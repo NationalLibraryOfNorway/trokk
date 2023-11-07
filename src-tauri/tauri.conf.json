@@ -19,7 +19,17 @@
       },
       "fs": {
         "readDir": true,
-        "scope": ["$DOCUMENT/trokk/files"]
+        "scope": ["$DOCUMENT/trokk/files", "$DOCUMENT/trokk/files/**"]
+      },
+      "path": {
+        "all": true
+      },
+      "protocol": {
+        "asset": true,
+        "assetScope": [
+          "$DOCUMENT/trokk/files",
+          "$DOCUMENT/trokk/files/**"
+        ]
       }
     },
     "bundle": {
@@ -35,7 +45,7 @@
       ]
     },
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
     },
     "windows": [
       {
