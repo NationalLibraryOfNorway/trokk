@@ -107,7 +107,6 @@
                     >
                         {@html printFile(file)}
                     </div>
-                    <!--<p>{file.name}</p>-->
                 {/each}
             </div>
         </div>
