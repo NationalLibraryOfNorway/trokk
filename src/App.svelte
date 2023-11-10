@@ -1,39 +1,57 @@
 <script lang="ts">
-  import Greet from './lib/Greet.svelte'
+  import Files from "./lib/Files.svelte";
+  import Settings from "./lib/Settings.svelte";
+  import {onMount} from "svelte";
+  import {Store} from "tauri-plugin-store-api";
+  import {documentDir} from "@tauri-apps/api/path";
+
+
+  let scannerPath: string;
+
+  let openSettings = false;
+  let store = new Store(".settings.dat");
+
+  onMount(() => {
+    store.get<string>("scannerPath").then(async (savedPath) => {
+      if (savedPath) {
+        scannerPath = savedPath;
+      } else {
+        let defaultPath = await documentDir() + "trokk/files"
+        store.set("scannerPath", defaultPath).then(() => {
+          scannerPath = defaultPath;
+        })
+      }
+    })
+  })
+
+  function handleNewPath(event: CustomEvent) {
+    scannerPath = event.detail.newPath
+    store.set("scannerPath", scannerPath)
+    store.save()
+  }
+
 </script>
 
-<main class="container">
-  <h1>Welcome to Tauri!</h1>
-
-  <div class="row">
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo vite" alt="Vite Logo" />
-    </a>
-    <a href="https://tauri.app" target="_blank">
-      <img src="/tauri.svg" class="logo tauri" alt="Tauri Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank">
-      <img src="/svelte.svg" class="logo svelte" alt="Svelte Logo" />
-    </a>
+<main class="mainContainer">
+  <div class="topBar">
+    <h1>Trøkk</h1>
+    <button on:click={() => openSettings = !openSettings} >Settings</button>
   </div>
-
-  <p>
-    Click on the Tauri, Vite, and Svelte logos to learn more.
-  </p>
-
-  <div class="row">
-    <Greet />
-  </div>
-
-
+  {#if openSettings}
+    <Settings on:save={handleNewPath} bind:scannerPath></Settings>
+  {/if}
+  <Files bind:scannerPath></Files>
 </main>
 
 <style>
-  .logo.vite:hover {
-    filter: drop-shadow(0 0 2em #747bff);
+  .mainContainer {
+    display: flex;
+    flex-direction: column;
   }
 
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00);
+  .topBar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
   }
 </style>

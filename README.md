@@ -1,7 +1,12 @@
-# Tauri + Svelte + Typescript
+# Trøkk
+App for minimumsregistrering og filfytting av objekter fra skannemaskiner.
 
-This template should help get you started developing with Tauri, Svelte and TypeScript in Vite.
+## Setup
 
-## Recommended IDE Setup
+For oppstart:
+```bash
+    npm install
+    npm run tauri dev
+```
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+Er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så lag en mappe der med noen filer.
