@@ -1,7 +1,6 @@
 <script lang="ts">
     import {type FileEntry, readDir} from '@tauri-apps/api/fs'
     import {onMount} from 'svelte';
-    import {documentDir} from "@tauri-apps/api/path";
     import {convertFileSrc} from "@tauri-apps/api/tauri";
 
     interface ViewFile {
@@ -10,25 +9,28 @@
     }
 
     export let scannerPath: string
-    let defaultPath: string = '';
+
+    let readDirFailed: string | undefined = undefined
 
 
     let files: FileEntry[] = []
     let viewFiles: ViewFile[] = []
 
-    $: readDir(/*scannerPath*/ defaultPath, {recursive: true})
+
+    $: readDir(scannerPath, {recursive: true})
         .then(newFiles => {
             files = newFiles
+            readDirFailed = undefined
         }).catch(err => {
-            console.log(err)
-            return []
+            console.error(err)
+            readDirFailed = err
+            files = []
         })
 
 
 
     onMount(async () => {
-        defaultPath = await documentDir() + "trokk/files"
-        files = await readDir(/*scannerPath*/ defaultPath, {recursive: true})
+        files = await readDir(scannerPath, {recursive: true})
             .then(newFiles => {
                 let firstDir = newFiles.find((file: FileEntry): boolean => {
                     return !!file.children;
@@ -43,10 +45,12 @@
                     })
                     viewFiles = viewFiles
                 }
+                readDirFailed = undefined
                 return newFiles
             })
             .catch(err => {
-                console.log(err)
+                console.error(err)
+                readDirFailed = err
                 return []
             })
     })
@@ -64,58 +68,64 @@
     }
 
     function changeViewDirectory(fileEntry: FileEntry) {
+        viewFiles = []
         if (fileEntry.children) {
-            viewFiles = []
             fileEntry.children.forEach((file: FileEntry) => {
                 viewFiles.push({
                     fileEntry: file,
                     imageSource: convertFileSrc(file.path)
                 })
             })
-            viewFiles = viewFiles
         } else {
-            viewFiles = []
             viewFiles.push({
                 fileEntry: fileEntry,
                 imageSource: convertFileSrc(fileEntry.path)
             })
-            viewFiles = viewFiles
         }
+        viewFiles = viewFiles
     }
 
 
 </script>
 
-<div class="filesContainer">
-    <div>
-        {#if scannerPath}
-            <h3>Scanner path: {scannerPath}</h3>
-        {/if}
-        {#if files.length === 0}
-            <p>Ingen filer funnet i mappen {scannerPath}</p>
-        {/if}
-        <div class="filelist">
-            {#each files as file}
-                <div
-                        role="button"
-                        tabindex="0"
-                        on:click={() => changeViewDirectory(file)}
-                        on:keydown={() => changeViewDirectory(file)}
-                >
-                    {@html printFile(file)}
+{#if !readDirFailed}
+    <div class="filesContainer">
+        <div>
+            {#if scannerPath}
+                <h3>Scanner path: {scannerPath}</h3>
+            {/if}
+            {#if files.length === 0}
+                <p>Ingen filer funnet i mappen {scannerPath}</p>
+            {/if}
+            <div class="filelist">
+                {#each files as file}
+                    <div
+                            role="button"
+                            tabindex="0"
+                            on:click={() => changeViewDirectory(file)}
+                            on:keydown={() => changeViewDirectory(file)}
+                    >
+                        {@html printFile(file)}
+                    </div>
+                    <!--<p>{file.name}</p>-->
+                {/each}
+            </div>
+        </div>
+        <div class="images">
+            {#each viewFiles as viewFile}
+                <div>
+                    {#if viewFile.fileEntry.children}
+                        <p>directory</p>
+                    {:else}
+                        <img src={viewFile.imageSource} alt={viewFile.fileEntry.name}/>
+                    {/if}
                 </div>
-                <!--<p>{file.name}</p>-->
             {/each}
         </div>
     </div>
-    <div class="images">
-        {#each viewFiles as viewFile}
-            <div>
-                <img src={viewFile.imageSource} alt={viewFile.fileEntry.name}/>
-            </div>
-        {/each}
-    </div>
-</div>
+    {:else}
+    <p>Failed to read directory, {readDirFailed}</p>
+{/if}
 
 
 <style lang="scss">

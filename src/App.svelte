@@ -1,26 +1,46 @@
 <script lang="ts">
   import Files from "./lib/Files.svelte";
   import Settings from "./lib/Settings.svelte";
-  import TrokkSettings from "./lib/TrokkSettings.svelte";
+  import {onMount} from "svelte";
+  import {Store} from "tauri-plugin-store-api";
+  import {documentDir} from "@tauri-apps/api/path";
+
 
   let scannerPath: string;
 
-
   let openSettings = false;
+  let store = new Store(".settings.dat");
+
+  onMount(() => {
+    store.get<string>("scannerPath").then(async (savedPath) => {
+      if (savedPath) {
+        scannerPath = savedPath;
+      } else {
+        let defaultPath = await documentDir() + "trokk/files"
+        store.set("scannerPath", defaultPath).then(() => {
+          scannerPath = defaultPath;
+        })
+      }
+    })
+  })
+
+  function handleNewPath(event: CustomEvent) {
+    scannerPath = event.detail.newPath
+    store.set("scannerPath", scannerPath)
+    store.save()
+  }
+
 </script>
-<TrokkSettings bind:scannerPath></TrokkSettings>
 
 <main class="mainContainer">
-
   <div class="topBar">
     <h1>Trøkk</h1>
     <button on:click={() => openSettings = !openSettings} >Settings</button>
   </div>
   {#if openSettings}
-    <Settings bind:scannerPath></Settings>
+    <Settings on:save={handleNewPath} bind:scannerPath></Settings>
   {/if}
   <Files bind:scannerPath></Files>
-  <h1>{scannerPath ? scannerPath : "no setting"}</h1>
 </main>
 
 <style>
