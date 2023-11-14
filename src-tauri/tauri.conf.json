@@ -30,6 +30,13 @@
           "$DOCUMENT/trokk/files",
           "$DOCUMENT/trokk/files/**"
         ]
+      },
+      "http": {
+        "all": true,
+        "request": true,
+        "scope": [
+          "http://localhost:8087/**"
+        ]
       }
     },
     "bundle": {

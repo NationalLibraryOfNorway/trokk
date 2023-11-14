@@ -2,6 +2,7 @@
     import {type FileEntry, readDir} from '@tauri-apps/api/fs'
     import {onMount} from 'svelte';
     import {convertFileSrc} from "@tauri-apps/api/tauri";
+    import RegistrationSchema from "./RegistrationSchema.svelte";
 
     interface ViewFile {
         fileEntry: FileEntry
@@ -10,6 +11,7 @@
 
     export let scannerPath: string
 
+    let currentPath: string
     let readDirFailed: string | undefined = undefined
 
 
@@ -83,6 +85,7 @@
             })
         }
         viewFiles = viewFiles
+        currentPath = fileEntry.path
     }
 
 
@@ -121,6 +124,11 @@
                 </div>
             {/each}
         </div>
+        {#if currentPath}
+            <div class="registrationSchema" >
+                <RegistrationSchema bind:workingTitle="{currentPath}" />
+            </div>
+        {/if}
     </div>
     {:else}
     <p>Failed to read directory, {readDirFailed}</p>
@@ -158,6 +166,7 @@
   .images {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
 
     div:hover, div:focus {
       outline: none;
@@ -179,6 +188,11 @@
         object-fit: contain;
       }
     }
+  }
+
+  .registrationSchema {
+    margin-right: 1em;
+    margin-left: auto;
   }
 
 </style>
