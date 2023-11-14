@@ -24,7 +24,6 @@
     }
 
     function onSubmit() {
-        // const formData = new FormData(e.target)
         fetch("http://localhost:8087/papi/item/",
             {
                 method: 'POST',
