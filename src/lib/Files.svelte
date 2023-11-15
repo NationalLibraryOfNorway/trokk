@@ -46,6 +46,7 @@
                         })
                     })
                     viewFiles = viewFiles
+                    currentPath = firstDir.path
                 }
                 readDirFailed = undefined
                 return newFiles
