@@ -1,56 +1,63 @@
 <script lang="ts">
-    import {Font, Language, MaterialType} from "./model/registration-enums";
+    import {MaterialType} from "./model/registration-enums";
     import {Body, fetch} from "@tauri-apps/api/http";
     import {TextInputDto} from "./model/text-input-dto";
+    import {invoke} from "@tauri-apps/api/tauri";
 
     export let workingTitle: string
 
     const materialTypes = Object.keys(MaterialType)
-    const languages = Object.keys(Language)
-    const fonts = Object.keys(Font)
 
     let successMessage: string
-    let form = {
-        materialType: '',
-        font: '',
-        language: '',
-        workingTitle: '',
-    }
+    let errorMessage: string
+
+    let materialType: string = materialTypes.at(0)
+    let fraktur: boolean = false
+    let sami: boolean = false
+    let name: string
 
     $: {
         const newPath = workingTitle.split('/').at(-1)
-        if (newPath) form.workingTitle = newPath
+        if (newPath) name = newPath
         successMessage = ''
+        errorMessage = ''
     }
 
-    function onSubmit() {
-        fetch("http://localhost:8087/papi/item/",
+    function getHostname(): Promise<String> {
+        return invoke("get_hostname")
+    }
+
+    function postRegistration(scanner: string): Promise<Response> {
+        return fetch("http://localhost:8087/papi/item/",
             {
                 method: 'POST',
                 body: Body.json(new TextInputDto(
-                    form.materialType,
-                    form.font,
-                    form.language,
-                    "aUsernameOrSomething",
-                    "scanner123",
-                    form.workingTitle
+                    materialType,
+                    fraktur ? "FRAKTUR" : "ANTIQUA",
+                    sami ? "SME" : "NOB",
+                    "aUsernameOrSomething",     // TODO: add real username when auth is in place
+                    scanner,
+                    name
                 ))
             }
         )
-            .then(response => response.data)
-            .then(obj => displaySuccessMessage((obj as TextInputDto)))
+    }
+
+    function onSubmit() {
+        getHostname()
+            .then(hostname => postRegistration(hostname))
+            .then(response => {
+                if (response.ok) {
+                    errorMessage = ''
+                    displaySuccessMessage(response.data as TextInputDto)
+                } else {
+                    errorMessage = `Kunne ikke TRØKKE dette videre (Feilkode ${response.status}).`
+                }
+            })
     }
 
     function materialTypeToDisplayValue(type: string): string {
         return MaterialType[type as keyof typeof MaterialType]
-    }
-
-    function fontToDisplayValue(font: string): string {
-        return Font[font as keyof typeof Font]
-    }
-
-    function languageToDisplayValue(language: string): string {
-        return Language[language as keyof typeof Language]
     }
 
     function displaySuccessMessage(item: TextInputDto) {
@@ -63,7 +70,7 @@
 <form class="regContainer" on:submit|preventDefault={onSubmit}>
     <div class="regField">
         <label for="materialType"> Materialtype </label>
-        <select name="materialType" id="materialType" bind:value={form.materialType} >
+        <select name="materialType" id="materialType" bind:value={materialType} >
             {#each materialTypes as type}
                 <option value={type}>
                     {materialTypeToDisplayValue(type)}
@@ -72,38 +79,40 @@
         </select>
     </div>
 
-    <div class="regField">
-        <label for="font"> Font </label>
-        <select name="font" id="font" bind:value={form.font}>
-            {#each fonts as font}
-                <option value={font}>
-                    {fontToDisplayValue(font)}
-                </option>
-            {/each}
-        </select>
+    <div class="regField sideBySide">
+        <label>
+            <input type="radio" bind:group={fraktur} value={false} /> Antiqua
+        </label>
+        <label>
+            <input type="radio" bind:group={fraktur} value={true} /> Fraktur
+        </label>
     </div>
 
-    <div class="regField">
-        <label for="language"> Språk </label>
-        <select name="language" id="language" bind:value={form.language} >
-            {#each languages as language}
-                <option value={language}>
-                    {languageToDisplayValue(language)}
-                </option>
-            {/each}
-        </select>
+    <div class="regField sideBySide">
+        <label>
+            <input type="radio" bind:group={sami} value={false} /> Norsk
+        </label>
+        <label>
+            <input type="radio" bind:group={sami} value={true} /> Samisk
+        </label>
     </div>
 
     <div class="regField">
         <label for="workingTitle"> Arbeidstittel (Blir ikke brukt i produksjon) </label>
-        <input type="text" name="workingTitle" id="workingTitle" value="{form.workingTitle}" />
+        <input type="text" name="workingTitle" id="workingTitle" bind:value="{name}" />
     </div>
 
-    <button type="submit">Send til produksjonsløypen</button>
+    <button type="submit">TRØKK!</button>
 
     {#if successMessage}
         <p class="successMessage">
             {successMessage}
+        </p>
+    {/if}
+
+    {#if errorMessage}
+        <p class="errorMessage">
+            {errorMessage}
         </p>
     {/if}
 </form>
@@ -113,7 +122,7 @@
   .regContainer {
     display: flex;
     flex-direction: column;
-    max-width: 25em;
+    width: 20em;
   }
 
   .regField {
@@ -124,6 +133,15 @@
 
   .successMessage {
     color: green;
+  }
+
+  .errorMessage {
+    color: red;
+  }
+
+  .sideBySide {
+    display: flex;
+    flex-direction: row;
   }
 
 </style>
