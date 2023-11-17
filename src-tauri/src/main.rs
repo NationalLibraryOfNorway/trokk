@@ -11,6 +11,7 @@ use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
 
 mod auth;
 mod model;
+mod image_converter;
 
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	papi_path: env!("PAPI_PATH"),
@@ -40,6 +41,11 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 	auth::refresh_token(refresh_token).await
 }
 
+#[tauri::command]
+async fn convert_to_webp(file_path: String) {
+    image_converter::convert_to_webp(file_path).expect("Failed to convert image");
+}
+
 fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
@@ -52,7 +58,8 @@ fn main() {
 			get_hostname,
 			get_required_env_variables,
 			log_in,
-			refresh_token
+			refresh_token,
+			convert_to_webp
 		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
