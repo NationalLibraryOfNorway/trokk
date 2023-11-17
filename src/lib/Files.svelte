@@ -4,7 +4,6 @@
     import {convertFileSrc} from "@tauri-apps/api/tauri";
     import RegistrationSchema from "./RegistrationSchema.svelte";
     import {invoke} from "@tauri-apps/api";
-    import {WebviewWindow} from "@tauri-apps/api/window";
 
     interface ViewFile {
         fileEntry: FileEntry
@@ -34,7 +33,6 @@
 
 
     onMount(async () => {
-        console.log("on mount in Files.svelte")
         files = await readDir(scannerPath, {recursive: true})
             .then(newFiles => {
                 let firstDir = newFiles.find((file: FileEntry): boolean => {
@@ -62,9 +60,7 @@
     })
 
     function createThumbnail(path) {
-        invoke("convert_to_webp", {filePath: path}).then((res) => {
-            console.log(res)
-        }).catch((err) => {
+        invoke("convert_to_webp", {filePath: path}).catch((err) => {
             console.error(err)
         })
     }
@@ -89,13 +85,16 @@
         viewFiles = []
         if (fileEntry.children) {
             fileEntry.children.forEach((file: FileEntry) => {
-                if (file.name === ".thumbnails") {
+                if (file.name === '.thumbnails') {
                     file.children?.forEach((subDirectory: FileEntry) => {
                         viewFiles.push({
                             fileEntry: subDirectory,
                             imageSource: convertFileSrc(subDirectory.path)
                         })
                     })
+                }
+                if (file.path.endsWith(".tif")) {
+                    createThumbnail(file.path)
                 }
             })
         } else {
