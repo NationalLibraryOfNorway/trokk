@@ -43,6 +43,9 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 
 #[tauri::command]
 async fn convert_to_webp(file_path: String) {
+    if image_converter::check_if_webp_exists(&file_path) {
+        return;
+    }
     image_converter::convert_to_webp(file_path).expect("Failed to convert image");
 }
 

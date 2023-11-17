@@ -40,7 +40,14 @@
       },
       "window": {
         "create": true,
-        "close": true
+        "close": true,
+        "assetScope": {
+            "allow": [
+                "$DOCUMENT/trokk/files",
+                "$DOCUMENT/trokk/files/**"
+            ],
+            "requireLiteralLeadingDot": false
+        }
       }
     },
     "bundle": {

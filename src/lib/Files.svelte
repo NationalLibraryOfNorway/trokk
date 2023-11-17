@@ -69,15 +69,19 @@
         })
     }
 
-    function printFile(file: FileEntry, nestLevel: number = 0): string {
+    function printFile(fileEntry: FileEntry, nestLevel: number = 0): string {
         let printString: string = ""
         let nesting = "&nbsp;".repeat(nestLevel * 4)
-        printString += `<p>${nesting}${file.name}</p>`
-        if (file.children) {
-            file.children.forEach((child: FileEntry) => {
-                printString += printFile(child, nestLevel + 1)
-            })
-        }
+        printString += `<p>${nesting}${fileEntry.name}</p>`
+
+        fileEntry.children?.forEach((subDirectory: FileEntry) => {
+            if (subDirectory.name === ".thumbnails" && subDirectory.children) {
+                subDirectory.children.forEach((thumbnail: FileEntry) => {
+                    printString += printFile(thumbnail, nestLevel + 1)
+                })
+            }
+        })
+
         return printString
     }
 
@@ -85,14 +89,14 @@
         viewFiles = []
         if (fileEntry.children) {
             fileEntry.children.forEach((file: FileEntry) => {
-                viewFiles.push({
-                    fileEntry: file,
-                    imageSource: convertFileSrc(file.path)
-                })
-                if (file.path.endsWith(".tif")) {
-                    createThumbnail(file.path)
+                if (file.name === ".thumbnails") {
+                    file.children?.forEach((subDirectory: FileEntry) => {
+                        viewFiles.push({
+                            fileEntry: subDirectory,
+                            imageSource: convertFileSrc(subDirectory.path)
+                        })
+                    })
                 }
-                // createThumbnail(file.path)
             })
         } else {
             viewFiles.push({
@@ -103,7 +107,6 @@
         viewFiles = viewFiles
         currentPath = fileEntry.path
     }
-
 
 </script>
 
