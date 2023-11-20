@@ -16,6 +16,6 @@ Er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så lag en 
 
 Sett disse environment variablene for å få appen til å fungere:
 
-| Variabel   | Beskrivelse                                  |
-|------------|----------------------------------------------|
-| `API_PATH` | URL til API'et vi sender registreringen til. |
+| Variabel    | Beskrivelse                                  |
+|-------------|----------------------------------------------|
+| `PAPI_PATH` | URL til API'et vi sender registreringen til. |
