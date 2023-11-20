@@ -4,6 +4,7 @@
   import {onMount} from "svelte";
   import {Store} from "tauri-plugin-store-api";
   import {documentDir} from "@tauri-apps/api/path";
+  import {invoke} from "@tauri-apps/api";
 
 
   let scannerPath: string;
@@ -11,7 +12,12 @@
   let openSettings = false;
   let store = new Store(".settings.dat");
 
+  let envVariables: Map<string, string>;
+
   onMount(() => {
+    invoke("get_env_variables").then((res) => {
+      envVariables = res;
+    })
     store.get<string>("scannerPath").then(async (savedPath) => {
       if (savedPath) {
         scannerPath = savedPath;
