@@ -18,21 +18,6 @@
   let envVariables: RequiredEnvVariables;
 
   onMount(async () => {
-    invoke("get_required_env_variables").then((res) => {
-      envVariables = res as RequiredEnvVariables;
-      console.log(envVariables)
-
-      // TODO handle already logged user? Autologout? Log in every time? Log out button?
-      invoke('log_in').then((port) => {
-        const webview = new WebviewWindow('Login', {url: envVariables.oicdUrl + "/auth?scope=openid&response_type=code&client_id=" + envVariables.oicdClientId + "&redirect_uri=http://localhost:" + port})
-        appWindow.listen('token_exchanged', (event) => {
-          authResponse = event.payload as AuthenticationResponse
-          webview.close()
-        });
-      });
-    })
-
-
     store.get<string>("scannerPath").then(async (savedPath) => {
       if (savedPath) {
         scannerPath = savedPath;
@@ -43,7 +28,62 @@
         })
       }
     })
+
+    invoke("get_required_env_variables").then((res) => {
+      envVariables = res as RequiredEnvVariables;
+
+      // Login after required env variables are fetched
+      store.get<AuthenticationResponse>("authResponse").then(async (savedAuthResponse: AuthenticationResponse | null) => {
+        // Always refresh token on startup, if it exists and is not expired
+        const timeNow = new Date().getTime()
+        if (savedAuthResponse &&
+                (savedAuthResponse.expireInfo.expiresAt > timeNow || savedAuthResponse.expireInfo.refreshExpiresAt > timeNow)
+        ) {
+          authResponse = savedAuthResponse
+          await refreshToken()
+          setRefreshTokenInterval()
+        } else {
+          logIn()
+        }
+      })
+    })
   })
+
+  function setRefreshTokenInterval() {
+    setInterval(async () => {
+              await refreshToken()
+            },
+            authResponse.tokenResponse.expiresIn * 1000 - 10000 // 10 seconds before token expires
+    );
+  }
+
+  async function refreshToken() {
+    if (authResponse && authResponse.expireInfo.refreshExpiresAt > new Date().getTime()) {
+      await invoke<AuthenticationResponse>("refresh_token", {refreshToken: authResponse.tokenResponse.refreshToken}).then((res) => {
+        authResponse = res
+        store.set("authResponse", authResponse).then(() => {
+          store.save()
+        })
+      })
+    } else {
+      throw new Error("Refresh token expired")
+    }
+  }
+
+  function logIn() {
+    if (!envVariables) throw new Error("Env variables not set")
+    invoke('log_in').then((port) => {
+      const webview = new WebviewWindow('Login', {url: envVariables.oicdUrl + "/auth?scope=openid&response_type=code&client_id=" + envVariables.oicdClientId + "&redirect_uri=http://localhost:" + port})
+      appWindow.listen('token_exchanged', (event) => {
+        authResponse = event.payload as AuthenticationResponse
+        store.set("authResponse", authResponse).then(() => {
+          store.save()
+        })
+        webview.close()
+        setRefreshTokenInterval()
+      });
+    });
+  }
 
   function handleNewPath(event: CustomEvent) {
     scannerPath = event.detail.newPath

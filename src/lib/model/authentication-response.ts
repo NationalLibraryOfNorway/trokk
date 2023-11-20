@@ -1,5 +1,6 @@
 interface AuthenticationResponse {
     tokenResponse: TokenResponse;
+    expireInfo: ExpireInfo;
     userInfo: UserInfo;
 }
 
@@ -13,6 +14,11 @@ interface TokenResponse {
     notBeforePolicy: number;
     sessionState: string;
     scope: string;
+}
+
+interface ExpireInfo {
+    expiresAt: number;
+    refreshExpiresAt: number;
 }
 
 interface UserInfo {

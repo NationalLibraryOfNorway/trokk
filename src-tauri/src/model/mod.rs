@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AuthenticationResponse {
     pub(crate) token_response: TokenResponse,
+    pub(crate) expire_info: ExpireInfo,
     pub(crate) user_info: UserInfo,
 }
 
@@ -12,9 +13,9 @@ pub(crate) struct TokenResponse {
     #[serde(rename(serialize = "accessToken", deserialize = "access_token"))]
     pub(crate) access_token: String,
     #[serde(rename(serialize = "expiresIn", deserialize = "expires_in"))]
-    expires_in: i32,
+    pub(crate) expires_in: i32,
     #[serde(rename(serialize = "refreshExpiresIn", deserialize = "refresh_expires_in"))]
-    refresh_expires_in: i32,
+    pub(crate) refresh_expires_in: i32,
     #[serde(rename(serialize = "refreshToken", deserialize = "refresh_token"))]
     refresh_token: String,
     #[serde(rename(serialize = "tokenType", deserialize = "token_type"))]
@@ -28,6 +29,12 @@ pub(crate) struct TokenResponse {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub(crate) struct ExpireInfo {
+    pub(crate) expires_at: u128,
+    pub(crate) refresh_expires_at: u128,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct UserInfo {
     sub: String,
     name: String,
