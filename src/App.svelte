@@ -5,6 +5,7 @@
   import {Store} from "tauri-plugin-store-api";
   import {documentDir} from "@tauri-apps/api/path";
   import {invoke} from "@tauri-apps/api";
+  import type {RequiredEnvVariables} from "./lib/RequiredEnvVariables";
 
 
   let scannerPath: string;
@@ -12,10 +13,10 @@
   let openSettings = false;
   let store = new Store(".settings.dat");
 
-  let envVariables: Map<string, string>;
+  let envVariables: RequiredEnvVariables;
 
   onMount(() => {
-    invoke("get_env_variables").then((res) => {
+    invoke("get_required_env_variables").then((res: RequiredEnvVariables) => {
       envVariables = res;
     })
     store.get<string>("scannerPath").then(async (savedPath) => {
