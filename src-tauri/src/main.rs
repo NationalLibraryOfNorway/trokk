@@ -77,7 +77,7 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
         env_variables.oicd_client_secret,
         refresh_token
     );
-    return create_token(client.clone(), env_variables.oicd_url, body).await;
+    return create_token(client, env_variables.oicd_url, body).await;
 }
 
 async fn create_token(client: Client, url: String, body: String) -> AuthenticationResponse {
