@@ -37,6 +37,10 @@
         "scope": [
           "http://localhost:8087/**"
         ]
+      },
+      "window": {
+        "create": true,
+        "close": true
       }
     },
     "bundle": {
