@@ -20,6 +20,6 @@ Sett disse environment variablene for å få appen til å fungere:
 | Variabel             | Beskrivelse                                  |
 |----------------------|----------------------------------------------|
 | `PAPI_PATH`          | URL til API'et vi sender registreringen til. |
-| `OICD_URL`           | URL til OICD server.                         |
-| `OICD_CLIENT_ID`     | Client ID til OICD server.                   |
-| `OICD_CLIENT_SECRET` | Client secret til OICD server.               |
+| `OIDC_URL`           | URL til OIDC server.                         |
+| `OIDC_CLIENT_ID`     | Client ID til OIDC server.                   |
+| `OIDC_CLIENT_SECRET` | Client secret til OIDC server.               |
