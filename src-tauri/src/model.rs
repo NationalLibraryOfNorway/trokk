@@ -50,9 +50,9 @@ pub(crate) struct UserInfo {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct RequiredEnvironmentVariables {
+pub struct RequiredEnvironmentVariables {
     pub(crate) papi_path: String,
-    pub(crate) oicd_url: String,
-    pub(crate) oicd_client_id: String,
-    pub(crate) oicd_client_secret: String,
+    pub(crate) oidc_base_url: String,
+    pub(crate) oidc_client_id: String,
+    pub(crate) oidc_client_secret: String,
 }

@@ -1,6 +1,6 @@
-export interface RequiredEnvVariables {
+interface RequiredEnvVariables {
     papiPath: string;
-    oicdUrl: string;
-    oicdClientId: string;
-    oicdClientSecret: string;
+    oidcBaseUrl: string;
+    oidcClientId: string;
+    oidcClientSecret: string;
 }

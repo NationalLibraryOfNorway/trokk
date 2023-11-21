@@ -5,7 +5,6 @@
   import {Store} from "tauri-plugin-store-api";
   import {documentDir} from "@tauri-apps/api/path";
   import {invoke} from "@tauri-apps/api";
-  import type {RequiredEnvVariables} from "./lib/model/required-env-variables";
   import {appWindow, WebviewWindow} from "@tauri-apps/api/window";
 
 
@@ -73,7 +72,7 @@
   function logIn() {
     if (!envVariables) throw new Error("Env variables not set")
     invoke('log_in').then((port) => {
-      const webview = new WebviewWindow('Login', {url: envVariables.oicdUrl + "/auth?scope=openid&response_type=code&client_id=" + envVariables.oicdClientId + "&redirect_uri=http://localhost:" + port})
+      const webview = new WebviewWindow('Login', {url: envVariables.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVariables.oidcClientId + "&redirect_uri=http://localhost:" + port})
       appWindow.listen('token_exchanged', (event) => {
         authResponse = event.payload as AuthenticationResponse
         store.set("authResponse", authResponse).then(() => {
