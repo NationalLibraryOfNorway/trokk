@@ -50,7 +50,9 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 	let client = Client::new();
 	let body = format!(
 		"client_id={}&client_secret={}&grant_type=refresh_token&refresh_token={}",
-		ENVIRONMENT_VARIABLES.oidc_client_id, ENVIRONMENT_VARIABLES.oidc_client_secret, refresh_token
+		ENVIRONMENT_VARIABLES.oidc_client_id,
+		ENVIRONMENT_VARIABLES.oidc_client_secret,
+		refresh_token
 	);
 	return create_token(client, body).await;
 }
