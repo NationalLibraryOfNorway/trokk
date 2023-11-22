@@ -20,7 +20,7 @@ pub(crate) struct TokenResponse {
     refresh_token: String,
     #[serde(rename(serialize = "tokenType", deserialize = "token_type"))]
     token_type: String,
-    #[serde(rename(serialize = "notBeforePolicy", deserialize = "not-before-policy"))] // NB! Special kebab-case from OICD-server
+    #[serde(rename(serialize = "notBeforePolicy", deserialize = "not-before-policy"))] // NB! Special kebab-case from OIDC-server
     not_before_policy: i32,
     #[serde(rename(serialize = "sessionState", deserialize = "session_state"))]
     session_state: String,
