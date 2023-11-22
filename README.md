@@ -6,8 +6,8 @@ Laget i Tauri med Rust og Svelte.
 **NB:** Appen er en prototype som enda er i utvikling. Store endringer vil kunne forekomme.
 
 
-## Setup
-Rust må være installert på maskinen. Se [rust-lang.org](https://www.rust-lang.org/tools/install).
+## Setup for lokal utvikling
+Rust og diverse system-avhengigheter må være installert på maskinen. Se [Tauri prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites/) eller [rust-lang.org](https://www.rust-lang.org/tools/install) .
 
 For installasjon av nødvendige pakker og oppstart:
 
