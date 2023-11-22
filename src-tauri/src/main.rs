@@ -21,7 +21,7 @@ pub static ENVIRONMENT_VARIABLES: Lazy<RequiredEnvironmentVariables> =
 
 #[tauri::command]
 fn get_hostname() -> Result<String, OsString> {
-						return gethostname().into_string();
+	return gethostname().into_string();
 }
 
 #[tauri::command]
