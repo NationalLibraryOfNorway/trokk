@@ -5,6 +5,9 @@ name: Rustfmt
 jobs:
   format:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src-tauri
     permissions:
       pull-requests: write
     steps:
