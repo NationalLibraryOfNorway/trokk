@@ -8,14 +8,13 @@ jobs:
     defaults:
       run:
         working-directory: ./src-tauri
-    permissions:
-      pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@nightly
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
+          toolchain: stable
           components: rustfmt
-      - uses: mbrobbel/rustfmt-check@master
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          mode: review
+      - name: Run rustfmt
+        run: cargo fmt -- --check
