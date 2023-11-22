@@ -26,10 +26,13 @@
       },
       "protocol": {
         "asset": true,
-        "assetScope": [
-          "$DOCUMENT/trokk/files",
-          "$DOCUMENT/trokk/files/**"
-        ]
+        "assetScope": {
+          "allow": [
+            "$DOCUMENT/trokk/files",
+            "$DOCUMENT/trokk/files/**"
+          ],
+          "requireLiteralLeadingDot": false
+        }
       },
       "http": {
         "all": true,
@@ -40,14 +43,7 @@
       },
       "window": {
         "create": true,
-        "close": true,
-        "assetScope": {
-            "allow": [
-                "$DOCUMENT/trokk/files",
-                "$DOCUMENT/trokk/files/**"
-            ],
-            "requireLiteralLeadingDot": false
-        }
+        "close": true
       }
     },
     "bundle": {

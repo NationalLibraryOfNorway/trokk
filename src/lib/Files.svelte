@@ -4,6 +4,7 @@
     import {convertFileSrc} from "@tauri-apps/api/tauri";
     import RegistrationSchema from "./RegistrationSchema.svelte";
     import {invoke} from "@tauri-apps/api";
+    import FileTree from "./FileTree.svelte";
 
     interface ViewFile {
         fileEntry: FileEntry
@@ -65,34 +66,15 @@
         })
     }
 
-    function printFile(fileEntry: FileEntry, nestLevel: number = 0): string {
-        let printString: string = ""
-        let nesting = "&nbsp;".repeat(nestLevel * 4)
-        printString += `<p>${nesting}${fileEntry.name}</p>`
-
-        fileEntry.children?.forEach((subDirectory: FileEntry) => {
-            if (subDirectory.name === ".thumbnails" && subDirectory.children) {
-                subDirectory.children.forEach((thumbnail: FileEntry) => {
-                    printString += printFile(thumbnail, nestLevel + 1)
-                })
-            }
-        })
-
-        return printString
-    }
-
-    function changeViewDirectory(fileEntry: FileEntry) {
+    function changeViewDirectory(event: CustomEvent<FileEntry>) {
+        const fileEntry = event.detail
         viewFiles = []
         if (fileEntry.children) {
             fileEntry.children.forEach((file: FileEntry) => {
-                if (file.name === '.thumbnails') {
-                    file.children?.forEach((subDirectory: FileEntry) => {
-                        viewFiles.push({
-                            fileEntry: subDirectory,
-                            imageSource: convertFileSrc(subDirectory.path)
-                        })
-                    })
-                }
+                viewFiles.push({
+                    fileEntry: file,
+                    imageSource: convertFileSrc(file.path)
+                })
                 if (file.path.endsWith(".tif")) {
                     createThumbnail(file.path)
                 }
@@ -106,31 +88,31 @@
         viewFiles = viewFiles
         currentPath = fileEntry.path
     }
-
 </script>
 
 {#if !readDirFailed}
     <div class="filesContainer">
-        <div>
-            {#if scannerPath}
-                <h3>Scanner path: {scannerPath}</h3>
-            {/if}
-            {#if files.length === 0}
-                <p>Ingen filer funnet i mappen {scannerPath}</p>
-            {/if}
-            <div class="filelist">
-                {#each files as file}
-                    <div
-                            role="button"
-                            tabindex="0"
-                            on:click={() => changeViewDirectory(file)}
-                            on:keydown={() => changeViewDirectory(file)}
-                    >
-                        {@html printFile(file)}
-                    </div>
-                {/each}
-            </div>
-        </div>
+        <FileTree fileTree={files} on:directoryChange={changeViewDirectory}/>
+<!--        <div>-->
+<!--            {#if scannerPath}-->
+<!--                <h3>Scanner path: {scannerPath}</h3>-->
+<!--            {/if}-->
+<!--            {#if files.length === 0}-->
+<!--                <p>Ingen filer funnet i mappen {scannerPath}</p>-->
+<!--            {/if}-->
+<!--            <div class="filelist">-->
+<!--                {#each files as file}-->
+<!--                    <div-->
+<!--                            role="button"-->
+<!--                            tabindex="0"-->
+<!--                            on:click={() => changeViewDirectory(file)}-->
+<!--                            on:keydown={() => changeViewDirectory(file)}-->
+<!--                    >-->
+<!--                        {@html printFile(file)}-->
+<!--                    </div>-->
+<!--                {/each}-->
+<!--            </div>-->
+<!--        </div>-->
         <div class="images">
             {#each viewFiles as viewFile}
                 <div>
@@ -157,28 +139,6 @@
   .filesContainer {
     display: flex;
     flex-direction: row;
-  }
-
-  .filelist {
-    display: flex;
-    flex-direction: column;
-    margin: 10px;
-
-    div {
-      border: solid 1px transparent;
-    }
-
-    div:hover, div:focus {
-      outline: none;
-      border: solid 1px red;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-
-    :global(p) {
-      margin: 0;
-    }
   }
 
   .images {
