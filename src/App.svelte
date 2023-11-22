@@ -84,7 +84,7 @@
     });
   }
 
-  function handleNewPath(event: CustomEvent) {
+  function handleNewPathevent: CustomEvent) {
     scannerPath = event.detail.newPath
     store.set("scannerPath", scannerPath)
     store.save()
