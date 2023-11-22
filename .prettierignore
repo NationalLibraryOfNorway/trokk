@@ -1,6 +1,0 @@
-# Ignore rust part of Tauri App
-src-tauri
-
-dist
-.vscode
-.idea
