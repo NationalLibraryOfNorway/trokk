@@ -1,10 +1,7 @@
 module.exports = {
   extends: [
     // add more generic rule sets here, such as:
-    // "eslint:recommended",
-    //"plugin:@typescript-eslint/recommended",
     "plugin:svelte/recommended",
-    "plugin:svelte/prettier",
   ],
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
