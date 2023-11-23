@@ -6,26 +6,13 @@
     export let fileTree: FileEntry[] = []
     const dispatch = createEventDispatcher()
 
-    function printFile(file: FileEntry, nestLevel: number = 0): string {
-        let output = ''
-        if (file.children) {
-            output += `${' '.repeat(nestLevel)}${file.name}\n`
-            file.children.forEach(child => {
-                output += printFile(child, nestLevel + 1)
-            })
-        } else {
-            output += `${' '.repeat(nestLevel)}${file.name}\n`
-        }
-        return output
-    }
-
     function changeViewDirectory(file: FileEntry) {
         dispatch('directoryChange', file)
     }
 
 </script>
 
-<div class="tree-container">
+<div>
     <div>
         <ul>
             {#each fileTree as file}
@@ -56,10 +43,6 @@
 </div>
 
 <style lang="scss">
-  .tree-container {
-    background-color: #1e1e1e;
-  }
-
   li > span {
     &:hover {
       cursor: pointer;

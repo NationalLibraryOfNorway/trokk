@@ -1,10 +1,11 @@
 <script lang="ts">
     import {type FileEntry, readDir} from '@tauri-apps/api/fs'
-    import {onMount} from 'svelte';
+    import {onDestroy, onMount} from 'svelte';
     import {convertFileSrc} from "@tauri-apps/api/tauri";
     import RegistrationSchema from "./RegistrationSchema.svelte";
     import {invoke} from "@tauri-apps/api";
     import FileTree from "./FileTree.svelte";
+    import {watch} from "tauri-plugin-fs-watch-api";
 
     interface ViewFile {
         fileEntry: FileEntry
@@ -15,31 +16,58 @@
 
     let currentPath: string
     let readDirFailed: string | undefined = undefined
-
-
-    let files: FileEntry[] = []
+    let fileEntries: FileEntry[] = []
     let viewFiles: ViewFile[] = []
-
+    let stopWatching = null
 
     $: readDir(scannerPath, {recursive: true})
         .then(newFiles => {
-            files = newFiles
+            fileEntries = newFiles
             readDirFailed = undefined
         }).catch(err => {
             console.error(err)
             readDirFailed = err
-            files = []
+            fileEntries = []
         })
 
-
-
     onMount(async () => {
-        files = await readDir(scannerPath, {recursive: true})
+        fileEntries = await getFileEntries()
+        await watchFiles()
+    })
+
+    onDestroy(() => {
+        unwatchFiles()
+    })
+
+    async function watchFiles() {
+        if (stopWatching) {
+            await stopWatching()
+            stopWatching = null
+        }
+        stopWatching = await watch(
+            scannerPath,
+            async () => {
+                fileEntries = await getFileEntries(currentPath)
+            },
+            {recursive: true}
+        ).catch((err) => {
+            console.error(err);
+        });
+    }
+
+    async function unwatchFiles() {
+        if (stopWatching) {
+            await stopWatching()
+            stopWatching = null
+        }
+    }
+
+    async function getFileEntries(path?: string): Promise<FileEntry[]> {
+        return await readDir(scannerPath, {recursive: true})
             .then(newFiles => {
                 let firstDir = newFiles.find((file: FileEntry): boolean => {
                     return !!file.children;
                 })
-                viewFiles = []
                 if (firstDir?.children) {
                     firstDir.children.forEach((file: FileEntry) => {
                         viewFiles.push({
@@ -47,18 +75,17 @@
                             imageSource: convertFileSrc(file.path)
                         })
                     })
-                    viewFiles = viewFiles
-                    currentPath = firstDir.path
+                    currentPath = path ?? firstDir.path
                 }
                 readDirFailed = undefined
                 return newFiles
             })
             .catch(err => {
-                console.error(err)
+                console.error(`An error occurred when reading directory \'${scannerPath}\': ${err}`)
                 readDirFailed = err
                 return []
-            })
-    })
+            });
+    }
 
     function createThumbnail(path) {
         invoke("convert_to_webp", {filePath: path}).catch((err) => {
@@ -85,34 +112,12 @@
                 imageSource: convertFileSrc(fileEntry.path)
             })
         }
-        viewFiles = viewFiles
-        currentPath = fileEntry.path
     }
 </script>
 
 {#if !readDirFailed}
-    <div class="filesContainer">
-        <FileTree fileTree={files} on:directoryChange={changeViewDirectory}/>
-<!--        <div>-->
-<!--            {#if scannerPath}-->
-<!--                <h3>Scanner path: {scannerPath}</h3>-->
-<!--            {/if}-->
-<!--            {#if files.length === 0}-->
-<!--                <p>Ingen filer funnet i mappen {scannerPath}</p>-->
-<!--            {/if}-->
-<!--            <div class="filelist">-->
-<!--                {#each files as file}-->
-<!--                    <div-->
-<!--                            role="button"-->
-<!--                            tabindex="0"-->
-<!--                            on:click={() => changeViewDirectory(file)}-->
-<!--                            on:keydown={() => changeViewDirectory(file)}-->
-<!--                    >-->
-<!--                        {@html printFile(file)}-->
-<!--                    </div>-->
-<!--                {/each}-->
-<!--            </div>-->
-<!--        </div>-->
+    <div class="files-container">
+        <FileTree fileTree={fileEntries} on:directoryChange={changeViewDirectory}/>
         <div class="images">
             {#each viewFiles as viewFile}
                 <div>
@@ -125,18 +130,18 @@
             {/each}
         </div>
         {#if currentPath}
-            <div class="registrationSchema" >
-                <RegistrationSchema bind:workingTitle="{currentPath}" />
+            <div class="registration-schema">
+                <RegistrationSchema bind:workingTitle="{currentPath}"/>
             </div>
         {/if}
     </div>
-    {:else}
+{:else}
     <p>Failed to read directory, {readDirFailed}</p>
 {/if}
 
 
 <style lang="scss">
-  .filesContainer {
+  .files-container {
     display: flex;
     flex-direction: row;
   }
@@ -168,7 +173,7 @@
     }
   }
 
-  .registrationSchema {
+  .registration-schema {
     margin-right: 1em;
     margin-left: auto;
   }

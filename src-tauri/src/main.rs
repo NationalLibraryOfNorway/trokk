@@ -52,6 +52,7 @@ async fn convert_to_webp(file_path: String) {
 fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
+		.plugin(tauri_plugin_fs_watch::init())
 		.setup(|app| {
 			#[cfg(debug_assertions)]
 			app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
