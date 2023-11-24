@@ -79,7 +79,6 @@
                             imageSource: convertFileSrc(file.path)
                         })
                     })
-                    // currentPath = firstDir.path
                 }
 
                 readDirFailed = undefined
