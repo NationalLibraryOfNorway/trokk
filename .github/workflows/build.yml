@@ -12,6 +12,8 @@ jobs:
     permissions:
       contents: read
       packages: write
+    container:
+      image: ubuntu:20.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
