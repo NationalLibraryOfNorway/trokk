@@ -14,7 +14,7 @@
 
     export let scannerPath: string
 
-    let currentPath: string
+    let currentPath: string = scannerPath
     let readDirFailed: string | undefined = undefined
     let fileEntries: FileEntry[] = []
     let viewFiles: ViewFile[] = []
@@ -47,7 +47,11 @@
         stopWatching = await watch(
             scannerPath,
             async () => {
-                fileEntries = await getFileEntries(currentPath)
+                fileEntries = await getFileEntries()
+                const currentEntry: FileEntry | undefined = findCurrentDir(fileEntries)
+                if (currentEntry) {
+                    changeViewDirectory(currentEntry)
+                }
             },
             {recursive: true}
         ).catch((err) => {
@@ -62,7 +66,7 @@
         }
     }
 
-    async function getFileEntries(path?: string): Promise<FileEntry[]> {
+    async function getFileEntries(): Promise<FileEntry[]> {
         return await readDir(scannerPath, {recursive: true})
             .then(newFiles => {
                 let firstDir = newFiles.find((file: FileEntry): boolean => {
@@ -75,8 +79,9 @@
                             imageSource: convertFileSrc(file.path)
                         })
                     })
-                    currentPath = path ?? firstDir.path
+                    // currentPath = firstDir.path
                 }
+
                 readDirFailed = undefined
                 return newFiles
             })
@@ -87,14 +92,24 @@
             });
     }
 
+    function findCurrentDir(fileEntries: FileEntry[]): FileEntry | undefined {
+        for (const fileEntry of fileEntries) {
+            if (fileEntry.path === currentPath)  return fileEntry
+            else if (fileEntry.children) {
+                const result = findCurrentDir(fileEntry.children)
+                if (result) return result
+            }
+        }
+    }
+
     function createThumbnail(path) {
         invoke("convert_to_webp", {filePath: path}).catch((err) => {
             console.error(err)
         })
     }
 
-    function changeViewDirectory(event: CustomEvent<FileEntry>) {
-        const fileEntry = event.detail
+    function changeViewDirectory(fileEntry: FileEntry): void {
+        currentPath = fileEntry.path
         viewFiles = []
         if (fileEntry.children) {
             fileEntry.children.forEach((file: FileEntry) => {
@@ -117,7 +132,7 @@
 
 {#if !readDirFailed}
     <div class="files-container">
-        <FileTree fileTree={fileEntries} on:directoryChange={changeViewDirectory}/>
+        <FileTree fileTree={fileEntries} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
         <div class="images">
             {#each viewFiles as viewFile}
                 <div>

@@ -6,8 +6,14 @@
     export let fileTree: FileEntry[] = []
     const dispatch = createEventDispatcher()
 
-    function changeViewDirectory(file: FileEntry) {
+    function changeViewDirectory(file: FileEntry): void {
         dispatch('directoryChange', file)
+    }
+
+    function formatFileNames(fileName: string): string {
+        if (fileName.endsWith('.tif')) return fileName.replace('.tif', '')
+        if (fileName.endsWith('.webp')) return fileName.replace('.webp', '')
+        return fileName
     }
 
 </script>
@@ -23,7 +29,7 @@
                             on:keydown|preventDefault={() => changeViewDirectory(file)}
                         >
                             <Folder size="16" color="orange" />
-                            <span>{file.name}</span>
+                            <span>{formatFileNames(file.name)}</span>
                         </span>
                         <ul>
                             <svelte:self fileTree={file.children} on:directoryChange />
@@ -33,7 +39,7 @@
                     <li>
                         <span>
                             <FileImage size="16" color="orange" />
-                            <span>{file.name}</span>
+                            <span>{formatFileNames(file.name)}</span>
                         </span>
                     </li>
                 {/if}

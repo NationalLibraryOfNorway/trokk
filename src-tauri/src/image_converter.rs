@@ -18,7 +18,7 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 
     let encoder: Encoder = Encoder::from_image(&image)?;
     let encoded_webp: WebPMemory = encoder
-        .encode_simple(false,WEBP_QUALITY)
+        .encode_simple(false, WEBP_QUALITY)
         .expect("Failed to encode image");
 
     let parent_directory = path_reference.parent().unwrap();
