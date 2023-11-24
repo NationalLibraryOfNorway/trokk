@@ -23,7 +23,7 @@ jobs:
         # libayatana-appindicator3-dev
         run: |
           apt update
-          apt install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev curl
+          apt install -y libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev curl git
         env:
           DEBIAN_FRONTEND: noninteractive
 
