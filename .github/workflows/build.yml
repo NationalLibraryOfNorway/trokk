@@ -44,6 +44,9 @@ jobs:
       - name: Install frontend dependencies
         # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
         run: npm install # Change this to npm, yarn or pnpm.
+        env:
+          HTTPS_PROXY: ${{ secrets.HTTPS_PROXY }}
+          HTTP_PROXY: ${{ secrets.HTTP_PROXY }}
         # TODO figure out how and where to upload artifacts for private release.
         # name: Build the app, uses: tauri-apps/tauri-action@v0
 
