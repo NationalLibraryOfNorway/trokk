@@ -18,7 +18,6 @@ For installasjon av nødvendige pakker og oppstart:
 
 Appen er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så lag en mappe der med noen filer.
 
-
 ### Krevde environment variabler
 
 Sett disse environment variablene for å få appen til å fungere:
@@ -29,7 +28,6 @@ Sett disse environment variablene for å få appen til å fungere:
 | `OIDC_BASE_URL`      | URL til OIDC server (inkludert "protocol/openid-connect"). |
 | `OIDC_CLIENT_ID`     | Client ID til OIDC server.                                 |
 | `OIDC_CLIENT_SECRET` | Client secret til OIDC server.                             |
-
 
 
 ## Vedlikehold

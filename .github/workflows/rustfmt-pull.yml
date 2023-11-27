@@ -1,0 +1,20 @@
+on: pull_request
+
+name: Rustfmt
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src-tauri
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          components: rustfmt
+      - name: Run rustfmt
+        run: cargo fmt -- --check
