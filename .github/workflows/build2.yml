@@ -21,10 +21,9 @@ jobs:
 
       - name: setup node
         uses: actions/setup-node@v1
-        run: |
-          npm install ci
         with:
-          node-version: 16
+          node-version: 20
+      - run: npm install
 
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
