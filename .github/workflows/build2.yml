@@ -21,6 +21,8 @@ jobs:
 
       - name: setup node
         uses: actions/setup-node@v1
+        run: |
+          npm install ci
         with:
           node-version: 16
 
@@ -37,3 +39,11 @@ jobs:
 
       - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PAPI_PATH: "placeholder"
+          OIDC_BASE_URL: "placeholder"
+          OIDC_CLIENT_ID: "placeholder"
+          OIDC_CLIENT_SECRET: "placeholder"
+          RUST_BACKTRACE: full
+          RUST_LOG: debug
