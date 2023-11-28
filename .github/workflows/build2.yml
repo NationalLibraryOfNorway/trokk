@@ -25,6 +25,8 @@ jobs:
       RUST_BACKTRACE: full
       RUST_LOG: debug
     steps:
+        # TODO fetch secrets
+
       - uses: actions/checkout@v2
 
       - name: install dependencies (ubuntu only)
@@ -32,12 +34,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install libssl-dev
 
       - name: install Rust stable
         uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
           components: rustfmt, clippy
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
 
       - name: Run rustfmt
         working-directory: ./src-tauri
@@ -47,10 +55,7 @@ jobs:
         working-directory: ./src-tauri
         run: cargo clippy --all -- -D warnings
 
-      - name: Rust cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: './src-tauri -> target'
+        # TODO run backend tests
 
       - name: Sync node version and setup cache
         uses: actions/setup-node@v4
@@ -64,5 +69,9 @@ jobs:
       - name: Lint frontend
         run: npm run lint
 
+        # TODO run frontend tests
+
       - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
+
+        # TODO upload somewhere
