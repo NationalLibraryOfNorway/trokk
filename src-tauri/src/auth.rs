@@ -1,12 +1,14 @@
-use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo};
-use crate::ENVIRONMENT_VARIABLES;
-use reqwest::Client;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use reqwest::Client;
 use tauri::Window;
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
+
+use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo};
+use crate::ENVIRONMENT_VARIABLES;
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
 	start_with_config(

@@ -1,22 +1,23 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod auth;
-mod model;
-
-use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
-use gethostname::gethostname;
 use std::ffi::OsString;
+
+use gethostname::gethostname;
 use tauri::Manager;
 use tauri::Window;
 
-pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables =
-	RequiredEnvironmentVariables {
-		papi_path: env!("PAPI_PATH"),
-		oidc_base_url: env!("OIDC_BASE_URL"),
-		oidc_client_id: env!("OIDC_CLIENT_ID"),
-		oidc_client_secret: env!("OIDC_CLIENT_SECRET"),
-	};
+use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
+
+mod auth;
+mod model;
+
+pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
+	papi_path: env!("PAPI_PATH"),
+	oidc_base_url: env!("OIDC_BASE_URL"),
+	oidc_client_id: env!("OIDC_CLIENT_ID"),
+	oidc_client_secret: env!("OIDC_CLIENT_SECRET"),
+};
 
 #[tauri::command]
 fn get_hostname() -> Result<String, OsString> {
