@@ -54,7 +54,7 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 		ENVIRONMENT_VARIABLES.oidc_client_secret,
 		refresh_token
 	);
-	return create_token(client, body).await;
+	create_token(client, body).await
 }
 
 async fn create_token(client: Client, body: String) -> AuthenticationResponse {
@@ -100,5 +100,5 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		expire_info,
 		user_info,
 	};
-	return authentication_response;
+	authentication_response
 }
