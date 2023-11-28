@@ -4,36 +4,63 @@ on:
   push:
     tags:
       - v*
-      - test-build*
+      - test*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-and-push-image:
-    runs-on: self-hosted
-    permissions:
-      contents: read
-      packages: write
-    container:
-      image: ubuntu:20.04
+  build-binaries:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [self-hosted, ubuntu-latest]
+    runs-on: ${{ matrix.platform }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PAPI_PATH: "placeholder"
+      OIDC_BASE_URL: "placeholder"
+      OIDC_CLIENT_ID: "placeholder"
+      OIDC_CLIENT_SECRET: "placeholder"
+      RUST_BACKTRACE: full
+      RUST_LOG: debug
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        # TODO fetch secrets from somewhere
 
-      - name: Install dependencies (ubuntu only)
-        # You can remove libayatana-appindicator3-dev if you don't use the system tray feature.
-        # libayatana-appindicator3-dev
+      - uses: actions/checkout@v2
+
+      - name: install dependencies (ubuntu only)
+        if: matrix.platform == 'self-hosted' || matrix.platform == 'ubuntu-latest'
         run: |
-          apt update
-          apt install -y build-essential pkg-config libssl-dev libgtk-3-dev libwebkit2gtk-4.0-dev librsvg2-dev curl git wget
-        env:
-          DEBIAN_FRONTEND: noninteractive
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install libssl-dev
 
-      - name: Rust setup
-        uses: dtolnay/rust-toolchain@stable
+      - name: install Rust stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy, audit
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+
+      - name: Run rustfmt
+        working-directory: ./src-tauri
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        working-directory: ./src-tauri
+        run: cargo clippy --all -- -D warnings
+
+      - name: Run audit
+        working-directory: ./src-tauri
+        run: cargo audit --all -- -D warnings
+
+        # TODO run backend tests when they exist
 
       - name: Sync node version and setup cache
         uses: actions/setup-node@v4
@@ -42,18 +69,14 @@ jobs:
           cache: 'npm' # Set this to npm, yarn or pnpm.
 
       - name: Install frontend dependencies
-        # If you don't have `beforeBuildCommand` configured you may want to build your frontend here too.
-        run: npm install # Change this to npm, yarn or pnpm.
-        # TODO figure out how and where to upload artifacts for private release.
-        # name: Build the app, uses: tauri-apps/tauri-action@v0
+        run: npm ci
 
-      - name: Build the app
-        run: npm run tauri build -- --verbose
+      - name: Lint frontend
+        run: npm run lint
 
-        #env:
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PAPI_PATH: "placeholder"
-          OIDC_BASE_URL: "placeholder"
-          OIDC_CLIENT_ID: "placeholder"
-          OIDC_CLIENT_SECRET: "placeholder"
+        # TODO run frontend tests when they exist
+
+      - uses: JonasKruckenberg/tauri-build@v1
+        id: tauri_build
+
+        # TODO upload somewhere when we have a place to upload to
