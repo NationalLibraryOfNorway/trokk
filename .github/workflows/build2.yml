@@ -16,6 +16,14 @@ jobs:
       matrix:
         platform: [self-hosted, ubuntu-latest]
     runs-on: ${{ matrix.platform }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PAPI_PATH: "placeholder"
+      OIDC_BASE_URL: "placeholder"
+      OIDC_CLIENT_ID: "placeholder"
+      OIDC_CLIENT_SECRET: "placeholder"
+      RUST_BACKTRACE: full
+      RUST_LOG: debug
     steps:
       - uses: actions/checkout@v2
 
@@ -58,11 +66,3 @@ jobs:
 
       - uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PAPI_PATH: "placeholder"
-          OIDC_BASE_URL: "placeholder"
-          OIDC_CLIENT_ID: "placeholder"
-          OIDC_CLIENT_SECRET: "placeholder"
-          RUST_BACKTRACE: full
-          RUST_LOG: debug
