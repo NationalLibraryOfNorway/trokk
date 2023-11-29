@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [self-hosted, ubuntu-latest]
+        platform: [self-hosted] # This is ubuntu, waiting on a windows runner
     runs-on: ${{ matrix.platform }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -30,8 +30,8 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'self-hosted' || matrix.platform == 'ubuntu-latest'
+      - name: Install dependencies (ubuntu only)
+        if: matrix.platform == 'self-hosted'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
@@ -81,12 +81,15 @@ jobs:
         uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
 
-      - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v3
-        env:
-          JF_URL: ${{ secrets.ARTIFACTORY_URL }}}
+      - run: echo "tauri build output ${{ steps.tauri_build.outputs.artifacts }}"
+        # TODO upload somewhere when we have a place to upload to
 
-      - name: Upload to Artifactory
-        run: |
-          jf rt u "src-tauri/target/release/bundle/*" "/trokk/"
+    #  - name: Setup JFrog CLI
+    #    uses: jfrog/setup-jfrog-cli@v3
+    #    env:
+    #      JF_URL: ${{ secrets.ARTIFACTORY_URL }}}
+
+    #  - name: Upload to Artifactory
+    #    run: |
+    #      jf rt u "src-tauri/target/release/bundle/*" "/trokk/${{ VERSION }}" --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }}
         # TODO upload somewhere when we have a place to upload to
