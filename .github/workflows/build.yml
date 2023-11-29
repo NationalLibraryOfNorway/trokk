@@ -27,7 +27,7 @@ jobs:
       RUST_LOG: debug
     steps:
         # TODO fetch secrets from somewhere
-      - run: echo ${{ GITHUB_REF_NAME }}
+      - run: echo ${{ github.ref_name }}
 
       - uses: actions/checkout@v2
 
@@ -101,6 +101,6 @@ jobs:
           echo '${{ steps.tauri_build.outputs.artifacts }}' |
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
-          xargs -I % jf rt u --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }} --build-name ${{ env.GITHUB_REF_NAME }} % "/trokk/"  
+          xargs -I % jf rt u --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }} --build-name ${{ github.ref_name }} % "/trokk/"  
 
         # TODO upload somewhere when we have a place to upload to
