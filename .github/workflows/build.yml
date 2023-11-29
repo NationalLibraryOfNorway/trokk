@@ -27,6 +27,7 @@ jobs:
       RUST_LOG: debug
     steps:
         # TODO fetch secrets from somewhere
+      - run: echo ${{ GITHUB_REF_NAME }}
 
       - uses: actions/checkout@v2
 
