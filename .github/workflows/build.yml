@@ -84,7 +84,7 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
         env:
-          JF_URL: {{ secrets.ARTIFACTORY_URL }}}
+          JF_URL: ${{ secrets.ARTIFACTORY_URL }}}
 
       - name: Upload to Artifactory
         run: |
