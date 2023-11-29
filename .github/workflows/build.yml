@@ -27,8 +27,6 @@ jobs:
       RUST_LOG: debug
     steps:
         # TODO fetch secrets from somewhere
-      - run: echo ${{ github.ref_name }}
-
       - uses: actions/checkout@v2
 
       - name: Install dependencies (ubuntu only)
@@ -38,47 +36,49 @@ jobs:
           sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
           sudo apt-get install libssl-dev
 
-      - name: install Rust stable
+      - name: Rust; Install Rust stable
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: stable
           components: rustfmt, clippy
 
-      - name: Rust cache
-        if: false # TODO enable when we have a cache
+      - name: Rust; Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Rust; Rust cache
+        if: false # TODO figure out caching, disabled for now
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
 
-      - name: Run rustfmt
-        if: false # TODO enable
+      - name: Rust; Run cargo fmt
+        if: false
         working-directory: ./src-tauri
         run: cargo fmt --all -- --check
 
-      - name: Run clippy
-        if: false # TODO enable
+      - name: Rust; Run cargo clippy
+        if: false
         working-directory: ./src-tauri
         run: cargo clippy --all -- -D warnings
 
-      - name: Run audit
-        if: false # TODO enable
+      - name: Rust; Run cargo audit
+        if: false
         continue-on-error: true
         working-directory: ./src-tauri
         run: cargo audit --all -- -D warnings
 
         # TODO run backend tests when they exist
 
-      - name: Sync node version and setup cache
+      - name: NPM; Sync node version and setup cache # TODO as above in 'Rust cache' step, figure out caching
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'
           cache: 'npm' # Set this to npm, yarn or pnpm.
 
-      - name: Install frontend dependencies
+      - name: NPM; Install frontend dependencies
         run: npm ci
 
-      - name: Lint frontend
-        if: false # TODO enable
+      - name: NPM; Lint frontend
         run: npm run lint
 
         # TODO run frontend tests when they exist
@@ -86,9 +86,6 @@ jobs:
       - name: Tauri build
         uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
-
-      - run: echo "tauri build output ${{ steps.tauri_build.outputs.artifacts }}"
-        # TODO upload somewhere when we have a place to upload to
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
@@ -101,6 +98,4 @@ jobs:
           echo '${{ steps.tauri_build.outputs.artifacts }}' |
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
-          xargs -I % jf rt u --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"  
-
-        # TODO upload somewhere when we have a place to upload to
+          xargs -I % jf rt u --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
