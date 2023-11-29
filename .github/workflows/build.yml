@@ -93,6 +93,6 @@ jobs:
         run: |
           echo '${{ steps.tauri_build.outputs.artifacts }}' |
           jq .[] |
-          xargs -I % jf rt u % "/trokk/${{ env.GITHUB_REF_NAME }}" --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }}
+          xargs -I % jf rt u % "/trokk/${{ env.GITHUB_REF_NAME }}" --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }}
 
         # TODO upload somewhere when we have a place to upload to
