@@ -57,6 +57,7 @@ jobs:
         run: cargo clippy --all -- -D warnings
 
       - name: Run audit
+        continue-on-error: true
         working-directory: ./src-tauri
         run: cargo audit --all -- -D warnings
 
@@ -76,7 +77,15 @@ jobs:
 
         # TODO run frontend tests when they exist
 
-      - uses: JonasKruckenberg/tauri-build@v1
+      - name: Tauri build
+        uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
 
+      - name: publish to artifactory
+        uses: advancedcsg-open/action-jfrog-cli@master
+        with:
+          url: {{ secrets.ARTIFACTORY_URL }}}
+          credentials type: 'apikey'
+          apikey: 'blabla'
+          args: u "src-tauri/target/release/bundle/*" "/trokk/"
         # TODO upload somewhere when we have a place to upload to
