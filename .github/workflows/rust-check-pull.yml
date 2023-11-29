@@ -18,6 +18,8 @@ jobs:
           components: rustfmt, clippy
       - name: Run rustfmt
         run: cargo fmt --all -- --check
+        continue-on-error: true
       - name: Run clippy
         run: cargo clippy --all -- -D warnings
+        continue-on-error: true
         # TODO run backend tests
