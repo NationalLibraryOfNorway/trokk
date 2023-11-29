@@ -101,6 +101,6 @@ jobs:
           echo '${{ steps.tauri_build.outputs.artifacts }}' |
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
-          xargs -I % jf rt u --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}"  
+          xargs -I % jf rt u --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"  
 
         # TODO upload somewhere when we have a place to upload to
