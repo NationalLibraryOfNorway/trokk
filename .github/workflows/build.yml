@@ -84,12 +84,15 @@ jobs:
       - run: echo "tauri build output ${{ steps.tauri_build.outputs.artifacts }}"
         # TODO upload somewhere when we have a place to upload to
 
-    #  - name: Setup JFrog CLI
-    #    uses: jfrog/setup-jfrog-cli@v3
-    #    env:
-    #      JF_URL: ${{ secrets.ARTIFACTORY_URL }}}
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v3
+        env:
+          JF_URL: ${{ secrets.ARTIFACTORY_URL }}}
 
-    #  - name: Upload to Artifactory
-    #    run: |
-    #      jf rt u "src-tauri/target/release/bundle/*" "/trokk/${{ VERSION }}" --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }}
+      - name: Upload to Artifactory
+        run: |
+          echo ${{ steps.tauri_build.outputs.artifacts }} |
+          jq .[] |
+          xargs -I % jf rt u % "/trokk/${{ GITHUB_REF }}" --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }}
+
         # TODO upload somewhere when we have a place to upload to
