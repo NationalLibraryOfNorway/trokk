@@ -91,7 +91,7 @@ jobs:
 
       - name: Upload to Artifactory
         run: |
-          echo ${{ steps.tauri_build.outputs.artifacts }} |
+          echo '${{ steps.tauri_build.outputs.artifacts }}' |
           jq .[] |
           xargs -I % jf rt u % "/trokk/${{ env.GITHUB_REF_NAME }}" --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }}
 
