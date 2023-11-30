@@ -3753,6 +3753,7 @@ dependencies = [
  "tauri-plugin-fs-watch",
  "tauri-plugin-oauth",
  "tauri-plugin-store",
+ "thiserror",
  "url",
  "webp",
 ]

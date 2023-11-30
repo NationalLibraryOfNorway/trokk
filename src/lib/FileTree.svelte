@@ -25,6 +25,8 @@
                 {#if file.children}
                     <li>
                         <span
+                            role="button"
+                            tabindex={0}
                             on:click|preventDefault={() => changeViewDirectory(file)}
                             on:keydown|preventDefault={() => changeViewDirectory(file)}
                         >
