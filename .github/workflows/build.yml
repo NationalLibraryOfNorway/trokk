@@ -21,6 +21,7 @@ jobs:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       RUST_BACKTRACE: full
       RUST_LOG: debug
+      ACTIONS_STEP_DEBUG: true
     steps:
         # TODO fetch secrets from somewhere
       - name: Import Secrets
