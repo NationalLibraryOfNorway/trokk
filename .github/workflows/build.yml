@@ -33,7 +33,7 @@ jobs:
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            kv/data/team/text/test 'test' | TEST;
+            kv/team/text/data/test 'test' | TEST;
             kv/team/text/artifactory * | ART_;
             kv/team/text/trokk-stage * | TROKK_
 
