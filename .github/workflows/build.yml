@@ -19,14 +19,27 @@ jobs:
     runs-on: ${{ matrix.platform }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      PAPI_PATH: "placeholder"
-      OIDC_BASE_URL: "placeholder"
-      OIDC_CLIENT_ID: "placeholder"
-      OIDC_CLIENT_SECRET: "placeholder"
       RUST_BACKTRACE: full
       RUST_LOG: debug
     steps:
         # TODO fetch secrets from somewhere
+      - name: Import Secrets
+        id: import-secrets
+        uses: hashicorp/vault-action@v2
+        with:
+          url: ${{ secrets.VAULT_URL }}
+          method: approle
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
+          secrets: |
+            kv/team/text/test * | TEST_;
+            kv/team/text/artifactory * | ART_;
+            kv/team/text/trokk-stage * | TROKK_;
+
+      - run: |
+          echo "TEST_TEST: ${{ steps.import-secrets.TEST_TEST }}"
+          echo "all? : ${{ steps.import-secrets.outputs }}"
+
       - uses: actions/checkout@v2
 
       - name: Install dependencies (ubuntu only)
@@ -86,11 +99,14 @@ jobs:
       - name: Tauri build
         uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
+        env:
+          PAPI_PATH: ${{ steps.import-secrets.outputs.TROKK_PAPI_PATH }}
+          OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
+          OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
+          OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
-        env:
-          JF_URL: ${{ secrets.ARTIFACTORY_URL }}}
 
       - name: Upload to Artifactory
         working-directory: ./src-tauri/target/release/bundle
@@ -98,4 +114,4 @@ jobs:
           echo '${{ steps.tauri_build.outputs.artifacts }}' |
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
-          xargs -I % jf rt u --url ${{ secrets.ARTIFACTORY_URL }} --user ${{ secrets.ARTIFACTORY_USER }} --password ${{ secrets.ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
+          xargs -I % jf rt u --url ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }} --user ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }} --password ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
