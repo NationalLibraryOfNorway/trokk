@@ -26,14 +26,14 @@ jobs:
         # TODO fetch secrets from somewhere
       - name: Import Secrets
         id: import-secrets
-        uses: hashicorp/vault-action@v2
+        uses: sindrir/vault-action@main
         with:
           url: ${{ secrets.VAULT_URL }}
           method: approle
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            kv/team/text/test 'test' | TEST;
+            kv/team/text/test * | TEST;
             kv/team/text/artifactory * | ART_;
             kv/team/text/trokk-stage * | TROKK_
 
