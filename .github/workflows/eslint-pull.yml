@@ -1,6 +1,6 @@
 on: pull_request
 
-name: EsLint
+name: Npm code check
 
 jobs:
   format:
@@ -11,3 +11,4 @@ jobs:
         run: npm install
       - name: Run EsLint
         run: npm run lint
+      # TODO run frontend tests

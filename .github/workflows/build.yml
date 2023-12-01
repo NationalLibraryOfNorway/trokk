@@ -23,7 +23,6 @@ jobs:
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
     steps:
-        # TODO fetch secrets from somewhere
       - name: Import Secrets
         id: import-secrets
         uses: hashicorp/vault-action@v2
@@ -33,13 +32,8 @@ jobs:
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            kv/team/text/data/test * | TEST;
             kv/team/text/data/artifactory * | ART_;
             kv/team/text/data/trokk-stage * | TROKK_
-
-      - run: |
-          echo "TEST_TEST: ${{ steps.import-secrets.TEST_TEST }}"
-          echo "all? : ${{ steps.import-secrets.outputs }}"
 
       - uses: actions/checkout@v2
 
@@ -56,32 +50,32 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
 
-      - name: Rust; Install cargo-audit
-        run: cargo install cargo-audit
-
       - name: Rust; Rust cache
         if: false # TODO figure out caching, disabled for now
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
 
-      - name: Rust; Run cargo fmt
-        if: false
-        working-directory: ./src-tauri
-        run: cargo fmt --all -- --check
-
-      - name: Rust; Run cargo clippy
-        if: false
-        working-directory: ./src-tauri
-        run: cargo clippy --all -- -D warnings
+      - name: Rust; Install cargo-audit
+        run: cargo install cargo-audit
 
       - name: Rust; Run cargo audit
-        if: false
         continue-on-error: true
         working-directory: ./src-tauri
         run: cargo audit --all -- -D warnings
 
         # TODO run backend tests when they exist
+
+      - name: Rust; Run cargo fmt
+        if: false
+        working-directory: ./src-tauri
+        run: cargo fmt --all -- --check
+      - name: Rust; Run cargo clippy
+        if: false
+        working-directory: ./src-tauri
+        run: cargo clippy --all -- -D warnings
+
+
 
       - name: NPM; Sync node version and setup cache # TODO as above in 'Rust cache' step, figure out caching
         uses: actions/setup-node@v4
