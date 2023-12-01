@@ -26,7 +26,7 @@ jobs:
         # TODO fetch secrets from somewhere
       - name: Import Secrets
         id: import-secrets
-        uses: sindrir/vault-action@f91c015b81623c3f988151d17d220ab5a5c52882
+        uses: sindrir/vault-action@main
         with:
           url: ${{ secrets.VAULT_URL }}
           method: approle
