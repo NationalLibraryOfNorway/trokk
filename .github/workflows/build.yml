@@ -64,18 +64,15 @@ jobs:
         working-directory: ./src-tauri
         run: cargo audit
 
-        # TODO run backend tests when they exist
-
       - name: Rust; Run cargo fmt
-        if: false
         working-directory: ./src-tauri
         run: cargo fmt --all -- --check
+
       - name: Rust; Run cargo clippy
-        if: false
         working-directory: ./src-tauri
         run: cargo clippy --all -- -D warnings
 
-
+        # TODO run backend tests when they exist
 
       - name: NPM; Sync node version and setup cache # TODO as above in 'Rust cache' step, figure out caching
         uses: actions/setup-node@v4
