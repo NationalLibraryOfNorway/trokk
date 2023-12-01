@@ -62,7 +62,7 @@ jobs:
       - name: Rust; Run cargo audit
         continue-on-error: true
         working-directory: ./src-tauri
-        run: cargo audit --all -- -D warnings
+        run: cargo audit
 
         # TODO run backend tests when they exist
 
