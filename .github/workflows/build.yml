@@ -33,9 +33,9 @@ jobs:
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            kv/team/text/data/test 'test' | TEST;
-            kv/team/text/data/artifactory * | ART_;
-            kv/team/text/data/trokk-stage * | TROKK_
+            kv/team/text/test 'test' | TEST;
+            kv/team/text/artifactory * | ART_;
+            kv/team/text/trokk-stage * | TROKK_
 
       - run: |
           echo "TEST_TEST: ${{ steps.import-secrets.TEST_TEST }}"
