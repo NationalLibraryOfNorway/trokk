@@ -71,6 +71,12 @@ jobs:
       - name: Rust; Run cargo clippy
         working-directory: ./src-tauri
         run: cargo clippy --all -- -D warnings
+        env:
+          PAPI_PATH: ${{ steps.import-secrets.outputs.TROKK_PAPI_PATH }}
+          OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
+          OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
+          OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
+
 
         # TODO run backend tests when they exist
 
