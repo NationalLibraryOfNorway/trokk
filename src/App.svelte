@@ -2,29 +2,27 @@
   import Files from "./lib/Files.svelte";
   import Settings from "./lib/Settings.svelte";
   import {onMount} from "svelte";
-  import {Store} from "tauri-plugin-store-api";
   import {documentDir} from "@tauri-apps/api/path";
   import {invoke} from "@tauri-apps/api";
   import {appWindow, WebviewWindow} from "@tauri-apps/api/window";
+  import {settings} from "./lib/util/settings";
 
 
   let scannerPath: string;
 
   let openSettings = false;
-  let store = new Store(".settings.dat");
 
-  let authResponse: AuthenticationResponse;
+  let authResponse: AuthenticationResponse | null;
   let envVariables: RequiredEnvVariables;
 
   onMount(async () => {
-    store.get<string>("scannerPath").then(async (savedPath) => {
+    settings.scannerPath.then(async (savedPath) => {
       if (savedPath) {
         scannerPath = savedPath;
       } else {
         let defaultPath = await documentDir() + "trokk/files"
-        store.set("scannerPath", defaultPath).then(() => {
-          scannerPath = defaultPath;
-        })
+        settings.scannerPath = defaultPath;
+        scannerPath = defaultPath;
       }
     })
 
@@ -32,7 +30,7 @@
       envVariables = res as RequiredEnvVariables;
 
       // Login after required env variables are fetched
-      store.get<AuthenticationResponse>("authResponse").then(async (savedAuthResponse: AuthenticationResponse | null) => {
+      settings.authResponse.then(async (savedAuthResponse: AuthenticationResponse | null) => {
         // Always refresh token on startup, if it exists and is not expired
         const timeNow = new Date().getTime()
         if (savedAuthResponse &&
@@ -40,7 +38,7 @@
         ) {
           authResponse = savedAuthResponse
           await refreshToken()
-          setRefreshTokenInterval()
+          await setRefreshTokenInterval()
         } else {
           logIn()
         }
@@ -48,7 +46,9 @@
     })
   })
 
-  function setRefreshTokenInterval() {
+  async function setRefreshTokenInterval() {
+    if (!authResponse) throw new Error("User not logged in")
+
     setInterval(async () => {
               await refreshToken()
             },
@@ -57,12 +57,12 @@
   }
 
   async function refreshToken() {
+    authResponse = await settings.authResponse
+
     if (authResponse && authResponse.expireInfo.refreshExpiresAt > new Date().getTime()) {
       await invoke<AuthenticationResponse>("refresh_token", {refreshToken: authResponse.tokenResponse.refreshToken}).then((res) => {
         authResponse = res
-        store.set("authResponse", authResponse).then(() => {
-          store.save()
-        })
+        settings.authResponse = res
       })
     } else {
       throw new Error("Refresh token expired")
@@ -75,9 +75,7 @@
       const webview = new WebviewWindow('Login', {url: envVariables.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVariables.oidcClientId + "&redirect_uri=http://localhost:" + port})
       appWindow.listen('token_exchanged', (event) => {
         authResponse = event.payload as AuthenticationResponse
-        store.set("authResponse", authResponse).then(() => {
-          store.save()
-        })
+        settings.authResponse = authResponse
         webview.close()
         setRefreshTokenInterval()
       });
@@ -86,8 +84,7 @@
 
   function handleNewPath(event: CustomEvent) {
     scannerPath = event.detail.newPath
-    store.set("scannerPath", scannerPath)
-    store.save()
+    settings.scannerPath = scannerPath
   }
 
 </script>
