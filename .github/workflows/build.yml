@@ -51,7 +51,6 @@ jobs:
           components: rustfmt, clippy
 
       - name: Rust; Rust cache
-        if: false # TODO figure out caching, disabled for now
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
@@ -77,10 +76,9 @@ jobs:
           OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
           OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
 
-
         # TODO run backend tests when they exist
 
-      - name: NPM; Sync node version and setup cache # TODO as above in 'Rust cache' step, figure out caching
+      - name: NPM; Sync node version and setup cache
         uses: actions/setup-node@v4
         with:
           node-version: 'lts/*'

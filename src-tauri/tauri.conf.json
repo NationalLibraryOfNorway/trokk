@@ -7,7 +7,7 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "trokk",
+    "productName": "Trøkk",
     "version": "0.0.0"
   },
   "tauri": {
@@ -47,6 +47,7 @@
       "active": true,
       "targets": "all",
       "identifier": "no.nb.trokk",
+      "shortDescription": "Filflytting og registrering fra skannermaskiner",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
