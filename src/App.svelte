@@ -38,7 +38,7 @@
         ) {
           authResponse = savedAuthResponse
           await refreshToken()
-          await setRefreshTokenInterval()
+          setRefreshTokenInterval()
         } else {
           logIn()
         }
@@ -46,7 +46,7 @@
     })
   })
 
-  async function setRefreshTokenInterval() {
+  function setRefreshTokenInterval() {
     if (!authResponse) throw new Error("User not logged in")
 
     setInterval(async () => {
