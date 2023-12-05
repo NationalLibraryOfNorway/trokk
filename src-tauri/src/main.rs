@@ -1,27 +1,27 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod auth;
-mod model;
-
-use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
-use gethostname::gethostname;
-use once_cell::sync::Lazy;
 use std::ffi::OsString;
+
+use gethostname::gethostname;
 use tauri::Manager;
 use tauri::Window;
 
-pub static ENVIRONMENT_VARIABLES: Lazy<RequiredEnvironmentVariables> =
-	Lazy::new(|| RequiredEnvironmentVariables {
-		papi_path: env!("PAPI_PATH").parse().unwrap(),
-		oidc_base_url: env!("OIDC_BASE_URL").parse().unwrap(),
-		oidc_client_id: env!("OIDC_CLIENT_ID").parse().unwrap(),
-		oidc_client_secret: env!("OIDC_CLIENT_SECRET").parse().unwrap(),
-	});
+use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
+
+mod auth;
+mod model;
+
+pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
+	papi_path: env!("PAPI_PATH"),
+	oidc_base_url: env!("OIDC_BASE_URL"),
+	oidc_client_id: env!("OIDC_CLIENT_ID"),
+	oidc_client_secret: env!("OIDC_CLIENT_SECRET"),
+};
 
 #[tauri::command]
 fn get_hostname() -> Result<String, OsString> {
-	return gethostname().into_string();
+	gethostname().into_string()
 }
 
 #[tauri::command]

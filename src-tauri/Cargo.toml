@@ -2,7 +2,7 @@
 name = "trokk"
 version = "0.0.0"
 description = "A Tauri App"
-authors = ["you"]
+authors = ["Team Tekst"]
 license = ""
 repository = ""
 edition = "2021"
