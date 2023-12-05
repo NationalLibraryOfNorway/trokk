@@ -1,4 +1,5 @@
 use thiserror::Error;
+use serde::{Serialize, Serializer};
 
 #[derive(Error, Debug)]
 pub enum ImageConversionError {
@@ -35,5 +36,16 @@ impl std::fmt::Display for WebPEncodingErrorWrapper {
 		write!(f, "{:?}", self.0)
 	}
 }
+
+impl Serialize for ImageConversionError {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		S: Serializer,
+	{
+		serializer.serialize_str(&self.to_string().as_ref())
+	}
+}
+
+pub type ImageConversionResult<T> = Result<T, ImageConversionError>;
 
 impl std::error::Error for WebPEncodingErrorWrapper {}

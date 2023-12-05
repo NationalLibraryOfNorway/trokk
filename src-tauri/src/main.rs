@@ -7,6 +7,7 @@ use gethostname::gethostname;
 use tauri::Manager;
 use tauri::Window;
 
+use crate::error::{ImageConversionError, ImageConversionResult};
 use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
 
 mod auth;
@@ -43,21 +44,21 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 }
 
 #[tauri::command]
-async fn convert_to_webp(file_path: String) {
+fn convert_to_webp(file_path: String) -> ImageConversionResult<()>	{
 	match image_converter::check_if_webp_exists(&file_path) {
 		Ok(exists) => {
 			if exists {
-				return;
+				return Ok(());
 			}
 		}
 		Err(e) => {
-			println!("{e}")
+			ImageConversionError::StrError(e.to_string());
 		}
 	}
 	match image_converter::convert_to_webp(file_path) {
-		Ok(_) => {}
+		Ok(_) => { Ok(()) },
 		Err(e) => {
-			println!("{e}");
+			Err(ImageConversionError::StrError(e.to_string()))
 		}
 	}
 }

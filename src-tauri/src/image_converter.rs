@@ -55,7 +55,6 @@ fn get_parent_directory(path_reference: &Path) -> Result<&Path, ImageConversionE
 				path_reference.to_str()
 			))
 		})
-		.map_err(|e| ImageConversionError::FailedToGetParentDirectoryError(e.to_string()));
 }
 
 fn get_file_name(path_reference: &Path) -> Result<&OsStr, ImageConversionError> {
@@ -64,5 +63,4 @@ fn get_file_name(path_reference: &Path) -> Result<&OsStr, ImageConversionError> 
 		.ok_or_else(|| {
 			ImageConversionError::FailedToGetFileNameError(format!("{:?}", path_reference.to_str()))
 		})
-		.map_err(|e| ImageConversionError::FailedToGetFileNameError(e.to_string()));
 }
