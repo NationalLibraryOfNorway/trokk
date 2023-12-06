@@ -7,7 +7,6 @@ use gethostname::gethostname;
 use tauri::Manager;
 use tauri::Window;
 
-
 use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
 
 mod auth;

@@ -1,4 +1,3 @@
-
 use thiserror::Error;
 
 #[allow(clippy::enum_variant_names)]
