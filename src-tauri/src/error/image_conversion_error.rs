@@ -1,6 +1,7 @@
-use thiserror::Error;
-use serde::{Serialize, Serializer};
 
+use thiserror::Error;
+
+#[allow(clippy::enum_variant_names)]
 #[derive(Error, Debug)]
 pub enum ImageConversionError {
 	#[error("Failed to decode image: {0}")]
@@ -36,16 +37,5 @@ impl std::fmt::Display for WebPEncodingErrorWrapper {
 		write!(f, "{:?}", self.0)
 	}
 }
-
-impl Serialize for ImageConversionError {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-	{
-		serializer.serialize_str(&self.to_string().as_ref())
-	}
-}
-
-pub type ImageConversionResult<T> = Result<T, ImageConversionError>;
 
 impl std::error::Error for WebPEncodingErrorWrapper {}

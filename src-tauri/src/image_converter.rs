@@ -9,13 +9,18 @@ use crate::error::ImageConversionError;
 
 const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 const WEBP_EXTENSION: &str = "webp";
-const WEBP_QUALITY: f32 = 2.50;
+const WEBP_QUALITY: f32 = 25.0;
 
 pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let image = ImageReader::open(path_reference)?
 		.with_guessed_format()?
 		.decode()?;
+	let image = image.resize(
+		image.width() / 2,
+		image.height() / 2,
+		image::imageops::FilterType::Nearest,
+	);
 
 	let encoder: Encoder =
 		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
@@ -47,20 +52,16 @@ pub fn check_if_webp_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, Image
 }
 
 fn get_parent_directory(path_reference: &Path) -> Result<&Path, ImageConversionError> {
-	return path_reference
-		.parent()
-		.ok_or_else(|| {
-			ImageConversionError::FailedToGetParentDirectoryError(format!(
-				"{:?}",
-				path_reference.to_str()
-			))
-		})
+	return path_reference.parent().ok_or_else(|| {
+		ImageConversionError::FailedToGetParentDirectoryError(format!(
+			"{:?}",
+			path_reference.to_str()
+		))
+	});
 }
 
 fn get_file_name(path_reference: &Path) -> Result<&OsStr, ImageConversionError> {
-	return path_reference
-		.file_name()
-		.ok_or_else(|| {
-			ImageConversionError::FailedToGetFileNameError(format!("{:?}", path_reference.to_str()))
-		})
+	return path_reference.file_name().ok_or_else(|| {
+		ImageConversionError::FailedToGetFileNameError(format!("{:?}", path_reference.to_str()))
+	});
 }
