@@ -5,9 +5,6 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
   ignorePatterns: ["*.cjs"],
-  rules: {
-    "svelte/no-at-html-tags": "off",
-  },
   overrides: [
     {
       files: ["*.svelte"],

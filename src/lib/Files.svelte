@@ -1,8 +1,11 @@
 <script lang="ts">
     import {type FileEntry, readDir} from '@tauri-apps/api/fs'
-    import {onMount} from 'svelte';
+    import {onDestroy, onMount} from 'svelte';
     import {convertFileSrc} from "@tauri-apps/api/tauri";
     import RegistrationSchema from "./RegistrationSchema.svelte";
+    import {invoke} from "@tauri-apps/api";
+    import FileTree from "./FileTree.svelte";
+    import {watch} from "tauri-plugin-fs-watch-api";
 
     interface ViewFile {
         fileEntry: FileEntry
@@ -11,33 +14,64 @@
 
     export let scannerPath: string
 
-    let currentPath: string
+    let currentPath: string = scannerPath
     let readDirFailed: string | undefined = undefined
-
-
-    let files: FileEntry[] = []
+    let fileEntries: FileEntry[] = []
     let viewFiles: ViewFile[] = []
-
+    let stopWatching = null
 
     $: readDir(scannerPath, {recursive: true})
         .then(newFiles => {
-            files = newFiles
+            fileEntries = newFiles
             readDirFailed = undefined
         }).catch(err => {
             console.error(err)
             readDirFailed = err
-            files = []
+            fileEntries = []
         })
 
-
-
     onMount(async () => {
-        files = await readDir(scannerPath, {recursive: true})
+        fileEntries = await getFileEntries()
+        await watchFiles()
+    })
+
+    onDestroy(() => {
+        unwatchFiles()
+    })
+
+    async function watchFiles() {
+        if (stopWatching) {
+            await stopWatching()
+            stopWatching = null
+        }
+        stopWatching = await watch(
+            scannerPath,
+            async () => {
+                fileEntries = await getFileEntries()
+                const currentEntry: FileEntry | undefined = findCurrentDir(fileEntries)
+                if (currentEntry) {
+                    changeViewDirectory(currentEntry)
+                }
+            },
+            {recursive: true}
+        ).catch((err) => {
+            console.error(err);
+        });
+    }
+
+    async function unwatchFiles() {
+        if (stopWatching) {
+            await stopWatching()
+            stopWatching = null
+        }
+    }
+
+    async function getFileEntries(): Promise<FileEntry[]> {
+        return await readDir(scannerPath, {recursive: true})
             .then(newFiles => {
                 let firstDir = newFiles.find((file: FileEntry): boolean => {
                     return !!file.children;
                 })
-                viewFiles = []
                 if (firstDir?.children) {
                     firstDir.children.forEach((file: FileEntry) => {
                         viewFiles.push({
@@ -45,32 +79,36 @@
                             imageSource: convertFileSrc(file.path)
                         })
                     })
-                    viewFiles = viewFiles
-                    currentPath = firstDir.path
                 }
+
                 readDirFailed = undefined
                 return newFiles
             })
             .catch(err => {
-                console.error(err)
+                console.error(`An error occurred when reading directory \'${scannerPath}\': ${err}`)
                 readDirFailed = err
                 return []
-            })
-    })
-
-    function printFile(file: FileEntry, nestLevel: number = 0): string {
-        let printString: string = ""
-        let nesting = "&nbsp;".repeat(nestLevel * 4)
-        printString += `<p>${nesting}${file.name}</p>`
-        if (file.children) {
-            file.children.forEach((child: FileEntry) => {
-                printString += printFile(child, nestLevel + 1)
-            })
-        }
-        return printString
+            });
     }
 
-    function changeViewDirectory(fileEntry: FileEntry) {
+    function findCurrentDir(fileEntries: FileEntry[]): FileEntry | undefined {
+        for (const fileEntry of fileEntries) {
+            if (fileEntry.path === currentPath)  return fileEntry
+            else if (fileEntry.children) {
+                const result = findCurrentDir(fileEntry.children)
+                if (result) return result
+            }
+        }
+    }
+
+    function createThumbnail(path) {
+        invoke("convert_to_webp", {filePath: path}).catch((err) => {
+            console.error(err)
+        })
+    }
+
+    function changeViewDirectory(fileEntry: FileEntry): void {
+        currentPath = fileEntry.path
         viewFiles = []
         if (fileEntry.children) {
             fileEntry.children.forEach((file: FileEntry) => {
@@ -78,6 +116,9 @@
                     fileEntry: file,
                     imageSource: convertFileSrc(file.path)
                 })
+                if (file.path.endsWith(".tif")) {
+                    createThumbnail(file.path)
+                }
             })
         } else {
             viewFiles.push({
@@ -85,35 +126,12 @@
                 imageSource: convertFileSrc(fileEntry.path)
             })
         }
-        viewFiles = viewFiles
-        currentPath = fileEntry.path
     }
-
-
 </script>
 
 {#if !readDirFailed}
-    <div class="filesContainer">
-        <div>
-            {#if scannerPath}
-                <h3>Scanner path: {scannerPath}</h3>
-            {/if}
-            {#if files.length === 0}
-                <p>Ingen filer funnet i mappen {scannerPath}</p>
-            {/if}
-            <div class="filelist">
-                {#each files as file}
-                    <div
-                            role="button"
-                            tabindex="0"
-                            on:click={() => changeViewDirectory(file)}
-                            on:keydown={() => changeViewDirectory(file)}
-                    >
-                        {@html printFile(file)}
-                    </div>
-                {/each}
-            </div>
-        </div>
+    <div class="files-container">
+        <FileTree fileTree={fileEntries} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
         <div class="images">
             {#each viewFiles as viewFile}
                 <div>
@@ -126,42 +144,20 @@
             {/each}
         </div>
         {#if currentPath}
-            <div class="registrationSchema" >
-                <RegistrationSchema bind:workingTitle="{currentPath}" />
+            <div class="registration-schema">
+                <RegistrationSchema bind:workingTitle="{currentPath}"/>
             </div>
         {/if}
     </div>
-    {:else}
+{:else}
     <p>Failed to read directory, {readDirFailed}</p>
 {/if}
 
 
 <style lang="scss">
-  .filesContainer {
+  .files-container {
     display: flex;
     flex-direction: row;
-  }
-
-  .filelist {
-    display: flex;
-    flex-direction: column;
-    margin: 10px;
-
-    div {
-      border: solid 1px transparent;
-    }
-
-    div:hover, div:focus {
-      outline: none;
-      border: solid 1px red;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-
-    :global(p) {
-      margin: 0;
-    }
   }
 
   .images {
@@ -191,7 +187,7 @@
     }
   }
 
-  .registrationSchema {
+  .registration-schema {
     margin-right: 1em;
     margin-left: auto;
   }
