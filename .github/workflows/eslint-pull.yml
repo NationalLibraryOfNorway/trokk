@@ -10,5 +10,6 @@ jobs:
       - name: Install modules
         run: npm install
       - name: Run EsLint
+        if: always()
         run: npm run lint
       # TODO run frontend tests
