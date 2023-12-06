@@ -35,7 +35,7 @@ async fn log_in(window: Window) -> Result<u16, String> {
 	auth::log_in_with_server_redirect(window)
 }
 
-#[tauri::command
+#[tauri::command]
 async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 	auth::refresh_token(refresh_token).await
 }
