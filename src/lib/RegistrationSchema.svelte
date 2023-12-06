@@ -3,6 +3,7 @@
     import {Body, fetch} from "@tauri-apps/api/http";
     import {TextInputDto} from "./model/text-input-dto";
     import {invoke} from "@tauri-apps/api/tauri";
+    import {settings} from "./util/settings";
 
     export let workingTitle: string
 
@@ -11,7 +12,7 @@
     let successMessage: string
     let errorMessage: string
 
-    let materialType: string = materialTypes.at(0)
+    let materialType: string | undefined = materialTypes.at(0)
     let fraktur: boolean = false
     let sami: boolean = false
     let name: string
@@ -27,15 +28,21 @@
         return invoke("get_hostname")
     }
 
-    function postRegistration(scanner: string): Promise<Response> {
+    async function postRegistration(scanner: string): Promise<Response> {
+        const auth = await settings.authResponse
+
+        // TODO: Actually log in instead
+        if (!auth) return Promise.reject("Not logged in")
+
         return fetch("http://localhost:8087/papi/item/",
             {
                 method: 'POST',
+                headers: {"Authorization" : "Bearer " + auth.tokenResponse.accessToken},
                 body: Body.json(new TextInputDto(
-                    materialType,
+                    materialType ?? "",
                     fraktur ? "FRAKTUR" : "ANTIQUA",
                     sami ? "SME" : "NOB",
-                    "aUsernameOrSomething",     // TODO: add real username when auth is in place
+                    auth.userInfo.name,
                     scanner,
                     name
                 ))
@@ -45,7 +52,7 @@
 
     function onSubmit() {
         getHostname()
-            .then(hostname => postRegistration(hostname))
+            .then(hostname => postRegistration(hostname.toString()))
             .then(response => {
                 if (response.ok) {
                     errorMessage = ''
