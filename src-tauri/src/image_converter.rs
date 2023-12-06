@@ -16,6 +16,7 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageCo
 	let image = ImageReader::open(path_reference)?
 		.with_guessed_format()?
 		.decode()?;
+
 	let image = image.resize(
 		image.width() / 2,
 		image.height() / 2,

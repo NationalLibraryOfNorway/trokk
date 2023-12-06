@@ -6,9 +6,10 @@
     import {invoke} from "@tauri-apps/api";
     import FileTree from "./FileTree.svelte";
     import {watch} from "tauri-plugin-fs-watch-api";
+    import {ChevronsUpDown, ChevronsDownUp} from "lucide-svelte";
 
     interface ViewFile {
-        fileEntry: FileEntry
+        fileEntry: FileTree,
         imageSource: string
     }
 
@@ -16,13 +17,13 @@
 
     let currentPath: string = scannerPath
     let readDirFailed: string | undefined = undefined
-    let fileEntries: FileEntry[] = []
+    let fileEntries: FileTree[] = []
     let viewFiles: ViewFile[] = []
     let stopWatching = null
 
     $: readDir(scannerPath, {recursive: true})
         .then(newFiles => {
-            fileEntries = newFiles
+            fileEntries = fileEntryArrayToFileTreeArray(newFiles)
             readDirFailed = undefined
         }).catch(err => {
             console.error(err)
@@ -31,7 +32,7 @@
         })
 
     onMount(async () => {
-        fileEntries = await getFileEntries()
+        fileEntries = fileEntryArrayToFileTreeArray(await getFileEntries())
         await watchFiles()
     })
 
@@ -47,8 +48,8 @@
         stopWatching = await watch(
             scannerPath,
             async () => {
-                fileEntries = await getFileEntries()
-                const currentEntry: FileEntry | undefined = findCurrentDir(fileEntries)
+                fileEntries = fileEntryArrayToFileTreeArray(await getFileEntries())
+                const currentEntry: FileTree | undefined = findCurrentDir(fileEntries)
                 if (currentEntry) {
                     changeViewDirectory(currentEntry)
                 }
@@ -57,6 +58,20 @@
         ).catch((err) => {
             console.error(err);
         });
+    }
+
+    function fileEntryArrayToFileTreeArray(fileEntries: FileEntry[]): FileTree[] {
+        let fileTreeArray: FileTree[] = []
+        fileEntries.forEach((fileEntry: FileEntry, index: number) => {
+            fileTreeArray.push(<FileTree>{
+                path: fileEntry.path,
+                name: fileEntry.name,
+                index: index,
+                opened: false,
+                children: fileEntry.children ? fileEntryArrayToFileTreeArray(fileEntry.children) : undefined
+            })
+        })
+        return fileTreeArray
     }
 
     async function unwatchFiles() {
@@ -91,7 +106,7 @@
             });
     }
 
-    function findCurrentDir(fileEntries: FileEntry[]): FileEntry | undefined {
+    function findCurrentDir(fileEntries: FileTree[]): FileTree | undefined {
         for (const fileEntry of fileEntries) {
             if (fileEntry.path === currentPath)  return fileEntry
             else if (fileEntry.children) {
@@ -107,7 +122,7 @@
         })
     }
 
-    function changeViewDirectory(fileEntry: FileEntry): void {
+    function changeViewDirectory(fileEntry: FileTree): void {
         currentPath = fileEntry.path
         viewFiles = []
         if (fileEntry.children) {
@@ -127,20 +142,44 @@
             })
         }
     }
+
+    function toggleExpand(expand: boolean): void {
+        fileEntries.forEach(entry => {
+            entry.opened = expand
+            if (entry.children) {
+                entry.children.forEach(child => {
+                    child.opened = expand
+                })
+            }
+        })
+        fileEntries = [...fileEntries]
+
+    }
 </script>
 
 {#if !readDirFailed}
     <div class="files-container">
-        <FileTree fileTree={fileEntries} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
+        <div class="file-tree-container">
+            <div class="icon-btn-group">
+                <span on:click={() => toggleExpand(true)}>
+                    <ChevronsUpDown size="14"/>
+                </span>
+                <span on:click={() => toggleExpand(false)}>
+                    <ChevronsDownUp size="14"/>
+                </span>
+            </div>
+            <FileTree fileTree={fileEntries} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
+        </div>
         <div class="images">
             {#each viewFiles as viewFile}
-                <div>
-                    {#if viewFile.fileEntry.children}
-                        <p>directory</p>
-                    {:else}
+                {#if viewFile.fileEntry.children}
+                    <p>directory</p>
+                {:else}
+                    <div>
                         <img src={viewFile.imageSource} alt={viewFile.fileEntry.name}/>
-                    {/if}
-                </div>
+                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                    </div>
+                {/if}
             {/each}
         </div>
         {#if currentPath}
@@ -160,36 +199,61 @@
     flex-direction: row;
   }
 
+  .file-tree-container {
+    width: 20vw;
+    overflow: scroll;
+  }
+
   .images {
+    margin: 0 1em;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
+    width: 60vw;
+    flex-flow: row wrap;
+    justify-content: flex-start;
+    align-content: flex-start;
+  }
 
-    div:hover, div:focus {
-      outline: none;
-      border: solid 1px red;
-      border-radius: 5px;
+  img {
+    width: 150px;
+    // Make height fit height of image when width is 150px
+    min-height: 150px;
+    max-height: fit-content;
+    margin: auto .5em;
+    object-fit: contain;
+    border: solid 3px gray;
+    border-radius: 3px;
+    &:hover {
       cursor: pointer;
+      border: solid 3px red;
+      // overlay transparent red over the image
+
     }
+  }
 
-    div {
-      width: 200px;
-      height: 400px;
-      border: solid 1px black;
-      border-radius: 5px;
-      margin: 5px;
+  i {
+    width: 150px;
+    height: fit-content;
+    display: block;
+    text-align: center;
+    overflow: visible;
+    word-wrap: break-word;
+  }
 
-      img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-      }
+  .icon-btn-group {
+    display: flex;
+    width: 60px;
+    justify-content: space-evenly;
+    margin: 6px 0;
+    span:hover {
+      cursor: pointer;
+      box-shadow: inset 0 0 100px 100px rgba(255, 255, 255, 0.25);
     }
   }
 
   .registration-schema {
     margin-right: 1em;
     margin-left: auto;
+    width: 20vw;
   }
 
 </style>

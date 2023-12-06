@@ -1,10 +1,22 @@
 <script lang="ts">
     import {type FileEntry} from '@tauri-apps/api/fs'
-    import {FileImage, Folder} from 'lucide-svelte';
-    import {createEventDispatcher} from "svelte";
+    import {ChevronDown, ChevronRight, FileImage, Folder, FolderOpen} from 'lucide-svelte';
+    import {beforeUpdate, createEventDispatcher} from "svelte";
 
-    export let fileTree: FileEntry[] = []
+    export let fileTree: FileTree[] = []
     const dispatch = createEventDispatcher()
+
+    beforeUpdate(() => {
+        fileTree = sortFileTree();
+    })
+
+    function sortFileTree(): FileTree[] {
+        return fileTree.sort((a, b) => {
+            if (a.name < b.name) return -1
+            if (a.name > b.name) return 1
+            return 0
+        })
+    }
 
     function changeViewDirectory(file: FileEntry): void {
         dispatch('directoryChange', file)
@@ -23,23 +35,34 @@
         {#each fileTree as file}
             {#if file.children}
                 <li>
+                    {#if file.opened}
+                        <span on:click={() => file.opened = !file.opened} >
+                            <ChevronDown size="16" color="gray"/>
+                        </span>
+                    {:else}
+                        <span on:click={() => file.opened = !file.opened} >
+                            <ChevronRight size="16" color="gray"/>
+                        </span>
+                    {/if}
                     <span
                         role="button"
-                        tabindex={0}
-                        on:click|preventDefault={() => changeViewDirectory(file)}
+                        tabindex={file.index}
+                        on:dblclick|preventDefault={() => changeViewDirectory(file)}
                         on:keydown|preventDefault={() => changeViewDirectory(file)}
                     >
-                        <Folder size="16" color="orange" />
+                        <Folder size="16"/>
                         <span>{formatFileNames(file.name)}</span>
                     </span>
-                    <ul>
-                        <svelte:self fileTree={file.children} on:directoryChange />
-                    </ul>
+                    {#if file.opened}
+                        <ul>
+                            <svelte:self fileTree={file.children} on:directoryChange />
+                        </ul>
+                    {/if}
                 </li>
             {:else}
                 <li>
-                    <span>
-                        <FileImage size="16" color="orange" />
+                    <span class="file">
+                        <FileImage size="16"/>
                         <span>{formatFileNames(file.name)}</span>
                     </span>
                 </li>
@@ -64,5 +87,9 @@
     ul {
         padding: 0;
         margin: auto 10px;
+    }
+
+    .file {
+      margin-left: 16px;
     }
 </style>
