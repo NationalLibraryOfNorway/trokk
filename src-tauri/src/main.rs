@@ -11,9 +11,9 @@ use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
 
 mod auth;
 mod error;
+mod file_size;
 mod image_converter;
 mod model;
-mod file_size;
 
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	papi_path: env!("PAPI_PATH"),
