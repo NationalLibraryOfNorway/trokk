@@ -215,7 +215,6 @@
 
   img {
     width: 150px;
-    // Make height fit height of image when width is 150px
     min-height: 150px;
     max-height: fit-content;
     margin: auto .5em;
@@ -225,8 +224,6 @@
     &:hover {
       cursor: pointer;
       border: solid 3px red;
-      // overlay transparent red over the image
-
     }
   }
 

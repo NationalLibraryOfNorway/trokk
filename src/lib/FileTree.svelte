@@ -44,15 +44,13 @@
                             <ChevronRight size="16" color="gray"/>
                         </button>
                     {/if}
-                    <span
-                        role="button"
-                        tabindex={4 + file.index}
+                    <button class="expand-btn"
                         on:dblclick|preventDefault={() => changeViewDirectory(file)}
                         on:keydown|preventDefault={() => changeViewDirectory(file)}
                     >
                         <Folder size="16"/>
                         <span>{formatFileNames(file.name)}</span>
-                    </span>
+                    </button>
                     {#if file.opened}
                         <ul>
                             <svelte:self fileTree={file.children} on:directoryChange />
