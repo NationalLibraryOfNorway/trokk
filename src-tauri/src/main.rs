@@ -11,6 +11,7 @@ use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
 
 mod auth;
 mod error;
+mod file_mover;
 mod file_size;
 mod image_converter;
 mod model;
@@ -67,6 +68,11 @@ fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
 	file_size::get_file_size(&path)
 }
 
+#[tauri::command]
+fn move_completed_dir(dir_path: String, done_path: String, id: String) -> Result<(), String> {
+	file_mover::move_dir(dir_path, done_path, id)
+}
+
 fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
@@ -83,6 +89,8 @@ fn main() {
 			refresh_token,
 			convert_to_webp,
 			get_total_size_of_files_in_folder
+			convert_to_webp,
+			move_completed_dir
 		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");

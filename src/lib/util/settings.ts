@@ -26,6 +26,16 @@ class Settings {
             await this.store.save();
         });
     }
+
+    get donePath(): Promise<string | null> {
+        return this.store.get<string>('donePath');
+    }
+
+    set donePath(path: string) {
+        this.store.set('donePath', path).then(async () => {
+            await this.store.save();
+        })
+    }
 }
 
 export const settings = new Settings()

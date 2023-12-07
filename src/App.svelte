@@ -9,6 +9,7 @@
 
 
   let scannerPath: string;
+  let donePath: string;
 
   let openSettings = false;
 
@@ -16,13 +17,23 @@
   let envVariables: RequiredEnvVariables;
 
   onMount(async () => {
-    settings.scannerPath.then(async (savedPath) => {
-      if (savedPath) {
-        scannerPath = savedPath;
+    settings.scannerPath.then(async (savedScanPath) => {
+      if (savedScanPath) {
+        scannerPath = savedScanPath;
       } else {
         let defaultPath = await documentDir() + "trokk/files"
         settings.scannerPath = defaultPath;
         scannerPath = defaultPath;
+      }
+    })
+
+    settings.donePath.then(async (savedDonePath) => {
+      if (savedDonePath) {
+        donePath = savedDonePath;
+      } else {
+        let defaultPath = await documentDir() + "trokk/done"
+        settings.donePath = defaultPath;
+        donePath = defaultPath;
       }
     })
 
@@ -82,9 +93,12 @@
     });
   }
 
-  function handleNewPath(event: CustomEvent) {
-    scannerPath = event.detail.newPath
+  function handleNewPaths(event: CustomEvent) {
+    scannerPath = event.detail.newScanPath
     settings.scannerPath = scannerPath
+
+    donePath = event.detail.newDonePath
+    settings.donePath = donePath
   }
 
 </script>
@@ -97,7 +111,7 @@
       <button on:click={() => openSettings = !openSettings} >Settings</button>
     </div>
     {#if openSettings}
-      <Settings on:save={handleNewPath} bind:scannerPath></Settings>
+      <Settings on:save={handleNewPaths} bind:scannerPath bind:donePath></Settings>
     {/if}
     <Files bind:scannerPath></Files>
   {:else}
