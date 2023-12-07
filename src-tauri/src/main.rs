@@ -11,8 +11,8 @@ use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
 
 mod auth;
 mod error;
-mod file_mover;
 mod file_size;
+mod file_utils;
 mod image_converter;
 mod model;
 
@@ -70,7 +70,7 @@ fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
 
 #[tauri::command]
 fn move_completed_dir(dir_path: String, done_path: String, id: String) -> Result<(), String> {
-	file_mover::move_dir(dir_path, done_path, id)
+	file_utils::move_dir(dir_path, done_path, id)
 }
 
 fn main() {
