@@ -60,15 +60,15 @@
         });
     }
 
-    function fileEntryArrayToFileTreeArray(fileEntries: FileEntry[]): FileTree[] {
+    function fileEntryArrayToFileTreeArray(fileEntries: FileEntry[], parentIndex = 0): FileTree[] {
         let fileTreeArray: FileTree[] = []
         fileEntries.forEach((fileEntry: FileEntry, index: number) => {
             fileTreeArray.push(<FileTree>{
                 path: fileEntry.path,
                 name: fileEntry.name,
-                index: index,
+                index: parentIndex + 1 + index,
                 opened: false,
-                children: fileEntry.children ? fileEntryArrayToFileTreeArray(fileEntry.children) : undefined
+                children: fileEntry.children ? fileEntryArrayToFileTreeArray(fileEntry.children, index) : undefined
             })
         })
         return fileTreeArray
@@ -161,12 +161,12 @@
     <div class="files-container">
         <div class="file-tree-container">
             <div class="icon-btn-group">
-                <span on:click={() => toggleExpand(true)}>
+                <button class="expand-btn" on:click={() => toggleExpand(true)}>
                     <ChevronsUpDown size="14"/>
-                </span>
-                <span on:click={() => toggleExpand(false)}>
+                </button>
+                <button class="expand-btn" on:click={() => toggleExpand(false)}>
                     <ChevronsDownUp size="14"/>
-                </span>
+                </button>
             </div>
             <FileTree fileTree={fileEntries} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
         </div>
@@ -244,16 +244,20 @@
     width: 60px;
     justify-content: space-evenly;
     margin: 6px 0;
-    span:hover {
-      cursor: pointer;
-      box-shadow: inset 0 0 100px 100px rgba(255, 255, 255, 0.25);
-    }
   }
 
   .registration-schema {
     margin-right: 1em;
     margin-left: auto;
     width: 20vw;
+  }
+
+  .expand-btn {
+    border-radius: 3px;
+    background: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
   }
 
 </style>

@@ -36,17 +36,17 @@
             {#if file.children}
                 <li>
                     {#if file.opened}
-                        <span on:click={() => file.opened = !file.opened} >
+                        <button class="expand-btn" on:click={() => file.opened = !file.opened}>
                             <ChevronDown size="16" color="gray"/>
-                        </span>
+                        </button>
                     {:else}
-                        <span on:click={() => file.opened = !file.opened} >
+                        <button class="expand-btn" on:click={() => file.opened = !file.opened}>
                             <ChevronRight size="16" color="gray"/>
-                        </span>
+                        </button>
                     {/if}
                     <span
                         role="button"
-                        tabindex={file.index}
+                        tabindex={4 + file.index}
                         on:dblclick|preventDefault={() => changeViewDirectory(file)}
                         on:keydown|preventDefault={() => changeViewDirectory(file)}
                     >
@@ -91,5 +91,14 @@
 
     .file {
       margin-left: 16px;
+    }
+
+    .expand-btn {
+        border: none;
+        background: none;
+        padding: 0;
+        margin: 0;
+        outline: none;
+        box-shadow: none;
     }
 </style>
