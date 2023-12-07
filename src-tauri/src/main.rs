@@ -13,6 +13,7 @@ mod auth;
 mod error;
 mod image_converter;
 mod model;
+mod file_size;
 
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	papi_path: env!("PAPI_PATH"),
@@ -63,18 +64,7 @@ fn convert_to_webp(file_path: String) -> Result<(), String> {
 
 #[tauri::command]
 fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
-	let mut size = 0;
-	for entry in std::fs::read_dir(path).unwrap() {
-		let entry = entry.unwrap();
-		let path = entry.path();
-		if path.is_file() {
-			size += match std::fs::metadata(path) {
-				Ok(data) => data.len(),
-				Err(e) => return Err(e.to_string()),
-			};
-		}
-	}
-	Ok(size)
+	file_size::get_file_size(&path)
 }
 
 fn main() {
