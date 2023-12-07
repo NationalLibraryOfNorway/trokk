@@ -1,7 +1,7 @@
 <script lang="ts">
-    import {type FileEntry} from '@tauri-apps/api/fs'
     import {ChevronDown, ChevronRight, FileImage, Folder, FolderOpen} from 'lucide-svelte';
     import {beforeUpdate, createEventDispatcher} from "svelte";
+    import {FileTree} from "./model/file-tree";
 
     export let fileTree: FileTree[] = []
     const dispatch = createEventDispatcher()
@@ -18,7 +18,7 @@
         })
     }
 
-    function changeViewDirectory(file: FileEntry): void {
+    function changeViewDirectory(file: FileTree): void {
         dispatch('directoryChange', file)
     }
 
@@ -45,10 +45,14 @@
                         </button>
                     {/if}
                     <button class="expand-btn"
-                        on:dblclick|preventDefault={() => changeViewDirectory(file)}
+                        on:click|preventDefault={() => changeViewDirectory(file)}
                         on:keydown|preventDefault={() => changeViewDirectory(file)}
                     >
-                        <Folder size="16"/>
+                        {#if file.opened}
+                            <FolderOpen size="16"/>
+                        {:else}
+                            <Folder size="16"/>
+                        {/if}
                         <span>{formatFileNames(file.name)}</span>
                     </button>
                     {#if file.opened}

@@ -1,15 +1,17 @@
 <script lang="ts">
-    import {type FileEntry, readDir} from '@tauri-apps/api/fs'
+    import {readDir} from '@tauri-apps/api/fs'
     import {onDestroy, onMount} from 'svelte';
     import {convertFileSrc} from "@tauri-apps/api/tauri";
     import RegistrationSchema from "./RegistrationSchema.svelte";
     import {invoke} from "@tauri-apps/api";
     import FileTree from "./FileTree.svelte";
     import {watch} from "tauri-plugin-fs-watch-api";
-    import {ChevronsUpDown, ChevronsDownUp} from "lucide-svelte";
+    import {ChevronsDownUp, ChevronsUpDown} from "lucide-svelte";
+    import {FileTree as FileTreeType} from "./model/file-tree";
+    import {type UnlistenFn} from "@tauri-apps/api/event";
 
     interface ViewFile {
-        fileEntry: FileTree,
+        fileTree: FileTreeType,
         imageSource: string
     }
 
@@ -17,22 +19,22 @@
 
     let currentPath: string = scannerPath
     let readDirFailed: string | undefined = undefined
-    let fileEntries: FileTree[] = []
+    let fileTree: FileTreeType[] = []
     let viewFiles: ViewFile[] = []
-    let stopWatching = null
+    let stopWatching: UnlistenFn | void | null = null
 
     $: readDir(scannerPath, {recursive: true})
         .then(newFiles => {
-            fileEntries = fileEntryArrayToFileTreeArray(newFiles)
+            fileTree = FileTreeType.fromFileEntry(newFiles)
             readDirFailed = undefined
         }).catch(err => {
             console.error(err)
             readDirFailed = err
-            fileEntries = []
+            fileTree = []
         })
 
     onMount(async () => {
-        fileEntries = fileEntryArrayToFileTreeArray(await getFileEntries())
+        fileTree = await getFileEntries()
         await watchFiles()
     })
 
@@ -42,14 +44,13 @@
 
     async function watchFiles() {
         if (stopWatching) {
-            await stopWatching()
             stopWatching = null
         }
         stopWatching = await watch(
             scannerPath,
             async () => {
-                fileEntries = fileEntryArrayToFileTreeArray(await getFileEntries())
-                const currentEntry: FileTree | undefined = findCurrentDir(fileEntries)
+                fileTree = await getFileEntries()
+                const currentEntry: FileTreeType | undefined = findCurrentDir(fileTree)
                 if (currentEntry) {
                     changeViewDirectory(currentEntry)
                 }
@@ -60,44 +61,30 @@
         });
     }
 
-    function fileEntryArrayToFileTreeArray(fileEntries: FileEntry[], parentIndex = 0): FileTree[] {
-        let fileTreeArray: FileTree[] = []
-        fileEntries.forEach((fileEntry: FileEntry, index: number) => {
-            fileTreeArray.push(<FileTree>{
-                path: fileEntry.path,
-                name: fileEntry.name,
-                index: parentIndex + 1 + index,
-                opened: false,
-                children: fileEntry.children ? fileEntryArrayToFileTreeArray(fileEntry.children, index) : undefined
-            })
-        })
-        return fileTreeArray
-    }
-
     async function unwatchFiles() {
         if (stopWatching) {
-            await stopWatching()
             stopWatching = null
         }
     }
 
-    async function getFileEntries(): Promise<FileEntry[]> {
+    async function getFileEntries(): Promise<FileTreeType[]> {
         return await readDir(scannerPath, {recursive: true})
             .then(newFiles => {
-                let firstDir = newFiles.find((file: FileEntry): boolean => {
+                const newFileEntries = FileTreeType.fromFileEntry(newFiles)
+                let firstDir = newFileEntries.find((file: FileTreeType): boolean => {
                     return !!file.children;
                 })
                 if (firstDir?.children) {
-                    firstDir.children.forEach((file: FileEntry) => {
+                    firstDir.children.forEach((file: FileTreeType) => {
                         viewFiles.push({
-                            fileEntry: file,
+                            fileTree: file,
                             imageSource: convertFileSrc(file.path)
                         })
                     })
                 }
 
                 readDirFailed = undefined
-                return newFiles
+                return newFileEntries
             })
             .catch(err => {
                 console.error(`An error occurred when reading directory \'${scannerPath}\': ${err}`)
@@ -106,7 +93,7 @@
             });
     }
 
-    function findCurrentDir(fileEntries: FileTree[]): FileTree | undefined {
+    function findCurrentDir(fileEntries: FileTreeType[]): FileTreeType | undefined {
         for (const fileEntry of fileEntries) {
             if (fileEntry.path === currentPath)  return fileEntry
             else if (fileEntry.children) {
@@ -116,19 +103,19 @@
         }
     }
 
-    function createThumbnail(path) {
+    function createThumbnail(path: string) {
         invoke("convert_to_webp", {filePath: path}).catch((err) => {
             console.error(err)
         })
     }
 
-    function changeViewDirectory(fileEntry: FileTree): void {
+    function changeViewDirectory(fileEntry: FileTreeType): void {
         currentPath = fileEntry.path
         viewFiles = []
         if (fileEntry.children) {
-            fileEntry.children.forEach((file: FileEntry) => {
+            fileEntry.children.forEach((file: FileTreeType) => {
                 viewFiles.push({
-                    fileEntry: file,
+                    fileTree: file,
                     imageSource: convertFileSrc(file.path)
                 })
                 if (file.path.endsWith(".tif")) {
@@ -137,14 +124,14 @@
             })
         } else {
             viewFiles.push({
-                fileEntry: fileEntry,
+                fileTree: fileEntry,
                 imageSource: convertFileSrc(fileEntry.path)
             })
         }
     }
 
     function toggleExpand(expand: boolean): void {
-        fileEntries.forEach(entry => {
+        fileTree.forEach(entry => {
             entry.opened = expand
             if (entry.children) {
                 entry.children.forEach(child => {
@@ -152,7 +139,7 @@
                 })
             }
         })
-        fileEntries = [...fileEntries]
+        fileTree = [...fileTree]
 
     }
 </script>
@@ -168,15 +155,15 @@
                     <ChevronsDownUp size="14"/>
                 </button>
             </div>
-            <FileTree fileTree={fileEntries} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
+            <FileTree fileTree={fileTree} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
         </div>
         <div class="images">
             {#each viewFiles as viewFile}
-                {#if viewFile.fileEntry.children}
+                {#if viewFile.fileTree.children}
                     <p>directory</p>
                 {:else}
                     <div>
-                        <img src={viewFile.imageSource} alt={viewFile.fileEntry.name}/>
+                        <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
                         <i>{viewFile.imageSource.split('%2F').pop()}</i>
                     </div>
                 {/if}
