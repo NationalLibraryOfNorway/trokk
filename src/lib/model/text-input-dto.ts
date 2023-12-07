@@ -5,6 +5,7 @@ export class TextInputDto {
     language?: string;
     createdBy?: string;
     scanner?: string;
+    fileSize?: BigInt;
     workingTitle?: string;
 
     constructor(
@@ -13,6 +14,7 @@ export class TextInputDto {
         language: string,
         createdBy: string,
         scanner: string,
+        fileSize: BigInt,
         workingTitle?: string,
     ) {
         this.id = undefined;
@@ -21,6 +23,7 @@ export class TextInputDto {
         this.language = language;
         this.createdBy = createdBy;
         this.scanner = scanner;
+        this.fileSize = fileSize;
         this.workingTitle = workingTitle;
     }
 }

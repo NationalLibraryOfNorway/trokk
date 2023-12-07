@@ -11,6 +11,7 @@ use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
 
 mod auth;
 mod error;
+mod file_size;
 mod image_converter;
 mod model;
 
@@ -61,6 +62,11 @@ fn convert_to_webp(file_path: String) -> Result<(), String> {
 	}
 }
 
+#[tauri::command]
+fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
+	file_size::get_file_size(&path)
+}
+
 fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
@@ -75,7 +81,8 @@ fn main() {
 			get_required_env_variables,
 			log_in,
 			refresh_token,
-			convert_to_webp
+			convert_to_webp,
+			get_total_size_of_files_in_folder
 		])
 		.run(tauri::generate_context!())
 		.expect("error while running tauri application");
