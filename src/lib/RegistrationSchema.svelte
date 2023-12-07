@@ -34,6 +34,8 @@
         // TODO: Actually log in instead
         if (!auth) return Promise.reject("Not logged in")
 
+        const fileSize = await getTotalFileSize(workingTitle)
+
         return fetch("http://localhost:8087/papi/item/",
             {
                 method: 'POST',
@@ -44,10 +46,17 @@
                     sami ? "SME" : "NOB",
                     auth.userInfo.name,
                     scanner,
+                    fileSize,
                     name
                 ))
             }
         )
+    }
+
+    function getTotalFileSize(path: string): Promise<BigInt> {
+        return invoke("get_total_size_of_files_in_folder", {path: path})
+            .then((size: BigInt) => size)
+            .catch(error => console.error(error))
     }
 
     function onSubmit() {
