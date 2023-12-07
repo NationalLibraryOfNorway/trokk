@@ -1,10 +1,24 @@
 extern crate fs_extra;
 
 use std::fs;
-use std::fs::create_dir;
 use std::path::Path;
 
 use fs_extra::dir::CopyOptions;
+
+pub fn get_file_size(path: &str) -> Result<u64, String> {
+	let mut size = 0;
+	for dir_entry_result in fs::read_dir(path).unwrap() {
+		let dir_entry = dir_entry_result.unwrap();
+		let path = dir_entry.path();
+		if path.is_file() {
+			size += match fs::metadata(path) {
+				Ok(data) => data.len(),
+				Err(e) => return Err(e.to_string()),
+			};
+		}
+	}
+	Ok(size)
+}
 
 pub(crate) fn move_dir(old_dir: String, done_dir: String, new_name: String) -> Result<(), String> {
 	let old_path = Path::new(&old_dir);
@@ -13,7 +27,7 @@ pub(crate) fn move_dir(old_dir: String, done_dir: String, new_name: String) -> R
 	// Create the new directory with new name
 	let new_dir_binding = done_path.join(new_name);
 	let new_dir = Path::new(&new_dir_binding);
-	match create_dir(new_dir) {
+	match fs::create_dir(new_dir) {
 		Ok(_) => (),
 		Err(e) => return Err(e.to_string()),
 	}

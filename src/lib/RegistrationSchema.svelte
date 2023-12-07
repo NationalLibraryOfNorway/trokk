@@ -34,7 +34,7 @@
         // TODO: Actually log in instead
         if (!auth) return Promise.reject("Not logged in")
 
-        const fileSize = await getTotalFileSize(workingTitle)
+        const fileSize = await getTotalFileSize(currentPath)
 
         let response = await fetch("http://localhost:8087/papi/item/",
             {
