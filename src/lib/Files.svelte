@@ -9,11 +9,7 @@
     import {ChevronsDownUp, ChevronsUpDown} from "lucide-svelte";
     import {FileTree as FileTreeType} from "./model/file-tree";
     import {type UnlistenFn} from "@tauri-apps/api/event";
-
-    interface ViewFile {
-        fileTree: FileTreeType,
-        imageSource: string
-    }
+    import {type ViewFile} from "./model/view-file";
 
     export let scannerPath: string
 
