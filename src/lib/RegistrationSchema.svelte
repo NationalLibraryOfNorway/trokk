@@ -4,6 +4,7 @@
     import {TextInputDto} from "./model/text-input-dto";
     import {invoke} from "@tauri-apps/api/tauri";
     import {settings} from "./util/settings";
+    import {v4} from "uuid";
 
     export let currentPath: string
 
@@ -34,7 +35,8 @@
         // TODO: Actually log in instead
         if (!auth) return Promise.reject("Not logged in")
 
-        const newPath = await moveToDoneDir(currentPath.split('/').at(-1))
+        const id = v4().toString()
+        const newPath = await moveToDoneDir(id)
             .catch(error => { handleError(error, 'Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.') })
 
         const fileSize = await getTotalFileSize(newPath)
@@ -51,7 +53,8 @@
                     auth.userInfo.name,
                     scanner,
                     fileSize,
-                    name
+                    name,
+                    id
                 ))
             }
         )

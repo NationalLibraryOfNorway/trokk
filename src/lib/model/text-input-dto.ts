@@ -16,8 +16,9 @@ export class TextInputDto {
         scanner: string,
         fileSize: BigInt,
         workingTitle?: string,
+        id?: string
     ) {
-        this.id = undefined;
+        this.id = id;
         this.materialType = materialType;
         this.font = font;
         this.language = language;
