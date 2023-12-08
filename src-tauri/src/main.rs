@@ -88,7 +88,6 @@ fn main() {
 			refresh_token,
 			convert_to_webp,
 			get_total_size_of_files_in_folder,
-			convert_to_webp,
 			move_completed_dir
 		])
 		.run(tauri::generate_context!())
