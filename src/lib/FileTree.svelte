@@ -35,22 +35,27 @@
                             <button class="expand-btn" on:click={() => file.opened = !file.opened}>
                                 <ChevronDown size="16" color="gray"/>
                             </button>
+                            <button
+                                class="expand-btn"
+                                on:click|preventDefault={() => changeViewDirectory(file)}
+                                on:keydown|preventDefault={() => changeViewDirectory(file)}
+                            >
+                                <FolderOpen size="16"/>
+                                <span>{formatFileNames(file.name)}</span>
+                            </button>
                         {:else}
                             <button class="expand-btn" on:click={() => file.opened = !file.opened}>
                                 <ChevronRight size="16" color="gray"/>
                             </button>
-                        {/if}
-                        <button class="expand-btn"
-                            on:click|preventDefault={() => changeViewDirectory(file)}
-                            on:keydown|preventDefault={() => changeViewDirectory(file)}
-                        >
-                            {#if file.opened}
-                                <FolderOpen size="16"/>
-                            {:else}
+                            <button
+                                class="expand-btn"
+                                on:click|preventDefault={() => changeViewDirectory(file)}
+                                on:keydown|preventDefault={() => changeViewDirectory(file)}
+                            >
                                 <Folder size="16"/>
-                            {/if}
-                            <span>{formatFileNames(file.name)}</span>
-                        </button>
+                                <span>{formatFileNames(file.name)}</span>
+                            </button>
+                        {/if}
                     {/if}
                     {#if file.opened && !file.name.startsWith('.')}
                         <ul>
