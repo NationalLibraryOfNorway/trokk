@@ -58,7 +58,7 @@
         if (response.ok) {
             removeErrorMessage()
             const item = response.data as TextInputDto
-            moveToDoneDir(item.id)
+            moveToDoneDir(item.id!)
                 .then(() => {
                     displaySuccessMessage(item)
                 })
@@ -66,7 +66,7 @@
                     handleError(error, 'Fikk ikke flyttet filene, er du sikker på at ferdig-mappen er korrekt?')
                 })
         } else {
-            handleError(null, null, response.status)
+            handleError(undefined, undefined, response.status)
         }
     }
 
