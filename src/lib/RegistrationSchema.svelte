@@ -4,8 +4,9 @@
     import {TextInputDto} from "./model/text-input-dto";
     import {invoke} from "@tauri-apps/api/tauri";
     import {settings} from "./util/settings";
+    import {v4} from "uuid";
 
-    export let workingTitle: string
+    export let currentPath: string
 
     const materialTypes = Object.keys(MaterialType)
 
@@ -18,23 +19,28 @@
     let name: string
 
     $: {
-        const newPath = workingTitle.split('/').at(-1)
+        const newPath = currentPath.split('/').at(-1)
         if (newPath) name = newPath
         successMessage = ''
-        errorMessage = ''
+        removeErrorMessage()
     }
 
     function getHostname(): Promise<String> {
         return invoke("get_hostname")
     }
 
-    async function postRegistration(scanner: string): Promise<Response> {
+    async function postRegistration(scanner: string): Promise<void> {
         const auth = await settings.authResponse
 
         // TODO: Actually log in instead
         if (!auth) return Promise.reject("Not logged in")
 
-        const fileSize = await getTotalFileSize(workingTitle)
+        const id = v4().toString()
+        const newPath = await moveToDoneDir(id)
+            .catch(error => { handleError(error, 'Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.') })
+
+        const fileSize = await getTotalFileSize(newPath)
+            .catch(error => { handleError(error, 'Fikk ikke hentet filstørrelse.') })
 
         return fetch("http://localhost:8087/papi/item/",
             {
@@ -47,10 +53,23 @@
                     auth.userInfo.name,
                     scanner,
                     fileSize,
-                    name
+                    name,
+                    id
                 ))
             }
         )
+            .then(response => {
+                if (response.ok) {
+                    removeErrorMessage()
+                    displaySuccessMessage(response.data as TextInputDto)
+                } else {
+                    handleError(undefined, undefined, response.status)
+                }
+            })
+            .catch(error => {
+                handleError(error)
+                throw error
+            })
     }
 
     function getTotalFileSize(path: string): Promise<BigInt> {
@@ -62,14 +81,6 @@
     function onSubmit() {
         getHostname()
             .then(hostname => postRegistration(hostname.toString()))
-            .then(response => {
-                if (response.ok) {
-                    errorMessage = ''
-                    displaySuccessMessage(response.data as TextInputDto)
-                } else {
-                    errorMessage = `Kunne ikke TRØKKE dette videre (Feilkode ${response.status}).`
-                }
-            })
     }
 
     function materialTypeToDisplayValue(type: string): string {
@@ -78,6 +89,34 @@
 
     function displaySuccessMessage(item: TextInputDto) {
         successMessage = `Item "${item.workingTitle}" sendt til produksjonsløypen med id ${item.id}`
+    }
+
+    async function moveToDoneDir(id: string): Promise<String> {
+        const donePath = await settings.donePath
+        const filesPath = await settings.scannerPath
+        if (filesPath === currentPath) {
+            return Promise.reject("Cannot move files from scanner dir")
+        }
+
+        return invoke("move_completed_dir", {dirPath: currentPath, donePath: donePath, id: id})
+    }
+
+    function handleError(error?: any, extra_text?: string, code?: string | number) {
+        let tmpErrorMessage = 'Kunne ikke TRØKKE dette videre.'
+        if (extra_text) tmpErrorMessage += ` ${extra_text}`
+        tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.'
+        if (code) tmpErrorMessage += ` (Feilkode ${code})`
+
+        errorMessage = tmpErrorMessage
+
+        if (error) {
+            console.error(error)
+            throw error
+        }
+    }
+
+    function removeErrorMessage(): void {
+        errorMessage = ''
     }
 
 </script>

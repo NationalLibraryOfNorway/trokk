@@ -15,15 +15,17 @@
   "dependencies": {
     "@tauri-apps/api": "^1.5.0",
     "@tauri-apps/tauri-forage": "^1.0.0-beta.2",
-    "mkdirp": "^3.0.1",
     "lucide-svelte": "^0.292.0",
+    "mkdirp": "^3.0.1",
     "tauri-plugin-fs-watch-api": "github:tauri-apps/tauri-plugin-fs-watch#v1",
-    "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store#v1"
+    "tauri-plugin-store-api": "github:tauri-apps/tauri-plugin-store#v1",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^2.4.2",
     "@tauri-apps/cli": "^1.5.0",
     "@tsconfig/svelte": "^5.0.0",
+    "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.12.0",
     "eslint": "^8.54.0",
     "eslint-plugin-svelte": "^2.35.1",

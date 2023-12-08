@@ -167,7 +167,7 @@
         </div>
         {#if currentPath}
             <div class="registration-schema">
-                <RegistrationSchema bind:workingTitle="{currentPath}"/>
+                <RegistrationSchema bind:currentPath="{currentPath}" />
             </div>
         {/if}
     </div>
