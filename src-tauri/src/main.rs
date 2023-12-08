@@ -68,7 +68,7 @@ fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
 }
 
 #[tauri::command]
-fn move_completed_dir(dir_path: String, done_path: String, id: String) -> Result<(), String> {
+fn move_completed_dir(dir_path: String, done_path: String, id: String) -> Result<String, String> {
 	file_utils::move_dir(dir_path, done_path, id)
 }
 

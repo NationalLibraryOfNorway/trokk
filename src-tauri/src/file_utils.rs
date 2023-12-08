@@ -20,7 +20,11 @@ pub fn get_file_size(path: &str) -> Result<u64, String> {
 	Ok(size)
 }
 
-pub(crate) fn move_dir(old_dir: String, done_dir: String, new_name: String) -> Result<(), String> {
+pub(crate) fn move_dir(
+	old_dir: String,
+	done_dir: String,
+	new_name: String,
+) -> Result<String, String> {
 	let old_path = Path::new(&old_dir);
 	let done_path = Path::new(&done_dir);
 
@@ -47,7 +51,7 @@ pub(crate) fn move_dir(old_dir: String, done_dir: String, new_name: String) -> R
 	options.content_only = true;
 
 	match fs_extra::dir::move_dir(old_path, new_dir, &options) {
-		Ok(_) => Ok(()),
+		Ok(_) => Ok(new_dir.to_string_lossy().to_string()),
 		Err(e) => Err(e.to_string()),
 	}
 }

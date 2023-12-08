@@ -34,9 +34,13 @@
         // TODO: Actually log in instead
         if (!auth) return Promise.reject("Not logged in")
 
-        const fileSize = await getTotalFileSize(currentPath)
+        const newPath = await moveToDoneDir(currentPath.split('/').at(-1))
+            .catch(error => { handleError(error, 'Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.') })
 
-        let response = await fetch("http://localhost:8087/papi/item/",
+        const fileSize = await getTotalFileSize(newPath)
+            .catch(error => { handleError(error, 'Fikk ikke hentet filstørrelse.') })
+
+        return fetch("http://localhost:8087/papi/item/",
             {
                 method: 'POST',
                 headers: {"Authorization" : "Bearer " + auth.tokenResponse.accessToken},
@@ -50,24 +54,19 @@
                     name
                 ))
             }
-        ).catch(error => {
-            handleError(error)
-            throw error
-        })
-
-        if (response.ok) {
-            removeErrorMessage()
-            const item = response.data as TextInputDto
-            moveToDoneDir(item.id!)
-                .then(() => {
-                    displaySuccessMessage(item)
-                })
-                .catch(error => {
-                    handleError(error, 'Fikk ikke flyttet filene, er du sikker på at ferdig-mappen er korrekt?')
-                })
-        } else {
-            handleError(undefined, undefined, response.status)
-        }
+        )
+            .then(response => {
+                if (response.ok) {
+                    removeErrorMessage()
+                    displaySuccessMessage(response.data as TextInputDto)
+                } else {
+                    handleError(undefined, undefined, response.status)
+                }
+            })
+            .catch(error => {
+                handleError(error)
+                throw error
+            })
     }
 
     function getTotalFileSize(path: string): Promise<BigInt> {
@@ -89,7 +88,7 @@
         successMessage = `Item "${item.workingTitle}" sendt til produksjonsløypen med id ${item.id}`
     }
 
-    async function moveToDoneDir(id: string): Promise<void> {
+    async function moveToDoneDir(id: string): Promise<String> {
         const donePath = await settings.donePath
         const filesPath = await settings.scannerPath
         if (filesPath === currentPath) {
@@ -100,14 +99,17 @@
     }
 
     function handleError(error?: any, extra_text?: string, code?: string | number) {
-        if (error) console.log(error)
-
         let tmpErrorMessage = 'Kunne ikke TRØKKE dette videre.'
         if (extra_text) tmpErrorMessage += ` ${extra_text}`
         tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.'
         if (code) tmpErrorMessage += ` (Feilkode ${code})`
 
         errorMessage = tmpErrorMessage
+
+        if (error) {
+            console.error(error)
+            throw error
+        }
     }
 
     function removeErrorMessage(): void {
