@@ -20,8 +20,7 @@
       "fs": {
         "readDir": true,
         "scope": [
-          "$DOCUMENT/trokk",
-          "$DOCUMENT/trokk/**"
+          "**"
         ]
       },
       "path": {
@@ -31,8 +30,7 @@
         "asset": true,
         "assetScope": {
           "allow": [
-            "$DOCUMENT/trokk",
-            "$DOCUMENT/trokk/**"
+            "**"
           ],
           "requireLiteralLeadingDot": false
         }
