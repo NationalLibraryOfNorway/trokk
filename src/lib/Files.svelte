@@ -121,6 +121,7 @@
 
     function addViewFile(fileEntry: FileTreeType) {
         fileEntry?.children?.forEach((file: FileTreeType) => {
+            // Show all files except the .thumbnail directory and tif files
             if (!file.name.startsWith(".thumbnails") && !file.name.endsWith(".tif")) {
                 viewFiles.push({
                     fileTree: file,
@@ -130,6 +131,7 @@
             if (file.name.endsWith(".tif")) {
                 createThumbnail(file.path)
             }
+            // If the current file is the .thumbnail directory, add all files in it
             if (file.children && file.path.endsWith(".thumbnails")) {
                 addViewFile(file)
             }
@@ -162,7 +164,7 @@
     }
 
     function getFileExtension(path: string): string {
-        return path.split('%2F').pop()?.split('.')?.pop()?.toLowerCase() || ""
+        return path?.split('.')?.pop() || ""
     }
 </script>
 
