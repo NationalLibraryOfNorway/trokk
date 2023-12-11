@@ -219,7 +219,10 @@
   }
 
   .file-tree-container {
+    position: sticky;
+    top: 0;
     width: 20vw;
+    height: 98vh;
     overflow: scroll;
   }
 
@@ -292,9 +295,12 @@
   }
 
   .registration-schema {
+    position: sticky;
+    top: 0;
     margin-right: 1em;
     margin-left: auto;
     width: 20vw;
+    height: 98vh;
   }
 
   .expand-btn {
