@@ -93,8 +93,8 @@ fn main() {
 		])
 		.system_tray(system_tray::get_system_tray())
 		.on_system_tray_event(system_tray::system_tray_event_handler())
-		.on_window_event(system_tray::run_frontend_in_background())
+		.on_window_event(system_tray::run_frontend_in_background_on_close())
 		.build(tauri::generate_context!())
 		.expect("error while running tauri application")
-		.run(system_tray::run_backend_in_background());
+		.run(system_tray::run_backend_in_background_on_close());
 }

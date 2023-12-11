@@ -37,7 +37,7 @@ pub fn system_tray_event_handler() -> fn(&AppHandle, SystemTrayEvent) {
 	}
 }
 
-pub fn run_frontend_in_background() -> fn(GlobalWindowEvent) {
+pub fn run_frontend_in_background_on_close() -> fn(GlobalWindowEvent) {
 	|event| {
 		if let tauri::WindowEvent::CloseRequested { api, .. } = event.event() {
 			event.window().hide().unwrap();
@@ -46,9 +46,9 @@ pub fn run_frontend_in_background() -> fn(GlobalWindowEvent) {
 	}
 }
 
-pub fn run_backend_in_background() -> fn(&AppHandle, RunEvent) {
+pub fn run_backend_in_background_on_close() -> fn(&AppHandle, RunEvent) {
 	|_app_handle, event| {
-		if let tauri::RunEvent::ExitRequested { api, .. } = event {
+		if let RunEvent::ExitRequested { api, .. } = event {
 			api.prevent_exit();
 		}
 	}
