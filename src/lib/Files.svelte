@@ -1,15 +1,16 @@
 <script lang="ts">
     import {readDir} from '@tauri-apps/api/fs'
-    import {onDestroy, onMount} from 'svelte';
+    import {beforeUpdate, onDestroy, onMount} from 'svelte';
     import {convertFileSrc} from "@tauri-apps/api/tauri";
     import RegistrationSchema from "./RegistrationSchema.svelte";
     import {invoke} from "@tauri-apps/api";
     import FileTree from "./FileTree.svelte";
     import {watch} from "tauri-plugin-fs-watch-api";
-    import {ChevronsDownUp, ChevronsUpDown} from "lucide-svelte";
+    import {ChevronsDownUp, ChevronsUpDown, File, Folder} from "lucide-svelte";
     import {FileTree as FileTreeType} from "./model/file-tree";
     import {type UnlistenFn} from "@tauri-apps/api/event";
     import {type ViewFile} from "./model/view-file";
+    import {formatFileNames} from "./util/file-utils";
 
     export let scannerPath: string
 
@@ -18,6 +19,7 @@
     let fileTree: FileTreeType[] = []
     let viewFiles: ViewFile[] = []
     let stopWatching: UnlistenFn | void | null = null
+    const supportedFileTypes = ["jpeg", "jpg", "png", "gif", "webp"]
 
     $: readDir(scannerPath, {recursive: true})
         .then(newFiles => {
@@ -34,9 +36,21 @@
         await watchFiles()
     })
 
+    beforeUpdate(() => {
+        viewFiles = sortViewFiles()
+    })
+
     onDestroy(() => {
         unwatchFiles()
     })
+
+    function sortViewFiles(): ViewFile[] {
+        return viewFiles.sort((a, b) => {
+            if (a.fileTree.name < b.fileTree.name) return -1
+            if (a.fileTree.name > b.fileTree.name) return 1
+            return 0
+        });
+    }
 
     async function watchFiles() {
         if (stopWatching) {
@@ -105,19 +119,30 @@
         })
     }
 
-    function changeViewDirectory(fileEntry: FileTreeType): void {
-        currentPath = fileEntry.path
-        viewFiles = []
-        if (fileEntry.children) {
-            fileEntry.children.forEach((file: FileTreeType) => {
+    function addViewFile(fileEntry: FileTreeType) {
+        fileEntry?.children?.forEach((file: FileTreeType) => {
+            // Show all files except the .thumbnail directory and tif files
+            if (!file.name.startsWith(".thumbnails") && !file.name.endsWith(".tif")) {
                 viewFiles.push({
                     fileTree: file,
                     imageSource: convertFileSrc(file.path)
                 })
-                if (file.path.endsWith(".tif")) {
-                    createThumbnail(file.path)
-                }
-            })
+            }
+            else if (file.name.endsWith(".tif")) {
+                createThumbnail(file.path)
+            }
+            // If the current file is the .thumbnail directory, add all files in it
+            else if (file.children && file.path.endsWith(".thumbnails")) {
+                addViewFile(file)
+            }
+        })
+    }
+
+    function changeViewDirectory(fileEntry: FileTreeType): void {
+        currentPath = fileEntry.path
+        viewFiles = []
+        if (fileEntry.children) {
+            addViewFile(fileEntry);
         } else {
             viewFiles.push({
                 fileTree: fileEntry,
@@ -136,7 +161,10 @@
             }
         })
         fileTree = [...fileTree]
+    }
 
+    function getFileExtension(path: string): string {
+        return path?.split('.')?.pop() || ""
     }
 </script>
 
@@ -156,10 +184,18 @@
         <div class="images">
             {#each viewFiles as viewFile}
                 {#if viewFile.fileTree.children}
-                    <p>directory</p>
-                {:else}
+                    <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
+                        <Folder size="96"/>
+                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                    </button>
+                {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
                     <div>
                         <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
+                        <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
+                    </div>
+                {:else}
+                    <div class="file">
+                        <File size="96" color="gray"/>
                         <i>{viewFile.imageSource.split('%2F').pop()}</i>
                     </div>
                 {/if}
@@ -208,6 +244,35 @@
       cursor: pointer;
       border: solid 3px red;
     }
+  }
+
+  .directory {
+    width: 150px;
+    min-height: 150px;
+    max-height: fit-content;
+    margin: auto .5em;
+    object-fit: contain;
+    border: solid 3px transparent;
+    border-radius: 3px;
+    text-align: center;
+    background: none;
+    padding: 0;
+    outline: none;
+    box-shadow: none;
+
+    &:hover {
+      cursor: pointer;
+      border: solid 3px deepskyblue;
+    }
+  }
+
+  .file {
+    width: 150px;
+    min-height: 150px;
+    max-height: fit-content;
+    margin: auto .5em;
+    object-fit: contain;
+    text-align: center;
   }
 
   i {
