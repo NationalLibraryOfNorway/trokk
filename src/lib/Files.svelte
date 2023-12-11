@@ -128,11 +128,11 @@
                     imageSource: convertFileSrc(file.path)
                 })
             }
-            if (file.name.endsWith(".tif")) {
+            else if (file.name.endsWith(".tif")) {
                 createThumbnail(file.path)
             }
             // If the current file is the .thumbnail directory, add all files in it
-            if (file.children && file.path.endsWith(".thumbnails")) {
+            else if (file.children && file.path.endsWith(".thumbnails")) {
                 addViewFile(file)
             }
         })
