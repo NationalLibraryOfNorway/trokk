@@ -14,6 +14,7 @@ mod error;
 mod file_utils;
 mod image_converter;
 mod model;
+mod system_tray;
 
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	papi_path: env!("PAPI_PATH"),
@@ -90,6 +91,10 @@ fn main() {
 			get_total_size_of_files_in_folder,
 			move_completed_dir
 		])
-		.run(tauri::generate_context!())
-		.expect("error while running tauri application");
+		.system_tray(system_tray::get_system_tray())
+		.on_system_tray_event(system_tray::system_tray_event_handler())
+		.on_window_event(system_tray::run_frontend_in_background())
+		.build(tauri::generate_context!())
+		.expect("error while running tauri application")
+		.run(system_tray::run_backend_in_background());
 }
