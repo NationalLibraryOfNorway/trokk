@@ -39,8 +39,11 @@
         const newPath = await moveToDoneDir(id)
             .catch(error => { handleError(error, 'Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.') })
 
-        const fileSize = await getTotalFileSize(newPath)
-            .catch(error => { handleError(error, 'Fikk ikke hentet filstørrelse.') })
+        const fileSize = await getTotalFileSize(newPath!)
+            .catch(error => {
+                moveFilesBack(id, name)
+                handleError(error, 'Fikk ikke hentet filstørrelse.')
+            })
 
         return fetch("http://localhost:8087/papi/item/",
             {
@@ -67,6 +70,7 @@
                 }
             })
             .catch(error => {
+                moveFilesBack(id, name)
                 handleError(error)
                 throw error
             })
@@ -91,7 +95,7 @@
         successMessage = `Item "${item.workingTitle}" sendt til produksjonsløypen med id ${item.id}`
     }
 
-    async function moveToDoneDir(id: string): Promise<String> {
+    async function moveToDoneDir(id: string): Promise<string> {
         const donePath = await settings.donePath
         const filesPath = await settings.scannerPath
         if (filesPath === currentPath) {
@@ -99,6 +103,13 @@
         }
 
         return invoke("move_dir", {oldDir: currentPath, newBaseDir: donePath, newName: id})
+    }
+
+    async function moveFilesBack(id: string, name: string): Promise<string> {
+        const donePath = await settings.donePath
+        const filesPath = await settings.scannerPath
+
+        return invoke("move_dir", {oldDir: `${donePath}/${id}`, newBaseDir: filesPath, newName: name})
     }
 
     function handleError(error?: any, extra_text?: string, code?: string | number) {
