@@ -97,11 +97,17 @@
   }
 
   function handleNewPaths(event: CustomEvent) {
-    scannerPath = event.detail.newScanPath
-    settings.scannerPath = scannerPath
+    const eventScannerPath = event.detail.newScanPath
+    if (eventScannerPath) {
+      scannerPath = eventScannerPath
+      settings.scannerPath = eventScannerPath
+    }
 
-    donePath = event.detail.newDonePath
-    settings.donePath = donePath
+    const eventDonePath = event.detail.newDonePath
+    if (eventDonePath) {
+      donePath = eventDonePath
+      settings.donePath = eventDonePath
+    }
   }
 
 </script>
@@ -114,7 +120,7 @@
       <button on:click={() => openSettings = !openSettings} >Settings</button>
     </div>
     {#if openSettings}
-      <Settings on:save={handleNewPaths} bind:scannerPath bind:donePath></Settings>
+      <Settings on:save={handleNewPaths}></Settings>
     {/if}
     <Files bind:scannerPath></Files>
   {:else}

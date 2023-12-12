@@ -78,6 +78,11 @@ fn delete_dir(dir: String) -> Result<(), String> {
 	file_utils::delete_dir(dir)
 }
 
+#[tauri::command]
+async fn pick_directory(start_path: String) -> Result<String, String> {
+	file_utils::directory_picker(start_path).await
+}
+
 fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
@@ -95,7 +100,8 @@ fn main() {
 			convert_to_webp,
 			get_total_size_of_files_in_folder,
 			copy_dir,
-			delete_dir
+			delete_dir,
+			pick_directory
 		])
 		.system_tray(system_tray::get_system_tray())
 		.on_system_tray_event(system_tray::system_tray_event_handler())
