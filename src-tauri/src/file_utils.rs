@@ -22,16 +22,16 @@ pub fn get_file_size(path: &str) -> Result<u64, String> {
 
 pub(crate) fn move_dir(
 	old_dir: String,
-	done_dir: String,
+	new_dir: String,
 	new_name: String,
 ) -> Result<String, String> {
 	let old_path = Path::new(&old_dir);
-	let done_path = Path::new(&done_dir);
+	let done_path = Path::new(&new_dir);
 
 	// Create the new directory with new name
 	let new_dir_binding = done_path.join(new_name);
-	let new_dir = Path::new(&new_dir_binding);
-	match fs::create_dir(new_dir) {
+	let new_path = Path::new(&new_dir_binding);
+	match fs::create_dir(new_path) {
 		Ok(_) => (),
 		Err(e) => return Err(e.to_string()),
 	}
@@ -46,12 +46,12 @@ pub(crate) fn move_dir(
 	}
 
 	// Create options that does not create new dir,
-	// but moves content and delete old dir since we want to use id as name
+	// but moves content and delete old dir since we want to use other name
 	let mut options = CopyOptions::new();
 	options.content_only = true;
 
-	match fs_extra::dir::move_dir(old_path, new_dir, &options) {
-		Ok(_) => Ok(new_dir.to_string_lossy().to_string()),
+	match fs_extra::dir::move_dir(old_path, new_path, &options) {
+		Ok(_) => Ok(new_path.to_string_lossy().to_string()),
 		Err(e) => Err(e.to_string()),
 	}
 }

@@ -98,7 +98,7 @@
             return Promise.reject("Cannot move files from scanner dir")
         }
 
-        return invoke("move_completed_dir", {dirPath: currentPath, donePath: donePath, id: id})
+        return invoke("move_dir", {oldDir: currentPath, newBaseDir: donePath, newName: id})
     }
 
     function handleError(error?: any, extra_text?: string, code?: string | number) {
