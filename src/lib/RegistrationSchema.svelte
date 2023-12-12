@@ -30,6 +30,7 @@
     }
 
     async function postRegistration(scanner: string): Promise<void> {
+        const papiPath = (await invoke("get_required_env_variables") as RequiredEnvVariables).papiPath
         const auth = await settings.authResponse
 
         // TODO: Actually log in instead
@@ -42,7 +43,7 @@
         const fileSize = await getTotalFileSize(newPath)
             .catch(error => { handleError(error, 'Fikk ikke hentet filstørrelse.') })
 
-        return fetch("http://localhost:8087/papi/item/",
+        return fetch(`${papiPath}item/`,
             {
                 method: 'POST',
                 headers: {"Authorization" : "Bearer " + auth.tokenResponse.accessToken},
