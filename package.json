@@ -10,7 +10,8 @@
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri",
     "lint": "eslint --ext .js,.ts,.svelte src",
-    "lintfix": "eslint --fix --ext .js,.ts,.svelte src"
+    "lintfix": "eslint --fix --ext .js,.ts,.svelte src",
+    "test": "vitest"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.0",
