@@ -22,7 +22,7 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^2.4.2",
+    "@sveltejs/vite-plugin-svelte": "^3.0.1",
     "@tauri-apps/cli": "^1.5.0",
     "@tsconfig/svelte": "^5.0.0",
     "@types/uuid": "^9.0.7",
@@ -35,6 +35,7 @@
     "svelte-preprocess": "^5.0.0",
     "tslib": "^2.6.0",
     "typescript": "^5.0.2",
-    "vite": "^4.4.4"
+    "vite": "^5.0.8",
+    "vitest": "^1.0.4"
   }
 }
