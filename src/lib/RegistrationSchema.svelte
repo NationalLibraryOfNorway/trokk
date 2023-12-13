@@ -5,6 +5,7 @@
     import {invoke} from "@tauri-apps/api/tauri";
     import {settings} from "./util/settings";
     import {v4} from "uuid";
+    import {onMount} from "svelte";
 
     export let currentPath: string
 
@@ -17,6 +18,7 @@
     let fraktur: boolean = false
     let sami: boolean = false
     let name: string
+    let papiPath: string
 
     $: {
         const newPath = currentPath.split('/').at(-1)
@@ -24,6 +26,10 @@
         successMessage = ''
         removeErrorMessage()
     }
+
+    onMount(async () => {
+        papiPath = (await invoke("get_required_env_variables") as RequiredEnvVariables).papiPath
+    })
 
     function getHostname(): Promise<String> {
         return invoke("get_hostname")
@@ -42,7 +48,7 @@
         const fileSize = await getTotalFileSize(newPath)
             .catch(error => { handleError(error, 'Fikk ikke hentet filstørrelse.') })
 
-        return fetch("http://localhost:8087/papi/item/",
+        return fetch(`${papiPath}/item/`,
             {
                 method: 'POST',
                 headers: {"Authorization" : "Bearer " + auth.tokenResponse.accessToken},

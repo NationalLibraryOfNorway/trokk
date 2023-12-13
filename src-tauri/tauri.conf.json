@@ -39,7 +39,8 @@
         "all": true,
         "request": true,
         "scope": [
-          "http://localhost:8087/**"
+          "http://localhost:8087/*",
+          "https://*.nb.no/*"
         ]
       },
       "window": {
