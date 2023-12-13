@@ -83,7 +83,10 @@
   function logIn() {
     if (!envVariables) throw new Error("Env variables not set")
     invoke('log_in').then((port) => {
-      const webview = new WebviewWindow('Login', {url: envVariables.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVariables.oidcClientId + "&redirect_uri=http://localhost:" + port})
+      const webview = new WebviewWindow('Login', {
+        url: envVariables.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVariables.oidcClientId + "&redirect_uri=http://localhost:" + port,
+        title: "NBAuth innlogging"
+      })
       appWindow.listen('token_exchanged', (event) => {
         authResponse = event.payload as AuthenticationResponse
         settings.authResponse = authResponse
