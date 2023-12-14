@@ -11,6 +11,8 @@
     import {type UnlistenFn} from "@tauri-apps/api/event";
     import {type ViewFile} from "./model/view-file";
     import {formatFileNames} from "./util/file-utils";
+    import {resize, move} from "./util/html-element-resize";
+    import ResizableDiv from "./ResizableDiv.svelte";
 
     export let scannerPath: string
 
@@ -20,6 +22,7 @@
     let viewFiles: ViewFile[] = []
     let stopWatching: UnlistenFn | void | null = null
     const supportedFileTypes = ["jpeg", "jpg", "png", "gif", "webp"]
+    let textSelectionStyle = "";
 
     $: readDir(scannerPath, {recursive: true})
         .then(newFiles => {
@@ -166,10 +169,18 @@
     function getFileExtension(path: string): string {
         return path?.split('.')?.pop() || ""
     }
+
+    function disableTextSelection() {
+        textSelectionStyle = 'no-text-select';
+    }
+
+    function enableTextSelection() {
+        textSelectionStyle = '';
+    }
 </script>
 
 {#if !readDirFailed}
-    <div class="files-container">
+    <div class="files-container {textSelectionStyle}">
         <div class="file-tree-container">
             <div class="icon-btn-group">
                 <button class="expand-btn" on:click={() => toggleExpand(true)}>
@@ -182,24 +193,26 @@
             <FileTree fileTree={fileTree} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
         </div>
         <div class="images">
-            {#each viewFiles as viewFile}
-                {#if viewFile.fileTree.children}
-                    <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
-                        <Folder size="96"/>
-                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                    </button>
-                {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
-                    <div>
-                        <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
-                        <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
-                    </div>
-                {:else}
-                    <div class="file">
-                        <File size="96" color="gray"/>
-                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                    </div>
-                {/if}
-            {/each}
+            <ResizableDiv>
+                {#each viewFiles as viewFile}
+                    {#if viewFile.fileTree.children}
+                        <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
+                            <Folder size="96"/>
+                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                        </button>
+                    {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
+                        <div>
+                            <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
+                            <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
+                        </div>
+                    {:else}
+                        <div class="file">
+                            <File size="96" color="gray"/>
+                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                        </div>
+                    {/if}
+                {/each}
+            </ResizableDiv>
         </div>
         {#if currentPath}
             <div class="registration-schema">
@@ -213,7 +226,20 @@
 
 
 <style lang="scss">
+    $dark-gray: #343434;
+    $dark-gray-accent: #4b4b4b;
+    $light-gray: #e8e8e8;
+    $light-gray-accent: #d3d3d3;
+
+  .no-text-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
   .files-container {
+    border-top: 1px solid $light-gray-accent;
     display: flex;
     flex-direction: row;
   }
@@ -222,17 +248,35 @@
     position: sticky;
     top: 0;
     width: 20vw;
+    min-width: 70px;
     height: 98vh;
     overflow: scroll;
+    margin-top: 10px;
   }
 
   .images {
+    padding: 1em;
     margin: 0 1em;
     display: flex;
     width: 60vw;
     flex-flow: row wrap;
     justify-content: flex-start;
     align-content: flex-start;
+    border-left: 1px solid $light-gray-accent;
+    border-right: 1px solid $light-gray-accent;
+    background-color: $light-gray;
+    overflow: scroll;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .files-container {
+      border-top: 1px solid $dark-gray-accent;
+    }
+    .images {
+      border-left: 1px solid $dark-gray-accent;
+      border-right: 1px solid $dark-gray-accent;
+      background-color: $dark-gray;
+    }
   }
 
   img {
@@ -297,6 +341,7 @@
   .registration-schema {
     position: sticky;
     top: 0;
+    margin-top: 10px;
     margin-right: 1em;
     margin-left: auto;
     width: 20vw;
@@ -309,6 +354,34 @@
     padding: 0;
     margin: 0;
     box-shadow: none;
+  }
+
+  :global(.grabber) {
+    position: absolute;
+    box-sizing: border-box;
+    cursor: col-resize;
+    width: 10px;
+    height: 100%;
+    top: 0;
+    //width: 10px;
+    //height: 100%;
+    //right: 0;
+    //cursor: col-resize;
+    //border-right: 1px solid #ff0000;
+  }
+
+  :global(.grabber.left) {
+    background: blue;
+    //left: -5px;
+  }
+
+  ::-webkit-scrollbar {
+    overflow: hidden;
+  }
+
+  :global(.grabber.right) {
+    background: red;
+    //right: 400px;
   }
 
 </style>
