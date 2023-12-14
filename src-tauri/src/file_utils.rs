@@ -1,9 +1,5 @@
-extern crate fs_extra;
-
 use std::fs;
 use std::path::Path;
-
-use fs_extra::dir::CopyOptions;
 
 pub fn get_file_size(path: &str) -> Result<u64, String> {
 	let mut size = 0;
@@ -20,10 +16,10 @@ pub fn get_file_size(path: &str) -> Result<u64, String> {
 	Ok(size)
 }
 
-pub(crate) fn move_dir(
+pub(crate) fn copy_dir_contents(
 	old_dir: String,
 	new_dir: String,
-	new_name: String,
+	new_name: String
 ) -> Result<String, String> {
 	let old_path = Path::new(&old_dir);
 	let done_path = Path::new(&new_dir);
@@ -36,22 +32,28 @@ pub(crate) fn move_dir(
 		Err(e) => return Err(e.to_string()),
 	}
 
-	// Delete thumbnails if present
-	let thumbnail_path = old_path.join(".thumbnails");
-	if thumbnail_path.exists() {
-		match fs::remove_dir_all(thumbnail_path) {
-			Ok(_) => (),
-			Err(e) => return Err(e.to_string()),
+	// Walk through old folder and only copy files, not sub-directories (like .thumbnails)
+	for entry in fs::read_dir(old_path).map_err(|e| e.to_string())? {
+		let old_entry = entry.map_err(|e| e.to_string())?;
+		let old_file_path = old_entry.path();
+
+		if old_file_path.is_file() {
+			let new_file_path = new_path.join(old_entry.file_name());
+			match fs::copy(old_file_path, new_file_path) {
+				Ok(_) => (),
+				Err(e) => return Err(e.to_string())
+			}
 		}
 	}
+	Ok(new_path.to_string_lossy().to_string())
+}
 
-	// Create options that does not create new dir,
-	// but moves content and delete old dir since we want to use other name
-	let mut options = CopyOptions::new();
-	options.content_only = true;
-
-	match fs_extra::dir::move_dir(old_path, new_path, &options) {
-		Ok(_) => Ok(new_path.to_string_lossy().to_string()),
-		Err(e) => Err(e.to_string()),
+pub(crate) fn delete_dir(
+	dir: String
+) -> Result<(), String>{
+	let path = Path::new(&dir);
+	match fs::remove_dir_all(path) {
+		Ok(_) => Ok(()),
+		Err(e) => Err(e.to_string())
 	}
 }

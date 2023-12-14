@@ -69,9 +69,12 @@ fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
 }
 
 #[tauri::command]
-fn move_dir(old_dir: String, new_base_dir: String, new_name: String) -> Result<String, String> {
-	file_utils::move_dir(old_dir, new_base_dir, new_name)
+fn copy_dir(old_dir: String, new_base_dir: String, new_name: String) -> Result<String, String> {
+	file_utils::copy_dir_contents(old_dir, new_base_dir, new_name)
 }
+
+#[tauri::command]
+fn delete_dir(dir: String) -> Result<(), String> { file_utils::delete_dir(dir) }
 
 fn main() {
 	tauri::Builder::default()
@@ -89,7 +92,8 @@ fn main() {
 			refresh_token,
 			convert_to_webp,
 			get_total_size_of_files_in_folder,
-			move_dir
+			copy_dir,
+			delete_dir
 		])
 		.system_tray(system_tray::get_system_tray())
 		.on_system_tray_event(system_tray::system_tray_event_handler())
