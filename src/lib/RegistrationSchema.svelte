@@ -40,7 +40,10 @@
             .catch(error => { handleError(error, 'Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.') })
 
         const fileSize = await getTotalFileSize(newPath!)
-            .catch(error => { handleError(error, 'Fikk ikke hentet filstørrelse.') })
+            .catch(error => {
+                deleteDir(newPath!)
+                handleError(error, 'Fikk ikke hentet filstørrelse.')
+            })
 
         return fetch("http://localhost:8087/papi/item/",
             {
@@ -60,7 +63,7 @@
         )
             .then(response => {
                 if (response.ok) {
-                    deleteCurrentObject()
+                    deleteDir(currentPath)
                     removeErrorMessage()
                     displaySuccessMessage(response.data as TextInputDto)
                 } else {
@@ -68,6 +71,7 @@
                 }
             })
             .catch(error => {
+                deleteDir(newPath!)
                 handleError(error)
                 throw error
             })
@@ -102,8 +106,8 @@
         return invoke("copy_dir", {oldDir: currentPath, newBaseDir: donePath, newName: id})
     }
 
-    async function deleteCurrentObject(): Promise<void> {
-        return invoke("delete_dir", {dir: currentPath})
+    async function deleteDir(path: string): Promise<void> {
+        return invoke("delete_dir", {dir: path})
     }
 
     function handleError(error?: any, extra_text?: string, code?: string | number) {
