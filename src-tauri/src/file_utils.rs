@@ -19,7 +19,7 @@ pub fn get_file_size(path: &str) -> Result<u64, String> {
 pub(crate) fn copy_dir_contents(
 	old_dir: String,
 	new_base_dir: String,
-	new_dir_name: String
+	new_dir_name: String,
 ) -> Result<String, String> {
 	let old_dir_path = Path::new(&old_dir);
 	let new_base_dir_path = Path::new(&new_base_dir);
@@ -41,19 +41,17 @@ pub(crate) fn copy_dir_contents(
 			let new_file_path = new_dir_path.join(old_entry.file_name());
 			match fs::copy(old_file_path, new_file_path) {
 				Ok(_) => (),
-				Err(e) => return Err(e.to_string())
+				Err(e) => return Err(e.to_string()),
 			}
 		}
 	}
 	Ok(new_dir_path.to_string_lossy().to_string())
 }
 
-pub(crate) fn delete_dir(
-	dir: String
-) -> Result<(), String>{
+pub(crate) fn delete_dir(dir: String) -> Result<(), String> {
 	let path = Path::new(&dir);
 	match fs::remove_dir_all(path) {
 		Ok(_) => Ok(()),
-		Err(e) => Err(e.to_string())
+		Err(e) => Err(e.to_string()),
 	}
 }

@@ -74,7 +74,9 @@ fn copy_dir(old_dir: String, new_base_dir: String, new_dir_name: String) -> Resu
 }
 
 #[tauri::command]
-fn delete_dir(dir: String) -> Result<(), String> { file_utils::delete_dir(dir) }
+fn delete_dir(dir: String) -> Result<(), String> {
+	file_utils::delete_dir(dir)
+}
 
 fn main() {
 	tauri::Builder::default()
