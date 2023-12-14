@@ -103,7 +103,7 @@
             return Promise.reject("Cannot move files from scanner dir")
         }
 
-        return invoke("copy_dir", {oldDir: currentPath, newBaseDir: donePath, newName: id})
+        return invoke("copy_dir", {oldDir: currentPath, newBaseDir: donePath, newDirName: id})
     }
 
     async function deleteDir(path: string): Promise<void> {

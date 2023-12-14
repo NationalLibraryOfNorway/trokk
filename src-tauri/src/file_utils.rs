@@ -18,34 +18,34 @@ pub fn get_file_size(path: &str) -> Result<u64, String> {
 
 pub(crate) fn copy_dir_contents(
 	old_dir: String,
-	new_dir: String,
-	new_name: String
+	new_base_dir: String,
+	new_dir_name: String
 ) -> Result<String, String> {
-	let old_path = Path::new(&old_dir);
-	let done_path = Path::new(&new_dir);
+	let old_dir_path = Path::new(&old_dir);
+	let new_base_dir_path = Path::new(&new_base_dir);
 
 	// Create the new directory with new name
-	let new_dir_binding = done_path.join(new_name);
-	let new_path = Path::new(&new_dir_binding);
-	match fs::create_dir(new_path) {
+	let new_dir_binding = new_base_dir_path.join(new_dir_name);
+	let new_dir_path = Path::new(&new_dir_binding);
+	match fs::create_dir(new_dir_path) {
 		Ok(_) => (),
 		Err(e) => return Err(e.to_string()),
 	}
 
 	// Walk through old folder and only copy files, not sub-directories (like .thumbnails)
-	for entry in fs::read_dir(old_path).map_err(|e| e.to_string())? {
+	for entry in fs::read_dir(old_dir_path).map_err(|e| e.to_string())? {
 		let old_entry = entry.map_err(|e| e.to_string())?;
 		let old_file_path = old_entry.path();
 
 		if old_file_path.is_file() {
-			let new_file_path = new_path.join(old_entry.file_name());
+			let new_file_path = new_dir_path.join(old_entry.file_name());
 			match fs::copy(old_file_path, new_file_path) {
 				Ok(_) => (),
 				Err(e) => return Err(e.to_string())
 			}
 		}
 	}
-	Ok(new_path.to_string_lossy().to_string())
+	Ok(new_dir_path.to_string_lossy().to_string())
 }
 
 pub(crate) fn delete_dir(

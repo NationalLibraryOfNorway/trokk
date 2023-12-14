@@ -69,8 +69,8 @@ fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
 }
 
 #[tauri::command]
-fn copy_dir(old_dir: String, new_base_dir: String, new_name: String) -> Result<String, String> {
-	file_utils::copy_dir_contents(old_dir, new_base_dir, new_name)
+fn copy_dir(old_dir: String, new_base_dir: String, new_dir_name: String) -> Result<String, String> {
+	file_utils::copy_dir_contents(old_dir, new_base_dir, new_dir_name)
 }
 
 #[tauri::command]
