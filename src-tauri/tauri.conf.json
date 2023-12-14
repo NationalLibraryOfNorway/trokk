@@ -19,6 +19,7 @@
       },
       "fs": {
         "readDir": true,
+        "writeFile": true,
         "scope": [
           "**"
         ]

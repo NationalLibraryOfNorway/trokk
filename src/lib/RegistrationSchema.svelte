@@ -42,11 +42,14 @@
         if (!auth) return Promise.reject("Not logged in")
 
         const id = v4().toString()
-        const newPath = await moveToDoneDir(id)
+        const newPath = await copyToDoneDir(id)
             .catch(error => { handleError(error, 'Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.') })
 
-        const fileSize = await getTotalFileSize(newPath)
-            .catch(error => { handleError(error, 'Fikk ikke hentet filstørrelse.') })
+        const fileSize = await getTotalFileSize(newPath!)
+            .catch(error => {
+                deleteDir(newPath!)
+                handleError(error, 'Fikk ikke hentet filstørrelse.')
+            })
 
         return fetch(`${papiPath}/item/`,
             {
@@ -66,6 +69,7 @@
         )
             .then(response => {
                 if (response.ok) {
+                    deleteDir(currentPath)
                     removeErrorMessage()
                     displaySuccessMessage(response.data as TextInputDto)
                 } else {
@@ -73,6 +77,7 @@
                 }
             })
             .catch(error => {
+                deleteDir(newPath!)
                 handleError(error)
                 throw error
             })
@@ -97,14 +102,18 @@
         successMessage = `Item "${item.workingTitle}" sendt til produksjonsløypen med id ${item.id}`
     }
 
-    async function moveToDoneDir(id: string): Promise<String> {
+    async function copyToDoneDir(id: string): Promise<string> {
         const donePath = await settings.donePath
         const filesPath = await settings.scannerPath
         if (filesPath === currentPath) {
             return Promise.reject("Cannot move files from scanner dir")
         }
 
-        return invoke("move_completed_dir", {dirPath: currentPath, donePath: donePath, id: id})
+        return invoke("copy_dir", {oldDir: currentPath, newBaseDir: donePath, newDirName: id})
+    }
+
+    async function deleteDir(path: string): Promise<void> {
+        return invoke("delete_dir", {dir: path})
     }
 
     function handleError(error?: any, extra_text?: string, code?: string | number) {

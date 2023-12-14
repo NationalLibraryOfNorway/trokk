@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = [ "system-tray", "fs-read-dir", "window-close", "window-create", "http-all", "protocol-asset", "path-all", "shell-open"] }
+tauri = { version = "1.5", features = [ "fs-write-file", "system-tray", "fs-read-dir", "window-close", "window-create", "http-all", "protocol-asset", "path-all", "shell-open"] }
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-oauth = "0.0.0-alpha.0"
@@ -26,7 +26,6 @@ once_cell = "1.18.0"
 image = "0.24.7"
 webp = "0.2.6"
 thiserror = "1.0.50"
-fs_extra = "1.3.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
