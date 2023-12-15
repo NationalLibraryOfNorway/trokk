@@ -133,4 +133,9 @@
     flex-direction: row;
     justify-content: space-between;
   }
+
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
 </style>

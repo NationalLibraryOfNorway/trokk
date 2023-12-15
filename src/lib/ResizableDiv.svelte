@@ -1,119 +1,197 @@
 <script lang='ts'>
-    import {onDestroy, onMount} from 'svelte';
+    import {onDestroy} from 'svelte';
+
+    export let disableLeftResize: boolean = false;
+    export let disableRightResize: boolean = false;
+
     interface SimpleRect {
         width: number;
         left: number;
         right: number;
     }
-    interface ResizableHTMLDivElement extends HTMLDivElement {
-        side?: 'left' | 'right';
+    // // interface ResizableHTMLDivElement extends HTMLDivElement {
+    // //     side?: 'left' | 'right';
+    // // }
+    //
+    // let activeDiv: HTMLDivElement;
+    //
+    // // The initial position of the cursor when clicking the draggable surface
+    // let initialPosition = { x: 0, y: 0 };
+    // // The div handle element, which is the div with id set to either 'left' or 'right'
+    // let activeResizeHandle: HTMLDivElement | null = null;
+    //
+    // let initialRect: SimpleRect = { width: 0, left: 0, right: 0 };
+    //
+    // onDestroy(() => {
+    //     // TODO: Check if this is necessary
+    //     document.removeEventListener('mousemove', onMouseMove);
+    //     document.removeEventListener('mouseup', onMouseUp);
+    //     document.removeEventListener('mousedown', onMouseDown);
+    // });
+    //
+    // function onMouseDown(event: MouseEvent): void {
+    //     activeResizeHandle = event.target as HTMLDivElement;
+    //     if (!activeResizeHandle || activeResizeHandle.id !== 'left' && activeResizeHandle.id !== 'right') return;
+    //
+    //     const child = activeResizeHandle.parentElement;
+    //     const parent = child.parentElement;
+    //
+    //     console.log('child', child)
+    //     console.log('parent', parent)
+    //
+    //     initialPosition = { x: event.pageX, y: event.pageY };
+    //     initialRect = {
+    //         width: child.offsetWidth,
+    //         left: child.offsetLeft,
+    //         right: parent.offsetWidth - child.offsetWidth - child.offsetLeft
+    //     }
+    // }
+    //
+    // function onMouseMove(event: MouseEvent): void {
+    //     console.log('onMouseMove')
+    //     if (!activeResizeHandle) return;
+    //     let parent = activeResizeHandle.parentElement as HTMLDivElement;
+    //
+    //     // console.log('event.pageX', event.pageX)
+    //     // console.log('initialPosition.x', initialPosition.x)
+    //     // console.log('initialRect.width', initialRect.width)
+    //     // console.log('initialRect.left', initialRect.left)
+    //     // console.log('initialRect.right', initialRect.right)
+    //     // console.log('parent.style.width', parent.style.width)
+    //
+    //     let delta = 0;
+    //     if (activeResizeHandle.id === 'right') {
+    //         delta = event.pageX - initialPosition.x;
+    //         let newWidth = initialRect.width + delta;
+    //         if (newWidth > window.innerWidth) {
+    //             newWidth = window.innerWidth;
+    //         }
+    //         parent.style.width = `${newWidth}px`;
+    //     }
+    //     else if (activeResizeHandle.id === 'left') {
+    //         delta = initialPosition.x - event.pageX;
+    //         parent.style.left = `${initialRect.left - delta}px`;
+    //         parent.style.width = `${initialRect.width - delta}px`; // subtract delta from width
+    //     }
+    // }
+    //
+    // function onMouseUp(event: MouseEvent): void {
+    //     if (!activeResizeHandle) return;
+    //     activeResizeHandle = null;
+    //     initialPosition = { x: 0, y: 0 };
+    //     initialRect = { width: 0, left: 0, right: 0 };
+    // }
+
+    let activeResizer: HTMLDivElement | null = null;
+    let leftResizer: HTMLDivElement | null = null;
+    let rightResizer: HTMLDivElement | null = null;
+    let initialPosition = { x: 0, y: 0 };
+    let initialRect: SimpleRect = { width: 0, left: 0, right: 0 };
+
+    function move(element: HTMLElement) {
+        return {
+            destroy() {}
+        }
     }
 
-    let activeDiv: HTMLDivElement;
-    let initialPosition = { x: 0, y: 0 };
-    let initialWidth: SimpleRect = { width: 0, left: 0, right: 0 };
-    let resizeRight: ResizableHTMLDivElement;
-    let resizeLeft: ResizableHTMLDivElement;
-    let activeResizeDiv: ResizableHTMLDivElement;
-    // let element: HTMLElement;
-
-    onMount(() => {
-        resizeRight = document.getElementById('right') as ResizableHTMLDivElement;
-        resizeLeft = document.getElementById('left') as ResizableHTMLDivElement;
-    })
-    
-    onDestroy(() => {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-    });
-    
-    // function move(element: HTMLElement): void {
-    //
-    //
-    // }
-    //
-    // function resize(element: HTMLElement): void {
-    //     element = element;
-    //
-    //     resizeRight = ;
-    //     resizeRight.side = 'right';
-    //     resizeRight.classList.add('resize', 'right');
-    //     resizeRight.addEventListener('mousedown', onMouseDown);
-    //     element.appendChild(resizeRight);
-    //
-    //     resizeLeft = document.createElement('div');
-    //     resizeLeft.side = 'left';
-    //     resizeLeft.classList.add('resize', 'left');
-    //     resizeLeft.addEventListener('mousedown', onMouseDown);
-    //     element.appendChild(resizeLeft);
-    // }
-
-    function onMouseDown(event: MouseEvent): void {
-        activeResizeDiv = event.target as ResizableHTMLDivElement;
-        if (!activeResizeDiv) return;
-
-        console.log(activeResizeDiv.parentElement?.getBoundingClientRect())
-        console.log(activeResizeDiv.getBoundingClientRect())
-
-        const parent = activeResizeDiv.parentElement?.getBoundingClientRect() || new DOMRect(0, 0, 0, 0);
-        const child = activeResizeDiv.getBoundingClientRect();
-        initialPosition = { x: event.pageX, y: event.pageY };
-        initialWidth = {
-            width: child.width,
-            left: child.left - parent.left,
-            right: parent.right - child.right
+    function resize(element: HTMLElement) {
+        if (!disableLeftResize) {
+            leftResizer = element.querySelector('#left');
+            leftResizer?.addEventListener('mousedown', onMouseDown);
+        }
+        if (!disableRightResize) {
+            rightResizer = element.querySelector('#right');
+            rightResizer?.addEventListener('mousedown', onMouseDown);
         }
 
-        // const rect = element.getBoundingClientRect();
-        // const parent = element.parentElement?.getBoundingClientRect() || new DOMRect(0, 0, 0, 0)
-        // initialPosition = { x: event.pageX, y: event.pageY };
-        // initialWidth = {
-        //     width: rect.width,
-        //     left: rect.left - parent.left,
-        //     right: parent.right - rect.right
-        // }
-    }
+        function onMouseDown(event: MouseEvent) {
+            // Set body style to no text selection
+            document.body.style.userSelect = 'none';
 
-    function onMouseMove(event: MouseEvent): void {}
+            activeResizer = event.target as HTMLDivElement;
+            if (!activeResizer || activeResizer.id !== 'left' && activeResizer.id !== 'right') return;
 
-    function onMouseUp(event: MouseEvent): void {
-        if (!activeResizeDiv) return;
-        activeResizeDiv = null;
-        initialPosition
+            const child = activeResizer.parentElement;
+            if (!child) return;
+            const parent = child.parentElement;
+            if (!parent) return;
+
+            console.log('child', child)
+            console.log('parent', parent)
+
+            initialPosition = { x: event.pageX, y: event.pageY };
+            initialRect = {
+                width: child.offsetWidth,
+                left: child.offsetLeft,
+                right: parent.offsetWidth - child.offsetWidth - child.offsetLeft
+            }
+        }
+
+        function onMouseUp(event: MouseEvent) {
+            if (!activeResizer) return;
+            activeResizer = null;
+            initialPosition = { x: 0, y: 0 };
+            initialRect = { width: 0, left: 0, right: 0 };
+        }
+
+        function onMove(event: MouseEvent) {
+            if (!activeResizer) return;
+            let parent = activeResizer.parentElement as HTMLDivElement;
+
+            let delta = 0;
+            if (activeResizer.id === 'right') {
+                delta = event.pageX - initialPosition.x;
+                let newWidth = initialRect.width + delta;
+                if (newWidth > window.innerWidth) {
+                    newWidth = window.innerWidth;
+                }
+                parent.style.width = `${newWidth}px`;
+            }
+            else if (activeResizer.id === 'left') {
+                delta = initialPosition.x - event.pageX;
+                parent.style.left = `${initialRect.left - delta}px`;
+                parent.style.width = `${initialRect.width - delta}px`; // subtract delta from width
+            }
+        }
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onMouseUp);
     }
 </script>
 
-<div class='resizable-container'>
-    <div
-        id="left"
-        class="drag"
-        on:mouseup={onMouseUp}
-        on:mousedown={onMouseDown}
-        on:mousemove={onMouseMove}
-    />
-    <div class="content">
-        <slot></slot>
-    </div>
-    <div
-        id="right"
-        class="drag"
-        on:mouseup={onMouseUp}
-        on:mousedown={onMouseDown}
-        on:mousemove={onMouseMove}
-    />
+<div class='resizable-container'
+     role="none"
+     use:resize
+     use:move
+>
+    {#if !disableLeftResize}
+        <div id="left" class="drag"/>
+    {/if}
+    <slot name="content">No content provided</slot>
+    {#if !disableRightResize}
+        <div id="right" class="drag"/>
+    {/if}
 </div>
 
 <style lang='scss'>
     .resizable-container {
+      position: relative;
       display: flex;
       flex-direction: row;
+      justify-content: space-between;
     }
 
     .drag {
       cursor: col-resize;
-      width: 10px;
       height: 100%;
       top: 0;
-      border: 1px solid crimson;
+      border: 3px dotted crimson;
+    }
+
+    #left {
+      transform: translateX(-50%);
+    }
+
+    #right {
+      transform: translateX(50%);
     }
 </style>

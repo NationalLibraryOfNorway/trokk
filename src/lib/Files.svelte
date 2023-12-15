@@ -11,7 +11,6 @@
     import {type UnlistenFn} from "@tauri-apps/api/event";
     import {type ViewFile} from "./model/view-file";
     import {formatFileNames} from "./util/file-utils";
-    import {resize, move} from "./util/html-element-resize";
     import ResizableDiv from "./ResizableDiv.svelte";
 
     export let scannerPath: string
@@ -181,43 +180,45 @@
 
 {#if !readDirFailed}
     <div class="files-container {textSelectionStyle}">
-        <div class="file-tree-container">
-            <div class="icon-btn-group">
-                <button class="expand-btn" on:click={() => toggleExpand(true)}>
-                    <ChevronsUpDown size="14"/>
-                </button>
-                <button class="expand-btn" on:click={() => toggleExpand(false)}>
-                    <ChevronsDownUp size="14"/>
-                </button>
+        <ResizableDiv disableLeftResize={true}>
+            <div class="file-tree-container" slot="content">
+                <div class="icon-btn-group">
+                    <button class="expand-btn" on:click={() => toggleExpand(true)}>
+                        <ChevronsUpDown size="14"/>
+                    </button>
+                    <button class="expand-btn" on:click={() => toggleExpand(false)}>
+                        <ChevronsDownUp size="14"/>
+                    </button>
+                </div>
+                <FileTree fileTree={fileTree} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
             </div>
-            <FileTree fileTree={fileTree} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
-        </div>
+        </ResizableDiv>
         <div class="images">
-            <ResizableDiv>
-                {#each viewFiles as viewFile}
-                    {#if viewFile.fileTree.children}
-                        <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
-                            <Folder size="96"/>
-                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                        </button>
-                    {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
-                        <div>
-                            <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
-                            <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
-                        </div>
-                    {:else}
-                        <div class="file">
-                            <File size="96" color="gray"/>
-                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                        </div>
-                    {/if}
-                {/each}
-            </ResizableDiv>
+            {#each viewFiles as viewFile}
+                {#if viewFile.fileTree.children}
+                    <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
+                        <Folder size="96"/>
+                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                    </button>
+                {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
+                    <div>
+                        <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
+                        <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
+                    </div>
+                {:else}
+                    <div class="file">
+                        <File size="96" color="gray"/>
+                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                    </div>
+                {/if}
+            {/each}
         </div>
         {#if currentPath}
-            <div class="registration-schema">
-                <RegistrationSchema bind:currentPath="{currentPath}" />
-            </div>
+            <ResizableDiv disableRightResize={true}>
+                <div class="registration-schema" slot="content">
+                    <RegistrationSchema bind:currentPath="{currentPath}" />
+                </div>
+            </ResizableDiv>
         {/if}
     </div>
 {:else}
@@ -226,10 +227,10 @@
 
 
 <style lang="scss">
-    $dark-gray: #343434;
-    $dark-gray-accent: #4b4b4b;
-    $light-gray: #e8e8e8;
-    $light-gray-accent: #d3d3d3;
+    $dark-gray: #1E1F22FF;
+    $dark-gray-accent: #151515;
+    $light-gray: #ececec;
+    $light-gray-accent: #e0e0e0;
 
   .no-text-select {
     -webkit-user-select: none;
@@ -247,7 +248,7 @@
   .file-tree-container {
     position: sticky;
     top: 0;
-    width: 20vw;
+    //width: 20vw;
     min-width: 70px;
     height: 98vh;
     overflow: scroll;
@@ -255,8 +256,6 @@
   }
 
   .images {
-    padding: 1em;
-    margin: 0 1em;
     display: flex;
     width: 60vw;
     flex-flow: row wrap;
@@ -356,32 +355,8 @@
     box-shadow: none;
   }
 
-  :global(.grabber) {
-    position: absolute;
-    box-sizing: border-box;
-    cursor: col-resize;
-    width: 10px;
-    height: 100%;
-    top: 0;
-    //width: 10px;
-    //height: 100%;
-    //right: 0;
-    //cursor: col-resize;
-    //border-right: 1px solid #ff0000;
-  }
-
-  :global(.grabber.left) {
-    background: blue;
-    //left: -5px;
-  }
-
   ::-webkit-scrollbar {
     overflow: hidden;
-  }
-
-  :global(.grabber.right) {
-    background: red;
-    //right: 400px;
   }
 
 </style>
