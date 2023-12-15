@@ -54,3 +54,11 @@ export const textInputDtoResponseMockNewspaper: Response<string> = new Response(
     rawHeaders: {},
     data: JSON.stringify(textInputDtoMockNewspaper, (_, v) => typeof v === 'bigint' ? v.toString() : v)
 })
+
+export const response400Mock: Response<string> = new Response({
+    url: "papi",
+    status: 400,
+    headers: {},
+    rawHeaders: {},
+    data: "Bad request"
+})
