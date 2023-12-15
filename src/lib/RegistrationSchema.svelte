@@ -5,6 +5,7 @@
     import {invoke} from "@tauri-apps/api/tauri";
     import {settings} from "./util/settings";
     import {v4} from "uuid";
+    import {path} from "@tauri-apps/api";
     import {onMount} from "svelte";
 
     export let currentPath: string
@@ -21,7 +22,7 @@
     let papiPath: string
 
     $: {
-        const newPath = currentPath.split('/').at(-1)
+        const newPath = currentPath.split(path.sep).at(-1)
         if (newPath) name = newPath
         successMessage = ''
         removeErrorMessage()

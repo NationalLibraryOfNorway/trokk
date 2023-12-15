@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use tauri::api::dialog::blocking::FileDialogBuilder;
 
 pub fn get_file_size(path: &str) -> Result<u64, String> {
 	let mut size = 0;
@@ -53,5 +54,14 @@ pub(crate) fn delete_dir(dir: String) -> Result<(), String> {
 	match fs::remove_dir_all(path) {
 		Ok(_) => Ok(()),
 		Err(e) => Err(e.to_string()),
+	}
+}
+
+pub(crate) async fn directory_picker(start_path: String) -> Result<String, String> {
+	let start = Path::new(&start_path);
+	let result = FileDialogBuilder::new().set_directory(start).pick_folder();
+	match result {
+		None => Err("No folder was chosen".to_string()),
+		_ => Ok(result.unwrap().to_string_lossy().to_string()),
 	}
 }
