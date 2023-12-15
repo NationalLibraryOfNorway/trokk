@@ -43,12 +43,16 @@
 
         const id = v4().toString()
         const newPath = await copyToDoneDir(id)
-            .catch(error => { handleError(error, 'Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.') })
+            .catch(error => {
+                handleError('Fikk ikke flyttet filene, sjekk at mappeinnstillinger er korrekt.')
+                return Promise.reject(error)
+            })
 
         const fileSize = await getTotalFileSize(newPath!)
             .catch(error => {
                 deleteDir(newPath!)
-                handleError(error, 'Fikk ikke hentet filstørrelse.')
+                handleError('Fikk ikke hentet filstørrelse.')
+                return Promise.reject(error)
             })
 
         return fetch(`${papiPath}/item/`,
@@ -73,25 +77,25 @@
                     removeErrorMessage()
                     displaySuccessMessage(response.data as TextInputDto)
                 } else {
-                    handleError(undefined, undefined, response.status)
+                    handleError(undefined, response.status)
                 }
             })
             .catch(error => {
                 deleteDir(newPath!)
-                handleError(error)
-                throw error
+                handleError()
+                return Promise.reject(error)
             })
     }
 
     function getTotalFileSize(path: string): Promise<BigInt> {
         return invoke("get_total_size_of_files_in_folder", {path: path})
             .then((size: BigInt) => size)
-            .catch(error => console.error(error))
     }
 
     function onSubmit() {
         getHostname()
             .then(hostname => postRegistration(hostname.toString()))
+            .catch(error => console.log(error))
     }
 
     function materialTypeToDisplayValue(type: string): string {
@@ -116,18 +120,13 @@
         return invoke("delete_dir", {dir: path})
     }
 
-    function handleError(error?: any, extra_text?: string, code?: string | number) {
+    function handleError(extra_text?: string, code?: string | number) {
         let tmpErrorMessage = 'Kunne ikke TRØKKE dette videre.'
         if (extra_text) tmpErrorMessage += ` ${extra_text}`
         tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.'
         if (code) tmpErrorMessage += ` (Feilkode ${code})`
 
         errorMessage = tmpErrorMessage
-
-        if (error) {
-            console.error(error)
-            throw error
-        }
     }
 
     function removeErrorMessage(): void {
