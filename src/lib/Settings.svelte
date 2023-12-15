@@ -64,7 +64,7 @@
 <form on:submit|preventDefault class="settings-form">
     <div class="form-group">
         <label for="scannerPath">Skanner kilde</label>
-        <button on:click={() => pickScannerPath()}>Velg mappe</button>
+        <button type="button" on:click={() => pickScannerPath()}>Velg mappe</button>
         <input type="text" id="scannerPath" bind:value={scannerPath}/>
         <button on:click={() => saveScannerPath(scannerPath)}>Lagre</button>
         {#if scanPathError}
@@ -77,7 +77,7 @@
 
     <div class="form-group">
         <label for="donePath">Ferdige objekter</label>
-        <button on:click={() => pickDonePath()}>Velg mappe</button>
+        <button type="button" on:click={() => pickDonePath()}>Velg mappe</button>
         <input type="text" id="donePath" bind:value={donePath}/>
         <button on:click={() => saveDonePath(donePath)}>Lagre</button>
         {#if donePathError}
