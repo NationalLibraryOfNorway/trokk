@@ -19,17 +19,13 @@
 
     async function pickScannerPath() {
         await invoke<string>('pick_directory', {startPath: scannerPath})
-            .then(path => {
-                saveScannerPath(path)
-            })
+            .then(path => saveScannerPath(path))
             .catch(error => console.log(error))
     }
 
     async function pickDonePath() {
         await invoke<string>('pick_directory', {startPath: donePath})
-            .then(path => {
-                saveDonePath(path)
-            })
+            .then(path => saveDonePath(path))
             .catch(error => console.log(error))
     }
 
