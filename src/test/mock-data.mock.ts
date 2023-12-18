@@ -1,6 +1,8 @@
 import type {TextInputDto} from "../lib/model/text-input-dto";
 import {MaterialType} from "../lib/model/registration-enums";
 import {Response} from "@tauri-apps/api/http";
+import {FileTree} from "../lib/model/file-tree";
+import type {FileEntry} from "@tauri-apps/api/fs";
 
 
 const tokenResponseMock: TokenResponse = {
@@ -25,7 +27,7 @@ const userInfoMock: UserInfo = {
     familyName: "",
     givenName: "",
     groups: [""],
-    name: "trokk",
+    name: "trokk-navnet",
     preferredUsername: "",
     sub: ""
 }
@@ -62,3 +64,16 @@ export const response400Mock: Response<string> = new Response({
     rawHeaders: {},
     data: "Bad request"
 })
+
+export const fileTreeListMock: FileTree[] = [
+    new FileTree('e', 'e', false),
+    new FileTree('b', 'b', false),
+    new FileTree('d', 'd', false),
+    new FileTree('c', 'c', false),
+    new FileTree('a', 'a', false),
+]
+
+export const fileEntryListMock: FileEntry[] = [
+    {path: 'e', name: 'e'},
+    {path: 'b', name: 'b'}
+]

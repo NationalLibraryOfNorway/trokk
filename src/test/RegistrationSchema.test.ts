@@ -7,7 +7,7 @@ import {settings} from "../lib/util/settings";
 
 
 describe('RegistrationSchema.svelte', () => {
-    let container: RenderResult<RegistrationSchema>;
+    let container: RenderResult<RegistrationSchema>
 
     beforeEach(() => {
         vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(Promise.resolve(authenticationResponseMock))
@@ -44,6 +44,7 @@ describe('RegistrationSchema.svelte', () => {
 
     test('component mounts', () => {
         expect(container).toBeTruthy()
+        expect(container.component).toBeTruthy()
     })
 
     test('should render trøkk button', () => {
