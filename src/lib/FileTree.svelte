@@ -5,6 +5,7 @@
     import {formatFileNames} from "./util/file-utils";
 
     export let fileTree: FileTree[] = []
+    export let selectedDir: string = ''
     const dispatch = createEventDispatcher()
 
     beforeUpdate(() => {
@@ -23,6 +24,10 @@
         dispatch('directoryChange', file)
     }
 
+    function isSelectedDir(dirName: string): string {
+        return dirName === selectedDir ? 'selected-dir' : ''
+    }
+
 </script>
 
 <div>
@@ -32,29 +37,33 @@
                 <li>
                     {#if !file.name.startsWith('.')}
                         {#if file.opened}
-                            <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                <ChevronDown size="16" color="gray"/>
-                            </button>
-                            <button
-                                class="expand-btn"
-                                on:click|preventDefault={() => changeViewDirectory(file)}
-                                on:keydown|preventDefault={() => changeViewDirectory(file)}
-                            >
-                                <FolderOpen size="16"/>
-                                <span>{formatFileNames(file.name)}</span>
-                            </button>
+                            <span class={isSelectedDir(file.path)}>
+                                <button class="expand-btn" on:click={() => file.opened = !file.opened}>
+                                    <ChevronDown size="16" color="gray"/>
+                                </button>
+                                <button
+                                    class="expand-btn"
+                                    on:click|preventDefault={() => changeViewDirectory(file)}
+                                    on:keydown|preventDefault={() => changeViewDirectory(file)}
+                                >
+                                    <FolderOpen size="16"/>
+                                    <span>{formatFileNames(file.name)}</span>
+                                </button>
+                            </span>
                         {:else}
-                            <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                <ChevronRight size="16" color="gray"/>
-                            </button>
-                            <button
-                                class="expand-btn"
-                                on:click|preventDefault={() => changeViewDirectory(file)}
-                                on:keydown|preventDefault={() => changeViewDirectory(file)}
-                            >
-                                <Folder size="16"/>
-                                <span>{formatFileNames(file.name)}</span>
-                            </button>
+                            <span class={isSelectedDir(file.path)}>
+                                <button class="expand-btn" on:click={() => file.opened = !file.opened}>
+                                    <ChevronRight size="16" color="gray"/>
+                                </button>
+                                <button
+                                        class="expand-btn"
+                                        on:click|preventDefault={() => changeViewDirectory(file)}
+                                        on:keydown|preventDefault={() => changeViewDirectory(file)}
+                                >
+                                    <Folder size="16"/>
+                                    <span>{formatFileNames(file.name)}</span>
+                                </button>
+                            </span>
                         {/if}
                     {/if}
                     {#if file.opened && !file.name.startsWith('.')}
@@ -104,5 +113,11 @@
         margin: 0;
         outline: none;
         box-shadow: none;
+    }
+
+    .selected-dir {
+        background-color: rgba(19, 91, 168, 0.55);
+        padding: 4px 80px 4px 0;
+        border-radius: 5px;
     }
 </style>
