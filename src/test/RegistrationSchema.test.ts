@@ -52,7 +52,7 @@ describe('RegistrationSchema.svelte', () => {
         expect(button).toBeTruthy()
     })
 
-    test('should render material type drowdown', () => {
+    test('should render material type dropdown', () => {
         const select = container.getByLabelText('Materialtype')
         expect(select).toBeTruthy()
     })
