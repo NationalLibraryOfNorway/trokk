@@ -24,7 +24,7 @@
         dispatch('directoryChange', file)
     }
 
-    function isSelectedDir(dirName: string): string {
+    function getSelectedDirectoryHighlight(dirName: string): string {
         return dirName === selectedDir ? 'selected-dir' : ''
     }
 
@@ -37,7 +37,7 @@
                 <li>
                     {#if !file.name.startsWith('.')}
                         {#if file.opened}
-                            <span class={isSelectedDir(file.path)}>
+                            <span class="directory-list-item {getSelectedDirectoryHighlight(file.path)}">
                                 <button class="expand-btn" on:click={() => file.opened = !file.opened}>
                                     <ChevronDown size="16" color="gray"/>
                                 </button>
@@ -51,7 +51,7 @@
                                 </button>
                             </span>
                         {:else}
-                            <span class={isSelectedDir(file.path)}>
+                            <span class="directory-list-item {getSelectedDirectoryHighlight(file.path)}">
                                 <button class="expand-btn" on:click={() => file.opened = !file.opened}>
                                     <ChevronRight size="16" color="gray"/>
                                 </button>
@@ -113,6 +113,18 @@
         margin: 0;
         outline: none;
         box-shadow: none;
+    }
+
+    .directory-list-item {
+      &:hover {
+        background-color: rgba(180, 193, 208, 0.55);
+        padding: 4px 80px 4px 0;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+      &:active {
+        background-color: rgba(79, 122, 168, 0.55);
+      }
     }
 
     .selected-dir {
