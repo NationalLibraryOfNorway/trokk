@@ -34,10 +34,10 @@
     <ul>
         {#each fileTree as file}
             {#if file.children}
-                <li class="directory-list-item {getSelectedDirectoryHighlight(file.path)}">
+                <li >
                     {#if !file.name.startsWith('.')}
                         <button
-                            class="clickable-list-item"
+                            class="directory-list-item {getSelectedDirectoryHighlight(file.path)}"
                             on:click|preventDefault={() => changeViewDirectory(file)}
                             on:keydown|preventDefault={() => changeViewDirectory(file)}
                         >
@@ -79,6 +79,12 @@
 </div>
 
 <style lang="scss">
+    li > span {
+        &:hover {
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    }
     li {
         list-style: none;
         white-space: nowrap;
@@ -110,12 +116,9 @@
         @extend %no-style-button;
     }
 
-    .clickable-list-item {
+    .directory-list-item {
         @extend %no-style-button;
         width: 100%;
-    }
-
-    .directory-list-item {
         &:hover {
             background-color: rgba(180, 193, 208, 0.55);
             border-radius: 5px;
