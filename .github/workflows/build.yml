@@ -90,7 +90,8 @@ jobs:
       - name: NPM; Lint frontend
         run: npm run lint
 
-        # TODO run frontend tests when they exist
+      - name: NPM; Run frontend tests
+        run: npm run test
 
       - name: Tauri build
         uses: JonasKruckenberg/tauri-build@v1
