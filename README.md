@@ -1,4 +1,4 @@
-# Trøkk
+<img src="banner.png" alt="trøkk logo" width="500px">
 
 App for minimumsregistrering og filfytting av objekter fra skannemaskiner.
 Laget i Tauri med Rust og Svelte.
