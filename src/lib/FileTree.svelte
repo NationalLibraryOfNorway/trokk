@@ -79,13 +79,6 @@
 </div>
 
 <style lang="scss">
-    li > span {
-        &:hover {
-            cursor: pointer;
-            text-decoration: underline;
-        }
-    }
-
     li {
         list-style: none;
         white-space: nowrap;
