@@ -97,19 +97,19 @@
     }
 
     .file {
-      margin-left: 16px;
+        margin-left: 16px;
     }
 
     %no-style-button {
-      text-align: start;
-      background: none;
-      color: inherit;
-      border: none;
-      padding: 0;
-      font: inherit;
-      cursor: pointer;
-      outline: inherit;
-      box-shadow: none;
+        text-align: start;
+        background: none;
+        color: inherit;
+        border: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        outline: inherit;
+        box-shadow: none;
     }
 
     .expand-btn {
@@ -117,14 +117,13 @@
     }
 
     .clickable-list-item {
-      @extend %no-style-button;
-      width: 100%;
+        @extend %no-style-button;
+        width: 100%;
     }
 
     .directory-list-item {
         &:hover {
             background-color: rgba(180, 193, 208, 0.55);
-            //padding: 4px 4px 4px 0;
             border-radius: 5px;
             cursor: pointer;
         }
@@ -134,7 +133,7 @@
     }
 
     .selected-dir {
-      width: 100%;
+        width: 100%;
         background-color: rgba(19, 91, 168, 0.55);
         border-radius: 5px;
     }
