@@ -5,6 +5,7 @@
     import {formatFileNames} from "./util/file-utils";
 
     export let fileTree: FileTree[] = []
+    export let selectedDir: string = ''
     const dispatch = createEventDispatcher()
 
     beforeUpdate(() => {
@@ -23,39 +24,41 @@
         dispatch('directoryChange', file)
     }
 
+    function getSelectedDirectoryHighlight(dirName: string): string {
+        return dirName === selectedDir ? 'selected-dir' : ''
+    }
+
 </script>
 
 <div>
     <ul>
         {#each fileTree as file}
             {#if file.children}
-                <li>
+                <li >
                     {#if !file.name.startsWith('.')}
+                        <button
+                            class="directory-list-item {getSelectedDirectoryHighlight(file.path)}"
+                            on:click|preventDefault={() => changeViewDirectory(file)}
+                            on:keydown|preventDefault={() => changeViewDirectory(file)}
+                        >
                         {#if file.opened}
-                            <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                <ChevronDown size="16" color="gray"/>
-                            </button>
-                            <button
-                                class="expand-btn"
-                                on:click|preventDefault={() => changeViewDirectory(file)}
-                                on:keydown|preventDefault={() => changeViewDirectory(file)}
-                            >
+                            <span>
+                                <button class="expand-btn" on:click={() => file.opened = !file.opened}>
+                                    <ChevronDown size="16" color="gray"/>
+                                </button>
                                 <FolderOpen size="16"/>
                                 <span>{formatFileNames(file.name)}</span>
-                            </button>
+                            </span>
                         {:else}
-                            <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                <ChevronRight size="16" color="gray"/>
-                            </button>
-                            <button
-                                class="expand-btn"
-                                on:click|preventDefault={() => changeViewDirectory(file)}
-                                on:keydown|preventDefault={() => changeViewDirectory(file)}
-                            >
+                            <span>
+                                <button class="expand-btn" on:click={() => file.opened = !file.opened}>
+                                    <ChevronRight size="16" color="gray"/>
+                                </button>
                                 <Folder size="16"/>
                                 <span>{formatFileNames(file.name)}</span>
-                            </button>
+                            </span>
                         {/if}
+                        </button>
                     {/if}
                     {#if file.opened && !file.name.startsWith('.')}
                         <ul>
@@ -82,7 +85,6 @@
             text-decoration: underline;
         }
     }
-
     li {
         list-style: none;
         white-space: nowrap;
@@ -94,15 +96,42 @@
     }
 
     .file {
-      margin-left: 16px;
+        margin-left: 16px;
+    }
+
+    %no-style-button {
+        text-align: start;
+        background: none;
+        color: inherit;
+        border: none;
+        padding: 0;
+        font: inherit;
+        cursor: pointer;
+        outline: inherit;
+        box-shadow: none;
+
     }
 
     .expand-btn {
-        border: none;
-        background: none;
-        padding: 0;
-        margin: 0;
-        outline: none;
-        box-shadow: none;
+        @extend %no-style-button;
+    }
+
+    .directory-list-item {
+        @extend %no-style-button;
+        width: 100%;
+        &:hover {
+            background-color: rgba(180, 193, 208, 0.55);
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        &:active {
+            background-color: rgba(79, 122, 168, 0.55);
+        }
+    }
+
+    .selected-dir {
+        width: 100%;
+        background-color: rgba(19, 91, 168, 0.55);
+        border-radius: 5px;
     }
 </style>

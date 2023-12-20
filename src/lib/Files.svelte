@@ -179,7 +179,7 @@
                     <ChevronsDownUp size="14"/>
                 </button>
             </div>
-            <FileTree fileTree={fileTree} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
+            <FileTree fileTree={fileTree} selectedDir={currentPath} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
         </div>
         <div class="images">
             {#each viewFiles as viewFile}
