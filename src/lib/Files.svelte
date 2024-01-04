@@ -220,17 +220,6 @@
     position: sticky;
     top: 0;
     height: 98vh;
-    width: 100%;
-  }
-
-  .files-container {
-    display: flex;
-    flex-direction: row;
-  }
-  .file-tree-container {
-    position: sticky;
-    top: 0;
-    height: 98vh;
   }
 
   .images {
