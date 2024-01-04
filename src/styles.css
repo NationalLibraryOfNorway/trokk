@@ -88,26 +88,6 @@ button {
   margin-right: 5px;
 }
 
-:global(.splitpanes.custom-splitpanes-theme) {
-  .splitpanes__splitter {
-    background-color: #606060;
-    box-sizing: border-box;
-    position: relative;
-    flex-shrink: 0;
-  }
-}
-.custom-splitpanes-theme {
-  &.splitpanes .splitpanes .splitpanes__splitter {
-    z-index: 1;
-  }
-  &.splitpanes--vertical > .splitpanes__splitter,
-  .splitpanes--vertical > .splitpanes__splitter {
-    width: 7px;
-    border-left: 1px solid #868686;
-    cursor: col-resize;
-  }
-}
-
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;

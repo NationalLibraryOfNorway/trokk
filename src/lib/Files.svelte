@@ -11,10 +11,12 @@
     import {type UnlistenFn} from "@tauri-apps/api/event";
     import {type ViewFile} from "./model/view-file";
     import {formatFileNames} from "./util/file-utils";
-    import {Pane, Splitpanes} from "svelte-splitpanes";
+    // import {Pane, Splitpanes} from "svelte-splitpanes";
+    import Split from "split.js";
 
     export let scannerPath: string
 
+    // let container
     let currentPath: string = scannerPath
     let readDirFailed: string | undefined = undefined
     let fileTree: FileTreeType[] = []
@@ -35,6 +37,13 @@
     onMount(async () => {
         fileTree = await getFileEntries()
         await watchFiles()
+
+        Split(['#left-pane', '#middle-pane', '#right-pane'], {
+            sizes: [20, 60, 20],
+            minSize: [5, 10, 5],
+            gutterSize: 3,
+            direction: 'horizontal',
+        })
     })
 
     beforeUpdate(() => {
@@ -170,8 +179,8 @@
 </script>
 
 {#if !readDirFailed}
-    <Splitpanes theme="custom-splitpanes-theme" dblClickSplitter={false}>
-        <Pane size={20} minSize={5} class="sticky-top">
+    <div class="files-container">
+        <div id="left-pane" class="pane sticky-top">
             <div class="icon-btn-group">
                 <button class="expand-btn" on:click={() => toggleExpand(true)}>
                     <ChevronsUpDown size="14"/>
@@ -181,8 +190,8 @@
                 </button>
             </div>
             <FileTree fileTree={fileTree} selectedDir={currentPath} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
-        </Pane>
-        <Pane size={60} minSize={10} maxSize={90}>
+        </div>
+        <div id="middle-pane" class="pane">
             <div class="images">
                 {#each viewFiles as viewFile}
                     {#if viewFile.fileTree.children}
@@ -203,13 +212,13 @@
                     {/if}
                 {/each}
             </div>
-        </Pane>
-        <Pane size={20} minSize={5} class="sticky-top">
+        </div>
+        <div id="right-pane" class="pane sticky-top">
             {#if currentPath}
                 <RegistrationSchema bind:currentPath="{currentPath}" />
             {/if}
-        </Pane>
-    </Splitpanes>
+        </div>
+    </div>
 {:else}
     <p>Failed to read directory, {readDirFailed}</p>
 {/if}
@@ -220,6 +229,17 @@
     position: sticky;
     top: 0;
     height: 98vh;
+  }
+
+  :global(.gutter) {
+    background-color: #4c4d50;
+    &:hover {
+      cursor: col-resize;
+    }
+  }
+
+  .files-container {
+    display: flex;
   }
 
   .images {
@@ -295,6 +315,10 @@
     padding: 0;
     margin: 0;
     box-shadow: none;
+  }
+
+  .pane {
+    overflow: auto;
   }
 
 </style>
