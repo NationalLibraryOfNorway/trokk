@@ -170,7 +170,7 @@
 </script>
 
 {#if !readDirFailed}
-    <Splitpanes theme="custom-splitpanes-theme" dblClickSplitter={false} style="width: 100%">
+    <Splitpanes theme="custom-splitpanes-theme" dblClickSplitter={false}>
         <Pane size={20} minSize={5} class="sticky-top">
             <div class="icon-btn-group">
                 <button class="expand-btn" on:click={() => toggleExpand(true)}>
