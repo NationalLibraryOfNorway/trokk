@@ -11,12 +11,10 @@
     import {type UnlistenFn} from "@tauri-apps/api/event";
     import {type ViewFile} from "./model/view-file";
     import {formatFileNames} from "./util/file-utils";
-    // import {Pane, Splitpanes} from "svelte-splitpanes";
     import Split from "split.js";
 
     export let scannerPath: string
 
-    // let container
     let currentPath: string = scannerPath
     let readDirFailed: string | undefined = undefined
     let fileTree: FileTreeType[] = []
