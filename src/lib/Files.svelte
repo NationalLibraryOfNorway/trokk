@@ -36,6 +36,7 @@
         fileTree = await getFileEntries()
         await watchFiles()
 
+        // Applies the .gutter class from styles.css to the specified elements
         Split(['#left-pane', '#middle-pane', '#right-pane'], {
             sizes: [20, 60, 20],
             minSize: [5, 10, 5],
@@ -223,17 +224,10 @@
 
 
 <style lang="scss">
-  :global(.sticky-top) {
+  .sticky-top {
     position: sticky;
     top: 0;
     height: 98vh;
-  }
-
-  :global(.gutter) {
-    background-color: #4c4d50;
-    &:hover {
-      cursor: col-resize;
-    }
   }
 
   .files-container {
