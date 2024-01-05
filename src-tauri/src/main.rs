@@ -16,6 +16,10 @@ mod image_converter;
 mod model;
 mod system_tray;
 
+#[cfg(test)]
+mod tests;
+mod test_utils;
+
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	papi_path: env!("PAPI_PATH"),
 	oidc_base_url: env!("OIDC_BASE_URL"),
