@@ -11,6 +11,7 @@
     import {type UnlistenFn} from "@tauri-apps/api/event";
     import {type ViewFile} from "./model/view-file";
     import {formatFileNames} from "./util/file-utils";
+    import Split from "split.js";
 
     export let scannerPath: string
 
@@ -34,6 +35,14 @@
     onMount(async () => {
         fileTree = await getFileEntries()
         await watchFiles()
+
+        // Applies the .gutter class from styles.css to the specified elements
+        Split(['#left-pane', '#middle-pane', '#right-pane'], {
+            sizes: [20, 60, 20],
+            minSize: [5, 10, 5],
+            gutterSize: 3,
+            direction: 'horizontal',
+        })
     })
 
     beforeUpdate(() => {
@@ -170,7 +179,7 @@
 
 {#if !readDirFailed}
     <div class="files-container">
-        <div class="file-tree-container">
+        <div id="left-pane" class="pane sticky-top">
             <div class="icon-btn-group">
                 <button class="expand-btn" on:click={() => toggleExpand(true)}>
                     <ChevronsUpDown size="14"/>
@@ -181,31 +190,33 @@
             </div>
             <FileTree fileTree={fileTree} selectedDir={currentPath} on:directoryChange={(event) => changeViewDirectory(event.detail)}/>
         </div>
-        <div class="images">
-            {#each viewFiles as viewFile}
-                {#if viewFile.fileTree.children}
-                    <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
-                        <Folder size="96"/>
-                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                    </button>
-                {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
-                    <div>
-                        <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
-                        <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
-                    </div>
-                {:else}
-                    <div class="file">
-                        <File size="96" color="gray"/>
-                        <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                    </div>
-                {/if}
-            {/each}
-        </div>
-        {#if currentPath}
-            <div class="registration-schema">
-                <RegistrationSchema bind:currentPath="{currentPath}" />
+        <div id="middle-pane" class="pane">
+            <div class="images">
+                {#each viewFiles as viewFile}
+                    {#if viewFile.fileTree.children}
+                        <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
+                            <Folder size="96"/>
+                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                        </button>
+                    {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
+                        <div>
+                            <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
+                            <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
+                        </div>
+                    {:else}
+                        <div class="file">
+                            <File size="96" color="gray"/>
+                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                        </div>
+                    {/if}
+                {/each}
             </div>
-        {/if}
+        </div>
+        <div id="right-pane" class="pane sticky-top">
+            {#if currentPath}
+                <RegistrationSchema bind:currentPath="{currentPath}" />
+            {/if}
+        </div>
     </div>
 {:else}
     <p>Failed to read directory, {readDirFailed}</p>
@@ -213,23 +224,19 @@
 
 
 <style lang="scss">
-  .files-container {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .file-tree-container {
+  .sticky-top {
     position: sticky;
     top: 0;
-    width: 20vw;
     height: 98vh;
-    overflow: scroll;
+  }
+
+  .files-container {
+    display: flex;
   }
 
   .images {
     margin: 0 1em;
     display: flex;
-    width: 60vw;
     flex-flow: row wrap;
     justify-content: flex-start;
     align-content: flex-start;
@@ -294,21 +301,16 @@
     margin: 6px 0;
   }
 
-  .registration-schema {
-    position: sticky;
-    top: 0;
-    margin-right: 1em;
-    margin-left: auto;
-    width: 20vw;
-    height: 98vh;
-  }
-
   .expand-btn {
     border-radius: 3px;
     background: none;
     padding: 0;
     margin: 0;
     box-shadow: none;
+  }
+
+  .pane {
+    overflow: auto;
   }
 
 </style>

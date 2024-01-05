@@ -193,6 +193,7 @@
     display: flex;
     flex-direction: column;
     width: 20em;
+    margin-left: 1em;
   }
 
   .regField {

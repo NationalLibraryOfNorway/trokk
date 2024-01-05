@@ -88,6 +88,13 @@ button {
   margin-right: 5px;
 }
 
+.gutter {
+  background-color: #4c4d50;
+  &:hover {
+    cursor: col-resize;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
