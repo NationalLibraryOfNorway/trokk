@@ -28,7 +28,7 @@ webp = "0.2.6"
 thiserror = "1.0.50"
 
 [dev-dependencies]
-mockall = "0.12.1"
+tempfile = "3.9.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
