@@ -30,4 +30,11 @@ jobs:
           OIDC_BASE_URL: "placeholder"
           OIDC_CLIENT_ID: "placeholder"
           OIDC_CLIENT_SECRET: "placeholder"
-        # TODO run backend tests
+      - name: Run tests
+        if: always()
+        run: cargo test --all
+        env:
+          PAPI_PATH: "placeholder"
+          OIDC_BASE_URL: "placeholder"
+          OIDC_CLIENT_ID: "placeholder"
+          OIDC_CLIENT_SECRET: "placeholder"
