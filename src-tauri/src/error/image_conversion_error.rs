@@ -17,7 +17,7 @@ pub enum ImageConversionError {
 	StrError(String),
 }
 
-pub struct WebPEncodingErrorWrapper(webp::WebPEncodingError);
+pub struct WebPEncodingErrorWrapper(pub webp::WebPEncodingError);
 
 impl From<webp::WebPEncodingError> for ImageConversionError {
 	fn from(error: webp::WebPEncodingError) -> Self {

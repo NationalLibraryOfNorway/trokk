@@ -30,6 +30,8 @@ jobs:
           OIDC_BASE_URL: "placeholder"
           OIDC_CLIENT_ID: "placeholder"
           OIDC_CLIENT_SECRET: "placeholder"
+      # TODO: Reuse env between clippy and test
+      # TODO: Check if we can prevent having to compile twice (one for clippy and one for test)
       - name: Run tests
         if: always()
         run: cargo test --all
