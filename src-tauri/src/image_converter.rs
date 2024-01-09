@@ -65,20 +65,3 @@ fn get_file_name(path_reference: &Path) -> Result<&OsStr, ImageConversionError> 
 		ImageConversionError::FailedToGetFileNameError(format!("{:?}", path_reference.to_str()))
 	});
 }
-
-// #[cfg(test)]
-// mod tests {
-// 	use super::*;
-// 	use std::ffi::OsStr;
-//
-// 	#[test]
-// 	fn test_get_file_name() {
-// 		let path = std::path::Path::new("path/to/file.jpg");
-// 		let expected_file_name = "file.jpg";
-//
-// 		match get_file_name(path) {
-// 			Ok(file_name) => assert_eq!(file_name, OsStr::new(expected_file_name)),
-// 			Err(e) => panic!("{}", e),
-// 		}
-// 	}
-// }
