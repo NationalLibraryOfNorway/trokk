@@ -8,6 +8,11 @@ jobs:
     defaults:
       run:
         working-directory: ./src-tauri
+    env:
+      PAPI_PATH: "placeholder"
+      OIDC_BASE_URL: "placeholder"
+      OIDC_CLIENT_ID: "placeholder"
+      OIDC_CLIENT_SECRET: "placeholder"
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies (ubuntu only)
@@ -22,21 +27,8 @@ jobs:
       - name: Run rustfmt
         if: always()
         run: cargo fmt --all -- --check
-      - name: Run clippy
+      - name: Run clippy linter and tests
         if: always()
-        run: cargo clippy --all -- -D warnings
-        env:
-          PAPI_PATH: "placeholder"
-          OIDC_BASE_URL: "placeholder"
-          OIDC_CLIENT_ID: "placeholder"
-          OIDC_CLIENT_SECRET: "placeholder"
-      # TODO: Reuse env between clippy and test
-      # TODO: Check if we can prevent having to compile twice (one for clippy and one for test)
-      - name: Run tests
-        if: always()
-        run: cargo test --all
-        env:
-          PAPI_PATH: "placeholder"
-          OIDC_BASE_URL: "placeholder"
-          OIDC_CLIENT_ID: "placeholder"
-          OIDC_CLIENT_SECRET: "placeholder"
+        run: |
+          cargo clippy --all -- -D warnings
+          cargo test --all
