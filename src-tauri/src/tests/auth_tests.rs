@@ -6,4 +6,3 @@ fn test_refresh_token_returns_valid_result() {}
 
 #[test]
 fn test_create_token_returns_valid_result() {}
-
