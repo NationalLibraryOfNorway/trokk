@@ -13,7 +13,8 @@ use crate::tests::test_utils::get_test_resource_dir;
 use crate::tests::test_utils::TEST_IMAGE_1_NAME;
 
 #[test]
-fn test_convert_to_webp_creates_webp_of_original_in_thumbnails_directory() -> Result<(), Box<dyn error::Error>> {
+fn test_convert_to_webp_creates_webp_of_original_in_thumbnails_directory(
+) -> Result<(), Box<dyn error::Error>> {
 	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_1_NAME);
 
 	let tmp_dir = TempDir::with_prefix("trokk-test-tmp-")?;
@@ -30,7 +31,8 @@ fn test_convert_to_webp_creates_webp_of_original_in_thumbnails_directory() -> Re
 }
 
 #[test]
-fn test_check_if_webp_exists_returns_false_if_webp_doesnt_exist() -> Result<(), Box<dyn error::Error>> {
+fn test_check_if_webp_exists_returns_false_if_webp_doesnt_exist(
+) -> Result<(), Box<dyn error::Error>> {
 	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_1_NAME);
 
 	let tmp_dir = TempDir::with_prefix("trokk-test-tmp-")?;
