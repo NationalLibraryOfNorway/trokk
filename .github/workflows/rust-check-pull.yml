@@ -27,8 +27,9 @@ jobs:
       - name: Run rustfmt
         if: always()
         run: cargo fmt --all -- --check
-      - name: Run clippy linter and tests
+      - name: Run clippy
         if: always()
-        run: |
-          cargo clippy --all -- -D warnings
-          cargo test --all
+        run: cargo clippy --all -- -D warnings
+      - name: Run tests
+        if: always()
+        run: cargo test --all
