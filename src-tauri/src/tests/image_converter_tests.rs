@@ -10,15 +10,15 @@ use ::tempfile::TempDir;
 
 use crate::image_converter::*;
 use crate::tests::test_utils::get_test_resource_dir;
-use crate::tests::test_utils::TEST_IMAGE_1_NAME;
+use crate::tests::test_utils::TEST_IMAGE_PNG;
 
 #[test]
 fn test_convert_to_webp_creates_webp_of_original_in_thumbnails_directory(
 ) -> Result<(), Box<dyn error::Error>> {
-	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_1_NAME);
+	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_PNG);
 
 	let tmp_dir = TempDir::with_prefix("trokk-test-tmp-")?;
-	let tmp_img_path = tmp_dir.path().join(TEST_IMAGE_1_NAME);
+	let tmp_img_path = tmp_dir.path().join(TEST_IMAGE_PNG);
 
 	fs::copy(&input_image_path, &tmp_img_path)?;
 
@@ -33,10 +33,10 @@ fn test_convert_to_webp_creates_webp_of_original_in_thumbnails_directory(
 #[test]
 fn test_check_if_webp_exists_returns_false_if_webp_doesnt_exist(
 ) -> Result<(), Box<dyn error::Error>> {
-	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_1_NAME);
+	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_PNG);
 
 	let tmp_dir = TempDir::with_prefix("trokk-test-tmp-")?;
-	let tmp_img_path = tmp_dir.path().join(TEST_IMAGE_1_NAME);
+	let tmp_img_path = tmp_dir.path().join(TEST_IMAGE_PNG);
 
 	fs::copy(&input_image_path, &tmp_img_path)?;
 
@@ -48,10 +48,10 @@ fn test_check_if_webp_exists_returns_false_if_webp_doesnt_exist(
 
 #[test]
 fn test_check_if_webp_exists_returns_true_if_webp_exists() -> Result<(), Box<dyn error::Error>> {
-	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_1_NAME);
+	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_PNG);
 
 	let tmp_dir = TempDir::with_prefix("trokk-test-tmp-")?;
-	let tmp_img_path = tmp_dir.path().join(TEST_IMAGE_1_NAME);
+	let tmp_img_path = tmp_dir.path().join(TEST_IMAGE_PNG);
 
 	fs::copy(&input_image_path, &tmp_img_path)?;
 
