@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [self-hosted] # This is ubuntu, waiting on a windows runner
+        platform: [[self-hosted, Linux], [self-hosted, Windows]]
     runs-on: ${{ matrix.platform }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
