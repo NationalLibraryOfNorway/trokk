@@ -4,7 +4,8 @@
 use std::ffi::OsString;
 
 use gethostname::gethostname;
-use tauri::Manager;
+// TODO dev vs build
+//use tauri::Manager;
 use tauri::Window;
 
 use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
@@ -87,11 +88,12 @@ fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
 		.plugin(tauri_plugin_fs_watch::init())
-		.setup(|app| {
+		// TODO dev vs build
+		/*		.setup(|app| {
 			#[cfg(debug_assertions)]
 			app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
 			Ok(())
-		})
+		})*/
 		.invoke_handler(tauri::generate_handler![
 			get_hostname,
 			get_required_env_variables,
