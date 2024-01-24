@@ -7,6 +7,7 @@
     import {v4} from "uuid";
     import {path} from "@tauri-apps/api";
     import {onMount} from "svelte";
+    import {isLoggedIn} from "./Auth.svelte";
 
     export let currentPath: string
 
@@ -38,9 +39,7 @@
 
     async function postRegistration(scanner: string): Promise<void> {
         const auth = await settings.authResponse
-
-        // TODO: Actually log in instead
-        if (!auth) return Promise.reject("Not logged in")
+        if (!auth || !await isLoggedIn()) return Promise.reject("Not logged in")
 
         const id = v4().toString()
         const newPath = await copyToDoneDir(id)
