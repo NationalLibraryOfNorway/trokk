@@ -3,14 +3,15 @@ import {MaterialType} from "../lib/model/registration-enums";
 import {Response} from "@tauri-apps/api/http";
 import {FileTree} from "../lib/model/file-tree";
 import type {FileEntry} from "@tauri-apps/api/fs";
+import type {Event} from "@tauri-apps/api/event";
 
 
 const tokenResponseMock: TokenResponse = {
     accessToken: "",
-    expiresIn: 0,
+    expiresIn: 5 * 60, // 5 minutes
     idToken: "",
     notBeforePolicy: 0,
-    refreshExpiresIn: 0,
+    refreshExpiresIn: 60 * 30, // 30 minutes
     refreshToken: "",
     scope: "",
     sessionState: "",
@@ -18,8 +19,8 @@ const tokenResponseMock: TokenResponse = {
 }
 
 const expireInfoMock: ExpireInfo = {
-    expiresAt: 0,
-    refreshExpiresAt: 0
+    expiresAt: new Date().getTime() + (1000 * 60 * 5), // Add 5 minutes
+    refreshExpiresAt: new Date().getTime() + (1000 * 60 * 30) // Add 30 minutes
 }
 
 const userInfoMock: UserInfo = {
@@ -77,3 +78,10 @@ export const fileEntryListMock: FileEntry[] = [
     {path: 'e', name: 'e'},
     {path: 'b', name: 'b'}
 ]
+
+export const envVariablesMock: RequiredEnvVariables = {
+    oidcBaseUrl: 'oidcBaseUrl',
+    oidcClientId: 'oidcClientId',
+    oidcClientSecret: 'oidcClientSecret',
+    papiPath: 'papiPath'
+}
