@@ -18,6 +18,7 @@
         "open": true
       },
       "fs": {
+        "exists": true,
         "readDir": true,
         "writeFile": true,
         "scope": [
