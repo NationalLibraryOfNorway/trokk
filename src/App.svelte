@@ -4,8 +4,7 @@
   import {onMount} from "svelte";
   import {documentDir} from "@tauri-apps/api/path";
   import {settings} from "./lib/util/settings";
-  import {canRefresh, isLoggedIn, login, refreshAccessToken, setRefreshAccessTokenInterval} from "./lib/Auth.svelte";
-  import {appWindow} from "@tauri-apps/api/window";
+  import Auth from "./lib/Auth.svelte";
 
 
   let scannerPath: string;
@@ -35,18 +34,6 @@
         donePath = defaultPath;
       }
     })
-
-    // Always refresh token on startup, if it exists and is not expired
-    if(await isLoggedIn() || await canRefresh()) {
-      await refreshAccessToken()
-      await setRefreshAccessTokenInterval()
-      authResponse = await settings.authResponse
-    } else {
-      await login()
-      await appWindow.listen('token_exchanged', (event) => {
-        authResponse = event.payload as AuthenticationResponse
-      });
-    }
   })
 
   function handleNewPaths(event: CustomEvent) {
@@ -66,6 +53,7 @@
 </script>
 
 <main class="mainContainer">
+  <Auth bind:authResponse></Auth>
   {#if authResponse}
     <div class="topBar">
       <h1>Trøkk</h1>

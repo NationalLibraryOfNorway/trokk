@@ -1,9 +1,19 @@
-<script lang="ts" context="module">
-    import {invoke} from "@tauri-apps/api";
-    import {appWindow, WebviewWindow} from "@tauri-apps/api/window";
-    import {settings} from "./util/settings";
+<script lang="ts">
+    import {onMount} from "svelte";
 
-    export async function login(): Promise<string | void> {
+    export let authResponse: AuthenticationResponse | null;
+
+    onMount(async () => {
+        if(await isLoggedIn() || await canRefresh()) {
+            await refreshAccessToken()
+            await setRefreshAccessTokenInterval()
+            authResponse = await settings.authResponse
+        } else {
+            await login()
+        }
+    })
+
+    async function login(): Promise<string | void> {
         const envVars = await getEnvVariables()
         if (!envVars) throw new Error("Env variables not set")
 
@@ -13,12 +23,19 @@
                 title: "NBAuth innlogging"
             })
             appWindow.listen('token_exchanged', (event) => {
-                settings.authResponse = event.payload as AuthenticationResponse
-                setRefreshAccessTokenInterval()
+                authResponse = event.payload as AuthenticationResponse
+                settings.authResponse = authResponse
+                setRefreshAccessTokenInterval(authResponse)
                 webview.close()
             });
         });
     }
+</script>
+
+<script lang="ts" context="module">
+    import {invoke} from "@tauri-apps/api";
+    import {appWindow, WebviewWindow} from "@tauri-apps/api/window";
+    import {settings} from "./util/settings";
 
     export async function refreshAccessToken(): Promise<AuthenticationResponse | void> {
         const authResponse = await settings.authResponse
@@ -33,9 +50,11 @@
         }
     }
 
-    export async function setRefreshAccessTokenInterval(): Promise<void> {
-        const authResponse = await settings.authResponse
-        if (!authResponse) throw new Error("User not logged in")
+    export async function setRefreshAccessTokenInterval(authRes?: AuthenticationResponse): Promise<void> {
+        // Sending auth response to this method is recommended.
+        // Saving the response in store is async, can't be awaited and is slower than the regular login
+        const authResponse = authRes ?? await settings.authResponse
+        if (!authResponse) throw new Error("Cannot set refresh token interval: User not logged in")
 
         setInterval(async () => {
                 await refreshAccessToken()
