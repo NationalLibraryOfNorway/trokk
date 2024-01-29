@@ -13,8 +13,8 @@
                 title: "NBAuth innlogging"
             })
             appWindow.listen('token_exchanged', (event) => {
-                setRefreshAccessTokenInterval()
                 settings.authResponse = event.payload as AuthenticationResponse
+                setRefreshAccessTokenInterval()
                 webview.close()
             });
         });
@@ -27,7 +27,6 @@
             return invoke<AuthenticationResponse>("refresh_token", {refreshToken: authResponse.tokenResponse.refreshToken})
                 .then((res) => {
                     settings.authResponse = res
-                    setRefreshAccessTokenInterval()
                 })
         } else {
             throw new Error("Refresh token expired")
