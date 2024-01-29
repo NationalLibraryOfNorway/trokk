@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {readDir} from '@tauri-apps/api/fs'
+    import {exists, readDir} from '@tauri-apps/api/fs'
     import {beforeUpdate, onDestroy, onMount} from 'svelte';
     import {convertFileSrc} from "@tauri-apps/api/tauri";
     import RegistrationSchema from "./RegistrationSchema.svelte";
@@ -15,22 +15,14 @@
 
     export let scannerPath: string
 
-    let currentPath: string = scannerPath
+    let currentPath: string | undefined = undefined
     let readDirFailed: string | undefined = undefined
     let fileTree: FileTreeType[] = []
     let viewFiles: ViewFile[] = []
     let stopWatching: UnlistenFn | void | null = null
     const supportedFileTypes = ["jpeg", "jpg", "png", "gif", "webp"]
 
-    $: readDir(scannerPath, {recursive: true})
-        .then(newFiles => {
-            fileTree = FileTreeType.fromFileEntry(newFiles)
-            readDirFailed = undefined
-        }).catch(err => {
-            console.error(err)
-            readDirFailed = err
-            fileTree = []
-        })
+    $: updateBaseFilePath(scannerPath)
 
     onMount(async () => {
         fileTree = await getFileEntries()
@@ -53,6 +45,24 @@
         unwatchFiles()
     })
 
+    async function updateBaseFilePath(path: string) {
+        await unwatchFiles()
+        await readDir(path, {recursive: true})
+            .then(async newFiles => {
+                viewFiles = []
+                currentPath = undefined
+                fileTree = FileTreeType.fromFileEntry(newFiles)
+                await getFileEntries()
+                await watchFiles()
+                readDirFailed = undefined
+            })
+            .catch(err => {
+                console.error(err)
+                readDirFailed = err
+                fileTree = []
+            })
+    }
+
     function sortViewFiles(): ViewFile[] {
         return viewFiles.sort((a, b) => {
             if (a.fileTree.name < b.fileTree.name) return -1
@@ -62,16 +72,17 @@
     }
 
     async function watchFiles() {
-        if (stopWatching) {
-            stopWatching = null
-        }
+        await unwatchFiles()
         stopWatching = await watch(
             scannerPath,
             async () => {
+                if (currentPath && !await exists(currentPath)) currentPath = undefined
                 fileTree = await getFileEntries()
                 const currentEntry: FileTreeType | undefined = findCurrentDir(fileTree)
                 if (currentEntry) {
                     changeViewDirectory(currentEntry)
+                } else {
+                    viewFiles = []
                 }
             },
             {recursive: true}
@@ -82,18 +93,20 @@
 
     async function unwatchFiles() {
         if (stopWatching) {
+            stopWatching()
             stopWatching = null
         }
     }
 
     async function getFileEntries(): Promise<FileTreeType[]> {
         return await readDir(scannerPath, {recursive: true})
-            .then(newFiles => {
+            .then(async newFiles => {
                 const newFileEntries = FileTreeType.fromFileEntry(newFiles)
                 let firstDir = newFileEntries.find((file: FileTreeType): boolean => {
                     return !!file.children;
                 })
-                if (firstDir?.children) {
+                if (currentPath) currentPath = await exists(currentPath) ? currentPath : firstDir?.path ?? undefined
+                if (firstDir?.children && firstDir.path === currentPath) {
                     firstDir.children.forEach((file: FileTreeType) => {
                         viewFiles.push({
                             fileTree: file,
@@ -114,7 +127,7 @@
 
     function findCurrentDir(fileEntries: FileTreeType[]): FileTreeType | undefined {
         for (const fileEntry of fileEntries) {
-            if (fileEntry.path === currentPath)  return fileEntry
+            if (fileEntry.path === currentPath) return fileEntry
             else if (fileEntry.children) {
                 const result = findCurrentDir(fileEntry.children)
                 if (result) return result
@@ -192,24 +205,31 @@
         </div>
         <div id="middle-pane" class="pane">
             <div class="images">
-                {#each viewFiles as viewFile}
-                    {#if viewFile.fileTree.children}
-                        <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
-                            <Folder size="96"/>
-                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                        </button>
-                    {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
-                        <div>
-                            <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
-                            <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
-                        </div>
-                    {:else}
-                        <div class="file">
-                            <File size="96" color="gray"/>
-                            <i>{viewFile.imageSource.split('%2F').pop()}</i>
-                        </div>
-                    {/if}
-                {/each}
+                {#if viewFiles.length !== 0}
+                    {#each viewFiles as viewFile}
+                        {#if viewFile.fileTree.children}
+                            <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
+                                <Folder size="96"/>
+                                <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                            </button>
+                        {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
+                            <div>
+                                <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
+                                <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
+                            </div>
+                        {:else}
+                            <div class="file">
+                                <File size="96" color="gray"/>
+                                <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                            </div>
+                        {/if}
+                    {/each}
+                {:else}
+                    <p class="dir-help-text">
+                        Velg en mappe i listen til venstre. <br>
+                        Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
+                    </p>
+                {/if}
             </div>
         </div>
         <div id="right-pane" class="pane sticky-top">
@@ -311,6 +331,12 @@
 
   .pane {
     overflow: auto;
+  }
+
+  .dir-help-text {
+    margin: 2em;
+    font-weight: bold;
+    word-break: break-word;
   }
 
 </style>
