@@ -1,12 +1,6 @@
 import {beforeEach, describe, expect, test, vi} from "vitest";
 import {render, type RenderResult} from "@testing-library/svelte";
-import Auth, {
-    canRefresh,
-    isLoggedIn,
-    login,
-    refreshAccessToken,
-    setRefreshAccessTokenInterval
-} from "../lib/Auth.svelte";
+import Auth, {canRefresh, isLoggedIn, refreshAccessToken, setRefreshAccessTokenInterval} from "../lib/Auth.svelte";
 import {mockIPC} from "@tauri-apps/api/mocks";
 import {settings} from "../lib/util/settings";
 import {authenticationResponseMock, envVariablesMock} from "./mock-data.mock";
@@ -28,20 +22,12 @@ describe('Auth.svelte', () => {
             }
         })
 
-        container = render(Auth)
+        container = render(Auth, {props: {authResponse: null}})
     })
 
     test('component mounts', () => {
         expect(container).toBeTruthy()
         expect(container.component).toBeTruthy()
-    })
-
-    test('login should invoke log_in', async () => {
-        const logInSpy = vi.spyOn(window, '__TAURI_IPC__')
-        expect(logInSpy).not.toHaveBeenCalled()
-
-        await login()
-        expect(logInSpy).toHaveBeenCalledWith(expect.objectContaining({cmd: 'log_in'}))
     })
 
     test('refresh should invoke refresh_token', async () => {
