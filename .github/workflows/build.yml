@@ -58,7 +58,7 @@ jobs:
 
       - name: Rust; Install Rust stable dtolnay
         if: true
-        uses: dtolnay/rust-toolchain@master
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Rust; Install Rust stable actions rust lang
         if: false
