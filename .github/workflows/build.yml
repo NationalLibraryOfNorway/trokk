@@ -30,6 +30,11 @@ jobs:
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
     steps:
+      - name: Test bash
+        run: |
+          echo "Hello World"
+          echo "Hello World" > test.txt
+          cat test.txt
       - name: Import Secrets
         id: import-secrets
         uses: hashicorp/vault-action@v2
