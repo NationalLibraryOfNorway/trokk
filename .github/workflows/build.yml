@@ -41,6 +41,7 @@ jobs:
 
       - name: Try curl wix
         if: ${{ matrix.windows }}
+        shell: bash
         run: |
           curl -LJO https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip
           rm wix311-binaries.zip
