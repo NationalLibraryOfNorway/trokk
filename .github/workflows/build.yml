@@ -34,6 +34,8 @@ jobs:
         shell: bash
         run: |
           echo "Hello World"
+          echo $HTTP_PROXY
+          echo $HTTPS_PROXY
           echo "Hello World" > test.txt
           cat test.txt
 
