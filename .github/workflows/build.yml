@@ -33,9 +33,12 @@ jobs:
       - name: Test bash
         shell: bash
         run: |
-          echo "Hello World"
+          echo "uppercase"
           echo $HTTP_PROXY
           echo $HTTPS_PROXY
+          echo "lowercase"
+          echo $http_proxy
+          echo $https_proxy
           echo "Hello World" > test.txt
           cat test.txt
 
