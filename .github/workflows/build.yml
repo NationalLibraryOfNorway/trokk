@@ -129,6 +129,9 @@ jobs:
         uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
         env:
+          HTTP_PROXY: $https_proxy
+          HTTPS_PROXY: $https_proxy
+          http_proxy: $https_proxy
           PAPI_PATH: ${{ steps.import-secrets.outputs.TROKK_PAPI_PATH }}
           OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
           OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
