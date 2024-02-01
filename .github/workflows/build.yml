@@ -140,7 +140,7 @@ jobs:
 
       - name: Tauri build official
         uses: tauri-apps/tauri-action@v0
-        id: tauri_build
+        id: tauri_build_off
         env:
           HTTP_PROXY: $http_proxy
           HTTPS_PROXY: $https_proxy
@@ -155,8 +155,8 @@ jobs:
       - name: Upload to Artifactory
         working-directory: ./src-tauri/target/release/bundle
         run: |
-          echo '${{ steps.tauri_build.outputs.artifactPaths }}'
-          echo '${{ steps.tauri_build.outputs.artifactPaths }}' |
+          echo '${{ steps.tauri_build_off.outputs.artifactPaths }}'
+          echo '${{ steps.tauri_build_off.outputs.artifactPaths }}' |
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
           xargs -I % jf rt u --url ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }} --user ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }} --password ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
