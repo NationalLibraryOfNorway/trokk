@@ -42,13 +42,6 @@ jobs:
           echo "Hello World" > test.txt
           cat test.txt
 
-      - name: Try curl wix
-        if: ${{ matrix.windows }}
-        shell: bash
-        run: |
-          curl -LJO https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip
-          rm wix311-binaries.zip
-
       - name: Import Secrets
         id: import-secrets
         uses: hashicorp/vault-action@v2
@@ -62,10 +55,9 @@ jobs:
             kv/team/text/data/trokk-stage * | TROKK_
 
       - name: Git fix
-        if: ${{ matrix.windows }}
+        if: ${{ matrix.windows }} # TODO test false again
         run: |
           git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
-          git config --global core.usebuiltinfsmonitor false
 
       - uses: actions/checkout@v4
 
@@ -154,6 +146,7 @@ jobs:
         uses: jfrog/setup-jfrog-cli@v3
 
       - name: Upload to Artifactory
+        shell: bash
         working-directory: ./src-tauri/target/release/bundle
         run: |
           echo '${{ steps.tauri_build_off.outputs.artifactPaths }}'
