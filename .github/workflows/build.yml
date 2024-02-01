@@ -53,7 +53,7 @@ jobs:
         if: ${{ matrix.windows }}
         run: |
           git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
-          git config --system core.usebuiltinfsmonitor false
+          git config --global core.usebuiltinfsmonitor false
 
       - uses: actions/checkout@v4
 
