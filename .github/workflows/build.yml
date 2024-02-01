@@ -51,6 +51,7 @@ jobs:
 
       - name: Import Secrets
         id: import-secrets
+        if: false
         uses: hashicorp/vault-action@v2
         with:
           url: ${{ secrets.VAULT_URL }}
@@ -126,6 +127,7 @@ jobs:
         run: npm run test
 
       - name: Tauri build
+        if: false
         uses: JonasKruckenberg/tauri-build@v1
         id: tauri_build
         env:
@@ -136,13 +138,25 @@ jobs:
           OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
           OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
 
+      - name: Tauri build official
+        uses: tauri-apps/tauri-action@v0
+        id: tauri_build
+        env:
+          HTTP_PROXY: $http_proxy
+          HTTPS_PROXY: $https_proxy
+          PAPI_PATH: placeholder
+          OIDC_BASE_URL: placeholder
+          OIDC_CLIENT_ID: placeholder
+          OIDC_CLIENT_SECRET: placeholder
+
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
 
       - name: Upload to Artifactory
         working-directory: ./src-tauri/target/release/bundle
         run: |
-          echo '${{ steps.tauri_build.outputs.artifacts }}' |
+          echo '${{ steps.tauri_build.outputs.artifactPaths }}'
+          echo '${{ steps.tauri_build.outputs.artifactPaths }}' |
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
           xargs -I % jf rt u --url ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }} --user ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }} --password ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
