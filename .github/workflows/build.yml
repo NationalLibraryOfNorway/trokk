@@ -50,7 +50,10 @@ jobs:
             kv/team/text/data/trokk-stage * | TROKK_
 
       - name: Git fix
-        run: git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
+        if: ${{ matrix.windows }}
+        run: |
+          git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
+          git config --system core.usebuiltinfsmonitor false
 
       - uses: actions/checkout@v4
 
