@@ -145,8 +145,6 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         id: tauri_build_off
         env:
-          HTTP_PROXY: $http_proxy
-          HTTPS_PROXY: $https_proxy
           PAPI_PATH: placeholder
           OIDC_BASE_URL: placeholder
           OIDC_CLIENT_ID: placeholder
