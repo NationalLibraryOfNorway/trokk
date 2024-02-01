@@ -37,6 +37,12 @@ jobs:
           echo "Hello World" > test.txt
           cat test.txt
 
+      - name: Try curl wix
+        if: ${{ matrix.windows }}
+        run: |
+          curl -LJO https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip
+          rm wix311-binaries.zip
+
       - name: Import Secrets
         id: import-secrets
         uses: hashicorp/vault-action@v2
