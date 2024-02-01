@@ -49,6 +49,9 @@ jobs:
             kv/team/text/data/artifactory * | ART_;
             kv/team/text/data/trokk-stage * | TROKK_
 
+      - name: Git fix
+        run: git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
+
       - uses: actions/checkout@v4
 
       - name: Install dependencies (ubuntu only)
