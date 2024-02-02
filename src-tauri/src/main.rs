@@ -4,6 +4,7 @@
 use std::ffi::OsString;
 
 use gethostname::gethostname;
+#[cfg(debug_assertions)]
 use tauri::Manager;
 use tauri::Window;
 
@@ -87,9 +88,9 @@ fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
 		.plugin(tauri_plugin_fs_watch::init())
-		.setup(|app| {
+		.setup(|_app| {
 			#[cfg(debug_assertions)]
-			app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
+			_app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
 			Ok(())
 		})
 		.invoke_handler(tauri::generate_handler![
