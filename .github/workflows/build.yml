@@ -30,18 +30,6 @@ jobs:
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
     steps:
-      - name: Test bash
-        shell: bash
-        run: |
-          echo "uppercase"
-          echo $HTTP_PROXY
-          echo $HTTPS_PROXY
-          echo "lowercase"
-          echo $http_proxy
-          echo $https_proxy
-          echo "Hello World" > test.txt
-          cat test.txt
-
       - name: Import Secrets
         id: import-secrets
         uses: hashicorp/vault-action@v2
@@ -54,14 +42,14 @@ jobs:
             kv/team/text/data/artifactory * | ART_;
             kv/team/text/data/trokk-stage * | TROKK_
 
-      - name: Git fix
-        if: ${{ matrix.windows }} # TODO test false again
+      - name: Windows; Git fix
+        if: ${{ matrix.windows }}
         run: |
           git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
 
       - uses: actions/checkout@v4
 
-      - name: Install dependencies (ubuntu only)
+      - name: Ubuntu; Install dependencies
         if: ${{ matrix.linux }}
         run: |
           sudo apt-get update
@@ -111,7 +99,7 @@ jobs:
       - name: NPM; Install frontend dependencies
         run: npm ci
 
-      - name: NPM; Install windows dependency
+      - name: Windows NPM; Install windows dependency
         if: ${{ matrix.windows }}
         run: npm install @tauri-apps/cli-win32-x64-msvc@2.0.0-alpha.21
 
@@ -122,25 +110,13 @@ jobs:
         run: npm run test
 
       - name: Tauri build
-        if: false
-        uses: JonasKruckenberg/tauri-build@v1
+        uses: tauri-apps/tauri-action@v0
         id: tauri_build
         env:
-          HTTP_PROXY: $http_proxy
-          HTTPS_PROXY: $https_proxy
           PAPI_PATH: ${{ steps.import-secrets.outputs.TROKK_PAPI_PATH }}
           OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
           OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
           OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
-
-      - name: Tauri build official
-        uses: tauri-apps/tauri-action@v0
-        id: tauri_build_off
-        env:
-          PAPI_PATH: placeholder
-          OIDC_BASE_URL: placeholder
-          OIDC_CLIENT_ID: placeholder
-          OIDC_CLIENT_SECRET: placeholder
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
@@ -149,8 +125,7 @@ jobs:
         shell: bash
         working-directory: ./src-tauri/target/release/bundle
         run: |
-          pwd
-          echo '${{ steps.tauri_build_off.outputs.artifactPaths }}' |
+          echo '${{ steps.tauri_build.outputs.artifactPaths }}' |
           sed -e 's#\\#/#g' -e 's#//#/#g' |
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
