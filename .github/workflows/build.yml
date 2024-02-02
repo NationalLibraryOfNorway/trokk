@@ -63,11 +63,15 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
 
-      - name: Rust; Rust cache
-        uses: swatinem/rust-cache@v2
+      - uses: actions/cache@v3
         with:
-          cache-all-crates: true
-          workspaces: './src-tauri -> target'
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Rust; Install cargo-audit
         run: cargo install cargo-audit
