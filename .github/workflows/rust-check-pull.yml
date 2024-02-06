@@ -8,6 +8,11 @@ jobs:
     defaults:
       run:
         working-directory: ./src-tauri
+    env:
+      PAPI_PATH: "placeholder"
+      OIDC_BASE_URL: "placeholder"
+      OIDC_CLIENT_ID: "placeholder"
+      OIDC_CLIENT_SECRET: "placeholder"
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies (ubuntu only)
@@ -25,9 +30,6 @@ jobs:
       - name: Run clippy
         if: always()
         run: cargo clippy --all -- -D warnings
-        env:
-          PAPI_PATH: "placeholder"
-          OIDC_BASE_URL: "placeholder"
-          OIDC_CLIENT_ID: "placeholder"
-          OIDC_CLIENT_SECRET: "placeholder"
-        # TODO run backend tests
+      - name: Run tests
+        if: always()
+        run: cargo test --all
