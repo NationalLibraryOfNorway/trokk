@@ -25,9 +25,9 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	oidc_base_url: env!("OIDC_BASE_URL"),
 	oidc_client_id: env!("OIDC_CLIENT_ID"),
 	oidc_client_secret: env!("OIDC_CLIENT_SECRET"),
-	oidc_papi_base_url: env!("OIDC_PAPI_BASE_URL"),
-	oidc_papi_client_id: env!("OIDC_PAPI_CLIENT_ID"),
-	oidc_papi_client_secret: env!("OIDC_PAPI_CLIENT_SECRET"),
+	oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL"),
+	oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID"),
+	oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET"),
 };
 
 #[tauri::command]

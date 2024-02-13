@@ -22,12 +22,15 @@ Appen er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så l
 
 Sett disse environment variablene for å få appen til å fungere:
 
-| Variabel             | Beskrivelse                                                |
-|----------------------|------------------------------------------------------------|
-| `PAPI_PATH`          | URL til API'et vi sender registreringen til.               |
-| `OIDC_BASE_URL`      | URL til OIDC server (inkludert "protocol/openid-connect"). |
-| `OIDC_CLIENT_ID`     | Client ID til OIDC server.                                 |
-| `OIDC_CLIENT_SECRET` | Client secret til OIDC server.                             |
+| Variabel                   | Beskrivelse                                                                          |
+|----------------------------|--------------------------------------------------------------------------------------|
+| `PAPI_PATH`                | URL til API'et vi sender registreringen til.                                         |
+| `OIDC_BASE_URL`            | URL til OIDC server (nbauth-realm, inkludert "protocol/openid-connect").             |
+| `OIDC_CLIENT_ID`           | Client ID til OIDC server (nbauth-realm)                                             |
+| `OIDC_CLIENT_SECRET`       | Client secret til OIDC server (nbauth-realm)                                         |
+| `OIDC_TEKST_BASE_URL`      | URL til OIDC server for papi auth (tekst-realm, inkludert "protocol/openid-connect") |
+| `OIDC_TEKST_CLIENT_ID`     | Client ID til OIDC server (tekst-realm)                                              |
+| `OIDC_TEKST_CLIENT_SECRET` | Client secret til OIDC server (tekst-realm)                                          |
 
 
 ## Vedlikehold

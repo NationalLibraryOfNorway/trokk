@@ -70,7 +70,7 @@ pub struct RequiredEnvironmentVariables {
 	pub(crate) oidc_base_url: &'static str,
 	pub(crate) oidc_client_id: &'static str,
 	pub(crate) oidc_client_secret: &'static str,
-	pub(crate) oidc_papi_base_url: &'static str,
-	pub(crate) oidc_papi_client_id: &'static str,
-	pub(crate) oidc_papi_client_secret: &'static str,
+	pub(crate) oidc_tekst_base_url: &'static str,
+	pub(crate) oidc_tekst_client_id: &'static str,
+	pub(crate) oidc_tekst_client_secret: &'static str,
 }
