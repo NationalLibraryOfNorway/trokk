@@ -93,6 +93,9 @@ jobs:
           OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
           OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
           OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
+          OIDC_PAPI_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_PAPI_BASE_URL }}
+          OIDC_PAPI_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_PAPI_CLIENT_ID }}
+          OIDC_PAPI_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_PAPI_CLIENT_SECRET }}
 
         # TODO run backend tests when they exist
 
@@ -123,6 +126,9 @@ jobs:
           OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
           OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
           OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
+          OIDC_PAPI_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_PAPI_BASE_URL }}
+          OIDC_PAPI_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_PAPI_CLIENT_ID }}
+          OIDC_PAPI_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_PAPI_CLIENT_SECRET }}
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
