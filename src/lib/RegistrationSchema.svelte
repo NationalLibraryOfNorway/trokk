@@ -56,10 +56,12 @@
                 return Promise.reject(error)
             })
 
-        return fetch(`${papiPath}/item/`,
+        const accessToken = await invoke("get_papi_access_token")
+
+        return fetch(`${papiPath}/item`,
             {
                 method: 'POST',
-                headers: {"Authorization" : "Bearer " + auth.tokenResponse.accessToken},
+                headers: {"Authorization" : "Bearer " + accessToken},
                 body: Body.json(new TextInputDto(
                     materialType ?? "",
                     fraktur ? "FRAKTUR" : "ANTIQUA",

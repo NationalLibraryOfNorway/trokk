@@ -7,7 +7,7 @@ use tauri::Window;
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
-use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo};
+use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, TokenResponseWithoutRefresh, UserInfo};
 use crate::ENVIRONMENT_VARIABLES;
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
@@ -57,6 +57,29 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 		refresh_token
 	);
 	create_token(client, body).await
+}
+
+pub(crate) async fn get_access_token_for_papi() -> String {
+	let client = Client::new();
+	let body = format!(
+		"client_id={}&client_secret={}&grant_type=client_credentials",
+		ENVIRONMENT_VARIABLES.oidc_papi_client_id,
+		ENVIRONMENT_VARIABLES.oidc_papi_client_secret
+	);
+
+	let res = client
+		.post(format!(
+			"{}{}",
+			ENVIRONMENT_VARIABLES.oidc_papi_base_url, "/token"
+		))
+		.header("Content-Type", "application/x-www-form-urlencoded")
+		.body(body)
+		.send()
+		.await;
+
+	let token_response: TokenResponseWithoutRefresh =
+		serde_json::from_str(&res.unwrap().text().await.unwrap()).unwrap();
+	token_response.access_token
 }
 
 async fn create_token(client: Client, body: String) -> AuthenticationResponse {
