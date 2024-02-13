@@ -14,18 +14,6 @@ describe('App.svelte', () => {
         vi.spyOn(settings, 'donePath', 'get').mockReturnValue(Promise.resolve('/done'))
         vi.spyOn(settings, 'scannerPath', 'get').mockReturnValue(Promise.resolve('/scanner'))
 
-        mockIPC((cmd) => {
-            switch (cmd) {
-                case 'get_required_env_variables': return Promise.resolve({papiPath: 'test.papi'})
-                case 'refresh_token': return Promise.resolve(authenticationResponseMock)
-                case 'log_in': return Promise.resolve(9999)
-                default: {
-                    console.log(`unknown cmd: ${cmd}`)
-                    return ''
-                }
-            }
-        })
-
         mockWindows('main', 'Login')
         container = render(App)
     })
