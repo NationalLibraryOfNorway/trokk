@@ -92,7 +92,8 @@ async fn pick_directory(start_path: String) -> Result<String, String> {
 
 #[tauri::command]
 async fn get_papi_access_token() -> Result<String, String> {
-	auth::get_access_token_for_papi().await
+	auth::get_access_token_for_papi()
+		.await
 		.map_err(|e| format!("Could not get token for Papi. {e:?}"))
 }
 

@@ -5,13 +5,13 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use reqwest::Client;
 use tauri::Window;
-use tauri_plugin_oauth::{OauthConfig, start_with_config};
+use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
-use crate::ENVIRONMENT_VARIABLES;
 use crate::model::{
 	AuthenticationResponse, ExpireInfo, TokenResponse, TokenResponseWithoutRefresh, UserInfo,
 };
+use crate::ENVIRONMENT_VARIABLES;
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
 	start_with_config(
@@ -79,8 +79,7 @@ pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>
 		.send()
 		.await;
 
-	let token_response: TokenResponseWithoutRefresh =
-		serde_json::from_str(&res?.text().await?)?;
+	let token_response: TokenResponseWithoutRefresh = serde_json::from_str(&res?.text().await?)?;
 	Ok(token_response.access_token)
 }
 
