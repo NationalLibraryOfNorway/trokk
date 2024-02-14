@@ -21,6 +21,7 @@ describe('RegistrationSchema.svelte', () => {
                 case 'get_total_size_of_files_in_folder': return Promise.resolve(BigInt(123))
                 case 'copy_dir': return Promise.resolve('/scanner/123abc')
                 case 'delete_dir': return Promise.resolve()
+                case 'get_papi_access_token': return Promise.resolve('token')
                 case 'tauri': {
                     if (args['__tauriModule'] === 'Http') { // fetch requests has cmd=tauri and args.__tauriModule=Http
                         return Promise.resolve(textInputDtoResponseMockNewspaper)
@@ -100,6 +101,16 @@ describe('RegistrationSchema.svelte', () => {
 
         await new Promise(resolve => setTimeout(resolve, 0))
         expect(hostNameSpy).toHaveBeenCalledWith(expect.objectContaining({cmd: 'get_total_size_of_files_in_folder'}))
+    })
+
+    test('registration should get access token for PAPI', async () => {
+        const tokenSpy = vi.spyOn(window, '__TAURI_IPC__')
+        expect(tokenSpy).not.toHaveBeenCalled()
+
+        container.getByText('TRØKK!').click()
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        expect(tokenSpy).toHaveBeenCalledWith(expect.objectContaining({cmd: 'get_papi_access_token'}))
     })
 
     test('registration should post to papi with correct params', async () => {
