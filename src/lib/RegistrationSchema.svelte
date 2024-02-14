@@ -57,6 +57,11 @@
             })
 
         const accessToken = await invoke("get_papi_access_token")
+            .catch(error => {
+                deleteDir(newPath!)
+                handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.')
+                return Promise.reject(error)
+            })
 
         return fetch(`${papiPath}/item`,
             {
