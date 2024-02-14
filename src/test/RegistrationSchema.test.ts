@@ -191,6 +191,19 @@ describe('RegistrationSchema.svelte', () => {
         expect(res).toBeTruthy()
     })
 
+    test('registration should show error message if get token for papi failed', async () => {
+        mockIPC((cmd) => {
+            if (cmd === 'get_papi_access_token') return Promise.reject('token failed')
+            else return ''
+        })
+
+        container.getByText('TRØKK!').click()
+
+        await new Promise(resolve => setTimeout(resolve, 0))
+        const res = container.getByText('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen', {exact: false})
+        expect(res).toBeTruthy()
+    })
+
     test('registration should show error message if papi post failed', async () => {
         mockIPC((cmd) => {
             if (cmd === 'tauri') return Promise.reject('cannot post to papi')
