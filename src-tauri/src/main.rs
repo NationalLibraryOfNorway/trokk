@@ -25,6 +25,9 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	oidc_base_url: env!("OIDC_BASE_URL"),
 	oidc_client_id: env!("OIDC_CLIENT_ID"),
 	oidc_client_secret: env!("OIDC_CLIENT_SECRET"),
+	oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL"),
+	oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID"),
+	oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET"),
 };
 
 #[tauri::command]
@@ -87,6 +90,13 @@ async fn pick_directory(start_path: String) -> Result<String, String> {
 	file_utils::directory_picker(start_path).await
 }
 
+#[tauri::command]
+async fn get_papi_access_token() -> Result<String, String> {
+	auth::get_access_token_for_papi()
+		.await
+		.map_err(|e| format!("Could not get token for Papi. {e:?}"))
+}
+
 fn main() {
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
@@ -105,7 +115,8 @@ fn main() {
 			get_total_size_of_files_in_folder,
 			copy_dir,
 			delete_dir,
-			pick_directory
+			pick_directory,
+			get_papi_access_token
 		])
 		.system_tray(system_tray::get_system_tray())
 		.on_system_tray_event(system_tray::system_tray_event_handler())

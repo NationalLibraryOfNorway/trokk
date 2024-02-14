@@ -50,10 +50,27 @@ pub(crate) struct UserInfo {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+pub(crate) struct TokenResponseWithoutRefresh {
+	#[serde(rename(serialize = "accessToken", deserialize = "access_token"))]
+	pub(crate) access_token: String,
+	#[serde(rename(serialize = "expiresIn", deserialize = "expires_in"))]
+	pub(crate) expires_in: i32,
+	#[serde(rename(serialize = "tokenType", deserialize = "token_type"))]
+	token_type: String,
+	#[serde(rename(serialize = "notBeforePolicy", deserialize = "not-before-policy"))]
+	// NB! Special kebab-case from OIDC-server
+	not_before_policy: i32,
+	scope: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RequiredEnvironmentVariables {
 	pub(crate) papi_path: &'static str,
 	pub(crate) oidc_base_url: &'static str,
 	pub(crate) oidc_client_id: &'static str,
 	pub(crate) oidc_client_secret: &'static str,
+	pub(crate) oidc_tekst_base_url: &'static str,
+	pub(crate) oidc_tekst_client_id: &'static str,
+	pub(crate) oidc_tekst_client_secret: &'static str,
 }
