@@ -118,7 +118,7 @@ fn main() {
 			pick_directory,
 			get_papi_access_token
 		])
-		.system_tray(system_tray::get_system_tray())
+		.system_tray(system_tray::get_system_tray().with_tooltip("Trøkk"))
 		.on_system_tray_event(system_tray::system_tray_event_handler())
 		.on_window_event(system_tray::run_frontend_in_background_on_close())
 		.build(tauri::generate_context!())
