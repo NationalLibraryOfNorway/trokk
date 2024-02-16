@@ -123,10 +123,10 @@
     justify-content: center;
     align-items: center;
 
-    >button {
-      width: 200px;
-      height: 100px;
-      font-size: 30px;
-    }
+      >button {
+        width: 200px;
+        height: 100px;
+        font-size: 30px;
+      }
   }
 </style>

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { type EventCallback } from "@tauri-apps/api/event";
+    import { onMount } from "svelte";
+    import { type EventCallback } from "@tauri-apps/api/event";
 
-  export let authResponse: AuthenticationResponse | null;
+    export let authResponse: AuthenticationResponse | null;
     export let loggedOut: Boolean = false;
     let envVars: RequiredEnvVariables;
     let refreshIntervalId: number | undefined = undefined;
