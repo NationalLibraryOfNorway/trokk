@@ -13,7 +13,7 @@ pub fn get_system_tray() -> SystemTray {
 		.add_native_item(SystemTrayMenuItem::Separator)
 		.add_item(quit);
 
-	SystemTray::new().with_menu(tray_menu)
+	SystemTray::new().with_menu(tray_menu).with_tooltip("Trøkk")
 }
 
 pub fn system_tray_event_handler() -> fn(&AppHandle, SystemTrayEvent) {
