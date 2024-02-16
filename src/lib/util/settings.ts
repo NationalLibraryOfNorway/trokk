@@ -1,4 +1,4 @@
-import {Store} from "tauri-plugin-store-api";
+import { Store } from "tauri-plugin-store-api";
 
 class Settings {
     store: Store;
@@ -21,7 +21,7 @@ class Settings {
         return this.store.get<AuthenticationResponse>('authResponse');
     }
 
-    set authResponse(authResponse: AuthenticationResponse) {
+    set authResponse(authResponse: AuthenticationResponse | null) {
         this.store.set('authResponse', authResponse).then(async () => {
             await this.store.save();
         });

@@ -1,9 +1,9 @@
 <script lang="ts">
   import Files from "./lib/Files.svelte";
   import Settings from "./lib/Settings.svelte";
-  import {onMount} from "svelte";
-  import {documentDir} from "@tauri-apps/api/path";
-  import {settings} from "./lib/util/settings";
+  import { onMount } from "svelte";
+  import { documentDir } from "@tauri-apps/api/path";
+  import { settings } from "./lib/util/settings";
   import Auth from "./lib/Auth.svelte";
 
 
@@ -12,7 +12,9 @@
 
   let openSettings = false;
 
+  let authComponent: Auth;
   let authResponse: AuthenticationResponse | null;
+  let loggedOut: Boolean;
 
   onMount(async () => {
     settings.scannerPath.then(async (savedScanPath) => {
@@ -53,25 +55,32 @@
 </script>
 
 <main class="mainContainer">
-  <Auth bind:authResponse></Auth>
+  <Auth bind:this={authComponent} bind:authResponse bind:loggedOut></Auth>
   {#if authResponse}
     <div class="topBar">
       <h1>Trøkk</h1>
       <h2>Hei {authResponse.userInfo.givenName}!</h2>
-      <button on:click={() => openSettings = !openSettings} >Settings</button>
+      <div>
+        <button on:click={() => openSettings = !openSettings} >Instillinger</button>
+        <button on:click={() => authComponent.logout()} >Logg ut</button>
+      </div>
     </div>
     {#if openSettings}
       <Settings on:save={handleNewPaths}></Settings>
     {/if}
     <Files bind:scannerPath></Files>
+  {:else if loggedOut}
+      <div class="login">
+        <button on:click={() => authComponent.login()}>Logg in</button>
+      </div>
   {:else}
-      <h1>Trøkk</h1>
-      <p>Logger inn...</p>
+    <h1>Trøkk</h1>
+    <p>Logger inn...</p>
   {/if}
 </main>
 
 
-<style>
+<style lang="scss">
   .mainContainer {
     display: flex;
     flex-direction: column;
@@ -81,5 +90,19 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+  }
+
+  .login {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+      >button {
+        width: 200px;
+        height: 100px;
+        font-size: 30px;
+      }
   }
 </style>

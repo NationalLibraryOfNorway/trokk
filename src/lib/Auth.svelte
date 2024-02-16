@@ -1,34 +1,42 @@
 <script lang="ts">
-    import {onMount} from "svelte";
+  import { onMount } from "svelte";
 
-    export let authResponse: AuthenticationResponse | null;
+  export let authResponse: AuthenticationResponse | null;
+    export let loggedOut: Boolean = false;
 
     onMount(async () => {
-        if(await isLoggedIn() || await canRefresh()) {
-            await refreshAccessToken()
-            await setRefreshAccessTokenInterval()
-            authResponse = await settings.authResponse
+        if (await isLoggedIn() || await canRefresh()) {
+            await refreshAccessToken();
+            await setRefreshAccessTokenInterval();
+            authResponse = await settings.authResponse;
         } else {
-            await login()
+            await login();
         }
-    })
+    });
 
-    async function login(): Promise<string | void> {
-        const envVars = await getEnvVariables()
-        if (!envVars) throw new Error("Env variables not set")
+    export async function login(): Promise<string | void> {
+        const envVars = await getEnvVariables();
+        if (!envVars) throw new Error("Env variables not set");
 
-        return invoke('log_in').then((port) => {
-            const webview = new WebviewWindow('Login', {
+        return invoke("log_in").then((port) => {
+            loggedOut = false;
+            const webview = new WebviewWindow("Login", {
                 url: envVars.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVars.oidcClientId + "&redirect_uri=http://localhost:" + port,
                 title: "NBAuth innlogging"
-            })
-            appWindow.listen('token_exchanged', (event) => {
-                authResponse = event.payload as AuthenticationResponse
-                settings.authResponse = authResponse
-                setRefreshAccessTokenInterval(authResponse)
-                webview.close()
+            });
+            appWindow.listen("token_exchanged", (event) => {
+                authResponse = event.payload as AuthenticationResponse;
+                settings.authResponse = authResponse;
+                setRefreshAccessTokenInterval(authResponse);
+                webview.close();
             });
         });
+    }
+
+    export function logout(): void {
+        settings.authResponse = null;
+        authResponse = null;
+        loggedOut = true;
     }
 </script>
 
