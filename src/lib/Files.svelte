@@ -20,7 +20,7 @@
     let fileTree: FileTreeType[] = []
     let viewFiles: ViewFile[] = []
     let stopWatching: UnlistenFn | void | null = null
-    const pathSeparator: string = encodeURIComponent(path.sep);
+    const uriPathSeparator: string = encodeURIComponent(path.sep);
     const supportedFileTypes = ["jpeg", "jpg", "png", "gif", "webp"]
 
     $: updateBaseFilePath(scannerPath)
@@ -212,17 +212,17 @@
                         {#if viewFile.fileTree.children}
                             <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
                                 <Folder size="96"/>
-                                <i>{viewFile.imageSource.split(pathSeparator).pop()}</i>
+                                <i>{viewFile.imageSource.split(uriPathSeparator).pop()}</i>
                             </button>
                         {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
                             <div>
                                 <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
-                                <i>{formatFileNames(viewFile.imageSource.split(pathSeparator).pop())}</i>
+                                <i>{formatFileNames(viewFile.imageSource.split(uriPathSeparator).pop())}</i>
                             </div>
                         {:else}
                             <div class="file">
                                 <File size="96" color="gray"/>
-                                <i>{viewFile.imageSource.split(pathSeparator).pop()}</i>
+                                <i>{viewFile.imageSource.split(uriPathSeparator).pop()}</i>
                             </div>
                         {/if}
                     {/each}
