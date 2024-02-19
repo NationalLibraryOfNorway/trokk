@@ -3,7 +3,12 @@ module.exports = {
     "plugin:svelte/recommended",
   ],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint"],
+  parserOptions: {
+    project: "./tsconfig.json",
+    extraFileExtensions: [".svelte"],
+  },
+  // plugins: ["@typescript-eslint"],
+  ignorePatterns: ["*.cjs"],
   overrides: [
     {
       files: ["*.svelte"],
@@ -13,4 +18,11 @@ module.exports = {
       },
     },
   ],
+  rules: {
+//    indent: ["error", 4, {"SwitchCase": 1}],
+    "svelte/indent": ["error", {
+      "indent": 4,
+      "switchCase": 1,
+    }],
+  }
 };
