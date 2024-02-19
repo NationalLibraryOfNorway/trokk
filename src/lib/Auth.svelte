@@ -3,11 +3,12 @@
 
   export let authResponse: AuthenticationResponse | null;
     export let loggedOut: Boolean = false;
+    let refreshIntervalId: number | undefined = undefined;
 
     onMount(async () => {
         if (await isLoggedIn() || await canRefresh()) {
             await refreshAccessToken();
-            await setRefreshAccessTokenInterval();
+            refreshIntervalId = await setRefreshAccessTokenInterval();
             authResponse = await settings.authResponse;
         } else {
             await login();
@@ -27,7 +28,10 @@
             appWindow.listen("token_exchanged", (event) => {
                 authResponse = event.payload as AuthenticationResponse;
                 settings.authResponse = authResponse;
-                setRefreshAccessTokenInterval(authResponse);
+                setRefreshAccessTokenInterval(authResponse)
+                  .then((id) => {
+                    refreshIntervalId = id;
+                  });
                 webview.close();
             });
         });
@@ -37,6 +41,8 @@
         settings.authResponse = null;
         authResponse = null;
         loggedOut = true;
+        clearInterval(refreshIntervalId);
+        refreshIntervalId = undefined;
     }
 </script>
 
@@ -58,13 +64,13 @@
         }
     }
 
-    export async function setRefreshAccessTokenInterval(authRes?: AuthenticationResponse): Promise<void> {
+    export async function setRefreshAccessTokenInterval(authRes?: AuthenticationResponse): Promise<number> {
         // Sending auth response to this method is recommended.
         // Saving the response in store is async, can't be awaited and is slower than the regular login
         const authResponse = authRes ?? await settings.authResponse
         if (!authResponse) throw new Error("Cannot set refresh token interval: User not logged in")
 
-        setInterval(async () => {
+        return setInterval(async () => {
                 await refreshAccessToken()
             },
             authResponse.tokenResponse.expiresIn * 1000 - 10000 // 10 seconds before token expires
