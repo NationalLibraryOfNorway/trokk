@@ -7,7 +7,6 @@ module.exports = {
     project: "./tsconfig.json",
     extraFileExtensions: [".svelte"],
   },
-  // plugins: ["@typescript-eslint"],
   ignorePatterns: ["*.cjs"],
   overrides: [
     {
@@ -19,7 +18,6 @@ module.exports = {
     },
   ],
   rules: {
-//    indent: ["error", 4, {"SwitchCase": 1}],
     "svelte/indent": ["error", {
       "indent": 4,
       "switchCase": 1,

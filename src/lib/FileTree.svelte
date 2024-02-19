@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {ChevronDown, ChevronRight, FileImage, Folder, FolderOpen} from 'lucide-svelte';
-    import {beforeUpdate, createEventDispatcher} from "svelte";
-    import {FileTree} from "./model/file-tree";
-    import {formatFileNames} from "./util/file-utils";
+    import { ChevronDown, ChevronRight, FileImage, Folder, FolderOpen } from "lucide-svelte";
+    import { beforeUpdate, createEventDispatcher } from "svelte";
+    import { FileTree } from "./model/file-tree";
+    import { formatFileNames } from "./util/file-utils";
 
     export let fileTree: FileTree[] = []
     export let selectedDir: string = ''

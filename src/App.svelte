@@ -86,47 +86,48 @@
 
 
 <style lang="scss">
-  .mainContainer {
-    display: flex;
-    flex-direction: column;
-  }
+    .mainContainer {
+        display: flex;
+        flex-direction: column;
+    }
 
-  .topRightMenu {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-
-    >div {
+    .topRightMenu {
         display: flex;
         flex-direction: row;
         align-items: center;
-        margin-right: 10px;
-    }
-    >button {
-      margin-left: 10px;
-    }
-  }
 
-  .topBar {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    height: 5vh;
-  }
+        >div {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            margin-right: 10px;
+        }
 
-  .login {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    > button {
-      width: 200px;
-      height: 100px;
-      font-size: 30px;
+        >button {
+            margin-left: 10px;
+        }
     }
-  }
+
+    .topBar {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        height: 5vh;
+    }
+
+    .login {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        > button {
+            width: 200px;
+            height: 100px;
+            font-size: 30px;
+        }
+    }
 </style>

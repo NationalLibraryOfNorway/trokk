@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { exists, readDir } from "@tauri-apps/api/fs";
-  import { beforeUpdate, onDestroy, onMount } from "svelte";
-  import { convertFileSrc } from "@tauri-apps/api/tauri";
-  import RegistrationSchema from "./RegistrationSchema.svelte";
-  import { invoke, path } from "@tauri-apps/api";
-  import FileTree from "./FileTree.svelte";
-  import { watch } from "tauri-plugin-fs-watch-api";
-  import { ChevronsDownUp, ChevronsUpDown, File, Folder } from "lucide-svelte";
-  import { FileTree as FileTreeType } from "./model/file-tree";
-  import { type UnlistenFn } from "@tauri-apps/api/event";
-  import { type ViewFile } from "./model/view-file";
-  import { formatFileNames } from "./util/file-utils";
-  import Split from "split.js";
+    import { exists, readDir } from "@tauri-apps/api/fs";
+    import { beforeUpdate, onDestroy, onMount } from "svelte";
+    import { convertFileSrc } from "@tauri-apps/api/tauri";
+    import RegistrationSchema from "./RegistrationSchema.svelte";
+    import { invoke , path} from "@tauri-apps/api";
+    import FileTree from "./FileTree.svelte";
+    import { watch } from "tauri-plugin-fs-watch-api";
+    import { ChevronsDownUp, ChevronsUpDown, File, Folder } from "lucide-svelte";
+    import { FileTree as FileTreeType } from "./model/file-tree";
+    import { type UnlistenFn } from "@tauri-apps/api/event";
+    import { type ViewFile } from "./model/view-file";
+    import { formatFileNames } from "./util/file-utils";
+    import Split from "split.js";
 
-  export let scannerPath: string
+    export let scannerPath: string
 
     let currentPath: string | undefined = undefined
     let readDirFailed: string | undefined = undefined
@@ -246,99 +246,98 @@
 
 
 <style lang="scss">
-  .sticky-top {
-    position: sticky;
-    top: 0;
-  }
-
-  .files-container {
-    display: flex;
-    height: 93vh;
-  }
-
-  .images {
-    margin: 0 1em;
-    display: flex;
-    flex-flow: row wrap;
-    justify-content: flex-start;
-    align-content: flex-start;
-  }
-
-  img {
-    width: 150px;
-    min-height: 150px;
-    max-height: fit-content;
-    margin: auto .5em;
-    object-fit: contain;
-    border: solid 3px gray;
-    border-radius: 3px;
-    &:hover {
-      cursor: pointer;
-      border: solid 3px red;
+    .sticky-top {
+        position: sticky;
+        top: 0;
     }
-  }
 
-  .directory {
-    width: 150px;
-    min-height: 150px;
-    max-height: fit-content;
-    margin: auto .5em;
-    object-fit: contain;
-    border: solid 3px transparent;
-    border-radius: 3px;
-    text-align: center;
-    background: none;
-    padding: 0;
-    outline: none;
-    box-shadow: none;
-
-    &:hover {
-      cursor: pointer;
-      border: solid 3px deepskyblue;
+    .files-container {
+        display: flex;
+        height: 93vh;
     }
-  }
 
-  .file {
-    width: 150px;
-    min-height: 150px;
-    max-height: fit-content;
-    margin: auto .5em;
-    object-fit: contain;
-    text-align: center;
-  }
+    .images {
+        margin: 0 1em;
+        display: flex;
+        flex-flow: row wrap;
+        justify-content: flex-start;
+        align-content: flex-start;
+    }
 
-  i {
-    width: 150px;
-    height: fit-content;
-    display: block;
-    text-align: center;
-    overflow: visible;
-    word-wrap: break-word;
-  }
+    img {
+        width: 150px;
+        min-height: 150px;
+        max-height: fit-content;
+        margin: auto .5em;
+        object-fit: contain;
+        border: solid 3px gray;
+        border-radius: 3px;
+        &:hover {
+            cursor: pointer;
+            border: solid 3px red;
+        }
+    }
 
-  .icon-btn-group {
-    display: flex;
-    width: 60px;
-    justify-content: space-evenly;
-    margin: 6px 0;
-  }
+    .directory {
+        width: 150px;
+        min-height: 150px;
+        max-height: fit-content;
+        margin: auto .5em;
+        object-fit: contain;
+        border: solid 3px transparent;
+        border-radius: 3px;
+        text-align: center;
+        background: none;
+        padding: 0;
+        outline: none;
+        box-shadow: none;
 
-  .expand-btn {
-    border-radius: 3px;
-    background: none;
-    padding: 0;
-    margin: 0;
-    box-shadow: none;
-  }
+        &:hover {
+            cursor: pointer;
+            border: solid 3px deepskyblue;
+        }
+    }
 
-  .pane {
-    overflow: auto;
-  }
+    .file {
+        width: 150px;
+        min-height: 150px;
+        max-height: fit-content;
+        margin: auto .5em;
+        object-fit: contain;
+        text-align: center;
+    }
 
-  .dir-help-text {
-    margin: 2em;
-    font-weight: bold;
-    word-break: break-word;
-  }
+    i {
+        width: 150px;
+        height: fit-content;
+        display: block;
+        text-align: center;
+        overflow: visible;
+        word-wrap: break-word;
+    }
 
+    .icon-btn-group {
+        display: flex;
+        width: 60px;
+        justify-content: space-evenly;
+        margin: 6px 0;
+    }
+
+    .expand-btn {
+        border-radius: 3px;
+        background: none;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+    }
+
+    .pane {
+        overflow: auto;
+    }
+
+    .dir-help-text {
+        margin: 2em;
+        font-weight: bold;
+        word-break: break-word;
+    }
 </style>
