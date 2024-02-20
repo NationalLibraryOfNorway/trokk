@@ -61,7 +61,7 @@
       <h1>Trøkk</h1>
       <h2>Hei {authResponse.userInfo.givenName}!</h2>
       <div>
-        <button on:click={() => openSettings = !openSettings} >Instillinger</button>
+        <button on:click={() => openSettings = !openSettings} >Innstillinger</button>
         <button on:click={() => authComponent.logout()} >Logg ut</button>
       </div>
     </div>
@@ -71,7 +71,7 @@
     <Files bind:scannerPath></Files>
   {:else if loggedOut}
       <div class="login">
-        <button on:click={() => authComponent.login()}>Logg in</button>
+        <button on:click={() => authComponent.login()}>Logg inn</button>
       </div>
   {:else}
     <h1>Trøkk</h1>
