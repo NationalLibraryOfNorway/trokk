@@ -3,9 +3,11 @@
 
   export let authResponse: AuthenticationResponse | null;
     export let loggedOut: Boolean = false;
+    let envVars: RequiredEnvVariables;
     let refreshIntervalId: number | undefined = undefined;
 
     onMount(async () => {
+        envVars = await getEnvVariables();
         if (await isLoggedIn() || await canRefresh()) {
             await refreshAccessToken();
             refreshIntervalId = await setRefreshAccessTokenInterval();
@@ -16,24 +18,29 @@
     });
 
     export async function login(): Promise<string | void> {
-        const envVars = await getEnvVariables();
-        if (!envVars) throw new Error("Env variables not set");
+        return invoke("log_in").then(async (port) => {
+          loggedOut = false;
+          let webview = new WebviewWindow("Login", {
+            url: envVars.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVars.oidcClientId + "&redirect_uri=http://localhost:" + port,
+            title: "NBAuth innlogging",
+            alwaysOnTop: true,
+            closable: false,  // Prevent user from closing the window, this prevents complicated logic to handle the user closing the window
+            focus: true,
+            center: true
+          });
 
-        return invoke("log_in").then((port) => {
-            loggedOut = false;
-            const webview = new WebviewWindow("Login", {
-                url: envVars.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVars.oidcClientId + "&redirect_uri=http://localhost:" + port,
-                title: "NBAuth innlogging"
-            });
-            appWindow.listen("token_exchanged", (event) => {
-                authResponse = event.payload as AuthenticationResponse;
-                settings.authResponse = authResponse;
-                setRefreshAccessTokenInterval(authResponse)
-                  .then((id) => {
-                    refreshIntervalId = id;
-                  });
-                webview.close();
-            });
+          await appWindow.once("token_exchanged", async (event) => {
+            authResponse = event.payload as AuthenticationResponse;
+            settings.authResponse = authResponse;
+            setRefreshAccessTokenInterval(authResponse)
+              .then((id) => {
+                refreshIntervalId = id;
+              });
+            await webview.close();
+            // Show main window on screen after login
+            if (await appWindow.isMinimized()) await appWindow.unminimize()
+            if (!(await appWindow.isVisible())) await appWindow.show();
+          });
         });
     }
 
@@ -89,7 +96,7 @@
         return authResponse.expireInfo.expiresAt > new Date().getTime()
     }
 
-    async function getEnvVariables(): Promise<RequiredEnvVariables | null> {
+    async function getEnvVariables(): Promise<RequiredEnvVariables> {
         return invoke("get_required_env_variables")
     }
 
