@@ -75,7 +75,6 @@
   .mainContainer {
     display: flex;
     flex-direction: column;
-    /*height: 98vh;*/
   }
 
   .topBar {
