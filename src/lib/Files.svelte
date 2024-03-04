@@ -3,7 +3,7 @@
   import { beforeUpdate, onDestroy, onMount } from "svelte";
   import { convertFileSrc } from "@tauri-apps/api/tauri";
   import RegistrationSchema from "./RegistrationSchema.svelte";
-  import { invoke } from "@tauri-apps/api";
+  import { invoke, path } from "@tauri-apps/api";
   import FileTree from "./FileTree.svelte";
   import { watch } from "tauri-plugin-fs-watch-api";
   import { ChevronsDownUp, ChevronsUpDown, File, Folder } from "lucide-svelte";
@@ -20,6 +20,7 @@
     let fileTree: FileTreeType[] = []
     let viewFiles: ViewFile[] = []
     let stopWatching: UnlistenFn | void | null = null
+    const uriPathSeparator: string = encodeURIComponent(path.sep);
     const supportedFileTypes = ["jpeg", "jpg", "png", "gif", "webp"]
 
     $: updateBaseFilePath(scannerPath)
@@ -188,6 +189,7 @@
     function getFileExtension(path: string): string {
         return path?.split('.')?.pop() || ""
     }
+
 </script>
 
 {#if !readDirFailed}
@@ -210,17 +212,17 @@
                         {#if viewFile.fileTree.children}
                             <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
                                 <Folder size="96"/>
-                                <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                                <i>{viewFile.imageSource.split(uriPathSeparator).pop()}</i>
                             </button>
                         {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
                             <div>
                                 <img src={viewFile.imageSource} alt={viewFile.fileTree.name}/>
-                                <i>{formatFileNames(viewFile.imageSource.split('%2F').pop())}</i>
+                                <i>{formatFileNames(viewFile.imageSource.split(uriPathSeparator).pop())}</i>
                             </div>
                         {:else}
                             <div class="file">
                                 <File size="96" color="gray"/>
-                                <i>{viewFile.imageSource.split('%2F').pop()}</i>
+                                <i>{viewFile.imageSource.split(uriPathSeparator).pop()}</i>
                             </div>
                         {/if}
                     {/each}
