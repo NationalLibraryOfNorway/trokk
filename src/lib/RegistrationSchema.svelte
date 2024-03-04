@@ -100,7 +100,6 @@
     }
 
     function onSubmit() {
-    console.log('papipath', papiPath)
         getHostname()
             .then(hostname => postRegistration(hostname.toString()))
             .catch(error => console.log(error))

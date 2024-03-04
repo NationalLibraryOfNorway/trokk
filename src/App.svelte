@@ -12,15 +12,6 @@
   let donePath: string;
 
   let openSettings = false;
-  $: showLogin = authResponse === null;
-  $: authTopBarClass = showLogin ? "topbarOnLogin" : "topbar";
-
-  $: {
-    console.log("authTopBarClass", authTopBarClass);
-  }
-  $: {
-    console.log("showLogin", showLogin);
-  }
 
   let authComponent: Auth;
   let authResponse: AuthenticationResponse | null;
