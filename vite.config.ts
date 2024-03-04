@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
 
 // https://vitejs.dev/config/
-export default defineConfig(async () => ({
+export default defineConfig(async ({mode}) => ({
   plugins: [
       svelte(
           {
@@ -27,6 +27,16 @@ export default defineConfig(async () => ({
   // https://tauri.app/v1/api/config#buildconfig.beforedevcommand
   envPrefix: ["VITE_", "TAURI_"],
   test: {
-   environment: 'jsdom'
+    environment: 'jsdom',
+    setupFiles: ['./vitest-setup.ts'],
+  },
+  // 4. To make onMount work for tests
+  resolve: {
+    conditions: mode === 'test' ? ['browser'] : []
+    /*...(process.env.VITEST
+      ? {
+          conditions: ["browser", "module", "default", "import"]
+        }
+      : null),*/
   }
 }));

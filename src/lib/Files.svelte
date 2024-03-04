@@ -1,19 +1,19 @@
 <script lang="ts">
-    import {exists, readDir} from '@tauri-apps/api/fs'
-    import {beforeUpdate, onDestroy, onMount} from 'svelte';
-    import {convertFileSrc} from "@tauri-apps/api/tauri";
-    import RegistrationSchema from "./RegistrationSchema.svelte";
-    import {invoke} from "@tauri-apps/api";
-    import FileTree from "./FileTree.svelte";
-    import {watch} from "tauri-plugin-fs-watch-api";
-    import {ChevronsDownUp, ChevronsUpDown, File, Folder} from "lucide-svelte";
-    import {FileTree as FileTreeType} from "./model/file-tree";
-    import {type UnlistenFn} from "@tauri-apps/api/event";
-    import {type ViewFile} from "./model/view-file";
-    import {formatFileNames} from "./util/file-utils";
-    import Split from "split.js";
+  import { exists, readDir } from "@tauri-apps/api/fs";
+  import { beforeUpdate, onDestroy, onMount } from "svelte";
+  import { convertFileSrc } from "@tauri-apps/api/tauri";
+  import RegistrationSchema from "./RegistrationSchema.svelte";
+  import { invoke } from "@tauri-apps/api";
+  import FileTree from "./FileTree.svelte";
+  import { watch } from "tauri-plugin-fs-watch-api";
+  import { ChevronsDownUp, ChevronsUpDown, File, Folder } from "lucide-svelte";
+  import { FileTree as FileTreeType } from "./model/file-tree";
+  import { type UnlistenFn } from "@tauri-apps/api/event";
+  import { type ViewFile } from "./model/view-file";
+  import { formatFileNames } from "./util/file-utils";
+  import Split from "split.js";
 
-    export let scannerPath: string
+  export let scannerPath: string
 
     let currentPath: string | undefined = undefined
     let readDirFailed: string | undefined = undefined
@@ -192,7 +192,7 @@
 
 {#if !readDirFailed}
     <div class="files-container">
-        <div id="left-pane" class="pane sticky-top">
+        <div id="left-pane" data-testid="left-pane" class="pane sticky-top">
             <div class="icon-btn-group">
                 <button class="expand-btn" on:click={() => toggleExpand(true)}>
                     <ChevronsUpDown size="14"/>

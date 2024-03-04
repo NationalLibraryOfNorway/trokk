@@ -5,12 +5,22 @@
   import { documentDir } from "@tauri-apps/api/path";
   import { settings } from "./lib/util/settings";
   import Auth from "./lib/Auth.svelte";
+  import { User } from "lucide-svelte";
 
 
   let scannerPath: string;
   let donePath: string;
 
   let openSettings = false;
+  $: showLogin = authResponse === null;
+  $: authTopBarClass = showLogin ? "topbarOnLogin" : "topbar";
+
+  $: {
+    console.log("authTopBarClass", authTopBarClass);
+  }
+  $: {
+    console.log("showLogin", showLogin);
+  }
 
   let authComponent: Auth;
   let authResponse: AuthenticationResponse | null;
@@ -58,9 +68,13 @@
   <Auth bind:this={authComponent} bind:authResponse bind:loggedOut></Auth>
   {#if authResponse}
     <div class="topBar">
+      <p></p>
       <h1>Trøkk</h1>
-      <h2>Hei {authResponse.userInfo.givenName}!</h2>
-      <div>
+      <div class="topRightMenu">
+        <div>
+          <User/>
+          <div>{authResponse.userInfo.givenName}</div>
+        </div>
         <button on:click={() => openSettings = !openSettings} >Innstillinger</button>
         <button on:click={() => authComponent.logout()} >Logg ut</button>
       </div>
@@ -70,9 +84,9 @@
     {/if}
     <Files bind:scannerPath></Files>
   {:else if loggedOut}
-      <div class="login">
-        <button on:click={() => authComponent.login()}>Logg inn</button>
-      </div>
+    <div class="login">
+      <button on:click={() => authComponent.login()}>Logg inn</button>
+    </div>
   {:else}
     <h1>Trøkk</h1>
     <p>Logger inn...</p>
@@ -84,6 +98,22 @@
   .mainContainer {
     display: flex;
     flex-direction: column;
+  }
+
+  .topRightMenu {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+    >div {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin-right: 10px;
+    }
+    >button {
+      margin-left: 10px;
+    }
   }
 
   .topBar {
@@ -99,10 +129,10 @@
     justify-content: center;
     align-items: center;
 
-      >button {
-        width: 200px;
-        height: 100px;
-        font-size: 30px;
-      }
+    >button {
+      width: 200px;
+      height: 100px;
+      font-size: 30px;
+    }
   }
 </style>

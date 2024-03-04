@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { type EventCallback } from "@tauri-apps/api/event";
 
   export let authResponse: AuthenticationResponse | null;
     export let loggedOut: Boolean = false;
@@ -18,30 +19,35 @@
     });
 
     export async function login(): Promise<string | void> {
+        envVars = await getEnvVariables();
         return invoke("log_in").then(async (port) => {
-          loggedOut = false;
-          let webview = new WebviewWindow("Login", {
-            url: envVars.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVars.oidcClientId + "&redirect_uri=http://localhost:" + port,
-            title: "NBAuth innlogging",
-            alwaysOnTop: true,
-            closable: false,  // Prevent user from closing the window, this prevents complicated logic to handle the user closing the window
-            focus: true,
-            center: true
-          });
+            loggedOut = false;
+            let loginWebView = new WebviewWindow("Login", {
+                url: envVars.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVars.oidcClientId + "&redirect_uri=http://localhost:" + port,
+                title: "NBAuth innlogging",
+                alwaysOnTop: true,
+                closable: false,  // Prevent user from closing the window, this prevents complicated logic to handle the user closing the window
+                focus: true,
+                center: true
+            });
 
-          await appWindow.once("token_exchanged", async (event) => {
-            authResponse = event.payload as AuthenticationResponse;
-            settings.authResponse = authResponse;
-            setRefreshAccessTokenInterval(authResponse)
-              .then((id) => {
-                refreshIntervalId = id;
-              });
-            await webview.close();
-            // Show main window on screen after login
-            if (await appWindow.isMinimized()) await appWindow.unminimize()
-            if (!(await appWindow.isVisible())) await appWindow.show();
-          });
+            await appWindow.once("token_exchanged", handleTokenExchangedEvent(loginWebView));
         });
+    }
+
+    export function handleTokenExchangedEvent(loginWebView: WebviewWindow): EventCallback<unknown> {
+      return async (event) => {
+        authResponse = event.payload as AuthenticationResponse;
+        settings.authResponse = authResponse;
+        setRefreshAccessTokenInterval(authResponse)
+          .then((id) => {
+            refreshIntervalId = id;
+          });
+        await loginWebView.close();
+        // Show main window on screen after login
+        if (await appWindow.isMinimized()) await appWindow.unminimize()
+        if (!(await appWindow.isVisible())) await appWindow.show();
+      }
     }
 
     export function logout(): void {

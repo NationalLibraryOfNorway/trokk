@@ -1,9 +1,8 @@
-import type {TextInputDto} from "../lib/model/text-input-dto";
-import {MaterialType} from "../lib/model/registration-enums";
-import {Response} from "@tauri-apps/api/http";
-import {FileTree} from "../lib/model/file-tree";
-import type {FileEntry} from "@tauri-apps/api/fs";
-import type {Event} from "@tauri-apps/api/event";
+import type { TextInputDto } from "../lib/model/text-input-dto";
+import { MaterialType } from "../lib/model/registration-enums";
+import { Response } from "@tauri-apps/api/http";
+import { FileTree } from "../lib/model/file-tree";
+import type { FileEntry } from "@tauri-apps/api/fs";
 
 
 const tokenResponseMock: TokenResponse = {
@@ -26,7 +25,7 @@ const expireInfoMock: ExpireInfo = {
 const userInfoMock: UserInfo = {
     email: "",
     familyName: "",
-    givenName: "",
+    givenName: "usersGivenName",
     groups: [""],
     name: "trokk-navnet",
     preferredUsername: "",

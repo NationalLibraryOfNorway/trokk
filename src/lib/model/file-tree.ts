@@ -1,4 +1,4 @@
-import type {FileEntry} from "@tauri-apps/api/fs";
+import type { FileEntry } from "@tauri-apps/api/fs";
 
 export class FileTree {
     path: string;
