@@ -1,8 +1,8 @@
 <script lang="ts">
-    import {ChevronDown, ChevronRight, FileImage, Folder, FolderOpen} from 'lucide-svelte';
-    import {beforeUpdate, createEventDispatcher} from "svelte";
-    import {FileTree} from "./model/file-tree";
-    import {formatFileNames} from "./util/file-utils";
+    import { ChevronDown, ChevronRight, FileImage, Folder, FolderOpen } from "lucide-svelte";
+    import { beforeUpdate, createEventDispatcher } from "svelte";
+    import { FileTree } from "./model/file-tree";
+    import { formatFileNames } from "./util/file-utils";
 
     export let fileTree: FileTree[] = []
     export let selectedDir: string = ''
@@ -41,23 +41,23 @@
                             on:click|preventDefault={() => changeViewDirectory(file)}
                             on:keydown|preventDefault={() => changeViewDirectory(file)}
                         >
-                        {#if file.opened}
-                            <span>
-                                <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                    <ChevronDown size="16" color="gray"/>
-                                </button>
-                                <FolderOpen size="16"/>
-                                <span>{formatFileNames(file.name)}</span>
-                            </span>
-                        {:else}
-                            <span>
-                                <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                    <ChevronRight size="16" color="gray"/>
-                                </button>
-                                <Folder size="16"/>
-                                <span>{formatFileNames(file.name)}</span>
-                            </span>
-                        {/if}
+                            {#if file.opened}
+                                <span>
+                                    <button class="expand-btn" on:click={() => file.opened = !file.opened}>
+                                        <ChevronDown size="16" color="gray"/>
+                                    </button>
+                                    <FolderOpen size="16"/>
+                                    <span>{formatFileNames(file.name)}</span>
+                                </span>
+                            {:else}
+                                <span>
+                                    <button class="expand-btn" on:click={() => file.opened = !file.opened}>
+                                        <ChevronRight size="16" color="gray"/>
+                                    </button>
+                                    <Folder size="16"/>
+                                    <span>{formatFileNames(file.name)}</span>
+                                </span>
+                            {/if}
                         </button>
                     {/if}
                     {#if file.opened && !file.name.startsWith('.')}
