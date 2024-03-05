@@ -47,7 +47,8 @@
       },
       "window": {
         "create": true,
-        "close": true
+        "close": true,
+        "show": true
       },
       "dialog": {
         "open": true

@@ -194,7 +194,7 @@
 
 {#if !readDirFailed}
     <div class="files-container">
-        <div id="left-pane" class="pane sticky-top">
+        <div id="left-pane" data-testid="left-pane" class="pane sticky-top">
             <div class="icon-btn-group">
                 <button class="expand-btn" on:click={() => toggleExpand(true)}>
                     <ChevronsUpDown size="14"/>

@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = [ "fs-exists", "dialog-open", "fs-write-file", "system-tray", "fs-read-dir", "window-close", "window-create", "http-all", "protocol-asset", "path-all", "shell-open"] }
+tauri = { version = "1.5", features = [ "window-show", "fs-exists", "dialog-open", "fs-write-file", "system-tray", "fs-read-dir", "window-close", "window-create", "http-all", "protocol-asset", "path-all", "shell-open"] }
 tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-oauth = "0.0.0-alpha.0"

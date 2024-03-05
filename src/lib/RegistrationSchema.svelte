@@ -1,15 +1,15 @@
 <script lang="ts">
-    import {MaterialType} from "./model/registration-enums";
-    import {Body, fetch} from "@tauri-apps/api/http";
-    import {TextInputDto} from "./model/text-input-dto";
-    import {invoke} from "@tauri-apps/api/tauri";
-    import {settings} from "./util/settings";
-    import {v4} from "uuid";
-    import {path} from "@tauri-apps/api";
-    import {onMount} from "svelte";
-    import {isLoggedIn} from "./Auth.svelte";
+  import { MaterialType } from "./model/registration-enums";
+  import { Body, fetch } from "@tauri-apps/api/http";
+  import { TextInputDto } from "./model/text-input-dto";
+  import { invoke } from "@tauri-apps/api/tauri";
+  import { settings } from "./util/settings";
+  import { v4 } from "uuid";
+  import { path } from "@tauri-apps/api";
+  import { onMount } from "svelte";
+  import { isLoggedIn } from "./Auth.svelte";
 
-    export let currentPath: string
+  export let currentPath: string
 
     const materialTypes = Object.keys(MaterialType)
 
