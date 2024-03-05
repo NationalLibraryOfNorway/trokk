@@ -1,60 +1,77 @@
 <script lang="ts">
-    import { ChevronDown, ChevronRight, FileImage, Folder, FolderOpen } from "lucide-svelte";
-    import { beforeUpdate, createEventDispatcher } from "svelte";
-    import { FileTree } from "./model/file-tree";
-    import { formatFileNames } from "./util/file-utils";
+    import {
+        ChevronDown,
+        ChevronRight,
+        FileImage,
+        Folder,
+        FolderOpen,
+    } from 'lucide-svelte';
+    import { beforeUpdate, createEventDispatcher } from 'svelte';
+    import { FileTree } from './model/file-tree';
+    import { formatFileNames } from './util/file-utils';
 
-    export let fileTree: FileTree[] = []
-    export let selectedDir: string = ''
-    const dispatch = createEventDispatcher()
+    export let fileTree: FileTree[] = [];
+    export let selectedDir: string = '';
+    const dispatch = createEventDispatcher();
 
     beforeUpdate(() => {
         fileTree = sortFileTree();
-    })
+    });
 
     function sortFileTree(): FileTree[] {
         return fileTree.sort((a, b) => {
-            if (a.name < b.name) return -1
-            if (a.name > b.name) return 1
-            return 0
-        })
+            if (a.name < b.name) return -1;
+            if (a.name > b.name) return 1;
+            return 0;
+        });
     }
 
     function changeViewDirectory(file: FileTree): void {
-        dispatch('directoryChange', file)
+        dispatch('directoryChange', file);
     }
 
     function getSelectedDirectoryHighlight(dirName: string): string {
-        return dirName === selectedDir ? 'selected-dir' : ''
+        return dirName === selectedDir ? 'selected-dir' : '';
     }
-
 </script>
 
 <div>
     <ul>
         {#each fileTree as file}
             {#if file.children}
-                <li >
+                <li>
                     {#if !file.name.startsWith('.')}
                         <button
-                            class="directory-list-item {getSelectedDirectoryHighlight(file.path)}"
-                            on:click|preventDefault={() => changeViewDirectory(file)}
-                            on:keydown|preventDefault={() => changeViewDirectory(file)}
+                            class="directory-list-item {getSelectedDirectoryHighlight(
+                                file.path,
+                            )}"
+                            on:click|preventDefault={() =>
+                                changeViewDirectory(file)}
+                            on:keydown|preventDefault={() =>
+                                changeViewDirectory(file)}
                         >
                             {#if file.opened}
                                 <span>
-                                    <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                        <ChevronDown size="16" color="gray"/>
+                                    <button
+                                        class="expand-btn"
+                                        on:click={() =>
+                                            (file.opened = !file.opened)}
+                                    >
+                                        <ChevronDown size="16" color="gray" />
                                     </button>
-                                    <FolderOpen size="16"/>
+                                    <FolderOpen size="16" />
                                     <span>{formatFileNames(file.name)}</span>
                                 </span>
                             {:else}
                                 <span>
-                                    <button class="expand-btn" on:click={() => file.opened = !file.opened}>
-                                        <ChevronRight size="16" color="gray"/>
+                                    <button
+                                        class="expand-btn"
+                                        on:click={() =>
+                                            (file.opened = !file.opened)}
+                                    >
+                                        <ChevronRight size="16" color="gray" />
                                     </button>
-                                    <Folder size="16"/>
+                                    <Folder size="16" />
                                     <span>{formatFileNames(file.name)}</span>
                                 </span>
                             {/if}
@@ -62,14 +79,17 @@
                     {/if}
                     {#if file.opened && !file.name.startsWith('.')}
                         <ul>
-                            <svelte:self fileTree={file.children} on:directoryChange />
+                            <svelte:self
+                                fileTree={file.children}
+                                on:directoryChange
+                            />
                         </ul>
                     {/if}
                 </li>
             {:else}
                 <li>
                     <span class="file">
-                        <FileImage size="16"/>
+                        <FileImage size="16" />
                         <span>{formatFileNames(file.name)}</span>
                     </span>
                 </li>
@@ -109,7 +129,6 @@
         cursor: pointer;
         outline: inherit;
         box-shadow: none;
-
     }
 
     .expand-btn {

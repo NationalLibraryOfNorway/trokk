@@ -22,11 +22,11 @@ interface ExpireInfo {
 }
 
 interface UserInfo {
-    sub: string,
-    name: string,
-    groups: Array<string>,
-    preferredUsername: string,
-    givenName: string,
-    familyName: string,
-    email: string,
+    sub: string;
+    name: string;
+    groups: Array<string>;
+    preferredUsername: string;
+    givenName: string;
+    familyName: string;
+    email: string;
 }

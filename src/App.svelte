@@ -1,12 +1,11 @@
 <script lang="ts">
-    import Files from "./lib/Files.svelte";
-    import Settings from "./lib/Settings.svelte";
-    import { onMount } from "svelte";
-    import { documentDir } from "@tauri-apps/api/path";
-    import { settings } from "./lib/util/settings";
-    import Auth from "./lib/Auth.svelte";
-    import { User } from "lucide-svelte";
-
+    import Files from './lib/Files.svelte';
+    import Settings from './lib/Settings.svelte';
+    import { onMount } from 'svelte';
+    import { documentDir } from '@tauri-apps/api/path';
+    import { settings } from './lib/util/settings';
+    import Auth from './lib/Auth.svelte';
+    import { User } from 'lucide-svelte';
 
     let scannerPath: string;
     let donePath: string;
@@ -22,7 +21,7 @@
             if (savedScanPath) {
                 scannerPath = savedScanPath;
             } else {
-                let defaultPath = await documentDir() + "trokk/files";
+                let defaultPath = (await documentDir()) + 'trokk/files';
                 settings.scannerPath = defaultPath;
                 scannerPath = defaultPath;
             }
@@ -32,7 +31,7 @@
             if (savedDonePath) {
                 donePath = savedDonePath;
             } else {
-                let defaultPath = await documentDir() + "trokk/done";
+                let defaultPath = (await documentDir()) + 'trokk/done';
                 settings.donePath = defaultPath;
                 donePath = defaultPath;
             }
@@ -52,7 +51,6 @@
             settings.donePath = eventDonePath;
         }
     }
-
 </script>
 
 <main class="mainContainer">
@@ -63,11 +61,13 @@
             <h1>Trøkk</h1>
             <div class="topRightMenu">
                 <div>
-                    <User/>
+                    <User />
                     <div>{authResponse.userInfo.givenName}</div>
                 </div>
-                <button on:click={() => openSettings = !openSettings} >Innstillinger</button>
-                <button on:click={() => authComponent.logout()} >Logg ut</button>
+                <button on:click={() => (openSettings = !openSettings)}
+                    >Innstillinger</button
+                >
+                <button on:click={() => authComponent.logout()}>Logg ut</button>
             </div>
         </div>
         {#if openSettings}
@@ -84,7 +84,6 @@
     {/if}
 </main>
 
-
 <style lang="scss">
     .mainContainer {
         display: flex;
@@ -96,14 +95,14 @@
         flex-direction: row;
         align-items: center;
 
-        >div {
+        > div {
             display: flex;
             flex-direction: row;
             align-items: center;
             margin-right: 10px;
         }
 
-        >button {
+        > button {
             margin-left: 10px;
         }
     }
