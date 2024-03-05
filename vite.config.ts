@@ -33,10 +33,5 @@ export default defineConfig(async ({mode}) => ({
   // 4. To make onMount work for tests
   resolve: {
     conditions: mode === 'test' ? ['browser'] : []
-    /*...(process.env.VITEST
-      ? {
-          conditions: ["browser", "module", "default", "import"]
-        }
-      : null),*/
   }
 }));
