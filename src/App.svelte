@@ -81,5 +81,8 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    position: sticky;
+    top: 0;
+    height: 5vh;
   }
 </style>

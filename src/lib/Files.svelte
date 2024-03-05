@@ -249,11 +249,11 @@
   .sticky-top {
     position: sticky;
     top: 0;
-    height: 98vh;
   }
 
   .files-container {
     display: flex;
+    height: 93vh;
   }
 
   .images {
