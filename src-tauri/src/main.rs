@@ -7,8 +7,9 @@ use gethostname::gethostname;
 #[cfg(debug_assertions)]
 use tauri::Manager;
 use tauri::Window;
+use tokio::sync::OnceCell;
 
-use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
+use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables};
 
 mod auth;
 mod error;
@@ -16,28 +17,32 @@ mod file_utils;
 mod image_converter;
 mod model;
 mod system_tray;
+mod vault;
 
 #[cfg(test)]
 mod tests;
 
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
-	papi_path: env!("PAPI_PATH"),
-	oidc_base_url: env!("OIDC_BASE_URL"),
-	oidc_client_id: env!("OIDC_CLIENT_ID"),
-	oidc_client_secret: env!("OIDC_CLIENT_SECRET"),
-	oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL"),
-	oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID"),
-	oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET"),
+	vault_base_url: env!("VAULT_BASE_URL"),
+	vault_role_id: env!("VAULT_ROLE_ID"),
+	vault_secret_id: env!("VAULT_SECRET_ID"),
 };
+
+// Use Tokio's OnceCell to fetch secrets from Vault only once
+static VAULT_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
+
+#[tauri::command]
+async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
+	// Fetch secrets from Vault only once, the cell functions as a cache
+	VAULT_CELL
+		.get_or_try_init(|| async { vault::fetch_secrets_from_vault().await })
+		.await
+		.map_err(|e| e.to_string())
+}
 
 #[tauri::command]
 fn get_hostname() -> Result<String, OsString> {
 	gethostname().into_string()
-}
-
-#[tauri::command]
-fn get_required_env_variables() -> RequiredEnvironmentVariables {
-	ENVIRONMENT_VARIABLES.clone()
 }
 
 #[tauri::command]
@@ -108,7 +113,7 @@ fn main() {
 		})
 		.invoke_handler(tauri::generate_handler![
 			get_hostname,
-			get_required_env_variables,
+			get_secret_variables,
 			log_in,
 			refresh_token,
 			convert_to_webp,

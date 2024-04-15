@@ -78,7 +78,7 @@ export const fileEntryListMock: FileEntry[] = [
     {path: 'b', name: 'b'}
 ]
 
-export const envVariablesMock: RequiredEnvVariables = {
+export const envVariablesMock: SecretVariables = {
     oidcBaseUrl: 'oidcBaseUrl',
     oidcClientId: 'oidcClientId',
     oidcClientSecret: 'oidcClientSecret',

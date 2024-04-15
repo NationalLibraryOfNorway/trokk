@@ -4,11 +4,11 @@
 
     export let authResponse: AuthenticationResponse | null;
     export let loggedOut: Boolean = false;
-    let envVars: RequiredEnvVariables;
+    let secrets: SecretVariables;
     let refreshIntervalId: number | undefined = undefined;
 
     onMount(async () => {
-        envVars = await getEnvVariables();
+        secrets = await getSecrets(); // TODO error handling for when fetching from Vault fails. Show msg to user
         if (await isLoggedIn() || await canRefresh()) {
             await refreshAccessToken();
             refreshIntervalId = await setRefreshAccessTokenInterval();
@@ -19,11 +19,11 @@
     });
 
     export async function login(): Promise<string | void> {
-        envVars = await getEnvVariables();
+        secrets = await getSecrets();
         return invoke("log_in").then(async (port) => {
             loggedOut = false;
             let loginWebView = new WebviewWindow("Login", {
-                url: envVars.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + envVars.oidcClientId + "&redirect_uri=http://localhost:" + port,
+                url: secrets.oidcBaseUrl + "/auth?scope=openid&response_type=code&client_id=" + secrets.oidcClientId + "&redirect_uri=http://localhost:" + port,
                 title: "NBAuth innlogging",
                 alwaysOnTop: true,
                 closable: false,  // Prevent user from closing the window, this prevents complicated logic to handle the user closing the window
@@ -45,9 +45,9 @@
                 });
             await loginWebView.close();
             // Show main window on screen after login
-            if (await appWindow.isMinimized()) await appWindow.unminimize()
+            if (await appWindow.isMinimized()) await appWindow.unminimize();
             if (!(await appWindow.isVisible())) await appWindow.show();
-        }
+        };
     }
 
     export function logout(): void {
@@ -79,7 +79,7 @@
 
     export async function setRefreshAccessTokenInterval(authRes?: AuthenticationResponse): Promise<number> {
         // Sending auth response to this method is recommended.
-      // Saving the response in store is async, can't be awaited and is slower than the regular login
+    // Saving the response in store is async, can't be awaited and is slower than the regular login
         const authResponse = authRes ?? await settings.authResponse;
         if (!authResponse) throw new Error("Cannot set refresh token interval: User not logged in");
 
@@ -102,8 +102,8 @@
         return authResponse.expireInfo.expiresAt > new Date().getTime();
     }
 
-    async function getEnvVariables(): Promise<RequiredEnvVariables> {
-        return invoke("get_required_env_variables");
+    async function getSecrets(): Promise<SecretVariables> {
+        return invoke("get_secret_variables");
     }
 
 </script>

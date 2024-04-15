@@ -66,11 +66,20 @@ pub(crate) struct TokenResponseWithoutRefresh {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RequiredEnvironmentVariables {
-	pub(crate) papi_path: &'static str,
-	pub(crate) oidc_base_url: &'static str,
-	pub(crate) oidc_client_id: &'static str,
-	pub(crate) oidc_client_secret: &'static str,
-	pub(crate) oidc_tekst_base_url: &'static str,
-	pub(crate) oidc_tekst_client_id: &'static str,
-	pub(crate) oidc_tekst_client_secret: &'static str,
+	pub(crate) vault_base_url: &'static str,
+	pub(crate) vault_role_id: &'static str,
+	pub(crate) vault_secret_id: &'static str,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all(serialize = "camelCase", deserialize = "SCREAMING_SNAKE_CASE"))]
+// "SCREAMING_SNAKE_CASE" is what we use in Vault, and we send "camelCase" to frontend
+pub struct SecretVariables {
+	pub(crate) papi_path: String,
+	pub(crate) oidc_base_url: String,
+	pub(crate) oidc_client_id: String,
+	pub(crate) oidc_client_secret: String,
+	pub(crate) oidc_tekst_base_url: String,
+	pub(crate) oidc_tekst_client_id: String,
+	pub(crate) oidc_tekst_client_secret: String,
 }

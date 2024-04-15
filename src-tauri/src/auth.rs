@@ -8,10 +8,10 @@ use tauri::Window;
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
+use crate::get_secret_variables;
 use crate::model::{
 	AuthenticationResponse, ExpireInfo, TokenResponse, TokenResponseWithoutRefresh, UserInfo,
 };
-use crate::ENVIRONMENT_VARIABLES;
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
 	start_with_config(
@@ -31,14 +31,15 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 				.collect();
 
 			tauri::async_runtime::block_on(async {
+				let secrets = get_secret_variables().await.unwrap();
 				let mut redirect_url = url.split('?').next().unwrap().to_string();
 				if redirect_url.ends_with('/') {
 					redirect_url.pop(); // remove trailing '/'
 				}
 				let body = format!(
 					"client_id={}&client_secret={}&code={}&grant_type=authorization_code&redirect_uri={}",
-					ENVIRONMENT_VARIABLES.oidc_client_id,
-					ENVIRONMENT_VARIABLES.oidc_client_secret,
+					secrets.oidc_client_id,
+					secrets.oidc_client_secret,
 					parameter_map.get("code").unwrap(),
 					redirect_url
 				);
@@ -52,28 +53,25 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 }
 
 pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
+	let secrets = get_secret_variables().await.unwrap();
 	let client = Client::new();
 	let body = format!(
 		"client_id={}&client_secret={}&grant_type=refresh_token&refresh_token={}",
-		ENVIRONMENT_VARIABLES.oidc_client_id,
-		ENVIRONMENT_VARIABLES.oidc_client_secret,
-		refresh_token
+		secrets.oidc_client_id, secrets.oidc_client_secret, refresh_token
 	);
 	create_token(client, body).await
 }
 
 pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>> {
+	let secrets = get_secret_variables().await.unwrap();
 	let client = Client::new();
 	let body = format!(
 		"client_id={}&client_secret={}&grant_type=client_credentials",
-		ENVIRONMENT_VARIABLES.oidc_tekst_client_id, ENVIRONMENT_VARIABLES.oidc_tekst_client_secret
+		secrets.oidc_tekst_client_id, secrets.oidc_tekst_client_secret
 	);
 
 	let res = client
-		.post(format!(
-			"{}{}",
-			ENVIRONMENT_VARIABLES.oidc_tekst_base_url, "/token"
-		))
+		.post(format!("{}{}", secrets.oidc_tekst_base_url, "/token"))
 		.header("Content-Type", "application/x-www-form-urlencoded")
 		.body(body)
 		.send()
@@ -84,16 +82,14 @@ pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>
 }
 
 async fn create_token(client: Client, body: String) -> AuthenticationResponse {
+	let secrets = get_secret_variables().await.unwrap();
 	let time_now = SystemTime::now()
 		.duration_since(UNIX_EPOCH)
 		.expect("Time went backwards")
 		.as_millis();
 
 	let res = client
-		.post(format!(
-			"{}{}",
-			ENVIRONMENT_VARIABLES.oidc_base_url, "/token"
-		))
+		.post(format!("{}{}", secrets.oidc_base_url, "/token"))
 		.header("Content-Type", "application/x-www-form-urlencoded")
 		.body(body)
 		.send()
@@ -108,10 +104,7 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 	};
 
 	let user_response = client
-		.get(format!(
-			"{}{}",
-			ENVIRONMENT_VARIABLES.oidc_base_url, "/userinfo"
-		))
+		.get(format!("{}{}", secrets.oidc_base_url, "/userinfo"))
 		.header(
 			"Authorization",
 			format!("Bearer {}", token_response.access_token),

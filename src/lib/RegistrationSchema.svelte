@@ -30,7 +30,7 @@
     }
 
     onMount(async () => {
-        papiPath = (await invoke("get_required_env_variables") as RequiredEnvVariables).papiPath
+        papiPath = (await invoke("get_required_env_variables") as SecretVariables).papiPath
     })
 
     function getHostname(): Promise<String> {
