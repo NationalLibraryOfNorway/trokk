@@ -1,10 +1,10 @@
-import { Store } from "tauri-plugin-store-api";
+import { Store } from 'tauri-plugin-store-api';
 
 class Settings {
     store: Store;
 
     constructor() {
-        this.store = new Store(".settings.dat");
+        this.store = new Store('.settings.dat');
     }
 
     get scannerPath(): Promise<string | null> {

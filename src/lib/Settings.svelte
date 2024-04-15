@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { createEventDispatcher, onMount } from "svelte";
-    import { invoke } from "@tauri-apps/api";
-    import { settings } from "./util/settings";
-    import { readDir } from "@tauri-apps/api/fs";
+    import { createEventDispatcher, onMount } from 'svelte';
+    import { invoke } from '@tauri-apps/api';
+    import { settings } from './util/settings';
+    import { readDir } from '@tauri-apps/api/fs';
 
     const dispatch = createEventDispatcher()
     let scannerPath: string
@@ -34,13 +34,13 @@
             .then(() => {
                 scanPathError = undefined
                 scannerPath = path
-                dispatch("save", {newScanPath: path})
-                scanPathSuccess = "Lagret!"
+                dispatch('save', {newScanPath: path})
+                scanPathSuccess = 'Lagret!'
                 setTimeout(() => scanPathSuccess = undefined, 5000)
             })
             .catch((e: string) => {
-                if (e.includes('Not a directory')) scanPathError = "Dette er ikke en mappe"
-                else scanPathError = "Mappen eksisterer ikke"
+                if (e.includes('Not a directory')) scanPathError = 'Dette er ikke en mappe'
+                else scanPathError = 'Mappen eksisterer ikke'
             })
     }
 
@@ -49,13 +49,13 @@
             .then(() => {
                 donePathError = undefined
                 donePath = path
-                dispatch("save", {newDonePath: path})
-                donePathSuccess = "Lagret!"
+                dispatch('save', {newDonePath: path})
+                donePathSuccess = 'Lagret!'
                 setTimeout(() => donePathSuccess = undefined, 5000)
             })
             .catch((e: string) => {
-                if (e.includes('Not a directory')) donePathError = "Dette er ikke en mappe"
-                else donePathError = "Mappen eksisterer ikke"
+                if (e.includes('Not a directory')) donePathError = 'Dette er ikke en mappe'
+                else donePathError = 'Mappen eksisterer ikke'
             })
     }
 

@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { MaterialType } from "./model/registration-enums";
-    import { Body, fetch } from "@tauri-apps/api/http";
-    import { TextInputDto } from "./model/text-input-dto";
-    import { invoke } from "@tauri-apps/api/tauri";
-    import { settings } from "./util/settings";
-    import { v4 } from "uuid";
-    import { path } from "@tauri-apps/api";
-    import { onMount } from "svelte";
-    import { isLoggedIn } from "./Auth.svelte";
+    import { MaterialType } from './model/registration-enums';
+    import { Body, fetch } from '@tauri-apps/api/http';
+    import { TextInputDto } from './model/text-input-dto';
+    import { invoke } from '@tauri-apps/api/tauri';
+    import { settings } from './util/settings';
+    import { v4 } from 'uuid';
+    import { path } from '@tauri-apps/api';
+    import { onMount } from 'svelte';
+    import { isLoggedIn } from './Auth.svelte';
 
     export let currentPath: string
 
@@ -30,16 +30,16 @@
     }
 
     onMount(async () => {
-        papiPath = (await invoke("get_required_env_variables") as SecretVariables).papiPath
+        papiPath = (await invoke('get_required_env_variables') as SecretVariables).papiPath
     })
 
     function getHostname(): Promise<String> {
-        return invoke("get_hostname")
+        return invoke('get_hostname')
     }
 
     async function postRegistration(scanner: string): Promise<void> {
         const auth = await settings.authResponse
-        if (!auth || !await isLoggedIn()) return Promise.reject("Not logged in")
+        if (!auth || !await isLoggedIn()) return Promise.reject('Not logged in')
 
         const id = v4().toString()
         const newPath = await copyToDoneDir(id)
@@ -55,7 +55,7 @@
                 return Promise.reject(error)
             })
 
-        const accessToken = await invoke("get_papi_access_token")
+        const accessToken = await invoke('get_papi_access_token')
             .catch(error => {
                 deleteDir(newPath!)
                 handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.')
@@ -65,11 +65,11 @@
         return fetch(`${papiPath}/item`,
             {
                 method: 'POST',
-                headers: {"Authorization" : "Bearer " + accessToken},
+                headers: {'Authorization' : 'Bearer ' + accessToken},
                 body: Body.json(new TextInputDto(
-                    materialType ?? "",
-                    fraktur ? "FRAKTUR" : "ANTIQUA",
-                    sami ? "SME" : "NOB",
+                    materialType ?? '',
+                    fraktur ? 'FRAKTUR' : 'ANTIQUA',
+                    sami ? 'SME' : 'NOB',
                     auth.userInfo.name,
                     scanner,
                     fileSize,
@@ -95,7 +95,7 @@
     }
 
     function getTotalFileSize(path: string): Promise<BigInt> {
-        return invoke("get_total_size_of_files_in_folder", {path: path})
+        return invoke('get_total_size_of_files_in_folder', {path: path})
             .then((size: BigInt) => size)
     }
 
@@ -117,14 +117,14 @@
         const donePath = await settings.donePath
         const filesPath = await settings.scannerPath
         if (filesPath === currentPath) {
-            return Promise.reject("Cannot move files from scanner dir")
+            return Promise.reject('Cannot move files from scanner dir')
         }
 
-        return invoke("copy_dir", {oldDir: currentPath, newBaseDir: donePath, newDirName: id})
+        return invoke('copy_dir', {oldDir: currentPath, newBaseDir: donePath, newDirName: id})
     }
 
     async function deleteDir(path: string): Promise<void> {
-        return invoke("delete_dir", {dir: path})
+        return invoke('delete_dir', {dir: path})
     }
 
     function handleError(extra_text?: string, code?: string | number) {

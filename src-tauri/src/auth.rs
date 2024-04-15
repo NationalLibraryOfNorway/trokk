@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use reqwest::Client;
 use tauri::Window;
-use tauri_plugin_oauth::{start_with_config, OauthConfig};
+use tauri_plugin_oauth::{OauthConfig, start_with_config};
 use url::Url;
 
 use crate::get_secret_variables;
@@ -31,6 +31,7 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 				.collect();
 
 			tauri::async_runtime::block_on(async {
+				// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 				let secrets = get_secret_variables().await.unwrap();
 				let mut redirect_url = url.split('?').next().unwrap().to_string();
 				if redirect_url.ends_with('/') {
@@ -53,6 +54,7 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 }
 
 pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
+	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();
 	let client = Client::new();
 	let body = format!(
@@ -63,6 +65,7 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 }
 
 pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>> {
+	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();
 	let client = Client::new();
 	let body = format!(
@@ -82,6 +85,7 @@ pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>
 }
 
 async fn create_token(client: Client, body: String) -> AuthenticationResponse {
+	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();
 	let time_now = SystemTime::now()
 		.duration_since(UNIX_EPOCH)

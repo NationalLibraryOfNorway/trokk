@@ -1,5 +1,5 @@
-import {describe, expect, test} from "vitest";
-import {formatFileNames} from "../../lib/util/file-utils";
+import {describe, expect, test} from 'vitest';
+import {formatFileNames} from '../../lib/util/file-utils';
 
 
 describe('formatFileNames', () => {

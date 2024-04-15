@@ -1,6 +1,6 @@
-import {describe, expect, test, vi} from "vitest";
-import {settings} from "../../lib/util/settings";
-import {authenticationResponseMock} from "../mock-data.mock";
+import {describe, expect, test, vi} from 'vitest';
+import {settings} from '../../lib/util/settings';
+import {authenticationResponseMock} from '../mock-data.mock';
 
 let store: Map<string, string | AuthenticationResponse> = new Map()
 

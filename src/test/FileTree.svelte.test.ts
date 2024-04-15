@@ -1,7 +1,7 @@
-import {describe, test, expect, beforeEach} from "vitest";
-import {render, type RenderResult} from "@testing-library/svelte";
-import FileTree from "../lib/FileTree.svelte";
-import {fileTreeListMock} from "./mock-data.mock";
+import {describe, test, expect, beforeEach} from 'vitest';
+import {render, type RenderResult} from '@testing-library/svelte';
+import FileTree from '../lib/FileTree.svelte';
+import {fileTreeListMock} from './mock-data.mock';
 
 
 describe('FileTree.svelte', () => {

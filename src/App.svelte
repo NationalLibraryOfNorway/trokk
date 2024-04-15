@@ -1,11 +1,11 @@
 <script lang="ts">
-    import Files from "./lib/Files.svelte";
-    import Settings from "./lib/Settings.svelte";
-    import { onMount } from "svelte";
-    import { documentDir } from "@tauri-apps/api/path";
-    import { settings } from "./lib/util/settings";
-    import Auth from "./lib/Auth.svelte";
-    import { User } from "lucide-svelte";
+    import Files from './lib/Files.svelte';
+    import Settings from './lib/Settings.svelte';
+    import { onMount } from 'svelte';
+    import { documentDir } from '@tauri-apps/api/path';
+    import { settings } from './lib/util/settings';
+    import Auth from './lib/Auth.svelte';
+    import { User } from 'lucide-svelte';
 
 
     let scannerPath: string;
@@ -23,7 +23,7 @@
             if (savedScanPath) {
                 scannerPath = savedScanPath;
             } else {
-                let defaultPath = await documentDir() + "trokk/files";
+                let defaultPath = await documentDir() + 'trokk/files';
                 settings.scannerPath = defaultPath;
                 scannerPath = defaultPath;
             }
@@ -33,7 +33,7 @@
             if (savedDonePath) {
                 donePath = savedDonePath;
             } else {
-                let defaultPath = await documentDir() + "trokk/done";
+                let defaultPath = await documentDir() + 'trokk/done';
                 settings.donePath = defaultPath;
                 donePath = defaultPath;
             }

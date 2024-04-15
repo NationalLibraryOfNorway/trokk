@@ -1,4 +1,4 @@
-import {FileTree} from "./file-tree";
+import {FileTree} from './file-tree';
 
 export interface ViewFile {
     fileTree: FileTree;

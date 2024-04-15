@@ -1,9 +1,9 @@
-import {afterEach, beforeEach, describe, expect, test, vi} from "vitest";
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest';
 import {cleanup, render, type RenderResult} from '@testing-library/svelte'
-import RegistrationSchema from "../lib/RegistrationSchema.svelte";
-import {mockIPC} from "@tauri-apps/api/mocks";
-import {authenticationResponseMock, response400Mock, textInputDtoResponseMockNewspaper} from "./mock-data.mock";
-import {settings} from "../lib/util/settings";
+import RegistrationSchema from '../lib/RegistrationSchema.svelte';
+import {mockIPC} from '@tauri-apps/api/mocks';
+import {authenticationResponseMock, response400Mock, textInputDtoResponseMockNewspaper} from './mock-data.mock';
+import {settings} from '../lib/util/settings';
 
 
 describe('RegistrationSchema.svelte', () => {
@@ -16,23 +16,23 @@ describe('RegistrationSchema.svelte', () => {
 
         mockIPC((cmd, args) => {
             switch (cmd) {
-                case 'get_required_env_variables': return Promise.resolve({papiPath: 'test.papi'})
-                case 'get_hostname': return Promise.resolve('testHost')
-                case 'get_total_size_of_files_in_folder': return Promise.resolve(BigInt(123))
-                case 'copy_dir': return Promise.resolve('/scanner/123abc')
-                case 'delete_dir': return Promise.resolve()
-                case 'get_papi_access_token': return Promise.resolve('token')
-                case 'tauri': {
-                    if (args['__tauriModule'] === 'Http') { // fetch requests has cmd=tauri and args.__tauriModule=Http
-                        return Promise.resolve(textInputDtoResponseMockNewspaper)
-                    }
-                    console.log(`unknown args for cmd "tauri": ${args}`)
-                    return ''
+            case 'get_required_env_variables': return Promise.resolve({papiPath: 'test.papi'})
+            case 'get_hostname': return Promise.resolve('testHost')
+            case 'get_total_size_of_files_in_folder': return Promise.resolve(BigInt(123))
+            case 'copy_dir': return Promise.resolve('/scanner/123abc')
+            case 'delete_dir': return Promise.resolve()
+            case 'get_papi_access_token': return Promise.resolve('token')
+            case 'tauri': {
+                if (args['__tauriModule'] === 'Http') { // fetch requests has cmd=tauri and args.__tauriModule=Http
+                    return Promise.resolve(textInputDtoResponseMockNewspaper)
                 }
-                default: {
-                    console.log(`unknown cmd: ${cmd}`)
-                    return ''
-                }
+                console.log(`unknown args for cmd "tauri": ${args}`)
+                return ''
+            }
+            default: {
+                console.log(`unknown cmd: ${cmd}`)
+                return ''
+            }
             }
         })
 
@@ -128,14 +128,14 @@ describe('RegistrationSchema.svelte', () => {
                     options: expect.objectContaining({
                         body: expect.objectContaining({
                             payload: expect.objectContaining({
-                                "createdBy": authenticationResponseMock.userInfo.name,
-                                "fileSize": 123n,
-                                "font": "ANTIQUA",
-                                "id": expect.any(String),
-                                "language": "NOB",
-                                "materialType": "NEWSPAPER",
-                                "scanner": "testHost",
-                                "workingTitle": "path"
+                                'createdBy': authenticationResponseMock.userInfo.name,
+                                'fileSize': 123n,
+                                'font': 'ANTIQUA',
+                                'id': expect.any(String),
+                                'language': 'NOB',
+                                'materialType': 'NEWSPAPER',
+                                'scanner': 'testHost',
+                                'workingTitle': 'path'
                             })
                         })
                     })
