@@ -4,8 +4,8 @@ use vaultrs::kv2;
 use vaultrs_login::engines::approle::AppRoleLogin;
 use vaultrs_login::LoginClient;
 
-use crate::ENVIRONMENT_VARIABLES;
 use crate::SecretVariables;
+use crate::ENVIRONMENT_VARIABLES;
 
 pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, ClientError> {
 	let mut client = VaultClient::new(

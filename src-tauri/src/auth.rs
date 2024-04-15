@@ -5,7 +5,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use reqwest::Client;
 use tauri::Window;
-use tauri_plugin_oauth::{OauthConfig, start_with_config};
+use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
 use crate::get_secret_variables;
