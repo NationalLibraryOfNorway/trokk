@@ -1,25 +1,9 @@
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    expect,
-    type MockInstance,
-    test,
-    vi,
-} from 'vitest';
+import { afterEach, beforeEach, describe, expect, type MockInstance, test, vi } from 'vitest';
 import { render, type RenderResult, waitFor } from '@testing-library/svelte';
-import Auth, {
-    canRefresh,
-    isLoggedIn,
-    refreshAccessToken,
-    setRefreshAccessTokenInterval,
-} from '../lib/Auth.svelte';
+import Auth, { canRefresh, isLoggedIn, refreshAccessToken, setRefreshAccessTokenInterval } from '../lib/Auth.svelte';
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import { settings } from '../lib/util/settings';
-import {
-    authenticationResponseMock,
-    secretVariablesMock,
-} from './mock-data.mock';
+import { authenticationResponseMock, secretVariablesMock } from './mock-data.mock';
 import { getAll } from '@tauri-apps/api/window';
 import { awaitNthTicks } from './util/util';
 
@@ -30,7 +14,7 @@ describe('Auth.svelte', () => {
             switch (cmd) {
             case 'log_in':
                 return Promise.resolve(9999);
-            case 'get_required_env_variables':
+            case 'get_secret_variables':
                 return Promise.resolve(secretVariablesMock);
             case 'refresh_token':
                 return Promise.resolve(authenticationResponseMock);
@@ -59,7 +43,7 @@ describe('Auth.svelte', () => {
 
         test('component mounts', () => {
             container = render(Auth, {
-                props: { authResponse: null, loggedOut: false },
+                props: { authResponse: null, loggedOut: false }
             });
             expect(container).toBeTruthy();
             expect(container.component).toBeTruthy();
@@ -75,7 +59,7 @@ describe('Auth.svelte', () => {
             const tauriIpcSpy = vi.spyOn(window, '__TAURI_IPC__');
 
             container = render(Auth, {
-                props: { authResponse: null, loggedOut: false },
+                props: { authResponse: null, loggedOut: false }
             });
 
             // Wait for login to be initiated
@@ -83,7 +67,7 @@ describe('Auth.svelte', () => {
                 // For some reason, we must await many ticks, even when using waitFor
                 await awaitNthTicks(50);
                 expect(tauriIpcSpy).toHaveBeenCalledWith(
-                    expect.objectContaining({ cmd: 'log_in' }),
+                    expect.objectContaining({ cmd: 'log_in' })
                 );
             });
 
@@ -94,13 +78,13 @@ describe('Auth.svelte', () => {
                     payload: authenticationResponseMock,
                     event: 'token_exchanged',
                     windowLabel: 'main',
-                    id: 0,
+                    id: 0
                 });
 
             await waitFor(() =>
                 expect(setAuthResponseSpy).toHaveBeenCalledWith(
-                    authenticationResponseMock,
-                ),
+                    authenticationResponseMock
+                )
             );
 
             // Expect canRefresh() check and isLoggedIn() check
@@ -119,13 +103,13 @@ describe('Auth.svelte', () => {
             expect(tauriIpcSpy).not.toHaveBeenCalled();
             expect(vi.getTimerCount()).toBe(0);
             container = render(Auth, {
-                props: { authResponse: null, loggedOut: false },
+                props: { authResponse: null, loggedOut: false }
             });
 
             await waitFor(async () => {
                 await awaitNthTicks(50);
                 expect(setAuthResponseSpy).toHaveBeenCalledWith(
-                    authenticationResponseMock,
+                    authenticationResponseMock
                 );
             });
 
@@ -133,7 +117,7 @@ describe('Auth.svelte', () => {
             expect(vi.getTimerCount()).toBe(1);
             // Expect a refresh token call
             expect(tauriIpcSpy).toHaveBeenCalledWith(
-                expect.objectContaining({ cmd: 'refresh_token' }),
+                expect.objectContaining({ cmd: 'refresh_token' })
             );
             // Expect every call to get the authResponse
             expect(getAuthSpy).toHaveBeenCalledTimes(5);
@@ -143,7 +127,7 @@ describe('Auth.svelte', () => {
     describe('module', () => {
         beforeEach(() => {
             vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(
-                Promise.resolve(authenticationResponseMock),
+                Promise.resolve(authenticationResponseMock)
             );
             vi.spyOn(settings, 'authResponse', 'set').mockReturnValue();
         });
@@ -154,7 +138,7 @@ describe('Auth.svelte', () => {
 
             await refreshAccessToken();
             expect(refreshSpy).toHaveBeenCalledWith(
-                expect.objectContaining({ cmd: 'refresh_token' }),
+                expect.objectContaining({ cmd: 'refresh_token' })
             );
         });
 
@@ -170,11 +154,11 @@ describe('Auth.svelte', () => {
             const authMock = structuredClone(authenticationResponseMock);
             authMock.expireInfo.refreshExpiresAt = 0;
             vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(
-                Promise.resolve(authMock),
+                Promise.resolve(authMock)
             );
 
             await expect(refreshAccessToken()).rejects.toThrow(
-                new Error('Refresh token expired'),
+                new Error('Refresh token expired')
             );
         });
 
@@ -192,7 +176,7 @@ describe('Auth.svelte', () => {
             const authMock = structuredClone(authenticationResponseMock);
             authMock.expireInfo.refreshExpiresAt = new Date().getTime() + 100000;
             vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(
-                Promise.resolve(authMock),
+                Promise.resolve(authMock)
             );
 
             expect(await canRefresh()).toBe(true);
@@ -202,7 +186,7 @@ describe('Auth.svelte', () => {
             const authMock = structuredClone(authenticationResponseMock);
             authMock.expireInfo.refreshExpiresAt = 0;
             vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(
-                Promise.resolve(authMock),
+                Promise.resolve(authMock)
             );
 
             expect(await canRefresh()).toBe(false);
@@ -212,7 +196,7 @@ describe('Auth.svelte', () => {
             const authMock = structuredClone(authenticationResponseMock);
             authMock.expireInfo.expiresAt = new Date().getTime() + 100000;
             vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(
-                Promise.resolve(authMock),
+                Promise.resolve(authMock)
             );
 
             expect(await isLoggedIn()).toBe(true);
@@ -222,7 +206,7 @@ describe('Auth.svelte', () => {
             const authMock = structuredClone(authenticationResponseMock);
             authMock.expireInfo.expiresAt = 0;
             vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(
-                Promise.resolve(authMock),
+                Promise.resolve(authMock)
             );
 
             expect(await isLoggedIn()).toBe(false);
