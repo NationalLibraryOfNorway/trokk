@@ -4,22 +4,36 @@
 
     export let authResponse: AuthenticationResponse | null;
     export let loggedOut: Boolean = false;
+    export let fetchSecretsError: string | null = null;
     let secrets: SecretVariables;
     let refreshIntervalId: number | undefined = undefined;
 
     onMount(async () => {
-        secrets = await getSecrets(); // TODO error handling for when fetching from Vault fails. Show msg to user
-        if (await isLoggedIn() || await canRefresh()) {
-            await refreshAccessToken();
-            refreshIntervalId = await setRefreshAccessTokenInterval();
-            authResponse = await settings.authResponse;
-        } else {
-            await login();
-        }
+        await getSecrets().then(async res => {
+            secrets = res;
+            fetchSecretsError = null;
+            if (await isLoggedIn() || await canRefresh()) {
+                await refreshAccessToken();
+                refreshIntervalId = await setRefreshAccessTokenInterval();
+                authResponse = await settings.authResponse;
+            } else {
+                await login();
+            }
+        }).catch(err => {
+            fetchSecretsError = err;
+            throw new Error("Failed to fetch secrets");
+        });
     });
 
     export async function login(): Promise<string | void> {
-        secrets = await getSecrets();
+        if (!secrets.oidcClientSecret) {
+            await getSecrets().then(res => {
+                secrets = res;
+            }).catch(err => {
+                fetchSecretsError = err;
+                throw new Error("Failed to fetch secrets");
+            });
+        }
         return invoke("log_in").then(async (port) => {
             loggedOut = false;
             let loginWebView = new WebviewWindow("Login", {
