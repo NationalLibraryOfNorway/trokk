@@ -37,10 +37,10 @@ jobs:
         id: import-secrets
         uses: hashicorp/vault-action@v2
         with:
-          url: ${{ VAULT_BASE_URL }}
+          url: ${{ secrets.VAULT_BASE_URL }}
           method: approle
-          roleId: ${{ VAULT_ROLE_ID }}
-          secretId: ${{ VAULT_SECRET_ID }}
+          roleId: ${{ secrets.VAULT_ROLE_ID }}
+          secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
             kv/team/text/data/artifactory * | ART_
 
