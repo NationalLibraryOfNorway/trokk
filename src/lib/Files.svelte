@@ -35,7 +35,7 @@
         await watchFiles();
 
         // Applies the .gutter class from styles.css to the specified elements
-        Split(['#left-pane', '#middle-pane', '#right-pane'], {
+        Split(["#left-pane", "#middle-pane", "#right-pane"], {
             sizes: [20, 60, 20],
             minSize: [5, 10, 5],
             gutterSize: 3,
@@ -81,12 +81,13 @@
         await unwatchFiles();
         stopWatching = await watch(
             scannerPath,
-            async () => {
+            async (event) => {
+                console.log(`Event: ${event}`);
                 if (currentPath && !await exists(currentPath)) currentPath = undefined;
                 fileTree = await getFileEntries();
                 const currentEntry: FileTreeType | undefined = findCurrentDir(fileTree);
                 if (currentEntry) {
-                    changeViewDirectory(currentEntry);
+                    changeViewDirectory(currentEntry, false);
                 } else {
                     viewFiles = [];
                 }
@@ -147,7 +148,13 @@
         });
     }
 
-    function addViewFile(fileEntry: FileTreeType) {
+    function createThumbnailsFromDirectory(directoryPath: string) {
+        invoke('convert_directory_to_webp', { directoryPath: directoryPath }).catch((err) => {
+            console.error(err);
+        });
+    }
+
+    function addViewFile(fileEntry: FileTreeType, generateThumbnails: boolean = true) {
         fileEntry?.children?.forEach((file: FileTreeType) => {
             // Show all files except the .thumbnail directory and tif files
             if (!file.name.startsWith('.thumbnails') && !file.name.endsWith('.tif')) {
@@ -155,8 +162,6 @@
                     fileTree: file,
                     imageSource: convertFileSrc(file.path)
                 });
-            } else if (file.name.endsWith('.tif')) {
-                createThumbnail(file.path);
             }
             // If the current file is the .thumbnail directory, add all files in it
             else if (file.children && file.path.endsWith('.thumbnails')) {
@@ -165,11 +170,14 @@
         });
     }
 
-    function changeViewDirectory(fileEntry: FileTreeType): void {
+    function changeViewDirectory(fileEntry: FileTreeType, generateThumbnails: boolean = true): void {
         currentPath = fileEntry.path;
         viewFiles = [];
+        if (generateThumbnails) {
+            createThumbnailsFromDirectory(currentPath);
+        }
         if (fileEntry.children) {
-            addViewFile(fileEntry);
+            addViewFile(fileEntry, false);
         } else {
             viewFiles.push({
                 fileTree: fileEntry,
@@ -207,8 +215,8 @@
                     <ChevronsDownUp size="14" />
                 </button>
             </div>
-            <FileTree fileTree={fileTree} selectedDir={currentPath} bind:allUploadProgress
-                on:directoryChange={(event) => changeViewDirectory(event.detail)} />
+            <FileTree fileTree={fileTree} selectedDir={currentPath}
+               bind:allUploadProgress on:directoryChange={(event) => changeViewDirectory(event.detail)} />
         </div>
         <div id="middle-pane" class="pane">
             <div class="images">
