@@ -2,15 +2,16 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::ffi::OsString;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
 use tauri::Manager;
-#[cfg(debug_assertions)]
 use tauri::Window;
 use tokio::sync::OnceCell;
 
+#[cfg(debug_assertions)]
+use crate::image_converter::ConversionCount;
 use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables};
 
 mod auth;
@@ -81,51 +82,50 @@ fn convert_to_webp(file_path: String) -> Result<(), String> {
 	}
 }
 
-// Define a global static Mutex wrapped in an Arc
-static CURRENT_DIRECTORIES_PROCESSING: Lazy<Arc<Mutex<Vec<String>>>> =
-	Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
+static CURRENT_DIRECTORIES_PROCESSING: Lazy<Mutex<Vec<String>>> =
+	Lazy::new(|| Mutex::new(Vec::new()));
 
 #[tauri::command]
-async fn convert_directory_to_webp(directory_path: String) -> Result<(), String> {
-	println!("MAIN: Converting directory to webp: {:?}", directory_path);
+async fn convert_directory_to_webp(directory_path: String) -> Result<ConversionCount, String> {
+	println!("MAIN: Converting directory to webp: {:?}", &directory_path);
 
-	// Clone the Arc
-	let directories_processing = Arc::clone(&CURRENT_DIRECTORIES_PROCESSING);
-
-	// Lock the Mutex
-	let mut directories = directories_processing.lock().unwrap();
-	println!("Directories being processed: {:?}", directories);
-	if !directories.contains(&directory_path) {
-		directories.push(directory_path.clone());
-		drop(directories); // Release the lock
-
-		//let directories_processing = Arc::clone(&directories_processing);
-
-		// Spawn a new thread to process the directory
-		THREAD_POOL.install(|| {
-			rayon::scope(|s| {
-				s.spawn(move |_| {
-					println!(
-						"S:SPAWN: Converting directory to webp: {:?}",
-						directory_path
-					);
-					image_converter::convert_directory_to_webp(directory_path.clone())
-						.expect("Could not convert directory to webp");
-
-					// Lock the Mutex again to update the directories
-					let mut directories = directories_processing.lock().unwrap();
-					directories.retain(|dir| dir != &directory_path); // Remove the directory from the list after processing
-				});
+	{
+		// Lock the Mutex to safely access the shared state
+		let mut directories = CURRENT_DIRECTORIES_PROCESSING.lock().unwrap();
+		println!("Directories being processed: {:?}", &directories);
+		if directories.contains(&directory_path) {
+			println!(
+				"MAIN: Directory already being processed: {:?}",
+				directory_path
+			);
+			return Ok(ConversionCount {
+				converted: 0,
+				already_converted: 0,
 			});
-		});
-	} else {
-		println!(
-			"MAIN: Directory already being processed: {:?}",
-			directory_path
-		);
-	}
+		}
 
-	Ok(())
+		directories.push(directory_path.clone());
+		drop(directories);
+	}
+	let directory_path_clone = directory_path.clone();
+
+	// Convert the directory to webp asynchronously
+	let result = tokio::task::spawn_blocking(move || {
+		image_converter::convert_directory_to_webp(directory_path_clone)
+	})
+	.await
+	.expect("Failed to run blocking task");
+
+	// Lock the Mutex again to update the directories
+	let mut directories = CURRENT_DIRECTORIES_PROCESSING.lock().unwrap();
+
+	directories.retain(|dir| dir != &directory_path); // Remove the directory from the list after processing
+
+	// Return the result
+	match result {
+		Ok(count) => Ok(count),
+		Err(e) => Err(e.to_string()),
+	}
 }
 
 /*const CURRENT_DIRECTORIES_PROCESSING: Lazy<Arc<Mutex<Vec<String>>>> =
@@ -207,7 +207,8 @@ async fn upload_directory_to_s3(
 	s3::upload_directory(directory_path, object_id, material_type, app_window).await
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
 	let sentry_client = sentry_tauri::sentry::init((
 		ENVIRONMENT_VARIABLES.sentry_url,
 		sentry_tauri::sentry::ClientOptions {
@@ -219,6 +220,7 @@ fn main() {
 
 	let _guard = sentry_tauri::minidump::init(&sentry_client);
 
+	tauri::async_runtime::set(tokio::runtime::Handle::current());
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
 		.plugin(tauri_plugin_fs_watch::init())
