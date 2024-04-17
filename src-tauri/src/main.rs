@@ -2,10 +2,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::ffi::OsString;
+use std::sync::{Arc, Mutex};
 
 use gethostname::gethostname;
-#[cfg(debug_assertions)]
+use once_cell::sync::Lazy;
 use tauri::Manager;
+#[cfg(debug_assertions)]
 use tauri::Window;
 
 use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables};
@@ -30,6 +32,13 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET"),
 };
 
+static THREAD_POOL: Lazy<rayon::ThreadPool> = Lazy::new(|| {
+	rayon::ThreadPoolBuilder::new()
+		.num_threads(4)
+		.build()
+		.unwrap()
+});
+
 #[tauri::command]
 fn get_hostname() -> Result<String, OsString> {
 	gethostname().into_string()
@@ -43,6 +52,7 @@ fn get_required_env_variables() -> RequiredEnvironmentVariables {
 #[tauri::command]
 async fn log_in(window: Window) -> Result<u16, String> {
 	// Returns the token via the `token_exchanged` window event
+	println!("MAIN: Logging in");
 	auth::log_in_with_server_redirect(window)
 }
 
@@ -69,6 +79,89 @@ fn convert_to_webp(file_path: String) -> Result<(), String> {
 		Err(e) => Err(e.to_string()),
 	}
 }
+
+// Define a global static Mutex wrapped in an Arc
+static CURRENT_DIRECTORIES_PROCESSING: Lazy<Arc<Mutex<Vec<String>>>> =
+	Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
+
+#[tauri::command]
+async fn convert_directory_to_webp(directory_path: String) -> Result<(), String> {
+	println!("MAIN: Converting directory to webp: {:?}", directory_path);
+
+	// Clone the Arc
+	let directories_processing = Arc::clone(&CURRENT_DIRECTORIES_PROCESSING);
+
+	// Lock the Mutex
+	let mut directories = directories_processing.lock().unwrap();
+	println!("Directories being processed: {:?}", directories);
+	if !directories.contains(&directory_path) {
+		directories.push(directory_path.clone());
+		drop(directories); // Release the lock
+
+		//let directories_processing = Arc::clone(&directories_processing);
+
+		// Spawn a new thread to process the directory
+		THREAD_POOL.install(|| {
+			rayon::scope(|s| {
+				s.spawn(move |_| {
+					println!(
+						"S:SPAWN: Converting directory to webp: {:?}",
+						directory_path
+					);
+					image_converter::convert_directory_to_webp(directory_path.clone())
+						.expect("Could not convert directory to webp");
+
+					// Lock the Mutex again to update the directories
+					let mut directories = directories_processing.lock().unwrap();
+					directories.retain(|dir| dir != &directory_path); // Remove the directory from the list after processing
+				});
+			});
+		});
+	} else {
+		println!(
+			"MAIN: Directory already being processed: {:?}",
+			directory_path
+		);
+	}
+
+	Ok(())
+}
+
+/*const CURRENT_DIRECTORIES_PROCESSING: Lazy<Arc<Mutex<Vec<String>>>> =
+	Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
+
+#[tauri::command]
+async fn convert_directory_to_webp(directory_path: String) -> Result<(), String> {
+	println!("MAIN: Converting directory to webp: {:?}", directory_path);
+	let inputs_clone = Arc::clone(&CURRENT_DIRECTORIES_PROCESSING);
+	let mut directories_processing = inputs_clone.lock().unwrap();
+	// print directories being processed
+	println!("Directories being processed: {:?}", directories_processing);
+	if !directories_processing.contains(&directory_path) {
+		directories_processing.push(directory_path.clone());
+		drop(directories_processing); // Release the lock
+		THREAD_POOL.install(|| {
+			rayon::scope(|s| {
+				s.spawn(move |_| {
+					println!(
+						"S:SPAWN: Converting directory to webp: {:?}",
+						directory_path
+					);
+					image_converter::convert_directory_to_webp(directory_path.clone())
+						.expect("Could not convert directory to webp");
+					let mut directories_processing = inputs_clone.lock().unwrap();
+					directories_processing.retain(|dir| dir != &directory_path); // Remove the directory from the list after processing
+				});
+			});
+		})
+	} else {
+		println!(
+			"MAIN: Directory already being processed: {:?}",
+			directory_path
+		);
+	}
+	Ok(())
+}*/
 
 #[tauri::command]
 fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
@@ -112,6 +205,7 @@ fn main() {
 			log_in,
 			refresh_token,
 			convert_to_webp,
+			convert_directory_to_webp,
 			get_total_size_of_files_in_folder,
 			copy_dir,
 			delete_dir,

@@ -11,6 +11,50 @@ const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 const WEBP_EXTENSION: &str = "webp";
 const WEBP_QUALITY: f32 = 25.0;
 
+pub struct ConversionCount {
+	converted: u32,
+	already_converted: u32,
+}
+
+pub fn convert_directory_to_webp<P: AsRef<Path>>(
+	directory_path: P,
+) -> Result<ConversionCount, ImageConversionError> {
+	println!(
+		"CRATE: Converting directory to webp: {:?}",
+		directory_path.as_ref()
+	);
+	let files = list_tif_files_in_directory(directory_path)?;
+	let mut count = ConversionCount {
+		converted: 0,
+		already_converted: 0,
+	};
+	for file in files {
+		if check_if_webp_exists(&file)? {
+			println!("CRATE: Already converted file: {:?}", file);
+			count.already_converted += 1;
+		} else {
+			convert_to_webp(&file)?;
+			println!("CRATE: Converted file: {:?}", file);
+			count.converted += 1;
+		}
+	}
+	Ok(count)
+}
+
+fn list_tif_files_in_directory<P: AsRef<Path>>(
+	directory_path: P,
+) -> Result<Vec<PathBuf>, ImageConversionError> {
+	let mut files = Vec::new();
+	for entry in fs::read_dir(directory_path)? {
+		let entry = entry?;
+		let path = entry.path();
+		if path.is_file() && path.extension().map_or(false, |ext| ext == "tif") {
+			files.push(path);
+		}
+	}
+	Ok(files)
+}
+
 pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let image = ImageReader::open(path_reference)?
