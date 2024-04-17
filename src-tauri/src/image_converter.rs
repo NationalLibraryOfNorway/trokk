@@ -3,6 +3,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use image::io::Reader as ImageReader;
+use serde::{Deserialize, Serialize};
 use webp::{Encoder, WebPMemory};
 
 use crate::error::ImageConversionError;
@@ -11,9 +12,10 @@ const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 const WEBP_EXTENSION: &str = "webp";
 const WEBP_QUALITY: f32 = 25.0;
 
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct ConversionCount {
-	converted: u32,
-	already_converted: u32,
+	pub(crate) converted: u32,
+	pub(crate) already_converted: u32,
 }
 
 pub fn convert_directory_to_webp<P: AsRef<Path>>(
@@ -56,19 +58,26 @@ fn list_tif_files_in_directory<P: AsRef<Path>>(
 }
 
 pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageConversionError> {
+	let elapsed = std::time::Instant::now();
 	let path_reference = image_path.as_ref();
-	let image = ImageReader::open(path_reference)?
+	let image: image::DynamicImage = ImageReader::open(path_reference)?
 		.with_guessed_format()?
 		.decode()?;
+	println!("CRATE: Image loaded in {:?}", elapsed.elapsed());
+
+	let elapsed = std::time::Instant::now();
 	let image = image.resize(
-		image.width() / 2,
-		image.height() / 2,
+		image.width() / 12,
+		image.height() / 12,
 		image::imageops::FilterType::Nearest,
 	);
+	println!("CRATE: Image resized in {:?}", elapsed.elapsed());
 
+	let elapsed = std::time::Instant::now();
 	let encoder: Encoder =
 		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
 	let encoded_webp: WebPMemory = encoder.encode_simple(false, WEBP_QUALITY)?;
+	println!("CRATE: Image encoded in {:?}", elapsed.elapsed());
 
 	let parent_directory = get_parent_directory(path_reference)?;
 	let filename_original_image = get_file_name(path_reference)?;
@@ -78,9 +87,32 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageCo
 	fs::create_dir_all(&path)?;
 	path.push(filename_original_image);
 	path.set_extension(WEBP_EXTENSION);
+	let elapsed = std::time::Instant::now();
 	fs::write(&path, &*encoded_webp)?;
+	println!("CRATE: Image written in {:?}", elapsed.elapsed());
+	// Print completed image size in names for bytes
+	println!(
+		"CRATE: Image size: {}",
+		format_size(encoded_webp.len() as u64)
+	);
 
 	Ok(path)
+}
+
+pub fn format_size(bytes: u64) -> String {
+	const KB: u64 = 1024;
+	const MB: u64 = KB * 1024;
+	const GB: u64 = MB * 1024;
+
+	if bytes < KB {
+		return format!("{} B", bytes);
+	} else if bytes < MB {
+		return format!("{:.2} KB", (bytes as f64) / (KB as f64));
+	} else if bytes < GB {
+		return format!("{:.2} MB", (bytes as f64) / (MB as f64));
+	} else {
+		return format!("{:.2} GB", (bytes as f64) / (GB as f64));
+	}
 }
 
 pub fn check_if_webp_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, ImageConversionError> {
