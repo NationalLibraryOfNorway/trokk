@@ -16,29 +16,29 @@ describe('RegistrationSchema.svelte', () => {
 
         mockIPC((cmd, args) => {
             switch (cmd) {
-            case 'get_secret_variables':
-                return Promise.resolve({ papiPath: 'test.papi' });
-            case 'get_hostname':
-                return Promise.resolve('testHost');
-            case 'get_total_size_of_files_in_folder':
-                return Promise.resolve(BigInt(123));
-            case 'copy_dir':
-                return Promise.resolve('/scanner/123abc');
-            case 'delete_dir':
-                return Promise.resolve();
-            case 'get_papi_access_token':
-                return Promise.resolve('token');
-            case 'tauri': {
-                if (args['__tauriModule'] === 'Http') { // fetch requests has cmd=tauri and args.__tauriModule=Http
-                    return Promise.resolve(textInputDtoResponseMockNewspaper);
+                case 'get_secret_variables':
+                    return Promise.resolve({ papiPath: 'test.papi' });
+                case 'get_hostname':
+                    return Promise.resolve('testHost');
+                case 'get_total_size_of_files_in_folder':
+                    return Promise.resolve(BigInt(123));
+                case 'copy_dir':
+                    return Promise.resolve('/scanner/123abc');
+                case 'delete_dir':
+                    return Promise.resolve();
+                case 'get_papi_access_token':
+                    return Promise.resolve('token');
+                case 'tauri': {
+                    if (args['__tauriModule'] === 'Http') { // fetch requests has cmd=tauri and args.__tauriModule=Http
+                        return Promise.resolve(textInputDtoResponseMockNewspaper);
+                    }
+                    console.log(`unknown args for cmd "tauri": ${args}`);
+                    return '';
                 }
-                console.log(`unknown args for cmd "tauri": ${args}`);
-                return '';
-            }
-            default: {
-                console.log(`unknown cmd: ${cmd}`);
-                return '';
-            }
+                default: {
+                    console.log(`unknown cmd: ${cmd}`);
+                    return '';
+                }
             }
         });
 

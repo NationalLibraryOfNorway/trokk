@@ -12,16 +12,16 @@ describe('Files.svelte', () => {
     beforeEach(async () => {
         mockIPC((cmd: string, args: Record<string, any>) => {
             switch (cmd) {
-            case 'tauri': {
-                switch (args.message.cmd) {
-                case 'readDir':
-                    return Promise.resolve(fileEntryListMock);
+                case 'tauri': {
+                    switch (args.message.cmd) {
+                        case 'readDir':
+                            return Promise.resolve(fileEntryListMock);
+                        default:
+                            return '';
+                    }
+                }
                 default:
                     return '';
-                }
-            }
-            default:
-                return '';
             }
         });
         container = render(Files, { props: { scannerPath: 'path' } });

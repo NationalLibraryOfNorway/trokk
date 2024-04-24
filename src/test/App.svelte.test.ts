@@ -27,19 +27,19 @@ describe('App.svelte', () => {
 
         mockIPC((cmd: string, args: Record<string, any>) => {
             switch (cmd) {
-            // readDir workaround for split-pane error
-            case 'tauri': {
-                switch (args.message.cmd) {
-                case 'readDir':
-                    return Promise.resolve(fileEntryListMock);
+                // readDir workaround for split-pane error
+                case 'tauri': {
+                    switch (args.message.cmd) {
+                        case 'readDir':
+                            return Promise.resolve(fileEntryListMock);
+                        default:
+                            return '';
+                    }
+                }
+                case 'get_secret_variables':
+                    return Promise.resolve(secretVariablesMock);
                 default:
                     return '';
-                }
-            }
-            case 'get_secret_variables':
-                return Promise.resolve(secretVariablesMock);
-            default:
-                return '';
             }
         });
 

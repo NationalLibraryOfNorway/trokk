@@ -12,12 +12,12 @@ describe('Auth.svelte', () => {
     beforeEach(() => {
         mockIPC((cmd, args) => {
             switch (cmd) {
-            case 'log_in':
-                return Promise.resolve(9999);
-            case 'get_secret_variables':
-                return Promise.resolve(secretVariablesMock);
-            case 'refresh_token':
-                return Promise.resolve(authenticationResponseMock);
+                case 'log_in':
+                    return Promise.resolve(9999);
+                case 'get_secret_variables':
+                    return Promise.resolve(secretVariablesMock);
+                case 'refresh_token':
+                    return Promise.resolve(authenticationResponseMock);
             }
         });
     });
