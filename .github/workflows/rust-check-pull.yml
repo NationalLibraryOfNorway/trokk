@@ -3,7 +3,7 @@ on: pull_request
 name: Rust code check
 
 jobs:
-  format-rust:
+  code-check-rust:
     runs-on: [ self-hosted, Linux ]
     defaults:
       run:
