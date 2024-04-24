@@ -4,7 +4,7 @@ name: Npm code check
 
 jobs:
   format:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, Linux ]
     steps:
       - uses: actions/checkout@v4
       - name: Install modules
