@@ -3,7 +3,7 @@ on: pull_request
 name: Npm code check
 
 jobs:
-  format:
+  format-npm:
     runs-on: [ self-hosted, Linux ]
     steps:
       - uses: actions/checkout@v4
