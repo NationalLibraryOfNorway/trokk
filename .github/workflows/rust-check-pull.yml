@@ -9,13 +9,9 @@ jobs:
       run:
         working-directory: ./src-tauri
     env:
-      PAPI_PATH: "placeholder"
-      OIDC_BASE_URL: "placeholder"
-      OIDC_CLIENT_ID: "placeholder"
-      OIDC_CLIENT_SECRET: "placeholder"
-      OIDC_TEKST_BASE_URL: "placeholder"
-      OIDC_TEKST_CLIENT_ID: "placeholder"
-      OIDC_TEKST_CLIENT_SECRET: "placeholder"
+      VAULT_BASE_URL: "placeholder"
+      VAULT_ROLE_ID: "placeholder"
+      VAULT_SECRET_ID: "placeholder"
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies (ubuntu only)

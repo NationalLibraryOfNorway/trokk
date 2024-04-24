@@ -1,11 +1,11 @@
 module.exports = {
   extends: [
-    "plugin:svelte/recommended",
+    "plugin:svelte/recommended"
   ],
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: "./tsconfig.json",
-    extraFileExtensions: [".svelte"],
+    extraFileExtensions: [".svelte"]
   },
   ignorePatterns: ["*.cjs"],
   overrides: [
@@ -13,14 +13,16 @@ module.exports = {
       files: ["*.svelte"],
       parser: "svelte-eslint-parser",
       parserOptions: {
-        parser: "@typescript-eslint/parser",
-      },
-    },
+        parser: "@typescript-eslint/parser"
+      }
+    }
   ],
   rules: {
     "svelte/indent": ["error", {
       "indent": 4,
-      "switchCase": 1,
+      "switchCase": 1
     }],
+    "indent": ["error", 4, { "SwitchCase": 1 }],
+    "quotes": ["error", "single"]
   }
 };

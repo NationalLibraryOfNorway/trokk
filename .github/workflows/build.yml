@@ -6,6 +6,7 @@ on:
       - v*
       - test*
 
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -16,16 +17,19 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-        - [self-hosted, Linux]
-        - [self-hosted, Windows]
+          - [ self-hosted, Linux ]
+          - [ self-hosted, Windows ]
         include:
-          - platform: [self-hosted, Linux]
+          - platform: [ self-hosted, Linux ]
             linux: true
-          - platform: [self-hosted, Windows]
+          - platform: [ self-hosted, Windows ]
             windows: true
     runs-on: ${{ matrix.platform }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      VAULT_BASE_URL: ${{ secrets.VAULT_BASE_URL }}
+      VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
+      VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
       RUST_BACKTRACE: full
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
@@ -34,13 +38,12 @@ jobs:
         id: import-secrets
         uses: hashicorp/vault-action@v2
         with:
-          url: ${{ secrets.VAULT_URL }}
+          url: ${{ secrets.VAULT_BASE_URL }}
           method: approle
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            kv/team/text/data/artifactory * | ART_;
-            kv/team/text/data/trokk-stage * | TROKK_
+            kv/team/text/data/artifactory * | ART_
 
       # Git fix for Windows, workaround for permission issues regarding self-hosted runners
       - name: Windows; Git fix
@@ -89,15 +92,13 @@ jobs:
         working-directory: ./src-tauri
         run: cargo clippy --all -- -D warnings
         env:
-          PAPI_PATH: ${{ steps.import-secrets.outputs.TROKK_PAPI_PATH }}
-          OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
-          OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
-          OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
-          OIDC_TEKST_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_TEKST_BASE_URL }}
-          OIDC_TEKST_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_TEKST_CLIENT_ID }}
-          OIDC_TEKST_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_TEKST_CLIENT_SECRET }}
+          VAULT_BASE_URL: "PLACEHOLDER"
+          VAULT_ROLE_ID: "PLACEHOLDER"
+          VAULT_SECRET_ID: "PLACEHOLDER"
 
-        # TODO run backend tests when they exist
+      - name: Rust; Run cargo test
+        working-directory: ./src-tauri
+        run: cargo test --all
 
       - name: NPM; Sync node version and setup cache
         uses: actions/setup-node@v4
@@ -121,14 +122,6 @@ jobs:
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         id: tauri_build
-        env:
-          PAPI_PATH: ${{ steps.import-secrets.outputs.TROKK_PAPI_PATH }}
-          OIDC_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_BASE_URL }}
-          OIDC_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_ID }}
-          OIDC_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_CLIENT_SECRET }}
-          OIDC_TEKST_BASE_URL: ${{ steps.import-secrets.outputs.TROKK_OIDC_TEKST_BASE_URL }}
-          OIDC_TEKST_CLIENT_ID: ${{ steps.import-secrets.outputs.TROKK_OIDC_TEKST_CLIENT_ID }}
-          OIDC_TEKST_CLIENT_SECRET: ${{ steps.import-secrets.outputs.TROKK_OIDC_TEKST_CLIENT_SECRET }}
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3

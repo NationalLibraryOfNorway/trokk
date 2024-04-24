@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { exists, readDir } from "@tauri-apps/api/fs";
-    import { beforeUpdate, onDestroy, onMount } from "svelte";
-    import { convertFileSrc } from "@tauri-apps/api/tauri";
-    import RegistrationSchema from "./RegistrationSchema.svelte";
-    import { invoke , path} from "@tauri-apps/api";
-    import FileTree from "./FileTree.svelte";
-    import { watch } from "tauri-plugin-fs-watch-api";
-    import { ChevronsDownUp, ChevronsUpDown, File, Folder } from "lucide-svelte";
-    import { FileTree as FileTreeType } from "./model/file-tree";
-    import { type UnlistenFn } from "@tauri-apps/api/event";
-    import { type ViewFile } from "./model/view-file";
-    import { formatFileNames } from "./util/file-utils";
-    import Split from "split.js";
+    import { exists, readDir } from '@tauri-apps/api/fs';
+    import { beforeUpdate, onDestroy, onMount } from 'svelte';
+    import { convertFileSrc } from '@tauri-apps/api/tauri';
+    import RegistrationSchema from './RegistrationSchema.svelte';
+    import { invoke , path} from '@tauri-apps/api';
+    import FileTree from './FileTree.svelte';
+    import { watch } from 'tauri-plugin-fs-watch-api';
+    import { ChevronsDownUp, ChevronsUpDown, File, Folder } from 'lucide-svelte';
+    import { FileTree as FileTreeType } from './model/file-tree';
+    import { type UnlistenFn } from '@tauri-apps/api/event';
+    import { type ViewFile } from './model/view-file';
+    import { formatFileNames } from './util/file-utils';
+    import Split from 'split.js';
 
     export let scannerPath: string
 
@@ -21,7 +21,7 @@
     let viewFiles: ViewFile[] = []
     let stopWatching: UnlistenFn | void | null = null
     const uriPathSeparator: string = encodeURIComponent(path.sep);
-    const supportedFileTypes = ["jpeg", "jpg", "png", "gif", "webp"]
+    const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp']
 
     $: updateBaseFilePath(scannerPath)
 
@@ -137,7 +137,7 @@
     }
 
     function createThumbnail(path: string) {
-        invoke("convert_to_webp", {filePath: path}).catch((err) => {
+        invoke('convert_to_webp', {filePath: path}).catch((err) => {
             console.error(err)
         })
     }
@@ -145,17 +145,17 @@
     function addViewFile(fileEntry: FileTreeType) {
         fileEntry?.children?.forEach((file: FileTreeType) => {
             // Show all files except the .thumbnail directory and tif files
-            if (!file.name.startsWith(".thumbnails") && !file.name.endsWith(".tif")) {
+            if (!file.name.startsWith('.thumbnails') && !file.name.endsWith('.tif')) {
                 viewFiles.push({
                     fileTree: file,
                     imageSource: convertFileSrc(file.path)
                 })
             }
-            else if (file.name.endsWith(".tif")) {
+            else if (file.name.endsWith('.tif')) {
                 createThumbnail(file.path)
             }
             // If the current file is the .thumbnail directory, add all files in it
-            else if (file.children && file.path.endsWith(".thumbnails")) {
+            else if (file.children && file.path.endsWith('.thumbnails')) {
                 addViewFile(file)
             }
         })
@@ -187,7 +187,7 @@
     }
 
     function getFileExtension(path: string): string {
-        return path?.split('.')?.pop() || ""
+        return path?.split('.')?.pop() || ''
     }
 
 </script>
