@@ -54,6 +54,7 @@ fn list_tif_files_in_directory<P: AsRef<Path>>(
 			files.push(path);
 		}
 	}
+	files.sort();
 	Ok(files)
 }
 
@@ -67,8 +68,8 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageCo
 
 	let elapsed = std::time::Instant::now();
 	let image = image.resize(
-		image.width() / 12,
-		image.height() / 12,
+		image.width() / 8,
+		image.height() / 8,
 		image::imageops::FilterType::Nearest,
 	);
 	println!("CRATE: Image resized in {:?}", elapsed.elapsed());
