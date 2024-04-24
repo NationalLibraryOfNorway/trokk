@@ -24,10 +24,7 @@ describe('Auth.svelte', () => {
 
     describe('component', () => {
         let container: RenderResult<Auth>;
-        let setAuthResponseSpy: MockInstance<
-      [Promise<AuthenticationResponse | null>],
-      void
-    >;
+        let setAuthResponseSpy: MockInstance<[Promise<AuthenticationResponse | null>], void>;
 
         beforeEach(async () => {
             setAuthResponseSpy = vi

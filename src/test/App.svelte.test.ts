@@ -8,10 +8,7 @@ import { awaitNthTicks } from './util/util';
 
 describe('App.svelte', () => {
     let container: RenderResult<App>;
-    let setAuthResponseSpy: MockInstance<
-    [Promise<AuthenticationResponse | null>],
-    void
-  >;
+    let setAuthResponseSpy: MockInstance<[Promise<AuthenticationResponse | null>], void>;
 
     beforeEach(async () => {
         setAuthResponseSpy = vi
@@ -39,7 +36,7 @@ describe('App.svelte', () => {
                     return '';
                 }
             }
-            case 'get_required_env_variables':
+            case 'get_secret_variables':
                 return Promise.resolve(secretVariablesMock);
             default:
                 return '';

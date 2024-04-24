@@ -13,12 +13,12 @@ const tokenResponseMock: TokenResponse = {
     refreshToken: '',
     scope: '',
     sessionState: '',
-    tokenType: '',
+    tokenType: ''
 };
 
 const expireInfoMock: ExpireInfo = {
     expiresAt: new Date().getTime() + 1000 * 60 * 5, // Add 5 minutes
-    refreshExpiresAt: new Date().getTime() + 1000 * 60 * 30, // Add 30 minutes
+    refreshExpiresAt: new Date().getTime() + 1000 * 60 * 30 // Add 30 minutes
 };
 
 const userInfoMock: UserInfo = {
@@ -28,13 +28,13 @@ const userInfoMock: UserInfo = {
     groups: [''],
     name: 'trokk-navnet',
     preferredUsername: '',
-    sub: '',
+    sub: ''
 };
 
 export const authenticationResponseMock: AuthenticationResponse = {
     expireInfo: expireInfoMock,
     tokenResponse: tokenResponseMock,
-    userInfo: userInfoMock,
+    userInfo: userInfoMock
 };
 
 export const textInputDtoMockNewspaper: TextInputDto = {
@@ -45,7 +45,7 @@ export const textInputDtoMockNewspaper: TextInputDto = {
     createdBy: 'trokk',
     scanner: 'test',
     fileSize: BigInt(123),
-    workingTitle: 'testavisen',
+    workingTitle: 'testavisen'
 };
 
 export const textInputDtoResponseMockNewspaper: Response<string> = new Response(
@@ -55,9 +55,9 @@ export const textInputDtoResponseMockNewspaper: Response<string> = new Response(
         headers: {},
         rawHeaders: {},
         data: JSON.stringify(textInputDtoMockNewspaper, (_, v) =>
-            typeof v === 'bigint' ? v.toString() : v,
-        ),
-    },
+            typeof v === 'bigint' ? v.toString() : v
+        )
+    }
 );
 
 export const response400Mock: Response<string> = new Response({
@@ -65,7 +65,7 @@ export const response400Mock: Response<string> = new Response({
     status: 400,
     headers: {},
     rawHeaders: {},
-    data: 'Bad request',
+    data: 'Bad request'
 });
 
 export const fileTreeListMock: FileTree[] = [
@@ -73,17 +73,17 @@ export const fileTreeListMock: FileTree[] = [
     new FileTree('b', 'b', false),
     new FileTree('d', 'd', false),
     new FileTree('c', 'c', false),
-    new FileTree('a', 'a', false),
+    new FileTree('a', 'a', false)
 ];
 
 export const fileEntryListMock: FileEntry[] = [
     { path: 'e', name: 'e' },
-    { path: 'b', name: 'b' },
+    { path: 'b', name: 'b' }
 ];
 
 export const secretVariablesMock: SecretVariables = {
     oidcBaseUrl: 'oidcBaseUrl',
     oidcClientId: 'oidcClientId',
     oidcClientSecret: 'oidcClientSecret',
-    papiPath: 'papiPath',
+    papiPath: 'papiPath'
 };
