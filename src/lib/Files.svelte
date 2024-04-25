@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { exists, type FileEntry, readDir } from '@tauri-apps/api/fs';
+    import { type FileEntry, readDir } from '@tauri-apps/api/fs';
     import { beforeUpdate, onDestroy, onMount } from 'svelte';
     import { convertFileSrc } from '@tauri-apps/api/tauri';
     import RegistrationSchema from './RegistrationSchema.svelte';
@@ -9,22 +9,19 @@
     import { ChevronsDownUp, ChevronsUpDown, File, Folder } from 'lucide-svelte';
     import { FileTree as FileTreeType } from './model/file-tree';
     import { type UnlistenFn } from '@tauri-apps/api/event';
-    import { type ViewFile } from './model/view-file';
+    import { type ViewDirectory, type ViewFile } from './model/view-file';
     import { formatFileNames } from './util/file-utils';
     import Split from 'split.js';
     import type { AllTransferProgress } from './model/transfer-progress';
     import { writable, type Writable } from 'svelte/store';
     import TransferLog from './TransferLog.svelte'
 
-    interface ViewDirectory extends FileEntry {
-        viewFile?: ViewFile;
-    }
 
     export let scannerPath: string;
     export let useS3: boolean;
     let allUploadProgress: Writable<AllTransferProgress> = writable<AllTransferProgress>({ dir: {} });
 
-    let currentFileEntry: ViewDirectory | undefined = undefined;//FileEntry | undefined = undefined;
+    let currentViewDirectory: ViewDirectory = { path: '', name: '', opened: false, children: [], viewFiles: [] };//FileEntry | undefined = undefined;
     //let testViewDirectory: ViewDirectory | undefined = undefined;
     let readDirFailed: string | undefined = undefined;
     let fileTree: FileTreeType[] = [];
@@ -33,11 +30,11 @@
     const uriPathSeparator: string = encodeURIComponent(path.sep);
     const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
-    $: updateBaseFilePath(scannerPath);
+    $: getFileEntries(scannerPath);
 
     onMount(async () => {
         // Applies the .gutter class from styles.css to the specified elements
-        Split(["#left-pane", "#middle-pane", "#right-pane"], {
+        Split(['#left-pane', '#middle-pane', '#right-pane'], {
             sizes: [20, 60, 20],
             minSize: [5, 10, 5],
             gutterSize: 3,
@@ -46,140 +43,43 @@
     });
 
     beforeUpdate(() => {
-        viewFiles = sortViewFiles();
+        sortViewDirectoryChildren();
     });
 
     onDestroy(() => {
         unwatchFiles();
     });
 
-    async function updateBaseFilePath(path: string) {
+    async function getFileEntries(path: string = scannerPath): Promise<FileTreeType[]> {
+        console.log('Getting file entries...');
         await unwatchFiles();
-        await readDir(path, { recursive: true })
+        return await readDir(path, { recursive: true })
             .then(async newFiles => {
-                viewFiles = [];
-                currentFileEntry = undefined;
-                fileTree = FileTreeType.fromFileEntry(newFiles);
-                await getFileEntries();
-                await watchFiles();
-                readDirFailed = undefined;
-            })
-            .catch(err => {
-                console.error(err);
-                readDirFailed = err;
-                fileTree = [];
-            });
-    }
-
-    function sortViewFiles(): ViewFile[] {
-        return viewFiles.sort((a, b) => {
-            if (a.fileTree.name < b.fileTree.name) return -1;
-            if (a.fileTree.name > b.fileTree.name) return 1;
-            return 0;
-        });
-    }
-
-    // TODO ide
-  // watch here also updates the filelist
-  // do we need a new watch to only update thumbnails in currentDir?
-
-    async function watchFiles() {
-        await unwatchFiles();
-        console.log("Watching files...");
-        stopWatching = await watch(
-            scannerPath,
-            async (events) => {
-                // API returns an array of objects, but says it returns a single object
-                const debouncedEvents: DebouncedEvent[] = events as unknown as DebouncedEvent[];
-                console.log(typeof events);
-                console.log(events);
-                console.log(debouncedEvents);
-                for (let event of debouncedEvents) {
-                    if (event.kind.toUpperCase() != "ANY")
-                        continue;
-                    console.log(event);
-                    console.log(currentFileEntry);
-                    if (currentFileEntry && event.path.includes(currentFileEntry.path)) {
-                        if (!event.path.includes(".thumbnails") && event.path.includes(".tif")) {
-
-                            // TODO create thumbnail if currentpath is in the same directory
-                            console.log(`Event: ${event}`);
-                            console.log(event);
-                            createThumbnail(event.path);
-
-                        /*if (currentPath && !await exists(currentPath)) currentPath = undefined;
-fileTree = await getFileEntries();
-const currentEntry: FileTreeType | undefined = findCurrentDir(fileTree);
-if (currentEntry) {
-changeViewDirectory(currentEntry, false);
-} else {
-viewFiles = [];
-}*/
-                        } else if (event.path.includes(".thumbnails/")) {
-                            // Todo add file to viewfiles
-                            console.log(`ThumbnailEvent: ${event}`);
-                            console.log(event);
-                            viewFiles.push({
-                                fileTree: FileTreeType.fromFileEntry(
-                                    [{ path: event.path, name: event.path.split("/").pop() } as FileEntry]
-                                )[0],
-                                imageSource: convertFileSrc(event.path)
-                            } as ViewFile);
-                            viewFiles = viewFiles; // To update view
-                            console.log(viewFiles);
-                        }
-
-                    // Todo handle new folder
-                    } else if (!event.path.includes(".")) {
-                        // Assume event is new folder when no file extension
-                        await readDir(scannerPath, { recursive: true })
-                            .then(async newFiles => {
-                                fileTree = FileTreeType.fromFileEntry(newFiles);
-                                readDirFailed = undefined;
-                            })
-                            .catch(err => {
-                                console.error(err);
-                                readDirFailed = err;
-                                fileTree = [];
-                            });
-                    }
-                }
-
-            },
-            { recursive: true }
-        ).catch((err) => {
-            console.error(err);
-        });
-    }
-
-    async function unwatchFiles() {
-        if (stopWatching) {
-            console.log("Unwatching files...");
-            stopWatching();
-            stopWatching = null;
-        }
-    }
-
-    async function getFileEntries(): Promise<FileTreeType[]> {
-        console.log("Getting file entries...");
-        return await readDir(scannerPath, { recursive: true })
-            .then(async newFiles => {
-                const newFileTree = FileTreeType.fromFileEntry(newFiles);
-                let firstDir = newFileTree.find((file: FileTreeType): boolean => {
+                console.log('Reading directory...');
+                newFiles.sort((a, b) => {
+                    if (a.path < b.path) return -1;
+                    if (a.path > b.path) return 1;
+                    return 0;
+                });
+                let firstDir = newFiles.find((file: FileEntry): boolean => {
                     return !!file.children;
                 });
-                if (currentFileEntry) currentFileEntry = await exists(currentFileEntry.path) ? currentFileEntry : newFiles.find(fileEntry => fileEntry.path == firstDir?.path) ?? undefined;
-                console.log(currentFileEntry);
-                if (firstDir?.children && currentFileEntry && firstDir.path === currentFileEntry.path) {
-                    firstDir.children.forEach((file: FileTreeType) => {
-                        viewFiles.push({
-                            fileTree: file,
-                            imageSource: convertFileSrc(file.path)
-                        });
-                    });
+                if (firstDir) {
+                    let firstDirFileTree = FileTreeType.fromFileEntry([firstDir])[0];
+                    currentViewDirectory = {
+                        path: firstDir.path,
+                        name: firstDir.name,
+                        children: firstDirFileTree.children,
+                        viewFiles: []
+                    } as ViewDirectory;
+                    addViewFilesFromChildren(firstDirFileTree, false);
                 }
+                console.log('File entries read...');
 
                 readDirFailed = undefined;
+                const newFileTree = FileTreeType.fromFileEntry(newFiles);
+                fileTree = newFileTree;
+                watchFiles();
                 return newFileTree;
             })
             .catch(err => {
@@ -189,9 +89,102 @@ viewFiles = [];
             });
     }
 
+    /*    function sortViewFiles(): ViewFile[] {
+            return viewFiles.sort((a, b) => {
+                if (a.fileEntry.path < b.fileEntry.path) return -1;
+                if (a.fileEntry.path > b.fileEntry.path) return 1;
+                return 0;
+            });
+        }  */
+
+    function sortViewDirectoryChildren() {
+        currentViewDirectory.children = currentViewDirectory.children
+            .sort((a, b) => {
+                if (a.path < b.path) return -1;
+                if (a.path > b.path) return 1;
+                return 0;
+            });
+    }
+
+    // TODO ide
+    // watch here also updates the filelist
+    // do we need a new watch to only update thumbnails in currentDir?
+
+    async function watchFiles() {
+        await unwatchFiles();
+        console.log('Watching files...');
+        stopWatching = await watch(
+            scannerPath,
+            async (events) => {
+                // API returns an array of objects, but says it returns a single object
+                const debouncedEvents: DebouncedEvent[] = events as unknown as DebouncedEvent[];
+                console.log(typeof events);
+                console.log(events);
+                console.log(debouncedEvents);
+                for (const eventD of debouncedEvents) {
+                    let event: DebouncedEvent = eventD;
+                    if (event.kind.toUpperCase() != 'ANY')
+                        continue;
+                    console.log(event);
+                    console.log(currentViewDirectory);
+                    console.log(event.path);
+                    console.log(currentViewDirectory?.path + path.sep + event.path.split(path.sep).pop());
+                    if (currentViewDirectory) {
+                        // New tif file, create thumbnail
+                        if (!event.path.includes('.thumbnails') && event.path.includes('.tif') && event.path == currentViewDirectory.path + path.sep + event.path.split(path.sep).pop()) {
+                            console.log(`Event: ${event}`);
+                            console.log(event);
+
+                            createThumbnail(event.path);
+                        /*if (currentPath && !await exists(currentPath)) currentPath = undefined;                                                                                                                 }*/
+                        } else if (event.path.includes('.thumbnails/') && event.path == currentViewDirectory.path + path.sep + '.thumbnails' + path.sep + event.path.split(path.sep).pop()) {
+                            console.log(`ThumbnailEvent: ${event}`);
+                            console.log(event);
+                            currentViewDirectory.viewFiles.push({
+                                path: event.path,
+                                name: event.path.split(path.sep).pop(),
+                                imageSource: convertFileSrc(event.path)
+                            } as ViewFile);
+
+                        }
+                        currentViewDirectory = currentViewDirectory; // To update view
+                        console.log(currentViewDirectory);
+                    } else if (!event.path.includes('.')) { // No '.', no file extension, assume new folder
+                        // Assume event is new folder when no file extension
+                        await readDir(scannerPath, { recursive: true })
+                            .then(async newFiles => {
+                                fileTree = FileTreeType.fromFileEntry(newFiles).sort((a, b) => {
+                                    if (a.path < b.path) return -1;
+                                    if (a.path > b.path) return 1;
+                                    return 0;
+                                });
+                                readDirFailed = undefined;
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                readDirFailed = err;
+                                fileTree = [];
+                            });
+                    }
+                }
+            },
+            { recursive: true }
+        ).catch((err) => {
+            console.error(err);
+        });
+    }
+
+    async function unwatchFiles() {
+        if (stopWatching) {
+            console.log('Unwatching files...');
+            stopWatching();
+            stopWatching = null;
+        }
+    }
+
     function findCurrentDir(fileEntries: FileTreeType[]): FileTreeType | undefined {
         for (const fileEntry of fileEntries) {
-            if (fileEntry.path === currentFileEntry?.path) return fileEntry;
+            if (fileEntry.path === currentViewDirectory?.path) return fileEntry;
             else if (fileEntry.children) {
                 const result = findCurrentDir(fileEntry.children);
                 if (result) return result;
@@ -207,17 +200,28 @@ viewFiles = [];
 
     function createThumbnailsFromDirectory(directoryPath: string) {
         // TODO use result, update viewFiles last time
-        invoke('convert_directory_to_webp', { directoryPath: directoryPath }).catch((err) => {
-            console.error(err);
-        });
+        invoke('convert_directory_to_webp', { directoryPath: directoryPath })
+            .then((result) => {
+                console.log(result);
+                // TODO update viewFiles
+                viewFiles = [];
+            // getFileEntries();
+            })
+            .catch((err) => {
+                console.error(err);
+            });
     }
 
     function addViewFilesFromChildren(fileTree: FileTreeType, generateThumbnails: boolean = true) {
+        console.log('INSIDEAdding view files from children...');
+        console.log(fileTree);
         fileTree?.children?.forEach((file: FileTreeType) => {
             // Show all files except the .thumbnail directory and tif files
-            if (!file.name.startsWith('.thumbnails') && !file.name.endsWith('.tif')) {
-                viewFiles.push({
-                    fileTree: file,
+            console.log(file);
+            if (!!file.name && !file.name?.startsWith('.thumbnails') && !file.name?.endsWith('.tif')) {
+                currentViewDirectory.viewFiles.push({
+                    name: file.name,
+                    path: file.path,
                     imageSource: convertFileSrc(file.path)
                 });
             }
@@ -225,22 +229,25 @@ viewFiles = [];
             else if (file.children && file.path.endsWith('.thumbnails')) {
                 addViewFilesFromChildren(file);
             }
+            console.log('Adding view files from children...');
         });
+        console.log(currentViewDirectory.viewFiles);
+        console.log(currentViewDirectory.children);
     }
 
-    function changeViewDirectory(fileEntry: FileTreeType, generateThumbnails: boolean = true): void {
-        currentFileEntry = fileEntry as ViewDirectory;
-        console.log("Changing view directory...");
-        viewFiles = [];
+    function changeViewDirectory(fileTree: FileTreeType, generateThumbnails: boolean = true): void {
+        currentViewDirectory = { ...fileTree, viewFiles: [] } as ViewDirectory;
+        console.log('Changing view directory...');
         if (generateThumbnails) {
-            createThumbnailsFromDirectory(currentFileEntry.path);
+            createThumbnailsFromDirectory(currentViewDirectory.path);
         }
-        if (fileEntry.children) {
-            addViewFilesFromChildren(fileEntry, false);
+        if (fileTree.children) {
+            addViewFilesFromChildren(fileTree, false);
         } else {
-            viewFiles.push({
-                fileTree: fileEntry,
-                imageSource: convertFileSrc(fileEntry.path)
+            currentViewDirectory.viewFiles.push({
+                name: fileTree.name ? fileTree.name : '',
+                path: fileTree.path,
+                imageSource: convertFileSrc(fileTree.path)
             });
         }
     }
@@ -261,6 +268,10 @@ viewFiles = [];
         return path?.split('.')?.pop() || '';
     }
 
+    function getCorrespondingViewFile(fileTree: FileTreeType): ViewFile | undefined {
+        return currentViewDirectory?.viewFiles?.find(viewFile => viewFile.name.split('.')[0] === fileTree.name.split('.')[0]);
+    }
+
 </script>
 
 {#if !readDirFailed}
@@ -274,43 +285,53 @@ viewFiles = [];
                     <ChevronsDownUp size="14" />
                 </button>
             </div>
-            <FileTree fileTree={fileTree} selectedDir={currentFileEntry?.path}
+            <FileTree fileTree={fileTree} selectedDir={currentViewDirectory?.path}
                bind:allUploadProgress on:directoryChange={(event) => changeViewDirectory(event.detail)} />
         </div>
         <div id="middle-pane" class="pane">
             <div class="images">
-                {#if viewFiles.length !== 0}
-                    {#each viewFiles as viewFile}
-                        <!-- TODO use filelist in combination with viewfiles. So all images are "shown" while generating thumbnails -->
-                        {#if viewFile.fileTree.children}
-                            <button class="directory" on:click={() => changeViewDirectory(viewFile.fileTree)}>
-                                <Folder size="96" />
-                                <i>{viewFile.imageSource.split(uriPathSeparator).pop()}</i>
-                            </button>
-                        {:else if supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
-                            <div>
-                                <img src={viewFile.imageSource} alt={viewFile.fileTree.name} />
-                                <i>{formatFileNames(viewFile.imageSource.split(uriPathSeparator).pop())}</i>
-                            </div>
-                        {:else}
-                            <div class="file">
-                                <File size="96" color="gray" />
-                                <i>{viewFile.imageSource.split(uriPathSeparator).pop()}</i>
-                            </div>
-                        {/if}
-                    {/each}
-                {:else}
-                    <p class="dir-help-text">
-                        Velg en mappe i listen til venstre. <br>
-                        Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
-                    </p>
+                {#if currentViewDirectory && !!currentViewDirectory.children}
+                    {#if currentViewDirectory.children.length !== 0}
+                        {#each currentViewDirectory.children as child}
+                            {#if !child.name.startsWith('.thumbnails') && child.children}
+                                <button class="directory" on:click={() => changeViewDirectory(child)}>
+                                    <Folder size="96" />
+                                    <i>{child.name}</i>
+                                </button>
+                            {:else}
+                                {@const viewFile = getCorrespondingViewFile(child)}
+                                {#if viewFile && supportedFileTypes.includes(getFileExtension(viewFile.imageSource))}
+                                    <div>
+                                        <img src={viewFile.imageSource} alt={viewFile.name} />
+                                        <i>{formatFileNames(viewFile.imageSource.split(uriPathSeparator).pop())}</i>
+                                    </div>
+                                {:else if viewFile}
+                                    <div class="file">
+                                        <File size="96" color="gray" />
+                                        <i>{viewFile.imageSource.split(uriPathSeparator).pop()}</i>
+                                    </div>
+                                {:else if !child.name.startsWith('.thumbnails')}
+                                    <div class="file">
+                                        <File size="96" color="gray" />
+                                        <i>{child.name}</i>
+                                    </div>
+                                {/if}
+                            {/if}
+                            <!-- TODO use filelist in combination with viewfiles. So all images are "shown" while generating thumbnails -->
+
+                        {/each}
+                    {:else}
+                        <p class="dir-help-text">
+                            Velg en mappe i listen til venstre. <br>
+                            Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
+                        </p>
+                    {/if}
                 {/if}
             </div>
         </div>
         <div id="right-pane" class="pane sticky-top">
-            {#if currentFileEntry}
-                <RegistrationSchema bind:currentPath bind:useS3 bind:allUploadProgress />
-                <TransferLog />
+            {#if currentViewDirectory.path}
+                <RegistrationSchema bind:currentPath="{currentViewDirectory.path}" bind:useS3 bind:allUploadProgress />
             {/if}
         </div>
     </div>
@@ -354,13 +375,11 @@ viewFiles = [];
   }
 
   .directory {
-    width: 150px;
+    width: 156px; // 3 + 3 extra width to keep same width as img (borders)
     min-height: 150px;
     max-height: fit-content;
     margin: auto .5em;
     object-fit: contain;
-    border: solid 3px transparent;
-    border-radius: 3px;
     text-align: center;
     background: none;
     padding: 0;
@@ -374,7 +393,7 @@ viewFiles = [];
   }
 
   .file {
-    width: 150px;
+    width: 156px; // 3 + 3 extra width to keep same width as images (borders)
     min-height: 150px;
     max-height: fit-content;
     margin: auto .5em;
