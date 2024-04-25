@@ -13,6 +13,7 @@ const WEBP_EXTENSION: &str = "webp";
 const WEBP_QUALITY: f32 = 25.0;
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all(serialize = "camelCase"))]
 pub struct ConversionCount {
 	pub(crate) converted: u32,
 	pub(crate) already_converted: u32,

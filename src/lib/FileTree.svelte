@@ -31,6 +31,8 @@
     }
 
     function changeViewDirectory(file: FileTree): void {
+        console.log('FileTree');
+        console.log(file);
         dispatch('directoryChange', file);
     }
 

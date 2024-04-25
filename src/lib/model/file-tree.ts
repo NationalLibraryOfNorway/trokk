@@ -1,10 +1,11 @@
 import type { FileEntry } from '@tauri-apps/api/fs';
+import type { Thumbnail } from './thumbnail';
 
 export class FileTree {
     path: string;
     name: string;
     opened: boolean;
-    // viewFile?: ViewFile;
+    thumbnail?: Thumbnail;
     children?: FileTree[];
 
     constructor(path: string, name: string, opened: boolean, children?: FileTree[]) {
