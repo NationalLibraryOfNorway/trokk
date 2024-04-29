@@ -24,6 +24,11 @@ jobs:
       VAULT_ROLE_ID: "placeholder"
       VAULT_SECRET_ID: "placeholder"
     steps:
+      # Git fix for Windows, workaround for permission issues regarding self-hosted runners
+      - name: Windows; Git fix
+        if: ${{ matrix.windows }}
+        run: |
+          git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
       - uses: actions/checkout@v4
       - name: Install dependencies (ubuntu only)
         if: ${{ matrix.linux }}
