@@ -122,6 +122,7 @@ jobs:
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         id: tauri_build
+        args: --verbose
         env:
           NO_STRIP: true
 
