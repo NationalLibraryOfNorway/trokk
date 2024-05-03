@@ -15,6 +15,7 @@ jobs:
             linux: true
           - platform: [ self-hosted, Windows ]
             windows: true
+            linux: false
     runs-on: ${{ matrix.platform }}
     defaults:
       run:

@@ -15,6 +15,7 @@ jobs:
             linux: true
           - platform: [ self-hosted, Windows ]
             windows: true
+            linux: false
     runs-on: ${{ matrix.platform }}
     steps:
       # Git fix for Windows, workaround for permission issues regarding self-hosted runners
