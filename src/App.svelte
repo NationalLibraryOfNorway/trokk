@@ -19,6 +19,7 @@
     let loggedOut: Boolean;
 
     onMount(async () => {
+        throw new Error('Sentry test error');
         settings.scannerPath.then(async (savedScanPath) => {
             if (savedScanPath) {
                 scannerPath = savedScanPath;

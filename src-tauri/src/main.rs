@@ -103,9 +103,20 @@ async fn get_papi_access_token() -> Result<String, String> {
 }
 
 fn main() {
+	let sentry_client = sentry_tauri::sentry::init((
+		"https://2e86507db704449aa405fb28348f9e06@sentry.nb.no/7",
+		sentry_tauri::sentry::ClientOptions {
+			release: sentry_tauri::sentry::release_name!(),
+			..Default::default()
+		},
+	));
+
+	let _guard = sentry_tauri::minidump::init(&sentry_client);
+
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
 		.plugin(tauri_plugin_fs_watch::init())
+		.plugin(sentry_tauri::plugin())
 		.setup(|_app| {
 			#[cfg(debug_assertions)]
 			_app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
