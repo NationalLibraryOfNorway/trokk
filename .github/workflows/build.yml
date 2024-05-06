@@ -17,7 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - [ self-hosted ]
+          # Disabled due to issues with linux building https://github.com/tauri-apps/tauri/issues/8929#issuecomment-1956338150
+          # NO_STRIP=TRUE fix didn't work, so we are disabling linux builds for now
+          #- [ self-hosted ]
           - [ self-hosted, Windows ]
         include:
           - platform: [ self-hosted ]
