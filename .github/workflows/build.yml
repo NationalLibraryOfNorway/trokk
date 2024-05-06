@@ -122,9 +122,6 @@ jobs:
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         id: tauri_build
-        args: --verbose
-        env:
-          NO_STRIP: true
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
