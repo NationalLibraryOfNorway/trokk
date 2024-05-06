@@ -4,8 +4,8 @@ use vaultrs::kv2;
 use vaultrs_login::engines::approle::AppRoleLogin;
 use vaultrs_login::LoginClient;
 
-use crate::SecretVariables;
 use crate::ENVIRONMENT_VARIABLES;
+use crate::SecretVariables;
 
 pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, ClientError> {
 	let mut client = VaultClient::new(
@@ -24,7 +24,7 @@ pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, Client
 	client.login("approle", &login).await?; // Token is automatically set to client
 
 	// Use the client to interact with the Vault API
-	let secrets: SecretVariables = kv2::read(&client, "kv/team/text/", "trokk-stage").await?;
+	let secrets: SecretVariables = kv2::read(&client, "kv/team/text/", "trokk-stage").await?; // TODO set dynamically for prod/stage
 
 	Ok(secrets)
 }
