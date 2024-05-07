@@ -3,8 +3,20 @@ on: pull_request
 name: Rust code check
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
+  code-check-rust:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - [ self-hosted ]
+          - [ self-hosted, Windows ]
+        include:
+          - platform: [ self-hosted ]
+            linux: true
+          - platform: [ self-hosted, Windows ]
+            windows: true
+            linux: false
+    runs-on: ${{ matrix.platform }}
     defaults:
       run:
         working-directory: ./src-tauri
@@ -13,11 +25,17 @@ jobs:
       VAULT_ROLE_ID: "placeholder"
       VAULT_SECRET_ID: "placeholder"
     steps:
+      # Git fix for Windows, workaround for permission issues regarding self-hosted runners
+      - name: Windows; Git fix
+        if: ${{ matrix.windows }}
+        run: |
+          git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
       - uses: actions/checkout@v4
       - name: Install dependencies (ubuntu only)
+        if: ${{ matrix.linux }}
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get update -y
+          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf libssl-dev curl build-essential
       - name: Install Rust
         uses: dtolnay/rust-toolchain@master
         with:

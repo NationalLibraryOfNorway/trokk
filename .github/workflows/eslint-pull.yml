@@ -3,12 +3,37 @@ on: pull_request
 name: Npm code check
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
+  code-check-npm:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - [ self-hosted ]
+          - [ self-hosted, Windows ]
+        include:
+          - platform: [ self-hosted ]
+            linux: true
+          - platform: [ self-hosted, Windows ]
+            windows: true
+            linux: false
+    runs-on: ${{ matrix.platform }}
     steps:
+      # Git fix for Windows, workaround for permission issues regarding self-hosted runners
+      - name: Windows; Git fix
+        if: ${{ matrix.windows }}
+        run: |
+          git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
       - uses: actions/checkout@v4
-      - name: Install modules
-        run: npm install
+      - name: Sync node version and setup cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm' # Set this to npm, yarn or pnpm.
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Windows NPM; Install windows dependency
+        if: ${{ matrix.windows }}
+        run: npm install @tauri-apps/cli-win32-x64-msvc@2.0.0-alpha.21
       - name: Run EsLint
         if: always()
         run: npm run lint
