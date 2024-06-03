@@ -1,9 +1,8 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::ffi::OsString;
-
 use gethostname::gethostname;
+use std::ffi::OsString;
 #[cfg(debug_assertions)]
 use tauri::Manager;
 use tauri::Window;
@@ -26,6 +25,8 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	vault_base_url: env!("VAULT_BASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
 	vault_secret_id: env!("VAULT_SECRET_ID"),
+	sentry_environment: env!("SENTRY_ENVIRONMENT"),
+	sentry_url: env!("SENTRY_URL"),
 };
 
 // Use Tokio's OnceCell to fetch secrets from Vault only once
@@ -103,9 +104,21 @@ async fn get_papi_access_token() -> Result<String, String> {
 }
 
 fn main() {
+	let sentry_client = sentry_tauri::sentry::init((
+		ENVIRONMENT_VARIABLES.sentry_url,
+		sentry_tauri::sentry::ClientOptions {
+			release: sentry_tauri::sentry::release_name!(),
+			environment: Some(ENVIRONMENT_VARIABLES.sentry_environment.into()),
+			..Default::default()
+		},
+	));
+
+	let _guard = sentry_tauri::minidump::init(&sentry_client);
+
 	tauri::Builder::default()
 		.plugin(tauri_plugin_store::Builder::default().build())
 		.plugin(tauri_plugin_fs_watch::init())
+		.plugin(sentry_tauri::plugin())
 		.setup(|_app| {
 			#[cfg(debug_assertions)]
 			_app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
