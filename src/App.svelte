@@ -41,7 +41,7 @@
         });
 
         settings.useS3.then(async (savedUseS3) => {
-            if (savedUseS3) {
+            if (savedUseS3 !== null) {
                 useS3 = savedUseS3;
             } else {
                 let defaultUseS3 = true;
@@ -65,6 +65,7 @@
         }
 
         const eventUseS3 = event.detail.newUseS3;
+        console.log('event', event);
         if (eventUseS3 !== undefined) {
             useS3 = eventUseS3;
             settings.useS3 = eventUseS3;

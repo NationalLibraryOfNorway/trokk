@@ -16,7 +16,14 @@
     onMount(async () => {
         scannerPath = await settings.scannerPath ?? '';
         donePath = await settings.donePath ?? '';
-        useS3 = await settings.useS3 ?? true;
+        let tmpUseS3 = await settings.useS3;
+        console.log(tmpUseS3);
+        if (tmpUseS3 === null) {
+            tmpUseS3 = true;
+            settings.useS3 = tmpUseS3;
+        } else {
+            useS3 = tmpUseS3;
+        }
     });
 
     async function pickScannerPath() {
@@ -63,6 +70,8 @@
 
     function saveUseS3(useS3: boolean): undefined {
         dispatch('save', { newUseS3: useS3 });
+        setTimeout(() => console.log('useS3', useS3), 1000);
+        setTimeout(async () => console.log('useS3', await settings.useS3), 1000);
     }
 
 </script>

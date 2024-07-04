@@ -5,7 +5,6 @@ use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::primitives::ByteStream;
 use tauri::Window;
 use tokio::sync::OnceCell;
-use url::Url;
 
 use crate::file_utils::get_file_paths_in_directory;
 use crate::get_secret_variables;
@@ -39,7 +38,7 @@ pub(crate) async fn upload_directory(
 
 		app_window
 			.emit(
-				"transfer_progress", // Use TransferProgress struct from model.rs
+				"transfer_progress",
 				TransferProgress {
 					directory: directory_path.clone(),
 					page_nr: (index + 1),
@@ -65,21 +64,6 @@ async fn put_object(
 		.await
 		.map_err(|e| format!("Failed to read file: {}", e))?;
 
-	println!("Client: {:?}", client);
-
-	println!("Uploading file: {:?}", path);
-	// Print all s3 config variables
-	println!("Access key: {}", secret_variables.s3_access_key_id);
-	println!("Secret key: {}", secret_variables.s3_secret_access_key);
-	println!("Region: {}", secret_variables.s3_region);
-	println!("URL: {}", secret_variables.s3_url);
-	println!("Bucket: {}", secret_variables.s3_bucket_name);
-
-	let uri = Url::parse("s3://tekst-internal/file.txt").map_err(|e| e.to_string())?;
-	println!("URI: {:?}", uri);
-	println!("URI path: {:?}", uri.path());
-	println!("URI host: {:?}", uri.host_str());
-
 	let result = client
 		.put_object()
 		.bucket(secret_variables.s3_bucket_name.clone())
@@ -95,12 +79,10 @@ async fn put_object(
 		.send()
 		.await
 		.inspect_err(|e| {
-			// Print all error types
 			println!("Error: {:?}", e);
 		})
 		.map_err(|e| format!("Failed to upload directory: {:?}", e))?;
 
-	println!("PutObjectOutput: {:?}", result);
 	Ok(())
 }
 

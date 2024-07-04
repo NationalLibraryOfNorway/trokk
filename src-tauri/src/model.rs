@@ -93,7 +93,7 @@ pub struct SecretVariables {
 
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all(serialize = "camelCase"))]
-// "SCREAMING_SNAKE_CASE" is what we use in Vault, and we send "camelCase" to frontend
+// We send "camelCase" to frontend
 pub struct TransferProgress {
 	pub(crate) directory: String,
 	pub(crate) page_nr: usize,
