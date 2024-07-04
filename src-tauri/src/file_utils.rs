@@ -1,6 +1,10 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
 use tauri::api::dialog::blocking::FileDialogBuilder;
+use tauri::Window;
+
+use crate::model::TransferProgress;
 
 pub fn get_file_size(path: &str) -> Result<u64, String> {
 	let mut size = 0;
@@ -21,6 +25,7 @@ pub(crate) fn copy_dir_contents(
 	old_dir: String,
 	new_base_dir: String,
 	new_dir_name: String,
+	app_window: Window,
 ) -> Result<String, String> {
 	let old_dir_path = Path::new(&old_dir);
 	let new_base_dir_path = Path::new(&new_base_dir);
@@ -33,17 +38,38 @@ pub(crate) fn copy_dir_contents(
 		Err(e) => return Err(e.to_string()),
 	}
 
-	// Walk through old folder and only copy files, not sub-directories (like .thumbnails)
-	for entry in fs::read_dir(old_dir_path).map_err(|e| e.to_string())? {
-		let old_entry = entry.map_err(|e| e.to_string())?;
-		let old_file_path = old_entry.path();
-
-		if old_file_path.is_file() {
-			let new_file_path = new_dir_path.join(old_entry.file_name());
-			match fs::copy(old_file_path, new_file_path) {
-				Ok(_) => (),
-				Err(e) => return Err(e.to_string()),
+	let file_entries: Vec<_> = fs::read_dir(old_dir_path)
+		.map_err(|e| e.to_string())?
+		.filter_map(|entry| {
+			let entry = entry.ok()?;
+			let path = entry.path();
+			if path.is_file() {
+				Some(path)
+			} else {
+				None
 			}
+		})
+		.collect();
+
+	let total_files = file_entries.len();
+
+	// Walk through old folder and only copy files, not sub-directories (like .thumbnails)
+	for (index, entry) in file_entries.iter().enumerate() {
+		let new_file_path = new_dir_path.join(entry.file_name().unwrap());
+		match fs::copy(entry, new_file_path) {
+			Ok(_) => {
+				app_window
+					.emit(
+						"transfer_progress",
+						TransferProgress {
+							directory: old_dir.clone(),
+							page_nr: index + 1,
+							total_pages: total_files,
+						},
+					)
+					.map_err(|e| e.to_string())?;
+			}
+			Err(e) => return Err(e.to_string()),
 		}
 	}
 	Ok(new_dir_path.to_string_lossy().to_string())
@@ -64,4 +90,18 @@ pub(crate) async fn directory_picker(start_path: String) -> Result<String, Strin
 		None => Err("No folder was chosen".to_string()),
 		_ => Ok(result.unwrap().to_string_lossy().to_string()),
 	}
+}
+
+// Get all file paths in a directory, without subdirectories
+pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<PathBuf>, String> {
+	let mut file_paths = Vec::new();
+	for dir_entry_result in fs::read_dir(directory_path).map_err(|e| e.to_string())? {
+		let dir_entry = dir_entry_result.map_err(|e| e.to_string())?;
+		let path = dir_entry.path();
+		if path.is_file() {
+			file_paths.push(path);
+		}
+	}
+	file_paths.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+	Ok(file_paths)
 }

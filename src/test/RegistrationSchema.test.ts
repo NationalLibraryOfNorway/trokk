@@ -4,6 +4,8 @@ import RegistrationSchema from '../lib/RegistrationSchema.svelte';
 import { mockIPC } from '@tauri-apps/api/mocks';
 import { authenticationResponseMock, response400Mock, textInputDtoResponseMockNewspaper } from './mock-data.mock';
 import { settings } from '../lib/util/settings';
+import type { AllTransferProgress } from '../lib/model/transfer-progress';
+import { writable } from 'svelte/store';
 
 
 describe('RegistrationSchema.svelte', () => {
@@ -42,7 +44,13 @@ describe('RegistrationSchema.svelte', () => {
             }
         });
 
-        container = render(RegistrationSchema, { props: { currentPath: 'path' } });
+        container = render(RegistrationSchema, {
+            props: {
+                currentPath: 'path',
+                useS3: false,
+                allUploadProgress: writable<AllTransferProgress>({ dir: {} })
+            }
+        });
     });
 
     afterEach(() => {

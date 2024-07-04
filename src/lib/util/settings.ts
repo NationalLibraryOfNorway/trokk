@@ -14,7 +14,7 @@ class Settings {
     set scannerPath(path: string) {
         this.store.set('scannerPath', path).then(async () => {
             await this.store.save();
-        })
+        });
     }
 
     get authResponse(): Promise<AuthenticationResponse | null> {
@@ -34,8 +34,18 @@ class Settings {
     set donePath(path: string) {
         this.store.set('donePath', path).then(async () => {
             await this.store.save();
-        })
+        });
+    }
+
+    get useS3(): Promise<boolean | null> {
+        return this.store.get<boolean>('useS3');
+    }
+
+    set useS3(useS3: boolean) {
+        this.store.set('useS3', useS3).then(async () => {
+            await this.store.save();
+        });
     }
 }
 
-export const settings = new Settings()
+export const settings = new Settings();
