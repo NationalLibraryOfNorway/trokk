@@ -22,9 +22,9 @@ pub fn get_file_size(path: &str) -> Result<u64, String> {
 }
 
 pub(crate) fn copy_dir_contents(
-	old_dir: String,
-	new_base_dir: String,
-	new_dir_name: String,
+	old_dir: &str,
+	new_base_dir: &str,
+	new_dir_name: &str,
 	app_window: Window,
 ) -> Result<String, String> {
 	let old_dir_path = Path::new(&old_dir);
@@ -62,7 +62,7 @@ pub(crate) fn copy_dir_contents(
 					.emit(
 						"transfer_progress",
 						TransferProgress {
-							directory: old_dir.clone(),
+							directory: old_dir.to_string(),
 							page_nr: index + 1,
 							total_pages: total_files,
 						},
@@ -75,16 +75,16 @@ pub(crate) fn copy_dir_contents(
 	Ok(new_dir_path.to_string_lossy().to_string())
 }
 
-pub(crate) fn delete_dir(dir: String) -> Result<(), String> {
-	let path = Path::new(&dir);
+pub(crate) fn delete_dir(dir: &str) -> Result<(), String> {
+	let path = Path::new(dir);
 	match fs::remove_dir_all(path) {
 		Ok(_) => Ok(()),
 		Err(e) => Err(e.to_string()),
 	}
 }
 
-pub(crate) async fn directory_picker(start_path: String) -> Result<String, String> {
-	let start = Path::new(&start_path);
+pub(crate) async fn directory_picker(start_path: &str) -> Result<String, String> {
+	let start = Path::new(start_path);
 	let result = FileDialogBuilder::new().set_directory(start).pick_folder();
 	match result {
 		None => Err("No folder was chosen".to_string()),

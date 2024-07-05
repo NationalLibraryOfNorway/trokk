@@ -77,18 +77,18 @@ pub struct RequiredEnvironmentVariables {
 #[serde(rename_all(serialize = "camelCase", deserialize = "SCREAMING_SNAKE_CASE"))]
 // "SCREAMING_SNAKE_CASE" is what we use in Vault, and we send "camelCase" to frontend
 pub struct SecretVariables {
-	pub(crate) papi_path: String,
-	pub(crate) oidc_base_url: String,
-	pub(crate) oidc_client_id: String,
-	pub(crate) oidc_client_secret: String,
-	pub(crate) oidc_tekst_base_url: String,
-	pub(crate) oidc_tekst_client_id: String,
-	pub(crate) oidc_tekst_client_secret: String,
-	pub(crate) s3_access_key_id: String,
-	pub(crate) s3_secret_access_key: String,
-	pub(crate) s3_url: String,
-	pub(crate) s3_bucket_name: String,
-	pub(crate) s3_region: String,
+	pub(crate) papi_path: &'static str,
+	pub(crate) oidc_base_url: &'static str,
+	pub(crate) oidc_client_id: &'static str,
+	pub(crate) oidc_client_secret: &'static str,
+	pub(crate) oidc_tekst_base_url: &'static str,
+	pub(crate) oidc_tekst_client_id: &'static str,
+	pub(crate) oidc_tekst_client_secret: &'static str,
+	pub(crate) s3_access_key_id: &'static str,
+	pub(crate) s3_secret_access_key: &'static str,
+	pub(crate) s3_url: &'static str,
+	pub(crate) s3_bucket_name: &'static str,
+	pub(crate) s3_region: &'static str,
 }
 
 #[derive(Debug, Serialize, Clone)]

@@ -2,6 +2,7 @@ use std::path::PathBuf;
 
 use aws_sdk_s3::Client;
 use aws_sdk_s3::config::{Credentials, Region};
+use aws_sdk_s3::operation::put_object::PutObjectOutput;
 use aws_sdk_s3::primitives::ByteStream;
 use tauri::Window;
 use tokio::sync::OnceCell;
@@ -11,9 +12,9 @@ use crate::get_secret_variables;
 use crate::model::{SecretVariables, TransferProgress};
 
 pub(crate) async fn upload_directory(
-	directory_path: String,
-	object_id: String,
-	material_type: String,
+	directory_path: &str,
+	object_id: &str,
+	material_type: &str,
 	app_window: Window,
 ) -> Result<(), String> {
 	let secret_variables = get_secret_variables()
@@ -30,9 +31,9 @@ pub(crate) async fn upload_directory(
 			&client,
 			&secret_variables,
 			file_path,
-			&object_id,
+			object_id,
 			index,
-			&material_type,
+			material_type,
 		)
 		.await?;
 
@@ -40,7 +41,7 @@ pub(crate) async fn upload_directory(
 			.emit(
 				"transfer_progress",
 				TransferProgress {
-					directory: directory_path.clone(),
+					directory: directory_path.to_string(),
 					page_nr: (index + 1),
 					total_pages: file_paths.len(),
 				},
@@ -54,10 +55,10 @@ async fn put_object(
 	client: &Client,
 	secret_variables: &SecretVariables,
 	path: &PathBuf,
-	object_id: &String,
+	object_id: &str,
 	page_nr: usize,
-	material_type: &String,
-) -> Result<(), String> {
+	material_type: &str,
+) -> Result<PutObjectOutput, String> {
 	let body = ByteStream::read_from()
 		.path(path)
 		.build()
@@ -66,7 +67,7 @@ async fn put_object(
 
 	let result = client
 		.put_object()
-		.bucket(secret_variables.s3_bucket_name.clone())
+		.bucket(secret_variables.s3_bucket_name)
 		.key(format!(
 			"{}/{}/{}_{:0>5}.{}", // The "{:0>5}" is used to pad the page number with zeros.
 			material_type,
@@ -83,7 +84,7 @@ async fn put_object(
 		})
 		.map_err(|e| format!("Failed to upload directory: {:?}", e))?;
 
-	Ok(())
+	Ok(result)
 }
 
 // Use Tokio's OnceCell to create the S3 client only once
@@ -99,15 +100,15 @@ async fn get_client(secret_variables: &SecretVariables) -> Result<&'static Clien
 
 async fn create_client(secret_variables: &SecretVariables) -> Result<Client, String> {
 	let credentials = Credentials::from_keys(
-		secret_variables.s3_access_key_id.clone(),
-		secret_variables.s3_secret_access_key.clone(),
+		secret_variables.s3_access_key_id,
+		secret_variables.s3_secret_access_key,
 		None,
 	);
 
 	let config = aws_sdk_s3::Config::builder()
 		.credentials_provider(credentials)
-		.region(Region::new(secret_variables.s3_region.clone()))
-		.endpoint_url(secret_variables.s3_url.clone())
+		.region(Region::new(secret_variables.s3_region))
+		.endpoint_url(secret_variables.s3_url)
 		.disable_s3_express_session_auth(true)
 		.disable_multi_region_access_points(true)
 		.force_path_style(true)

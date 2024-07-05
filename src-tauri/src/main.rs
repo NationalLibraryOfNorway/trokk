@@ -79,27 +79,27 @@ fn convert_to_webp(file_path: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn get_total_size_of_files_in_folder(path: String) -> Result<u64, String> {
-	file_utils::get_file_size(&path)
+fn get_total_size_of_files_in_folder(path: &str) -> Result<u64, String> {
+	file_utils::get_file_size(path)
 }
 
 #[tauri::command]
 async fn copy_dir(
-	old_dir: String,
-	new_base_dir: String,
-	new_dir_name: String,
+	old_dir: &str,
+	new_base_dir: &str,
+	new_dir_name: &str,
 	app_window: Window,
 ) -> Result<String, String> {
 	file_utils::copy_dir_contents(old_dir, new_base_dir, new_dir_name, app_window)
 }
 
 #[tauri::command]
-async fn delete_dir(dir: String) -> Result<(), String> {
+async fn delete_dir(dir: &str) -> Result<(), String> {
 	file_utils::delete_dir(dir)
 }
 
 #[tauri::command]
-async fn pick_directory(start_path: String) -> Result<String, String> {
+async fn pick_directory(start_path: &str) -> Result<String, String> {
 	file_utils::directory_picker(start_path).await
 }
 
@@ -112,9 +112,9 @@ async fn get_papi_access_token() -> Result<String, String> {
 
 #[tauri::command]
 async fn upload_directory_to_s3(
-	directory_path: String,
-	object_id: String,
-	material_type: String,
+	directory_path: &str,
+	object_id: &str,
+	material_type: &str,
 	app_window: Window,
 ) -> Result<(), String> {
 	s3::upload_directory(directory_path, object_id, material_type, app_window).await
