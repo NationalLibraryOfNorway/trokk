@@ -4,18 +4,12 @@
 use std::ffi::OsString;
 
 use gethostname::gethostname;
-use serde::Serialize;
-use serde_json::Serializer;
-use tauri::{test, Wry};
 #[cfg(debug_assertions)]
 use tauri::Manager;
-use tauri::test::MockRuntime;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
-use crate::model::{
-	AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables, TransferProgress,
-};
+use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables};
 
 mod auth;
 mod error;

@@ -5,8 +5,8 @@ use std::path::{Path, PathBuf};
 use tauri::test;
 use tempfile::TempDir;
 
-use crate::{copy_dir, delete_dir, get_total_size_of_files_in_folder};
 use crate::tests::test_utils::get_test_resource_dir;
+use crate::{copy_dir, delete_dir, get_total_size_of_files_in_folder};
 
 #[test]
 fn test_get_total_size_of_files_in_folder_returns_correct_total_size(

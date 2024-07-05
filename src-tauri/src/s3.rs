@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 
-use aws_sdk_s3::Client;
 use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::operation::put_object::PutObjectOutput;
 use aws_sdk_s3::primitives::ByteStream;
+use aws_sdk_s3::Client;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
@@ -25,11 +25,11 @@ pub(crate) async fn upload_directory(
 		.await
 		.map_err(|e| format!("Failed to get S3 client: {}", e))?;
 
-	let file_paths = get_file_paths_in_directory(&directory_path)?;
+	let file_paths = get_file_paths_in_directory(directory_path)?;
 	for (index, file_path) in file_paths.iter().enumerate() {
 		put_object(
-			&client,
-			&secret_variables,
+			client,
+			secret_variables,
 			file_path,
 			object_id,
 			index,
