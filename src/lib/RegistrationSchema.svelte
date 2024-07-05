@@ -26,7 +26,7 @@
     export let allUploadProgress: Writable<AllTransferProgress>;
     let barWidth = 0;
 
-    let unlistenProgress: UnlistenFn;
+    let unlistenProgress: UnlistenFn | null = null;
 
     let materialType: string | undefined = materialTypes.at(0);
     let fraktur: boolean = false;
@@ -69,7 +69,10 @@
     });
     
     onDestroy(async () => {
-        unlistenProgress();
+        if (unlistenProgress) {
+            unlistenProgress();
+        }
+        unlistenProgress = null;
     })
 
     function getHostname(): Promise<String> {
@@ -92,69 +95,65 @@
         if (useS3) {
             transfer = uploadToS3(id)
                 .catch(error => {
-                    handleError('Fikk ikke lastet opp filene' + error.toString());
+                    handleError('Fikk ikke lastet opp filene', undefined, error);
                     return Promise.reject(error);
                 });
         } else {
             transfer = copyToDoneDir(id)
                 .catch(error => {
-                    handleError('Fikk ikke kopiert filene' + error.toString());
+                    handleError('Fikk ikke kopiert filene', undefined, error);
                     return Promise.reject(error);
                 });
         }
 
-        return transfer.then(async (newPath) => {
-            const fileSize = await getTotalFileSize(useS3 ? pushedDir : newPath)
-                .catch(error => {
-                    if (!useS3 && newPath) {
-                        deleteDir(newPath);
-                    }
-                    handleError('Fikk ikke hentet filstørrelse.');
-                    return Promise.reject(error);
-                });
+        newPath = await transfer;
 
-            const accessToken = await invoke('get_papi_access_token')
-                .catch(error => {
-                    if (!useS3  && newPath) {
-                        deleteDir(newPath!);
-                    }
-                    handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.');
-                    return Promise.reject(error);
-                });
-
-            fetch(`${papiPath}/item`,
-                {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + accessToken },
-                    body: Body.json(new TextInputDto(
-                        materialType ?? '',
-                        fraktur ? 'FRAKTUR' : 'ANTIQUA',
-                        sami ? 'SME' : 'NOB',
-                        auth.userInfo.name,
-                        scanner,
-                        fileSize,
-                        name,
-                        id
-                    ))
-                }
-            )
-                .then(response => {
-                    if (response.ok) {
-                        deleteDir(pushedDir);
-                        removeErrorMessage();
-                        displaySuccessMessage(response.data as TextInputDto);
-                    } else {
-                        handleError(undefined, response.status);
-                    }
-                })
-                .catch(error => {
-                    deleteDir(newPath!);
-                    handleError();
-                    return Promise.reject(error);
-                });
-        })
+        const fileSize = await getTotalFileSize(useS3 ? pushedDir : newPath)
             .catch(error => {
-                handleError('Fikk ikke overført filene' + error.toString());
+                if (!useS3 && newPath) {
+                    deleteDir(newPath);
+                }
+                handleError('Fikk ikke hentet filstørrelse.', undefined, error);
+                return Promise.reject(error);
+            });
+
+        const accessToken = await invoke('get_papi_access_token')
+            .catch(error => {
+                if (!useS3  && newPath) {
+                    deleteDir(newPath!);
+                }
+                handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.' , undefined, error);
+                return Promise.reject(error);
+            });
+
+        fetch(`${papiPath}/item`,
+            {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + accessToken },
+                body: Body.json(new TextInputDto(
+                    materialType ?? '',
+                    fraktur ? 'FRAKTUR' : 'ANTIQUA',
+                    sami ? 'SME' : 'NOB',
+                    auth.userInfo.name,
+                    scanner,
+                    fileSize,
+                    name,
+                    id
+                ))
+            }
+        )
+            .then(response => {
+                if (response.ok) {
+                    deleteDir(pushedDir);
+                    removeErrorMessage();
+                    displaySuccessMessage(response.data as TextInputDto);
+                } else {
+                    handleError(undefined, response.status);
+                }
+            })
+            .catch(error => {
+                deleteDir(newPath!);
+                handleError();
                 return Promise.reject(error);
             });
     }
@@ -211,12 +210,13 @@
         return invoke('delete_dir', { dir: path });
     }
 
-    function handleError(extra_text?: string, code?: string | number) {
+    function handleError(extra_text?: string, code?: string | number, error?: Error) {
         let tmpErrorMessage = 'Kunne ikke TRØKKE dette videre.';
         if (extra_text) tmpErrorMessage += ` ${extra_text}`;
         tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.';
         if (code) tmpErrorMessage += ` (Feilkode ${code})`;
 
+        console.error(tmpErrorMessage, error)
         errorMessage = tmpErrorMessage;
     }
 

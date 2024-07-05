@@ -15,11 +15,12 @@ describe('RegistrationSchema.svelte', () => {
         vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(Promise.resolve(authenticationResponseMock));
         vi.spyOn(settings, 'donePath', 'get').mockReturnValue(Promise.resolve('/done'));
         vi.spyOn(settings, 'scannerPath', 'get').mockReturnValue(Promise.resolve('/scanner'));
+        vi.spyOn(settings, 'useS3', 'get').mockReturnValue(Promise.resolve(false));
 
         mockIPC((cmd, args) => {
             switch (cmd) {
                 case 'get_secret_variables':
-                    return Promise.resolve({ papiPath: 'test.papi' });
+                    return Promise.resolve({ papiPath: 'test.papi', useS3: false });
                 case 'get_hostname':
                     return Promise.resolve('testHost');
                 case 'get_total_size_of_files_in_folder':
@@ -188,7 +189,21 @@ describe('RegistrationSchema.svelte', () => {
         container.getByText('TRØKK!').click();
 
         await new Promise(resolve => setTimeout(resolve, 0));
-        const res = container.getByText('Fikk ikke flyttet filene', { exact: false });
+        const res = container.getByText('Fikk ikke kopiert filene', { exact: false });
+        expect(res).toBeTruthy();
+    });
+
+    test('registration should show error message if s3 transfer failed', async () => {
+        vi.spyOn(settings, 'useS3', 'get').mockReturnValue(Promise.resolve(true));
+        mockIPC((cmd) => {
+            if (cmd === 'upload_directory_to_s3') return Promise.reject('s3 failed');
+            else return '';
+        });
+
+        container.getByText('TRØKK!').click();
+
+        await new Promise(resolve => setTimeout(resolve, 0));
+        const res = container.getByText('Fikk ikke lastet opp filene', { exact: false });
         expect(res).toBeTruthy();
     });
 
