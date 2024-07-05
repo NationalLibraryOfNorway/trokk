@@ -84,7 +84,7 @@
         "height": 600
       }
     ],
-    "systemTray":  {
+    "systemTray": {
       "iconPath": "icons/icon.png",
       "iconAsTemplate": true
     }

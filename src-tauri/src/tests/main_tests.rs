@@ -2,6 +2,7 @@ use std::error;
 use std::fs::DirBuilder;
 use std::path::{Path, PathBuf};
 
+use tauri::test;
 use tempfile::TempDir;
 
 use crate::{copy_dir, delete_dir, get_total_size_of_files_in_folder};
@@ -10,7 +11,8 @@ use crate::tests::test_utils::get_test_resource_dir;
 #[test]
 fn test_get_total_size_of_files_in_folder_returns_correct_total_size(
 ) -> Result<(), Box<dyn error::Error>> {
-	let img_path = get_test_resource_dir().to_str().unwrap();
+	let binding = get_test_resource_dir();
+	let img_path = binding.to_str().unwrap();
 	let actual_size = get_total_size_of_files_in_folder(img_path);
 	let expected_size = 11175;
 
@@ -21,9 +23,10 @@ fn test_get_total_size_of_files_in_folder_returns_correct_total_size(
 	Ok(())
 }
 
-#[test]
-fn test_copy_dir_should_copy_old_dir_with_contents_and_give_it_new_name(
+#[tokio::test]
+async fn test_copy_dir_should_copy_old_dir_with_contents_and_give_it_new_name(
 ) -> Result<(), Box<dyn error::Error>> {
+	let app_handle = test::mock_app().handle();
 	let base_path = TempDir::with_prefix("trokk-test-copy-tmp-")?;
 
 	let old_dir = base_path.path().join("dagbladet");
@@ -43,7 +46,9 @@ fn test_copy_dir_should_copy_old_dir_with_contents_and_give_it_new_name(
 		old_dir.to_str().unwrap(),
 		done_dir.to_str().unwrap(),
 		"the_new_folder_name",
-	);
+		app_handle,
+	)
+	.await;
 
 	match copied_dir_str {
 		Ok(copied_dir) => {
@@ -59,14 +64,14 @@ fn test_copy_dir_should_copy_old_dir_with_contents_and_give_it_new_name(
 	Ok(())
 }
 
-#[test]
-fn test_delete_dir_should_delete_directory() -> Result<(), Box<dyn error::Error>> {
+#[tokio::test]
+async fn test_delete_dir_should_delete_directory() -> Result<(), Box<dyn error::Error>> {
 	let dir = TempDir::with_prefix("trokk-test-delete-tmp-")?;
 	let dir_name = dir.path().to_str().unwrap();
 
 	assert!(Path::new(dir_name).exists());
 
-	let delete_dir_result = delete_dir(dir_name);
+	let delete_dir_result = delete_dir(dir_name).await;
 
 	match delete_dir_result {
 		Ok(_) => {

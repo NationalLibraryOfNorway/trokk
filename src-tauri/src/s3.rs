@@ -67,7 +67,7 @@ async fn put_object(
 
 	let result = client
 		.put_object()
-		.bucket(secret_variables.s3_bucket_name)
+		.bucket(&secret_variables.s3_bucket_name)
 		.key(format!(
 			"{}/{}/{}_{:0>5}.{}", // The "{:0>5}" is used to pad the page number with zeros.
 			material_type,
@@ -100,15 +100,15 @@ async fn get_client(secret_variables: &SecretVariables) -> Result<&'static Clien
 
 async fn create_client(secret_variables: &SecretVariables) -> Result<Client, String> {
 	let credentials = Credentials::from_keys(
-		secret_variables.s3_access_key_id,
-		secret_variables.s3_secret_access_key,
+		&secret_variables.s3_access_key_id,
+		&secret_variables.s3_secret_access_key,
 		None,
 	);
 
 	let config = aws_sdk_s3::Config::builder()
 		.credentials_provider(credentials)
-		.region(Region::new(secret_variables.s3_region))
-		.endpoint_url(secret_variables.s3_url)
+		.region(Region::new(secret_variables.s3_region.clone()))
+		.endpoint_url(&secret_variables.s3_url)
 		.disable_s3_express_session_auth(true)
 		.disable_multi_region_access_points(true)
 		.force_path_style(true)

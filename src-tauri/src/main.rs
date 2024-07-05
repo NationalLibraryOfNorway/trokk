@@ -4,12 +4,18 @@
 use std::ffi::OsString;
 
 use gethostname::gethostname;
+use serde::Serialize;
+use serde_json::Serializer;
+use tauri::{test, Wry};
 #[cfg(debug_assertions)]
 use tauri::Manager;
+use tauri::test::MockRuntime;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
-use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables};
+use crate::model::{
+	AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables, TransferProgress,
+};
 
 mod auth;
 mod error;
@@ -84,13 +90,14 @@ fn get_total_size_of_files_in_folder(path: &str) -> Result<u64, String> {
 }
 
 #[tauri::command]
-async fn copy_dir(
+async fn copy_dir<R: tauri::Runtime>(
+	// ^ Typed this way to handle both Wry and MockRuntime for testing purposes
 	old_dir: &str,
 	new_base_dir: &str,
 	new_dir_name: &str,
-	app_window: Window,
+	app_handle: tauri::AppHandle<R>,
 ) -> Result<String, String> {
-	file_utils::copy_dir_contents(old_dir, new_base_dir, new_dir_name, app_window)
+	file_utils::copy_dir_contents(old_dir, new_base_dir, new_dir_name, app_handle)
 }
 
 #[tauri::command]
