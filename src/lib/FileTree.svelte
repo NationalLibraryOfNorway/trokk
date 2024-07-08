@@ -9,7 +9,7 @@
     export let fileTree: FileTree[] = [];
     export let selectedDir: string = '';
     export let allUploadProgress: Writable<AllTransferProgress>;
-    let uploadProgress: AllTransferProgress;
+    let uploadProgress: AllTransferProgress = { dir: {} };
     const dispatch = createEventDispatcher();
 
     beforeUpdate(() => {
@@ -62,7 +62,7 @@
                                 <span>{formatFileNames(file.name)}</span>
                             </span>
                             {#if uploadProgress.dir[file.path]}
-                                <span class="progress">
+                                <span class="progress" data-testid="progress-bar">
                                     {calculateProgress(uploadProgress.dir[file.path])}
                                     &nbsp;
                                     <Upload style="margin-bottom: 6px" size="16" />

@@ -126,7 +126,7 @@
                 return Promise.reject(error);
             });
 
-        fetch(`${papiPath}/item`,
+        return await fetch(`${papiPath}/item`,
             {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + accessToken },
@@ -148,6 +148,7 @@
                     removeErrorMessage();
                     displaySuccessMessage(response.data as TextInputDto);
                 } else {
+                    console.log(response);
                     handleError(undefined, response.status);
                 }
             })
@@ -163,8 +164,8 @@
             .then((size) => size as BigInt);
     }
 
-    function onSubmit() {
-        getHostname()
+    async function onSubmit() {
+        await getHostname()
             .then(hostname => postRegistration(hostname.toString()))
             .catch(error => console.log(error));
     }
@@ -216,7 +217,6 @@
         tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.';
         if (code) tmpErrorMessage += ` (Feilkode ${code})`;
 
-        console.error(tmpErrorMessage, error)
         errorMessage = tmpErrorMessage;
     }
 
