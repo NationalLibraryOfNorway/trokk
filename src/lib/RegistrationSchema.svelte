@@ -11,7 +11,7 @@
     import { isLoggedIn } from './Auth.svelte';
     import { appWindow } from '@tauri-apps/api/window';
     import type { Event, UnlistenFn } from '@tauri-apps/api/event';
-    import { type AllTransferProgress, calculateProgress, type TransferProgress } from './model/transfer-progress';
+    import { type AllTransferProgress, type TransferProgress } from './model/transfer-progress';
 
     export let currentPath: string | undefined;
     export let useS3: boolean;
@@ -148,7 +148,6 @@
                     removeErrorMessage();
                     displaySuccessMessage(response.data as TextInputDto);
                 } else {
-                    console.log(response);
                     handleError(undefined, response.status);
                 }
             })
@@ -217,6 +216,7 @@
         tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.';
         if (code) tmpErrorMessage += ` (Feilkode ${code})`;
 
+        console.error(tmpErrorMessage, error); // For sentry
         errorMessage = tmpErrorMessage;
     }
 

@@ -65,7 +65,6 @@
         }
 
         const eventUseS3 = event.detail.newUseS3;
-        console.log('event', event);
         if (eventUseS3 !== undefined) {
             useS3 = eventUseS3;
             settings.useS3 = eventUseS3;
