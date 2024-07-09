@@ -10,6 +10,7 @@
 
     let scannerPath: string;
     let donePath: string;
+    let useS3: boolean;
 
     let openSettings = false;
 
@@ -38,9 +39,19 @@
                 donePath = defaultPath;
             }
         });
+
+        settings.useS3.then(async (savedUseS3) => {
+            if (savedUseS3 !== null) {
+                useS3 = savedUseS3;
+            } else {
+                let defaultUseS3 = true;
+                settings.useS3 = defaultUseS3;
+                useS3 = defaultUseS3;
+            }
+        });
     });
 
-    function handleNewPaths(event: CustomEvent) {
+    function handleNewSettings(event: CustomEvent) {
         const eventScannerPath = event.detail.newScanPath;
         if (eventScannerPath) {
             scannerPath = eventScannerPath;
@@ -51,6 +62,12 @@
         if (eventDonePath) {
             donePath = eventDonePath;
             settings.donePath = eventDonePath;
+        }
+
+        const eventUseS3 = event.detail.newUseS3;
+        if (eventUseS3 !== undefined) {
+            useS3 = eventUseS3;
+            settings.useS3 = eventUseS3;
         }
     }
 
@@ -82,9 +99,9 @@
             </div>
         </div>
         {#if openSettings}
-            <Settings on:save={handleNewPaths}></Settings>
+            <Settings on:save={handleNewSettings}></Settings>
         {/if}
-        <Files bind:scannerPath></Files>
+        <Files bind:scannerPath bind:useS3></Files>
     {:else if loggedOut}
         <div class="login">
             <button on:click={() => authComponent.login()}>Logg inn</button>

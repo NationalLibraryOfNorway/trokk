@@ -84,4 +84,18 @@ pub struct SecretVariables {
 	pub(crate) oidc_tekst_base_url: String,
 	pub(crate) oidc_tekst_client_id: String,
 	pub(crate) oidc_tekst_client_secret: String,
+	pub(crate) s3_access_key_id: String,
+	pub(crate) s3_secret_access_key: String,
+	pub(crate) s3_url: String,
+	pub(crate) s3_bucket_name: String,
+	pub(crate) s3_region: String,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all(serialize = "camelCase"))]
+// We send "camelCase" to frontend
+pub struct TransferProgress {
+	pub(crate) directory: String,
+	pub(crate) page_nr: usize,
+	pub(crate) total_pages: usize,
 }

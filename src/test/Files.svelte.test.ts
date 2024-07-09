@@ -24,7 +24,7 @@ describe('Files.svelte', () => {
                     return '';
             }
         });
-        container = render(Files, { props: { scannerPath: 'path' } });
+        container = render(Files, { props: { scannerPath: 'path', useS3: false } });
         // Wait for the component to mount
         await waitFor(async () => {
             // Even with waitFor, we need to await many ticks to avoid 'left-pane' not being found

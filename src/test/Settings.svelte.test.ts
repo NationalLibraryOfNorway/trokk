@@ -9,6 +9,7 @@ describe('Settings.svelte', () => {
     beforeEach(() => {
         vi.spyOn(settings, 'scannerPath', 'get').mockReturnValue(Promise.resolve('/scan'));
         vi.spyOn(settings, 'donePath', 'get').mockReturnValue(Promise.resolve('/done'));
+        vi.spyOn(settings, 'useS3', 'get').mockReturnValue(Promise.resolve(false));
         container = render(Settings);
     });
 

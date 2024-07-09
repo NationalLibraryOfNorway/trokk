@@ -69,8 +69,8 @@ export const response400Mock: Response<string> = new Response({
 });
 
 export const fileTreeListMock: FileTree[] = [
-    new FileTree('e', 'e', false),
-    new FileTree('b', 'b', false),
+    new FileTree('e', 'e', false, [new FileTree('f', 'f', false)]),
+    new FileTree('b', 'b', false, [new FileTree('g', 'g', false)]),
     new FileTree('d', 'd', false),
     new FileTree('c', 'c', false),
     new FileTree('a', 'a', false)

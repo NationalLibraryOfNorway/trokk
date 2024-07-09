@@ -4,6 +4,8 @@ import RegistrationSchema from '../lib/RegistrationSchema.svelte';
 import { mockIPC } from '@tauri-apps/api/mocks';
 import { authenticationResponseMock, response400Mock, textInputDtoResponseMockNewspaper } from './mock-data.mock';
 import { settings } from '../lib/util/settings';
+import type { AllTransferProgress } from '../lib/model/transfer-progress';
+import { writable } from 'svelte/store';
 
 
 describe('RegistrationSchema.svelte', () => {
@@ -13,11 +15,12 @@ describe('RegistrationSchema.svelte', () => {
         vi.spyOn(settings, 'authResponse', 'get').mockReturnValue(Promise.resolve(authenticationResponseMock));
         vi.spyOn(settings, 'donePath', 'get').mockReturnValue(Promise.resolve('/done'));
         vi.spyOn(settings, 'scannerPath', 'get').mockReturnValue(Promise.resolve('/scanner'));
+        vi.spyOn(settings, 'useS3', 'get').mockReturnValue(Promise.resolve(false));
 
         mockIPC((cmd, args) => {
             switch (cmd) {
                 case 'get_secret_variables':
-                    return Promise.resolve({ papiPath: 'test.papi' });
+                    return Promise.resolve({ papiPath: 'test.papi', useS3: false });
                 case 'get_hostname':
                     return Promise.resolve('testHost');
                 case 'get_total_size_of_files_in_folder':
@@ -31,6 +34,8 @@ describe('RegistrationSchema.svelte', () => {
                 case 'tauri': {
                     if (args['__tauriModule'] === 'Http') { // fetch requests has cmd=tauri and args.__tauriModule=Http
                         return Promise.resolve(textInputDtoResponseMockNewspaper);
+                    } else if (args['__tauriModule'] === 'Event' && args['message.cmd'] === 'unlisten' && args['message.event'] === 'transfer_progress') {
+                        return Promise.resolve(undefined);
                     }
                     console.log(`unknown args for cmd "tauri": ${args}`);
                     return '';
@@ -42,7 +47,13 @@ describe('RegistrationSchema.svelte', () => {
             }
         });
 
-        container = render(RegistrationSchema, { props: { currentPath: 'path' } });
+        container = render(RegistrationSchema, {
+            props: {
+                currentPath: 'path',
+                useS3: false,
+                allUploadProgress: writable<AllTransferProgress>({ dir: {} })
+            }
+        });
     });
 
     afterEach(() => {
@@ -180,7 +191,21 @@ describe('RegistrationSchema.svelte', () => {
         container.getByText('TRØKK!').click();
 
         await new Promise(resolve => setTimeout(resolve, 0));
-        const res = container.getByText('Fikk ikke flyttet filene', { exact: false });
+        const res = container.getByText('Fikk ikke kopiert filene', { exact: false });
+        expect(res).toBeTruthy();
+    });
+
+    test('registration should show error message if s3 transfer failed', async () => {
+        vi.spyOn(settings, 'useS3', 'get').mockReturnValue(Promise.resolve(true));
+        mockIPC((cmd) => {
+            if (cmd === 'upload_directory_to_s3') return Promise.reject('s3 failed');
+            else return '';
+        });
+
+        container.getByText('TRØKK!').click();
+
+        await new Promise(resolve => setTimeout(resolve, 0));
+        const res = container.getByText('Fikk ikke lastet opp filene', { exact: false });
         expect(res).toBeTruthy();
     });
 
@@ -210,10 +235,13 @@ describe('RegistrationSchema.svelte', () => {
         expect(res).toBeTruthy();
     });
 
-    test('registration should show error message if papi post failed', async () => {
-        mockIPC((cmd) => {
-            if (cmd === 'tauri') return Promise.reject('cannot post to papi');
-            else return '';
+    test('registration should show error message if papi returned non-ok status', async () => {
+        mockIPC((cmd, args) => {
+            if (cmd === 'tauri') {
+                if (args['__tauriModule'] === 'Http' && args['message.options.url'] === 'test.papi/item') {
+                    return Promise.resolve(response400Mock);
+                }
+            } else return '';
         });
 
         container.getByText('TRØKK!').click();
@@ -223,10 +251,14 @@ describe('RegistrationSchema.svelte', () => {
         expect(res).toBeTruthy();
     });
 
-    test('registration should show error message if papi returned non-ok status', async () => {
-        mockIPC((cmd) => {
-            if (cmd === 'tauri') return Promise.resolve(response400Mock);
-            else return '';
+
+    test('registration should show error message if papi post failed', async () => {
+        mockIPC((cmd, args) => {
+            if (cmd === 'tauri') {
+                if (args['__tauriModule'] === 'Http' && args['message.options.url'] === 'test.papi/item') {
+                    return Promise.reject('cannot post to papi');
+                }
+            } else return '';
         });
 
         container.getByText('TRØKK!').click();
