@@ -1,4 +1,4 @@
 import {type Writable, writable} from 'svelte/store';
-import type {TransferLogMessage} from '../model/transfer-log-message';
+import type {TransferLog} from '../model/transfer-log';
 
-export const transferLogs: Writable<TransferLogMessage[]> = writable([]);
+export const transferLogs: Writable<TransferLog[]> = writable([]);
