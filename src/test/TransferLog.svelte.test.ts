@@ -1,4 +1,4 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest';
+import {beforeEach, describe, expect, test} from 'vitest';
 import TransferLog from '../lib/TransferLog.svelte';
 import {render, type RenderResult, waitFor} from '@testing-library/svelte';
 import {transferLogMessages} from '../lib/store/transfer-log-store';
@@ -26,7 +26,10 @@ describe('TransferLog.svelte', async () => {
     test('should display messages from store', async () => {
         transferLogMessages.update((value: TransferLogMessage[]) => [
             {
-                message: 'Hello world!',
+                workingTitle: 'Hello world!',
+                pages: 1,
+                transferLocation: 'test',
+                uuid: 'test',
                 timestamp: new Date('2021-01-01T00:00:00Z')
             },
             ...value
@@ -43,11 +46,17 @@ describe('TransferLog.svelte', async () => {
     test('should display messages in reverse order of store', async () => {
         transferLogMessages.update((value: TransferLogMessage[]) => [
             {
-                message: 'Hello world!',
+                workingTitle: 'Hello world!',
+                pages: 1,
+                transferLocation: 'test',
+                uuid: 'test',
                 timestamp: new Date('2021-01-01T00:00:00Z')
             },
             {
-                message: 'Goodbye world!',
+                workingTitle: 'Goodbye world!',
+                pages: 1,
+                transferLocation: 'test',
+                uuid: 'test',
                 timestamp: new Date('2021-01-01T00:00:01Z')
             },
             ...value

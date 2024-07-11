@@ -9,13 +9,20 @@
         });
     }
 
+    function numberOfPagesDisplayText(numberOfPages: number) {
+        return numberOfPages === 1 ? '1 side' : `${numberOfPages} sider`;
+    }
+
 </script>
 
 <div class="transfer-log-container">
     <h1>Overføringslogg</h1>
     <div class="transfer-log">
         {#each $transferLogMessages.slice().reverse() as log}
-            <p data-testid="transfer-log-message">[{formatDateString(log.timestamp)}]: {log.message}</p>
+            <p data-testid="transfer-log-message">
+                [{formatDateString(log.timestamp)}]:
+                Overførte {log.workingTitle} med {numberOfPagesDisplayText(log.pages)} til {log.transferLocation} ({log.uuid})
+            </p>
         {/each}
     </div>
 </div>

@@ -183,12 +183,13 @@
         if (!currentPath || !$allUploadProgress.dir[currentPath]) {
             return;
         }
-        const totalPages = $allUploadProgress.dir[currentPath].totalPages;
-        const numberOfPagesDisplayText = totalPages === 1 ? '1 side' : `${totalPages} sider`;
 
         $transferLogMessages = [...$transferLogMessages, {
-            message: `Overførte "${item.workingTitle}" med ${numberOfPagesDisplayText} til ${whereToText} (${item.id})`,
-            timestamp: new Date()
+            timestamp: new Date(),
+            workingTitle: item.workingTitle ?? '',
+            pages: $allUploadProgress.dir[currentPath].totalPages,
+            transferLocation: whereToText,
+            uuid: item.id ?? ''
         }]
     }
 

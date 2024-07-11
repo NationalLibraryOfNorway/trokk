@@ -1,4 +1,7 @@
 export interface TransferLogMessage {
     timestamp: Date;
-    message: string;
+    workingTitle: string;
+    pages: number;
+    transferLocation: string;
+    uuid: string;
 }
