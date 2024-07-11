@@ -12,6 +12,7 @@
     import { appWindow } from '@tauri-apps/api/window';
     import type { Event, UnlistenFn } from '@tauri-apps/api/event';
     import { type AllTransferProgress, type TransferProgress } from './model/transfer-progress';
+    import {transferLogMessages} from './store/transfer-log-store';
 
     export let currentPath: string | undefined;
     export let useS3: boolean;
@@ -67,7 +68,7 @@
         });
         disabled = currentPath === undefined;
     });
-    
+
     onDestroy(async () => {
         if (unlistenProgress) {
             unlistenProgress();
@@ -175,6 +176,20 @@
 
     function displaySuccessMessage(item: TextInputDto) {
         successMessage = `Item "${item.workingTitle}" sendt til produksjonsløypen med id ${item.id}`;
+        logTransferMessage(item);
+    }
+
+    function logTransferMessage(item: TextInputDto) {
+        if (!currentPath || !$allUploadProgress.dir[currentPath]) {
+            return;
+        }
+        const totalPages = $allUploadProgress.dir[currentPath].totalPages;
+        const numberOfPagesDisplayText = totalPages === 1 ? '1 side' : `${totalPages} sider`;
+
+        $transferLogMessages = [...$transferLogMessages, {
+            message: `Overførte "${item.workingTitle}" med ${numberOfPagesDisplayText} til ${whereToText} (${item.id})`,
+            timestamp: new Date()
+        }]
     }
 
     async function copyToDoneDir(id: string): Promise<string> {
@@ -308,7 +323,7 @@
     display: flex;
     flex-direction: column;
     width: 20em;
-    margin-left: 1em;
+    margin: 0 1em 2em 1em;
   }
 
   .regField {

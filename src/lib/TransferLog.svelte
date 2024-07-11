@@ -1,0 +1,51 @@
+<script lang="ts">
+    import {transferLogMessages} from './store/transfer-log-store';
+
+    function formatDateString(date: Date) {
+        return date.toLocaleString('no-NO', {
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric',
+        });
+    }
+
+</script>
+
+<div class="transfer-log-container">
+    <h1>Overføringslogg</h1>
+    <div class="transfer-log">
+        {#each $transferLogMessages.slice().reverse() as log}
+            <p>{formatDateString(log.timestamp)}: {log.message}</p>
+        {/each}
+    </div>
+</div>
+
+<style lang="scss">
+  h1 {
+    font-size: 1.25em;
+    text-align: start;
+  }
+
+  p {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 18px
+  }
+
+  .transfer-log-container {
+    margin: auto 1em
+  }
+
+  .transfer-log {
+    border-radius: 5px;
+    background-color: rgba(55, 55, 55, 0.91);
+    padding: 1em;
+    margin: 1em 0;
+  }
+
+    @media (prefers-color-scheme: light) {
+      .transfer-log {
+        background-color: rgb(230, 230, 230);
+      }
+    }
+</style>
