@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, test} from 'vitest';
 import TransferLog from '../lib/TransferLog.svelte';
 import {render, type RenderResult, waitFor} from '@testing-library/svelte';
-import {transferLogMessages} from '../lib/store/transfer-log-store';
+import {transferLogs} from '../lib/store/transfer-log-store';
 import type {TransferLogMessage} from '../lib/model/transfer-log-message';
 
 describe('TransferLog.svelte', async () => {
@@ -9,7 +9,7 @@ describe('TransferLog.svelte', async () => {
 
     beforeEach(() => {
         container = render(TransferLog);
-        transferLogMessages.set([]);
+        transferLogs.set([]);
     })
 
     test('component mounts', () => {
@@ -24,7 +24,7 @@ describe('TransferLog.svelte', async () => {
     });
 
     test('should display messages from store', async () => {
-        transferLogMessages.update((value: TransferLogMessage[]) => [
+        transferLogs.update((value: TransferLogMessage[]) => [
             {
                 workingTitle: 'Hello world!',
                 pages: 1,
@@ -44,7 +44,7 @@ describe('TransferLog.svelte', async () => {
     });
 
     test('should display messages in reverse order of store', async () => {
-        transferLogMessages.update((value: TransferLogMessage[]) => [
+        transferLogs.update((value: TransferLogMessage[]) => [
             {
                 workingTitle: 'Hello world!',
                 pages: 1,

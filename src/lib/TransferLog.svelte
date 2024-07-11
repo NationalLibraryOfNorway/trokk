@@ -1,5 +1,5 @@
 <script lang="ts">
-    import {transferLogMessages} from './store/transfer-log-store';
+    import {transferLogs} from './store/transfer-log-store';
 
     function formatDateString(date: Date) {
         return date.toLocaleString('no-NO', {
@@ -18,7 +18,7 @@
 <div class="transfer-log-container">
     <h1>Overføringslogg</h1>
     <div class="transfer-log">
-        {#each $transferLogMessages.slice().reverse() as log}
+        {#each $transferLogs.slice().reverse() as log}
             <p data-testid="transfer-log-message">
                 [{formatDateString(log.timestamp)}]:
                 Overførte {log.workingTitle} med {numberOfPagesDisplayText(log.pages)} til {log.transferLocation} ({log.uuid})

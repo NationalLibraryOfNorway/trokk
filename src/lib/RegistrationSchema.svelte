@@ -12,7 +12,7 @@
     import { appWindow } from '@tauri-apps/api/window';
     import type { Event, UnlistenFn } from '@tauri-apps/api/event';
     import { type AllTransferProgress, type TransferProgress } from './model/transfer-progress';
-    import {transferLogMessages} from './store/transfer-log-store';
+    import {transferLogs} from './store/transfer-log-store';
 
     export let currentPath: string | undefined;
     export let useS3: boolean;
@@ -184,7 +184,7 @@
             return;
         }
 
-        $transferLogMessages = [...$transferLogMessages, {
+        $transferLogs = [...$transferLogs, {
             timestamp: new Date(),
             workingTitle: item.workingTitle ?? '',
             pages: $allUploadProgress.dir[currentPath].totalPages,
