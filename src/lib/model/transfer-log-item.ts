@@ -1,4 +1,4 @@
-export interface TransferLog {
+export interface TransferLogItem {
     timestamp: Date;
     workingTitle: string;
     pages: number;
