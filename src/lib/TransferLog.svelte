@@ -15,7 +15,7 @@
     <h1>Overføringslogg</h1>
     <div class="transfer-log">
         {#each $transferLogMessages.slice().reverse() as log}
-            <p>{formatDateString(log.timestamp)}: {log.message}</p>
+            <p data-testid="transfer-log-message">[{formatDateString(log.timestamp)}]: {log.message}</p>
         {/each}
     </div>
 </div>
@@ -24,12 +24,6 @@
   h1 {
     font-size: 1.25em;
     text-align: start;
-  }
-
-  p {
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 12px;
-    line-height: 18px
   }
 
   .transfer-log-container {
@@ -41,6 +35,12 @@
     background-color: rgba(55, 55, 55, 0.91);
     padding: 1em;
     margin: 1em 0;
+  }
+
+  p {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    line-height: 18px
   }
 
     @media (prefers-color-scheme: light) {
