@@ -123,13 +123,13 @@ jobs:
       - name: NPM; Run frontend tests
         run: npm run test
 
-      # Regex match to regular semver without v, and can an extra dash or plus with numbers behind.
+      # Regex match to simple semver without v, and can have an extra dash or plus with numbers behind.
       # Examples: 1.2.3, 0.1.2, 0.0.0-123, 1.2.5+123123
-      # These are the versions that works with 'npm version' and Tauri (WiX, used by Tauri, has the hardest restrictions).
+      # These are the versions that works with both 'npm version' and Tauri (WiX, used by Tauri, has the hardest restrictions).
       # More info about the restrictions for tauri here
       # https://github.com/tauri-apps/tauri/blob/26f2e19a4f0e609c95c0aba5faefab2eb83a179e/tooling/bundler/src/bundle/windows/msi/wix.rs#L247
       # Tauri does not allow 'v' in front of version, npm adds it if it does not exist. Therefore, we remove 'v' if it exists.
-      # Should be mentioned that our rules in this action requires a leading 'v' to build, but that does not matter in this step.
+      # Should be mentioned that our rules in the beginning of this action requires a leading 'v' to build, but that does not matter in this step.
       - name: NPM; Set version
         shell: bash
         run: |
@@ -137,6 +137,7 @@ jobs:
           version_modified=$(echo ${{ github.ref_name }} | sed -e '/^v/s/^v//')
           if [[ $version_modified =~ $pattern ]]; then
             npm version $version_modified --no-git-tag-version
+            sed -i "s/0.0.0./$version_modified/g" src-tauri/Cargo.toml
             echo "Version set to 'v$version_modified'"
           else
             echo "'${{ github.ref_name }}' is not a valid version - using default. Must be a numerical only semver version."
