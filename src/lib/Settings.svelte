@@ -77,6 +77,7 @@
     <div class="form-group">
         <label for="useS3">Bruk S3</label>
         <input type="checkbox" id="useS3" bind:checked={useS3} on:change={saveUseS3(useS3)} />
+        <p style="align-self: flex-end">asd</p>
     </div>
 
     <div class="form-group">
@@ -116,6 +117,7 @@
   .form-group {
     display: flex;
     margin: .2em .5em;
+    width: 100%;
   }
 
   .form-group label {
