@@ -137,7 +137,7 @@ jobs:
           version_modified=$(echo ${{ github.ref_name }} | sed -e '/^v/s/^v//')
           if [[ $version_modified =~ $pattern ]]; then
             npm version $version_modified --no-git-tag-version
-            sed -i 's/version = "0.0.0"/version = "$version_modified"/g' src-tauri/Cargo.toml
+            sed -i "s/version = \"0.0.0\"/version = \"$version_modified\"/g" src-tauri/Cargo.toml
             echo "Version set to 'v$version_modified'"
           else
             echo "'${{ github.ref_name }}' is not a valid version - using default. Must be a numerical only semver version."
