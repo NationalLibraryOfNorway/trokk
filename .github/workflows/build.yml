@@ -123,6 +123,9 @@ jobs:
       - name: NPM; Run frontend tests
         run: npm run test
 
+      - name: NPM; Set version
+        run: npm version ${{ github.ref_name }} --no-git-tag-version
+
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         id: tauri_build
