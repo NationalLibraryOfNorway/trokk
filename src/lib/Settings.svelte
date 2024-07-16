@@ -122,7 +122,6 @@
   .form-group {
     display: flex;
     margin: .2em .5em;
-    width: 100%;
   }
 
   .form-group label {
