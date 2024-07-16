@@ -123,15 +123,19 @@ jobs:
       - name: NPM; Run frontend tests
         run: npm run test
 
-      # Regex match to e.g. v0.0.0 and 0.0.123, with anything behind the last number, like v0.0.0-beta
-      # These are the versions that works with 'npm version'
+      # Regex match to regular semver without v, with any alphanumerics and [.-] behind the last number, and ends with an alphanumeric.
+      # Examples: 1.2.3, 0.1.2, 0.0.0-beta, 2.5.9-something.1
+      # These are the versions that works with 'npm version' and rust semver used in Tauri.
+      # Tauri does not allow 'v' in front of version, npm does not care. Therefore, we remove 'v' if it exists.
+      # Should be mentioned that our rules in this action requires a leading 'v' to build, but that does not matter in this step.
       - name: NPM; Set version
         shell: bash
         run: |
-          pattern="^[v]*[0-9]+.[0-9]+.[0-9]+"
-          if [[ ${{ github.ref_name }} =~ $pattern ]]; then
-            npm version ${{ github.ref_name }} --no-git-tag-version
-            echo "Version set to ${{ github.ref_name }}"
+          pattern="^[0-9]+.[0-9]+.[0-9]+(-[-.a-zA-Z0-9]+[a-zA-Z0-9])?$"
+          version_modified=$(echo ${{ github.refname }} | sed -e '/^v/s/^v//')
+          if [[ $version_modified =~ $pattern ]]; then
+            npm version $version_modified --no-git-tag-version
+            echo "Version set to 'v$version_modified'"
           else
             echo "'${{ github.ref_name }}' is not a valid version - not setting version"
           fi
