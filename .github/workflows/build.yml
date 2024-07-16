@@ -126,9 +126,10 @@ jobs:
       # Regex match to e.g. v0.0.0 and 0.0.123, with anything behind the last number, like v0.0.0-beta
       # These are the versions that works with 'npm version'
       - name: NPM; Set version
+        shell: bash
         run: |
           pattern="^[v]*[0-9]+.[0-9]+.[0-9]+"
-          if [ ${{ github.ref_name }} =~ $pattern ]; then
+          if [[ ${{ github.ref_name }} =~ $pattern ]]; then
             npm version ${{ github.ref_name }} --no-git-tag-version
             echo "Version set to ${{ github.ref_name }}"
           else
