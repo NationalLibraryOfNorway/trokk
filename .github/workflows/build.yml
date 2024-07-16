@@ -128,12 +128,12 @@ jobs:
       - name: NPM; Set version
         run: |
           pattern="^[v]*[0-9]+.[0-9]+.[0-9]+"
-          if [[ ${{ github.ref_name }} =~ $pattern ]]; then
+          if [ ${{ github.ref_name }} =~ $pattern ]; then
             npm version ${{ github.ref_name }} --no-git-tag-version
-            echo "Version set to ${{ github.ref_name }}";
+            echo "Version set to ${{ github.ref_name }}"
           else
-            echo "No valid version found in '${{ github.ref_name }}' - setting '0.0.0'";
-            npm version 0.0.0 --no-git-tag-version;
+            echo "No valid version found in '${{ github.ref_name }}' - setting '0.0.0'"
+            npm version 0.0.0 --no-git-tag-version
           fi
 
       - name: Tauri build
