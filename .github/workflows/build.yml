@@ -133,8 +133,7 @@ jobs:
             npm version ${{ github.ref_name }} --no-git-tag-version
             echo "Version set to ${{ github.ref_name }}"
           else
-            echo "No valid version found in '${{ github.ref_name }}' - setting '0.0.0'"
-            npm version 0.0.0 --no-git-tag-version
+            echo "'${{ github.ref_name }}' is not a valid version - not setting version"
           fi
 
       - name: Tauri build
