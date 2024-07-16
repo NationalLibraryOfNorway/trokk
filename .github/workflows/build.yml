@@ -133,6 +133,7 @@ jobs:
         run: |
           pattern="^[0-9]+.[0-9]+.[0-9]+(-[-.a-zA-Z0-9]+[a-zA-Z0-9])?$"
           version_modified=$(echo ${{ github.refname }} | sed -e '/^v/s/^v//')
+          echo "Version without v: '$version_modified'"
           if [[ $version_modified =~ $pattern ]]; then
             npm version $version_modified --no-git-tag-version
             echo "Version set to 'v$version_modified'"
