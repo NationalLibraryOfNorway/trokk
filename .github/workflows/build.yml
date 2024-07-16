@@ -123,8 +123,18 @@ jobs:
       - name: NPM; Run frontend tests
         run: npm run test
 
+      # Regex match to e.g. v0.0.0 and 0.0.123, with anything behind the last number, like v0.0.0-beta
+      # These are the versions that works with 'npm version'
       - name: NPM; Set version
-        run: npm version ${{ github.ref_name }} --no-git-tag-version
+        run: |
+          pattern="^[v]*[0-9]+.[0-9]+.[0-9]+" |
+          if [[ ${{ github.ref_name }} =~ $pattern ]]; then |
+            npm version ${{ github.ref_name }} --no-git-tag-version |
+            echo "Version set to ${{ github.ref_name }}"; |
+          else |
+            echo "No valid version found in '${{ github.ref_name }}' - setting '0.0.0'"; |
+            npm version 0.0.0 --no-git-tag-version; |
+          fi
 
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
