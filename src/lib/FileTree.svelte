@@ -3,12 +3,12 @@
     import { beforeUpdate, createEventDispatcher, onMount } from 'svelte';
     import { FileTree } from './model/file-tree';
     import { formatFileNames } from './util/file-utils';
-    import type { Writable } from 'svelte/store';
+    import {writable, type Writable} from 'svelte/store';
     import { type AllTransferProgress, calculateProgress } from './model/transfer-progress';
 
     export let fileTree: FileTree[] = [];
     export let selectedDir: string = '';
-    export let allUploadProgress: Writable<AllTransferProgress>;
+    export let allUploadProgress: Writable<AllTransferProgress> = writable<AllTransferProgress>({ dir: {} });
     let uploadProgress: AllTransferProgress = { dir: {} };
     const dispatch = createEventDispatcher();
 

@@ -14,6 +14,7 @@
     import Split from 'split.js';
     import type { AllTransferProgress } from './model/transfer-progress';
     import { writable, type Writable } from 'svelte/store';
+    import TransferLog from './TransferLog.svelte'
 
     export let scannerPath: string;
     export let useS3: boolean;
@@ -240,6 +241,7 @@
         </div>
         <div id="right-pane" class="pane sticky-top">
             <RegistrationSchema bind:currentPath bind:useS3 bind:allUploadProgress />
+            <TransferLog />
         </div>
     </div>
 {:else}
