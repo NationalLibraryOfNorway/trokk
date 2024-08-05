@@ -3,6 +3,7 @@
     import { invoke } from '@tauri-apps/api';
     import { settings } from './util/settings';
     import { readDir } from '@tauri-apps/api/fs';
+    import { getVersion } from '@tauri-apps/api/app';
 
     const dispatch = createEventDispatcher();
     let scannerPath: string;
@@ -75,8 +76,13 @@
 
 <form on:submit|preventDefault class="settings-form">
     <div class="form-group">
-        <label for="useS3">Bruk S3</label>
-        <input type="checkbox" id="useS3" bind:checked={useS3} on:change={saveUseS3(useS3)} />
+        <div class="left-part">
+            <label for="useS3">Bruk S3</label>
+            <input type="checkbox" id="useS3" bind:checked={useS3} on:change={saveUseS3(useS3)} />
+        </div>
+        {#await getVersion() then version}
+            <div class="right-part"> versjon {version}</div>
+        {/await}
     </div>
 
     <div class="form-group">
@@ -133,6 +139,16 @@
     transform: scale(2);
     /*Adjust left padding for scaling*/
     margin: auto .5em;
+  }
+
+  .left-part {
+    flex-grow: 1;
+  }
+
+  .right-part {
+    flex-grow: 0;
+    margin: auto 1em;
+    font-size: x-small;
   }
 
   .grey-out {
