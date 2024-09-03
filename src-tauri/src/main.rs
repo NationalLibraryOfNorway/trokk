@@ -64,7 +64,7 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 }
 
 #[tauri::command]
-fn convert_to_webp(file_path: String) -> Result<(), String> {
+async fn convert_to_webp(file_path: String) -> Result<(), String> {
 	match image_converter::check_if_webp_exists(&file_path) {
 		Ok(exists) => {
 			if exists {
@@ -87,17 +87,10 @@ static CURRENT_DIRECTORIES_PROCESSING: Lazy<Mutex<Vec<String>>> =
 
 #[tauri::command]
 async fn convert_directory_to_webp(directory_path: String) -> Result<ConversionCount, String> {
-	println!("MAIN: Converting directory to webp: {:?}", &directory_path);
-
 	{
 		// Lock the Mutex to safely access the shared state
 		let mut directories = CURRENT_DIRECTORIES_PROCESSING.lock().unwrap();
-		println!("Directories being processed: {:?}", &directories);
 		if directories.contains(&directory_path) {
-			println!(
-				"MAIN: Directory already being processed: {:?}",
-				directory_path
-			);
 			return Ok(ConversionCount {
 				converted: 0,
 				already_converted: 0,
@@ -105,8 +98,8 @@ async fn convert_directory_to_webp(directory_path: String) -> Result<ConversionC
 		}
 
 		directories.push(directory_path.clone());
-		drop(directories);
-	}
+	} // The lock is automatically released here when the scope ends
+
 	let directory_path_clone = directory_path.clone();
 
 	// Convert the directory to webp asynchronously
@@ -126,46 +119,11 @@ async fn convert_directory_to_webp(directory_path: String) -> Result<ConversionC
 		Ok(count) => Ok(count),
 		Err(e) => Err(e.to_string()),
 	}
+	// Directories mutex unlocked at end of scope.
 }
 
-/*const CURRENT_DIRECTORIES_PROCESSING: Lazy<Arc<Mutex<Vec<String>>>> =
-	Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
-
 #[tauri::command]
-async fn convert_directory_to_webp(directory_path: String) -> Result<(), String> {
-	println!("MAIN: Converting directory to webp: {:?}", directory_path);
-	let inputs_clone = Arc::clone(&CURRENT_DIRECTORIES_PROCESSING);
-	let mut directories_processing = inputs_clone.lock().unwrap();
-	// print directories being processed
-	println!("Directories being processed: {:?}", directories_processing);
-	if !directories_processing.contains(&directory_path) {
-		directories_processing.push(directory_path.clone());
-		drop(directories_processing); // Release the lock
-		THREAD_POOL.install(|| {
-			rayon::scope(|s| {
-				s.spawn(move |_| {
-					println!(
-						"S:SPAWN: Converting directory to webp: {:?}",
-						directory_path
-					);
-					image_converter::convert_directory_to_webp(directory_path.clone())
-						.expect("Could not convert directory to webp");
-					let mut directories_processing = inputs_clone.lock().unwrap();
-					directories_processing.retain(|dir| dir != &directory_path); // Remove the directory from the list after processing
-				});
-			});
-		})
-	} else {
-		println!(
-			"MAIN: Directory already being processed: {:?}",
-			directory_path
-		);
-	}
-	Ok(())
-}*/
-
-#[tauri::command]
-fn get_total_size_of_files_in_folder(path: &str) -> Result<u64, String> {
+async fn get_total_size_of_files_in_folder(path: &str) -> Result<u64, String> {
 	file_utils::get_file_size(path)
 }
 
