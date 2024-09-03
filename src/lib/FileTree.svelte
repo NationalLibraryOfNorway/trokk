@@ -3,7 +3,7 @@
     import { beforeUpdate, createEventDispatcher, onMount } from 'svelte';
     import { FileTree } from './model/file-tree';
     import { formatFileNames } from './util/file-utils';
-    import {writable, type Writable} from 'svelte/store';
+    import { writable, type Writable } from 'svelte/store';
     import { type AllTransferProgress, calculateProgress } from './model/transfer-progress';
 
     export let fileTree: FileTree[] = [];
@@ -31,8 +31,6 @@
     }
 
     function changeViewDirectory(file: FileTree): void {
-        console.log('FileTree');
-        console.log(file);
         dispatch('directoryChange', file);
     }
 
@@ -55,7 +53,8 @@
                             <span class="filename">
                                 <button class="expand-btn" on:click={() => file.opened = !file.opened}>
                                     <ChevronRight size="16" color="gray" />
-                                    </button>{#if file.opened}
+                                </button>
+                                {#if file.opened}
                                     <FolderOpen size="16" />
                                 {:else}
                                     <Folder size="16" />
@@ -133,7 +132,7 @@
     @extend %no-style-button;
     width: 100%;
 
-display: flex;
+    display: flex;
     flex-direction: row;
     justify-content: space-between;
 
@@ -141,7 +140,9 @@ display: flex;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }    &:hover {
+    }
+
+    &:hover {
       background-color: rgba(180, 193, 208, 0.55);
       border-radius: 5px;
       cursor: pointer;

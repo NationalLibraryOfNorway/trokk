@@ -13,7 +13,6 @@
     import Split from 'split.js';
     import type { AllTransferProgress } from './model/transfer-progress';
     import { writable, type Writable } from 'svelte/store';
-    import TransferLog from './TransferLog.svelte'
     import type { ConversionResult } from './model/thumbnail';
 
 
@@ -157,9 +156,7 @@
             .then((result) => {
                 // Don't bother updating thumbnails if no new files were converted
                 // as no new files could be missed from watcher then.
-                console.log(result.converted, directoryPath, currentDirectory.path);
                 if (result.converted > 0 && directoryPath == currentDirectory.path) {
-                    console.log('Updating thumbnails');
                     setThumbnailsCurrentDirectory();
                 }
             })
@@ -170,15 +167,11 @@
 
     function setThumbnailsCurrentDirectory(): void {
         const thumbnailsTree = currentDirectory.children?.find((child: FileTreeType) => child.name === '.thumbnails');
-        console.log(thumbnailsTree, currentDirectory.children);
         currentDirectory.children?.forEach((file: FileTreeType) => {
-            console.log(file);
             if (file.thumbnail || file.name.startsWith('.thumbnails') || file.children) {
-                console.log('skip');
                 // Already has thumbnail or is a directory
                 return;
             }
-            console.log(thumbnailsTree, file.name, file.name.startsWith('.thumbnails'), file.name.endsWith('.tif'));
             if (thumbnailsTree && thumbnailsTree.children && !!file.name && !file.name.startsWith('.thumbnails') && file.name.endsWith('.tif')) {
                 let thumbnail = thumbnailsTree.children.find((child: FileTreeType) => child.name.split('.')[0] === file.name.split('.')[0]);
                 if (thumbnail) {
@@ -188,16 +181,13 @@
                         imageSource: convertFileSrc(thumbnail.path)
                     };
                 }
-                console.log('found thumb for tif');
             } else if (!file.name.startsWith('.thumbnails') && supportedFileTypes.includes(getFileExtension(file.path))) {
                 file.thumbnail = {
                     name: file.name,
                     path: file.path,
                     imageSource: convertFileSrc(file.path)
                 };
-                console.log('found any other image');
             }
-            console.log(file);
         });
         currentDirectory = currentDirectory;
     }
@@ -244,7 +234,7 @@
                 </button>
             </div>
             <FileTree fileTree={scannerPathTree} selectedDir={currentDirectory?.path}
-               bind:allUploadProgress on:directoryChange={(event) => changeViewDirectory(event.detail)} />
+                bind:allUploadProgress on:directoryChange={(event) => changeViewDirectory(event.detail)} />
         </div>
         <div id="middle-pane" class="pane">
             <div class="images">
