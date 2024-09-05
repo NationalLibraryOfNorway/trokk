@@ -1,14 +1,12 @@
 import type { FileEntry } from '@tauri-apps/api/fs';
-import type { Thumbnail } from './thumbnail';
 
 export class FileTree {
     path: string;
     name: string;
     opened: boolean;
-    thumbnail?: Thumbnail;
     children?: FileTree[];
 
-    constructor(path: string, name: string, opened: boolean, children?: FileTree[]) {
+    constructor(path: string, name: string, opened: boolean = false, children?: FileTree[]) {
         this.path = path;
         this.name = name;
         this.opened = opened;
@@ -22,7 +20,8 @@ export class FileTree {
                 name: fileEntry.name || '',
                 opened: false,
                 children: fileEntry.children ? this.fromFileEntry(fileEntry.children) : undefined
-            };
+            } as FileTree;
         });
     }
+
 }

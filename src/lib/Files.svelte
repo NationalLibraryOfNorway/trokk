@@ -20,17 +20,16 @@
     export let useS3: boolean;
     let allUploadProgress: Writable<AllTransferProgress> = writable<AllTransferProgress>({ dir: {} });
 
-    let currentDirectory: FileTreeType = { path: '', name: '', opened: false, children: [], thumbnail: undefined };//FileEntry | undefined = undefined;
-    //let testViewDirectory: ViewDirectory | undefined = undefined;
+    let currentDirectory: FileTreeType | undefined = undefined;
     let readDirFailed: string | undefined = undefined;
     let scannerPathTree: FileTreeType[] = [];
     let stopWatching: UnlistenFn | void | null = null;
-    const uriPathSeparator: string = encodeURIComponent(path.sep);
+    const pathSeparator: string = path.sep;
+    const uriPathSeparator: string = encodeURIComponent(pathSeparator);
     const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
-    $: getFileEntries(scannerPath);
+    $: initGetFilesAndWatch(scannerPath);
 
-    // TODO fix to that thumbnails is generated from default first directory
 
     onMount(async () => {
         // Applies the .gutter class from styles.css to the specified elements
@@ -43,18 +42,20 @@
     });
 
     beforeUpdate(() => {
-        currentDirectory.children?.sort((a, b) => {
-            if (a.path < b.path) return -1;
-            if (a.path > b.path) return 1;
-            return 0;
-        });
+        if (currentDirectory) {
+            currentDirectory.children?.sort((a, b) => {
+                if (a.path < b.path) return -1;
+                if (a.path > b.path) return 1;
+                return 0;
+            });
+        }
     });
 
     onDestroy(() => {
         unwatchFiles();
     });
 
-    async function getFileEntries(path: string = scannerPath): Promise<void> {
+    async function initGetFilesAndWatch(path: string = scannerPath): Promise<void> {
         await unwatchFiles();
         await readDir(path, { recursive: true })
             .then(async newFiles => {
@@ -67,16 +68,10 @@
                     return !!file.children;
                 });
                 if (firstDir) {
-                    currentDirectory = {
-                        path: firstDir.path,
-                        name: firstDir.name,
-                        children: firstDir.children,
-                        thumbnail: undefined
-                    } as FileTreeType;
+                    currentDirectory = firstDir;
                     await watchFiles();
+                    createThumbnailsFromDirectory(currentDirectory.path);
                 }
-                setThumbnailsCurrentDirectory();
-                createThumbnailsFromDirectory(currentDirectory.path);
                 readDirFailed = undefined;
             })
             .catch(err => {
@@ -85,11 +80,47 @@
             });
     }
 
+    // Used to update thumbnails to currentDirectory as they are generated,
+    // without refreshing the whole tree.
+    function addChildToCurrentDirectoryFromPath(path: string): void {
+        if (currentDirectory) {
+            path = path.substring(currentDirectory.path.length);
+            const pathParts = path.split(pathSeparator).filter(part => part.length > 0);
+            let currentNode: FileTreeType = currentDirectory;
+
+            for (const part of pathParts) {
+                if (!currentNode.children) {
+                    currentNode.children = [];
+                }
+
+                let childNode = currentNode.children.find(child => child.name === part);
+
+                if (!childNode) {
+                    childNode = {
+                        path: currentNode.path + pathSeparator + part,
+                        name: part,
+                        opened: false,
+                        children: undefined
+                    } as FileTreeType;
+                    currentNode.children.push(childNode);
+                }
+                currentNode = childNode;
+            }
+        }
+    }
+
     async function watchFiles() {
         await unwatchFiles();
         stopWatching = await watch(
+            /* TODO
+             * vi burde oppdatere til tauri V2 for bedre håndtering av events som skjer på disk
+             * se f.eks. https://v2.tauri.app/reference/javascript/fs/#watcheventkindremove
+             * Per nå har vi ingen måte å skille hva som skjer på disk, bare at noe har skjedd på en path.
+             */
             scannerPath,
             async (events) => {
+                console.log('event');
+                console.log(events);
                 // API returns an array of objects, but says it returns a single object
                 const debouncedEvents: DebouncedEvent[] = events as unknown as DebouncedEvent[];
                 for (const eventD of debouncedEvents) {
@@ -100,35 +131,12 @@
                         // New tif file, create thumbnail
                         if (!event.path.includes('.thumbnails') && event.path.includes('.tif') && event.path == currentDirectory.path + path.sep + event.path.split(path.sep).pop()) {
                             createThumbnail(event.path);
-                        } else if (event.path.includes('.thumbnails/') && event.path == currentDirectory.path + path.sep + '.thumbnails' + path.sep + event.path.split(path.sep).pop()) {
-                            currentDirectory.children?.find((child: FileTreeType) => {
-                                if (child.name.split('.')[0] === event.path.split(path.sep).pop().split('.')[0]) {
-                                    child.thumbnail = {
-                                        name: event.path.split(path.sep).pop(),
-                                        path: event.path,
-                                        imageSource: convertFileSrc(event.path)
-                                    };
-                                }
-                            });
-
+                        } else if (event.path.includes('.thumbnails')) {
+                            addChildToCurrentDirectoryFromPath(event.path);
                         }
                         currentDirectory = currentDirectory; // To update view
-                    } else if (getFileExtension(event.path) == 'thumbnails' || getFileExtension(event.path) == '') { // No '.', no file extension, assume new folder // TODO better folder stuff
-                        // Assume event is new folder when no file extension
-                        await readDir(scannerPath, { recursive: true })
-                            .then(async newFiles => {
-                                scannerPathTree = FileTreeType.fromFileEntry(newFiles).sort((a, b) => {
-                                    if (a.path < b.path) return -1;
-                                    if (a.path > b.path) return 1;
-                                    return 0;
-                                });
-                                readDirFailed = undefined;
-                            })
-                            .catch(err => {
-                                console.error(err);
-                                readDirFailed = err;
-                                scannerPathTree = [];
-                            });
+                    } else {
+                        await getFiles();
                     }
                 }
             },
@@ -136,6 +144,30 @@
         ).catch((err) => {
             console.error(err);
         });
+    }
+
+    async function getFiles() {
+        readDir(scannerPath, { recursive: true })
+            .then(async newFiles => {
+                scannerPathTree = FileTreeType.fromFileEntry(newFiles).sort((a, b) => {
+                    if (a.path < b.path) return -1;
+                    if (a.path > b.path) return 1;
+                    return 0;
+                });
+                readDirFailed = undefined;
+                if (currentDirectory) {
+                    let tmpCurrentDir = findCurrentDir(scannerPathTree);
+                    if (tmpCurrentDir)
+                        currentDirectory = tmpCurrentDir;
+                    else
+                        currentDirectory = undefined;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                readDirFailed = err;
+                scannerPathTree = [];
+            });
     }
 
     async function unwatchFiles() {
@@ -154,42 +186,12 @@
     function createThumbnailsFromDirectory(directoryPath: string) {
         invoke<ConversionResult>('convert_directory_to_webp', { directoryPath: directoryPath })
             .then((result) => {
-                // Don't bother updating thumbnails if no new files were converted
-                // as no new files could be missed from watcher then.
-                if (result.converted > 0 && directoryPath == currentDirectory.path) {
-                    setThumbnailsCurrentDirectory();
-                }
+                if (currentDirectory)
+                    getFiles();
             })
             .catch((err) => {
                 console.error(err);
             });
-    }
-
-    function setThumbnailsCurrentDirectory(): void {
-        const thumbnailsTree = currentDirectory.children?.find((child: FileTreeType) => child.name === '.thumbnails');
-        currentDirectory.children?.forEach((file: FileTreeType) => {
-            if (file.thumbnail || file.name.startsWith('.thumbnails') || file.children) {
-                // Already has thumbnail or is a directory
-                return;
-            }
-            if (thumbnailsTree && thumbnailsTree.children && !!file.name && !file.name.startsWith('.thumbnails') && file.name.endsWith('.tif')) {
-                let thumbnail = thumbnailsTree.children.find((child: FileTreeType) => child.name.split('.')[0] === file.name.split('.')[0]);
-                if (thumbnail) {
-                    file.thumbnail = {
-                        name: thumbnail.name,
-                        path: thumbnail.path,
-                        imageSource: convertFileSrc(thumbnail.path)
-                    };
-                }
-            } else if (!file.name.startsWith('.thumbnails') && supportedFileTypes.includes(getFileExtension(file.path))) {
-                file.thumbnail = {
-                    name: file.name,
-                    path: file.path,
-                    imageSource: convertFileSrc(file.path)
-                };
-            }
-        });
-        currentDirectory = currentDirectory;
     }
 
     function changeViewDirectory(fileTree: FileTreeType, generateThumbnails: boolean = true): void {
@@ -198,8 +200,15 @@
             if (generateThumbnails) {
                 createThumbnailsFromDirectory(currentDirectory.path);
             }
-            if (currentDirectory.children) {
-                setThumbnailsCurrentDirectory();
+        }
+    }
+
+    function findCurrentDir(fileEntries: FileTreeType[]): FileTreeType | undefined {
+        for (const fileEntry of fileEntries) {
+            if (fileEntry.path === currentDirectory.path) return fileEntry;
+            else if (fileEntry.children) {
+                const result = findCurrentDir(fileEntry.children);
+                if (result) return result;
             }
         }
     }
@@ -220,6 +229,37 @@
         return path?.split('.')?.pop() || '';
     }
 
+    function getThumbnailExtensionFromCurrentDirectory(filename: string): string | undefined {
+        let foundThumbnail = getThumbnailFromCurrentDirectory(filename);
+        if (foundThumbnail) {
+            return getFileExtension(foundThumbnail.name);
+        }
+        return undefined;
+    }
+
+    function getThumbnailURIFromCurrentDirectory(filename: string): string | undefined {
+        let foundThumbnail = getThumbnailFromCurrentDirectory(filename);
+        if (foundThumbnail) {
+            return convertFileSrc(foundThumbnail.path);
+        }
+        return undefined;
+    }
+
+    function getThumbnailFromCurrentDirectory(filename: string): FileTreeType | undefined {
+        let thumbnailDirectory = currentDirectory.children?.find(child => child.name == '.thumbnails');
+        if (thumbnailDirectory) {
+            let foundThumbnail = thumbnailDirectory
+                .children
+                ?.find( // Compare only names and not file extensions
+                    thumbnail => thumbnail.name.split('.')[0] == filename.split('.')[0]
+                );
+            if (foundThumbnail) {
+                return foundThumbnail;
+            }
+        }
+        return undefined;
+    }
+
 </script>
 
 {#if !readDirFailed}
@@ -238,7 +278,7 @@
         </div>
         <div id="middle-pane" class="pane">
             <div class="images">
-                {#if currentDirectory && !!currentDirectory.children}
+                {#if currentDirectory && currentDirectory.children}
                     {#if currentDirectory.children.length !== 0}
                         {#each currentDirectory.children as child}
                             {#if !child.name.startsWith('.thumbnails') && child.children}
@@ -247,17 +287,17 @@
                                     <i>{child.name}</i>
                                 </button>
                             {:else}
-                                {#if child.thumbnail && supportedFileTypes.includes(getFileExtension(child.thumbnail.imageSource))}
+                                {#if supportedFileTypes.includes(getFileExtension(child.path))}
                                     <div>
-                                        <img src={child.thumbnail.imageSource} alt={child.thumbnail.name} />
-                                        <i>{formatFileNames(child.thumbnail.imageSource.split(uriPathSeparator).pop())}</i>
+                                        <img src={convertFileSrc(child.path)} alt={child.name} />
+                                        <i>{formatFileNames(child.name)}</i>
                                     </div>
-                                {:else if child.thumbnail}
-                                    <div class="file">
-                                        <File size="96" color="gray" />
-                                        <i>{child.thumbnail.imageSource.split(uriPathSeparator).pop()}</i>
+                                {:else if getThumbnailExtensionFromCurrentDirectory(child.name) === 'webp' }
+                                    <div>
+                                        <img src={getThumbnailURIFromCurrentDirectory(child.name)} alt={child.name} />
+                                        <i>{formatFileNames(child.name)}</i>
                                     </div>
-                                {:else if !child.name.startsWith('.thumbnails')}
+                                {:else if child.name !== '.thumbnails'}
                                     <div class="file">
                                         <File size="96" color="gray" />
                                         <i>{child.name}</i>
@@ -279,7 +319,7 @@
             </div>
         </div>
         <div id="right-pane" class="pane sticky-top">
-            {#if currentDirectory.path}
+            {#if currentDirectory && currentDirectory.path}
                 <RegistrationSchema bind:currentPath="{currentDirectory.path}" bind:useS3 bind:allUploadProgress />
             {/if}
         </div>
