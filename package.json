@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0-rc.0",
+    "@tauri-apps/plugin-store": "^2.0.0-rc.1",
     "@tauri-apps/tauri-forage": "^1.0.0-beta.2",
     "lucide-svelte": "^0.292.0",
     "mkdirp": "^3.0.1",
