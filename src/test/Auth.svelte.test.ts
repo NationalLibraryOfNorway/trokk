@@ -4,7 +4,7 @@ import Auth, { canRefresh, isLoggedIn, refreshAccessToken, setRefreshAccessToken
 import { mockIPC, mockWindows } from '@tauri-apps/api/mocks';
 import { settings } from '../lib/util/settings';
 import { authenticationResponseMock, secretVariablesMock } from './mock-data.mock';
-import { getAll } from '@tauri-apps/api/window';
+import { getAll } from '@tauri-apps/api/webviewWindow';
 import { awaitNthTicks } from './util/util';
 
 describe('Auth.svelte', () => {

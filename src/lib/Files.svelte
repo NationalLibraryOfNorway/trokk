@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { readDir } from '@tauri-apps/api/fs';
+    import { readDir } from '@tauri-apps/plugin-fs';
     import { beforeUpdate, onDestroy, onMount } from 'svelte';
-    import { convertFileSrc } from '@tauri-apps/api/tauri';
+    import { convertFileSrc } from '@tauri-apps/api/core';
     import RegistrationSchema from './RegistrationSchema.svelte';
     import { invoke, path } from '@tauri-apps/api';
     import FileTree from './FileTree.svelte';
-    import { type DebouncedEvent, watch } from 'tauri-plugin-fs-watch-api';
+    import { type DebouncedEvent, watch } from '@tauri-apps/plugin-fs';
     import { ChevronsDownUp, ChevronsUpDown, File, Folder } from 'lucide-svelte';
     import { FileTree as FileTreeType } from './model/file-tree';
     import { type UnlistenFn } from '@tauri-apps/api/event';

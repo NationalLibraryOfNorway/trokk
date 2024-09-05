@@ -1,8 +1,8 @@
 import type { TextInputDto } from '../lib/model/text-input-dto';
 import { MaterialType } from '../lib/model/registration-enums';
-import { Response } from '@tauri-apps/api/http';
+import { Response } from '@tauri-apps/plugin-http';
 import { FileTree } from '../lib/model/file-tree';
-import type { FileEntry } from '@tauri-apps/api/fs';
+import type { FileEntry } from '@tauri-apps/plugin-fs';
 
 const tokenResponseMock: TokenResponse = {
     accessToken: '',

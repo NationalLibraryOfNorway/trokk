@@ -1,18 +1,19 @@
 <script lang="ts">
     import { MaterialType } from './model/registration-enums';
-    import { Body, fetch } from '@tauri-apps/api/http';
+    import { Body, fetch } from '@tauri-apps/plugin-http';
     import { TextInputDto } from './model/text-input-dto';
-    import { invoke } from '@tauri-apps/api/tauri';
+    import { invoke } from '@tauri-apps/api/core';
     import { settings } from './util/settings';
     import { type Writable } from 'svelte/store';
     import { v4 } from 'uuid';
     import { path } from '@tauri-apps/api';
     import { onDestroy, onMount } from 'svelte';
     import { isLoggedIn } from './Auth.svelte';
-    import { appWindow } from '@tauri-apps/api/window';
+    import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
     import type { Event, UnlistenFn } from '@tauri-apps/api/event';
     import { type AllTransferProgress, type TransferProgress } from './model/transfer-progress';
     import {transferLogs} from './store/transfer-log-store';
+const appWindow = getCurrentWebviewWindow()
 
     export let currentPath: string | undefined;
     export let useS3: boolean;
