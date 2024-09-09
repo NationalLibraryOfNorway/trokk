@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { readDir } from '@tauri-apps/plugin-fs';
+    import { type DebouncedEvent, readDir, watch } from '@tauri-apps/plugin-fs';
     import { beforeUpdate, onDestroy, onMount } from 'svelte';
-    import { convertFileSrc } from '@tauri-apps/api/core';
+    import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+    import { path } from '@tauri-apps/api';
     import RegistrationSchema from './RegistrationSchema.svelte';
-    import { invoke, path } from '@tauri-apps/api';
     import FileTree from './FileTree.svelte';
-    import { type DebouncedEvent, watch } from '@tauri-apps/plugin-fs';
     import { ChevronsDownUp, ChevronsUpDown, File, Folder } from 'lucide-svelte';
     import { FileTree as FileTreeType } from './model/file-tree';
     import { type UnlistenFn } from '@tauri-apps/api/event';
@@ -24,7 +23,7 @@
     let readDirFailed: string | undefined = undefined;
     let scannerPathTree: FileTreeType[] = [];
     let stopWatching: UnlistenFn | void | null = null;
-    const pathSeparator: string = path.sep;
+    const pathSeparator: string = path.sep();
     const uriPathSeparator: string = encodeURIComponent(pathSeparator);
     const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
@@ -57,9 +56,11 @@
 
     async function initGetFilesAndWatch(path: string = scannerPath): Promise<void> {
         await unwatchFiles();
-        await readDir(path, { recursive: true })
+        await readDir(path)
             .then(async newFiles => {
-                scannerPathTree = FileTreeType.fromFileEntry(newFiles).sort((a, b) => {
+                console.log('dirEntries');
+                console.log(newFiles);
+                scannerPathTree = FileTreeType.fromDirEntries(path, newFiles).sort((a, b) => {
                     if (a.path < b.path) return -1;
                     if (a.path > b.path) return 1;
                     return 0;
@@ -147,9 +148,9 @@
     }
 
     async function getFiles() {
-        readDir(scannerPath, { recursive: true })
+        readDir(scannerPath)
             .then(async newFiles => {
-                scannerPathTree = FileTreeType.fromFileEntry(newFiles).sort((a, b) => {
+                scannerPathTree = FileTreeType.fromDirEntries(newFiles).sort((a, b) => {
                     if (a.path < b.path) return -1;
                     if (a.path > b.path) return 1;
                     return 0;
@@ -204,11 +205,13 @@
     }
 
     function findCurrentDir(fileEntries: FileTreeType[]): FileTreeType | undefined {
-        for (const fileEntry of fileEntries) {
-            if (fileEntry.path === currentDirectory.path) return fileEntry;
-            else if (fileEntry.children) {
-                const result = findCurrentDir(fileEntry.children);
-                if (result) return result;
+        if (currentDirectory) {
+            for (const fileEntry of fileEntries) {
+                if (fileEntry.path === currentDirectory.path) return fileEntry;
+                else if (fileEntry.children) {
+                    const result = findCurrentDir(fileEntry.children);
+                    if (result) return result;
+                }
             }
         }
     }
@@ -246,18 +249,20 @@
     }
 
     function getThumbnailFromCurrentDirectory(filename: string): FileTreeType | undefined {
-        let thumbnailDirectory = currentDirectory.children?.find(child => child.name == '.thumbnails');
-        if (thumbnailDirectory) {
-            let foundThumbnail = thumbnailDirectory
-                .children
-                ?.find( // Compare only names and not file extensions
-                    thumbnail => thumbnail.name.split('.')[0] == filename.split('.')[0]
-                );
-            if (foundThumbnail) {
-                return foundThumbnail;
+        if (currentDirectory) {
+            let thumbnailDirectory = currentDirectory.children?.find(child => child.name == '.thumbnails');
+            if (thumbnailDirectory) {
+                let foundThumbnail = thumbnailDirectory
+                    .children
+                    ?.find( // Compare only names and not file extensions
+                        thumbnail => thumbnail.name.split('.')[0] == filename.split('.')[0]
+                    );
+                if (foundThumbnail) {
+                    return foundThumbnail;
+                }
             }
+            return undefined;
         }
-        return undefined;
     }
 
 </script>

@@ -1,9 +1,9 @@
-use tauri::{
-	AppHandle, CustomMenuItem, GlobalWindowEvent, Manager, RunEvent, SystemTray, SystemTrayEvent,
+/*use tauri::{
+	AppHandle, CustomMenuItem, GlobalWindowEvent, RunEvent, SystemTray, SystemTrayEvent,
 	SystemTrayMenu, SystemTrayMenuItem,
 };
 
-pub fn get_system_tray() -> SystemTray {
+pub fn get_system_tray() -> Tray {
 	let open = CustomMenuItem::new("open".to_string(), "Open");
 	let hide = CustomMenuItem::new("hide".to_string(), "Hide");
 	let quit = CustomMenuItem::new("quit".to_string(), "Quit");
@@ -53,3 +53,4 @@ pub fn run_backend_in_background_on_close() -> fn(&AppHandle, RunEvent) {
 		}
 	}
 }
+*/

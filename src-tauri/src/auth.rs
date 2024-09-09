@@ -4,6 +4,7 @@ use std::error::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use reqwest::Client;
+use tauri::Emitter;
 use tauri::Window;
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;

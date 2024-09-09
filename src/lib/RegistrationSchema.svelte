@@ -1,6 +1,6 @@
 <script lang="ts">
     import { MaterialType } from './model/registration-enums';
-    import { Body, fetch } from '@tauri-apps/plugin-http';
+    import { fetch } from '@tauri-apps/plugin-http';
     import { TextInputDto } from './model/text-input-dto';
     import { invoke } from '@tauri-apps/api/core';
     import { settings } from './util/settings';
@@ -13,7 +13,7 @@
     import type { Event, UnlistenFn } from '@tauri-apps/api/event';
     import { type AllTransferProgress, type TransferProgress } from './model/transfer-progress';
     import {transferLogs} from './store/transfer-log-store';
-const appWindow = getCurrentWebviewWindow()
+    const appWindow = getCurrentWebviewWindow()
 
     export let currentPath: string | undefined;
     export let useS3: boolean;
@@ -37,7 +37,7 @@ const appWindow = getCurrentWebviewWindow()
     let papiPath: string;
 
     $: {
-        const newPath = currentPath?.split(path.sep).at(-1);
+        const newPath = currentPath?.split(path.sep()).at(-1);
         if (newPath) {
             name = newPath;
         } else {
@@ -132,7 +132,7 @@ const appWindow = getCurrentWebviewWindow()
             {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + accessToken },
-                body: Body.json(new TextInputDto(
+                body: JSON.stringify(new TextInputDto(
                     materialType ?? '',
                     fraktur ? 'FRAKTUR' : 'ANTIQUA',
                     sami ? 'SME' : 'NOB',
@@ -148,7 +148,7 @@ const appWindow = getCurrentWebviewWindow()
                 if (response.ok) {
                     deleteDir(pushedDir);
                     removeErrorMessage();
-                    displaySuccessMessage(response.data as TextInputDto);
+                    displaySuccessMessage(response.json() as TextInputDto); // TODO check if this works
                 } else {
                     handleError(undefined, response.status);
                 }

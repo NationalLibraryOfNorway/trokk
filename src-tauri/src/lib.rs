@@ -3,8 +3,8 @@ use std::sync::Mutex;
 
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
-use tauri::Manager;
 use tauri::Window;
+use tauri::{Manager, RunEvent, WindowEvent};
 use tokio::sync::OnceCell;
 
 #[cfg(debug_assertions)]
@@ -18,6 +18,8 @@ mod image_converter;
 mod model;
 mod s3;
 mod system_tray;
+#[cfg(desktop)]
+mod tray;
 mod vault;
 
 #[cfg(test)]
@@ -141,8 +143,24 @@ async fn delete_dir(dir: &str) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn pick_directory(start_path: &str) -> Result<String, String> {
-	file_utils::directory_picker(start_path).await
+async fn pick_directory<R: tauri::Runtime>(
+	start_path: String,
+	app_handle: tauri::AppHandle<R>,
+) -> Result<String, String> {
+	let start_path_clone = start_path.clone();
+	let app_handle_clone = app_handle.clone();
+
+	let opt = tokio::task::spawn_blocking(|| {
+		file_utils::directory_picker(start_path_clone, app_handle_clone)
+	})
+	.await
+	.expect("Failed to run blocking task");
+
+	if opt.is_some() {
+		Ok(opt.unwrap())
+	} else {
+		Err("Could not pick directory".to_string())
+	}
 }
 
 #[tauri::command]
@@ -164,25 +182,30 @@ async fn upload_directory_to_s3(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-	let sentry_client = sentry_tauri::sentry::init((
+	let sentry_client = tauri_plugin_sentry::sentry::init((
 		ENVIRONMENT_VARIABLES.sentry_url,
-		sentry_tauri::sentry::ClientOptions {
-			release: sentry_tauri::sentry::release_name!(),
+		tauri_plugin_sentry::sentry::ClientOptions {
+			release: tauri_plugin_sentry::sentry::release_name!(),
 			environment: Some(ENVIRONMENT_VARIABLES.sentry_environment.into()),
 			..Default::default()
 		},
 	));
 
-	let _guard = sentry_tauri::minidump::init(&sentry_client);
+	let _guard = tauri_plugin_sentry::minidump::init(&sentry_client);
 
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
 	tauri::Builder::default()
+		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_store::Builder::default().build())
-		.plugin(tauri_plugin_fs_watch::init())
-		.plugin(sentry_tauri::plugin())
-		.setup(|_app| {
-			#[cfg(debug_assertions)]
-			_app.get_window("main").unwrap().open_devtools(); // `main` is the first window from tauri.conf.json without an explicit label
+		.plugin(tauri_plugin_fs::init())
+		.plugin(tauri_plugin_sentry::init())
+		.setup(|app| {
+			//#[cfg(debug_assertions)]
+			#[cfg(all(desktop))]
+			{
+				let handle = app.handle();
+				tray::create_tray(handle)?;
+			}
 			Ok(())
 		})
 		.invoke_handler(tauri::generate_handler![
@@ -199,10 +222,22 @@ pub fn run() {
 			get_papi_access_token,
 			upload_directory_to_s3
 		])
-		.system_tray(system_tray::get_system_tray())
-		.on_system_tray_event(system_tray::system_tray_event_handler())
-		.on_window_event(system_tray::run_frontend_in_background_on_close())
+		//.system_tray(system_tray::get_system_tray())
+		//.on_system_tray_event(system_tray::system_tray_event_handler())
+		.on_window_event(|window, event| match event {
+			// run frontend in background on close
+			tauri::WindowEvent::CloseRequested { api, .. } => {
+				window.hide().unwrap();
+				api.prevent_close();
+			}
+			_ => {}
+		})
 		.build(tauri::generate_context!())
 		.expect("error while running tauri application")
-		.run(system_tray::run_backend_in_background_on_close());
+		.run(|_app_handle, event| {
+			// run backend in background on close
+			if let RunEvent::ExitRequested { api, .. } = event {
+				api.prevent_exit();
+			}
+		});
 }

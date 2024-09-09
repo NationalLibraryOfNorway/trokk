@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, onMount } from 'svelte';
-    import { invoke } from '@tauri-apps/api';
+    import { invoke } from '@tauri-apps/api/core';
     import { settings } from './util/settings';
     import { readDir } from '@tauri-apps/plugin-fs';
     import { getVersion } from '@tauri-apps/api/app';

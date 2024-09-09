@@ -1,12 +1,16 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
     import { type EventCallback } from '@tauri-apps/api/event';
+    import { onMount } from 'svelte';
+    import { getCurrentWindow, type WindowOptions } from '@tauri-apps/api/window';
+    import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
+    import { type WebviewOptions } from '@tauri-apps/api/webview';
 
     export let authResponse: AuthenticationResponse | null;
     export let loggedOut: Boolean = false;
     export let fetchSecretsError: string | null = null;
     let secrets: SecretVariables;
     let refreshIntervalId: number | undefined = undefined;
+    const appWindow = getCurrentWindow();
 
     onMount(async () => {
         await getSecrets().then(async res => {
@@ -36,14 +40,27 @@
         }
         return invoke('log_in').then(async (port) => {
             loggedOut = false;
+            console.log('CREATE NEW WINDOW');
+            console.log(secrets.oidcBaseUrl + '/auth?scope=openid&response_type=code&client_id=' + secrets.oidcClientId + '&redirect_uri=http://localhost:' + port);
+            //let loginWindow = new Window('Login');
+
             let loginWebView = new WebviewWindow('Login', {
                 url: secrets.oidcBaseUrl + '/auth?scope=openid&response_type=code&client_id=' + secrets.oidcClientId + '&redirect_uri=http://localhost:' + port,
                 title: 'NBAuth innlogging',
+                visible: true,
+                visibleOnAllWorkspaces: true,
                 alwaysOnTop: true,
                 closable: false,  // Prevent user from closing the window, this prevents complicated logic to handle the user closing the window
                 focus: true,
                 center: true
+            } as WebviewOptions & WindowOptions);
+            await loginWebView.once('tauri://error', function(e) {
+                console.log('loginerror');
+                console.log(e);
             });
+            console.log(loginWebView);
+            console.log(loginWebView);
+
 
             await appWindow.once('token_exchanged', handleTokenExchangedEvent(loginWebView));
         });
@@ -74,8 +91,7 @@
 </script>
 
 <script context="module" lang="ts">
-    import { invoke } from '@tauri-apps/api';
-    import { appWindow, WebviewWindow } from '@tauri-apps/api/window';
+    import { invoke } from '@tauri-apps/api/core';
     import { settings } from './util/settings';
 
     export async function refreshAccessToken(): Promise<AuthenticationResponse | void> {

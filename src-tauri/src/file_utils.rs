@@ -1,8 +1,10 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use tauri::api::dialog::blocking::FileDialogBuilder;
+//use tauri::api::dialog::blocking::FileDialogBuilder;
+use tauri::Emitter;
 use tauri::Manager;
+use tauri_plugin_dialog::DialogExt;
 
 use crate::model::TransferProgress;
 
@@ -27,7 +29,8 @@ pub(crate) fn copy_dir_contents<R: tauri::Runtime>(
 	new_dir_name: &str,
 	app_handle: tauri::AppHandle<R>,
 ) -> Result<String, String> {
-	let app_window = app_handle.get_window("main").unwrap();
+	let app_window = app_handle.get_webview_window("main").unwrap();
+	// let app_window = app_handle.get_window("main").unwrap();
 	let old_dir_path = Path::new(&old_dir);
 	let new_base_dir_path = Path::new(&new_base_dir);
 
@@ -84,15 +87,26 @@ pub(crate) fn delete_dir(dir: &str) -> Result<(), String> {
 	}
 }
 
-pub(crate) async fn directory_picker(start_path: &str) -> Result<String, String> {
-	let start = Path::new(start_path);
-	let result = FileDialogBuilder::new().set_directory(start).pick_folder();
-	match result {
-		None => Err("No folder was chosen".to_string()),
-		_ => Ok(result.unwrap().to_string_lossy().to_string()),
+pub(crate) fn directory_picker<R: tauri::Runtime, P: AsRef<Path>>(
+	start_path: P,
+	app_handle: tauri::AppHandle<R>,
+) -> Option<String> {
+	let folder_path = app_handle
+		.dialog()
+		.file()
+		.set_directory(start_path)
+		.blocking_pick_folder();
+	if folder_path.is_none() {
+		None
+	} else {
+		Some(folder_path?.to_string())
 	}
 }
 
+/*pub(crate) async fn directory_picker(app: &AppHandle) {
+	let result = app.dialog().file().pick_folder(|option| {});
+}
+*/
 // Get all file paths in a directory, without subdirectories
 pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<PathBuf>, String> {
 	let mut file_paths = Vec::new();

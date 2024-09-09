@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use image::io::Reader as ImageReader;
+use image::ImageReader;
 use serde::{Deserialize, Serialize};
 use webp::{Encoder, WebPMemory};
 

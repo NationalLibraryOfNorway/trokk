@@ -1,4 +1,4 @@
-import type { FileEntry } from '@tauri-apps/plugin-fs';
+import type { DirEntry } from '@tauri-apps/plugin-fs';
 
 export class FileTree {
     path: string;
@@ -13,13 +13,13 @@ export class FileTree {
         this.children = children;
     }
 
-    static fromFileEntry(fileEntries: FileEntry[]): FileTree[] {
-        return fileEntries.map(fileEntry => {
+    static fromDirEntries(basePath: string, dirEntries: DirEntry[]): FileTree[] {
+        return dirEntries.map(dirEntry => {
             return {
-                path: fileEntry.path,
-                name: fileEntry.name || '',
-                opened: false,
-                children: fileEntry.children ? this.fromFileEntry(fileEntry.children) : undefined
+                path: basePath,
+                name: dirEntry.name || '',
+                opened: false
+                //children: dirEntry.isDirectory ? this.fromDirEntries(dirEntry.children) : undefined
             } as FileTree;
         });
     }
