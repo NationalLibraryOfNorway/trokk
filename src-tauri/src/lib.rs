@@ -3,8 +3,8 @@ use std::sync::Mutex;
 
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+use tauri::RunEvent;
 use tauri::Window;
-use tauri::{Manager, RunEvent, WindowEvent};
 use tokio::sync::OnceCell;
 
 #[cfg(debug_assertions)]
@@ -17,7 +17,6 @@ mod file_utils;
 mod image_converter;
 mod model;
 mod s3;
-mod system_tray;
 #[cfg(desktop)]
 mod tray;
 mod vault;
@@ -195,6 +194,7 @@ pub fn run() {
 
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
 	tauri::Builder::default()
+		.plugin(tauri_plugin_process::init())
 		.plugin(tauri_plugin_dialog::init())
 		.plugin(tauri_plugin_store::Builder::default().build())
 		.plugin(tauri_plugin_fs::init())
@@ -222,8 +222,6 @@ pub fn run() {
 			get_papi_access_token,
 			upload_directory_to_s3
 		])
-		//.system_tray(system_tray::get_system_tray())
-		//.on_system_tray_event(system_tray::system_tray_event_handler())
 		.on_window_event(|window, event| match event {
 			// run frontend in background on close
 			tauri::WindowEvent::CloseRequested { api, .. } => {
@@ -234,10 +232,5 @@ pub fn run() {
 		})
 		.build(tauri::generate_context!())
 		.expect("error while running tauri application")
-		.run(|_app_handle, event| {
-			// run backend in background on close
-			if let RunEvent::ExitRequested { api, .. } = event {
-				api.prevent_exit();
-			}
-		});
+		.run(|_app_handle, event| {});
 }

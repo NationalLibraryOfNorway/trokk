@@ -5979,6 +5979,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-process"
+version = "2.0.0-rc.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c9eb80b601682dcbd45dc5ed5f7cc214f1d994aeea730d500899cc616784559"
+dependencies = [
+ "tauri",
+ "tauri-plugin",
+]
+
+[[package]]
 name = "tauri-plugin-sentry"
 version = "2.0.0-beta"
 source = "git+https://github.com/enri90/plugins-workspace?branch=pr_sentry_plugin#206342e3ea9dea5d15588e2f5ec1642f86d77c31"
@@ -6478,6 +6488,7 @@ dependencies = [
  "tauri-plugin-fs",
  "tauri-plugin-http",
  "tauri-plugin-oauth",
+ "tauri-plugin-process",
  "tauri-plugin-sentry",
  "tauri-plugin-store",
  "tempfile",

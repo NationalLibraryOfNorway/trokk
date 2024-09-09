@@ -1,7 +1,6 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
-//use tauri::api::dialog::blocking::FileDialogBuilder;
 use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_dialog::DialogExt;
@@ -103,10 +102,6 @@ pub(crate) fn directory_picker<R: tauri::Runtime, P: AsRef<Path>>(
 	}
 }
 
-/*pub(crate) async fn directory_picker(app: &AppHandle) {
-	let result = app.dialog().file().pick_folder(|option| {});
-}
-*/
 // Get all file paths in a directory, without subdirectories
 pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<PathBuf>, String> {
 	let mut file_paths = Vec::new();

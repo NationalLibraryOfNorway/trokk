@@ -7,6 +7,7 @@
   ],
   "permissions": [
     "dialog:default",
+    "process:default",
     "store:default",
     "fs:default",
     "fs:read-all",
@@ -43,6 +44,7 @@
           "url": "https://*.nb.no/*"
         }
       ]
-    }
+    },
+    "process:default"
   ]
 }

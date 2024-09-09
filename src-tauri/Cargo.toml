@@ -38,6 +38,7 @@ aws-sdk-dynamodb = "1.36.0"
 aws-sdk-s3 = { version = "1.4.0", features = ["rt-tokio", "behavior-version-latest"] }
 log = "0.4.21"
 tauri-plugin-dialog = "2.0.0-rc"
+tauri-plugin-process = "2.0.0-rc"
 
 [dev-dependencies]
 tempfile = "3.10.1"
