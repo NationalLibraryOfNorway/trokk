@@ -40,9 +40,6 @@
         }
         return invoke('log_in').then(async (port) => {
             loggedOut = false;
-            console.log('CREATE NEW WINDOW');
-            console.log(secrets.oidcBaseUrl + '/auth?scope=openid&response_type=code&client_id=' + secrets.oidcClientId + '&redirect_uri=http://localhost:' + port);
-            //let loginWindow = new Window('Login');
 
             let loginWebView = new WebviewWindow('Login', {
                 url: secrets.oidcBaseUrl + '/auth?scope=openid&response_type=code&client_id=' + secrets.oidcClientId + '&redirect_uri=http://localhost:' + port,
@@ -54,13 +51,6 @@
                 focus: true,
                 center: true
             } as WebviewOptions & WindowOptions);
-            await loginWebView.once('tauri://error', function(e) {
-                console.log('loginerror');
-                console.log(e);
-            });
-            console.log(loginWebView);
-            console.log(loginWebView);
-
 
             await appWindow.once('token_exchanged', handleTokenExchangedEvent(loginWebView));
         });

@@ -58,8 +58,6 @@
         await unwatchFiles();
         await readDir(path)
             .then(async newFiles => {
-                console.log('dirEntries');
-                console.log(newFiles);
                 scannerPathTree = FileTreeType.fromDirEntries(path, newFiles).sort((a, b) => {
                     if (a.path < b.path) return -1;
                     if (a.path > b.path) return 1;
