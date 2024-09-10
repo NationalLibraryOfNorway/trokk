@@ -1,6 +1,6 @@
 {
-  "identifier": "migrated",
-  "description": "permissions that were migrated from v1",
+  "identifier": "base",
+  "description": "base permissions for the app",
   "local": true,
   "windows": [
     "main"
