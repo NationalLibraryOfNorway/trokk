@@ -1,18 +1,19 @@
 <script lang="ts">
     import { MaterialType } from './model/registration-enums';
-    import { Body, fetch } from '@tauri-apps/api/http';
+    import { fetch } from '@tauri-apps/plugin-http';
     import { TextInputDto } from './model/text-input-dto';
-    import { invoke } from '@tauri-apps/api/tauri';
+    import { invoke } from '@tauri-apps/api/core';
     import { settings } from './util/settings';
     import { type Writable } from 'svelte/store';
     import { v4 } from 'uuid';
     import { path } from '@tauri-apps/api';
     import { onDestroy, onMount } from 'svelte';
     import { isLoggedIn } from './Auth.svelte';
-    import { appWindow } from '@tauri-apps/api/window';
+    import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
     import type { Event, UnlistenFn } from '@tauri-apps/api/event';
     import { type AllTransferProgress, type TransferProgress } from './model/transfer-progress';
     import {transferLogs} from './store/transfer-log-store';
+    const appWindow = getCurrentWebviewWindow()
 
     export let currentPath: string | undefined;
     export let useS3: boolean;
@@ -36,7 +37,7 @@
     let papiPath: string;
 
     $: {
-        const newPath = currentPath?.split(path.sep).at(-1);
+        const newPath = currentPath?.split(path.sep()).at(-1);
         if (newPath) {
             name = newPath;
         } else {
@@ -131,7 +132,7 @@
             {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + accessToken },
-                body: Body.json(new TextInputDto(
+                body: JSON.stringify(new TextInputDto(
                     materialType ?? '',
                     fraktur ? 'FRAKTUR' : 'ANTIQUA',
                     sami ? 'SME' : 'NOB',
@@ -147,7 +148,7 @@
                 if (response.ok) {
                     deleteDir(pushedDir);
                     removeErrorMessage();
-                    displaySuccessMessage(response.data as TextInputDto);
+                    displaySuccessMessage(response.json() as TextInputDto); // TODO check if this works
                 } else {
                     handleError(undefined, response.status);
                 }

@@ -13,8 +13,7 @@ pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, Client
 			.address(ENVIRONMENT_VARIABLES.vault_base_url)
 			.build()
 			.unwrap(),
-	)
-	.unwrap();
+	)?;
 
 	// Login using AppRole method
 	let role_id = String::from(ENVIRONMENT_VARIABLES.vault_role_id);

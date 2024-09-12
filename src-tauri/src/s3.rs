@@ -4,7 +4,7 @@ use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::operation::put_object::PutObjectOutput;
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::Client;
-use tauri::Window;
+use tauri::{Emitter, Window};
 use tokio::sync::OnceCell;
 
 use crate::file_utils::get_file_paths_in_directory;
