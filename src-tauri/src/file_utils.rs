@@ -29,7 +29,6 @@ pub(crate) fn copy_dir_contents<R: tauri::Runtime>(
 	app_handle: tauri::AppHandle<R>,
 ) -> Result<String, String> {
 	let app_window = app_handle.get_webview_window("main").unwrap();
-	// let app_window = app_handle.get_window("main").unwrap();
 	let old_dir_path = Path::new(&old_dir);
 	let new_base_dir_path = Path::new(&new_base_dir);
 
