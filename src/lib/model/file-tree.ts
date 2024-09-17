@@ -1,27 +1,66 @@
-import type { DirEntry } from '@tauri-apps/plugin-fs';
+import { type DirEntry, readDir } from '@tauri-apps/plugin-fs';
+import { path } from '@tauri-apps/api';
 
-export class FileTree {
-    path: string;
+export class FileTree implements DirEntry {
+    // From DirEntry
     name: string;
+    isDirectory: boolean;
+    isFile: boolean;
+    isSymlink: boolean;
+
+    // Our extra
+    path: string;
     opened: boolean;
     children?: FileTree[];
 
-    constructor(path: string, name: string, opened: boolean = false, children?: FileTree[]) {
-        this.path = path;
+    constructor(
+        name: string,
+        isDirectory: boolean,
+        isFile: boolean,
+        isSymlink: boolean,
+        path: string,
+        opened: boolean = false,
+        children?: FileTree[]
+    ) {
         this.name = name;
+        this.isDirectory = isDirectory;
+        this.isFile = isFile;
+        this.isSymlink = isSymlink;
+        this.path = path;
         this.opened = opened;
         this.children = children;
     }
 
     static fromDirEntries(basePath: string, dirEntries: DirEntry[]): FileTree[] {
-        return dirEntries.map(dirEntry => {
-            return {
-                path: basePath,
-                name: dirEntry.name || '',
-                opened: false
-                //children: dirEntry.isDirectory ? this.fromDirEntries(dirEntry.children) : undefined
-            } as FileTree;
-        });
+        return dirEntries
+            .map(dirEntry => {
+                return new FileTree(
+                    dirEntry.name || '',
+                    dirEntry.isDirectory,
+                    dirEntry.isFile,
+                    dirEntry.isSymlink,
+                    basePath + path.sep() + dirEntry.name,
+                    false
+                );
+            });
+    }
+
+    async recursiveRead(): Promise<FileTree[] | undefined> {
+        if (this.isDirectory) {
+            const newDirEntries = await readDir(this.path);
+            let filteredEntries = newDirEntries.filter(newDirEntry => {
+                return newDirEntry.name !== '.thumbnails';
+            });
+            this.children = FileTree.fromDirEntries(this.path, newDirEntries);
+            for (let child of this.children) {
+                if (child && child.isDirectory) {
+                    await child.recursiveRead();
+                }
+            }
+            return this.children;
+        } else {
+            return undefined;
+        }
     }
 
 }

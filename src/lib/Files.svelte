@@ -1,5 +1,11 @@
 <script lang="ts">
-    import { type DebouncedEvent, readDir, watch } from '@tauri-apps/plugin-fs';
+    import {
+        type DirEntry,
+        readDir,
+        watch,
+        type WatchEventKind,
+        type WatchEventKindCreate
+    } from '@tauri-apps/plugin-fs';
     import { beforeUpdate, onDestroy, onMount } from 'svelte';
     import { convertFileSrc, invoke } from '@tauri-apps/api/core';
     import { path } from '@tauri-apps/api';
@@ -56,27 +62,16 @@
 
     async function initGetFilesAndWatch(path: string = scannerPath): Promise<void> {
         await unwatchFiles();
-        await readDir(path)
-            .then(async newFiles => {
-                scannerPathTree = FileTreeType.fromDirEntries(path, newFiles).sort((a, b) => {
-                    if (a.path < b.path) return -1;
-                    if (a.path > b.path) return 1;
-                    return 0;
-                });
-                let firstDir = scannerPathTree.find((file: FileTreeType): boolean => {
-                    return !!file.children;
-                });
-                if (firstDir) {
-                    currentDirectory = firstDir;
-                    await watchFiles();
-                    createThumbnailsFromDirectory(currentDirectory.path);
-                }
-                readDirFailed = undefined;
-            })
-            .catch(err => {
-                console.error(`An error occurred when reading directory \'${scannerPath}\': ${err}`);
-                readDirFailed = err;
-            });
+        await readDirRecursively();
+        let firstDir = scannerPathTree.find((file: FileTreeType): boolean => {
+            return file.isDirectory;
+        });
+        if (firstDir) {
+            currentDirectory = firstDir;
+            await watchFiles();
+            createThumbnailsFromDirectory(currentDirectory.path);
+        }
+        readDirFailed = undefined;
     }
 
     // Used to update thumbnails to currentDirectory as they are generated,
@@ -108,6 +103,10 @@
         }
     }
 
+    function isCreateEvent(event: WatchEventKind): event is { create: WatchEventKindCreate } {
+        return (event as { create: WatchEventKindCreate }).create !== undefined;
+    }
+
     async function watchFiles() {
         await unwatchFiles();
         stopWatching = await watch(
@@ -117,26 +116,25 @@
              * Per nå har vi ingen måte å skille hva som skjer på disk, bare at noe har skjedd på en path.
              */
             scannerPath,
-            async (events) => {
+            async (event) => {
                 console.log('event');
-                console.log(events);
-                // API returns an array of objects, but says it returns a single object
-                const debouncedEvents: DebouncedEvent[] = events as unknown as DebouncedEvent[];
-                for (const eventD of debouncedEvents) {
-                    let event: DebouncedEvent = eventD;
-                    if (event.kind.toUpperCase() != 'ANY')
-                        continue;
-                    if (currentDirectory) {
-                        // New tif file, create thumbnail
-                        if (!event.path.includes('.thumbnails') && event.path.includes('.tif') && event.path == currentDirectory.path + path.sep + event.path.split(path.sep).pop()) {
-                            createThumbnail(event.path);
-                        } else if (event.path.includes('.thumbnails')) {
-                            addChildToCurrentDirectoryFromPath(event.path);
+                console.log(event);
+
+                if (!isCreateEvent(event.type))
+                    return;
+                if (currentDirectory) {
+                    // New tif file, create thumbnail
+                    for (let eventPath in event.paths) {
+                        if (!eventPath.includes('.thumbnails') && eventPath.includes('.tif') && eventPath == currentDirectory.path + path.sep() + eventPath.split(path.sep()).pop()) {
+                            createThumbnail(eventPath);
+                        } else if (eventPath.includes('.thumbnails')) {
+                            addChildToCurrentDirectoryFromPath(eventPath);
                         }
-                        currentDirectory = currentDirectory; // To update view
-                    } else {
-                        await getFiles();
                     }
+                    currentDirectory = currentDirectory; // To update view
+                } else {
+                    //await getFiles();
+                    await readDirRecursively();
                 }
             },
             { recursive: true }
@@ -145,14 +143,13 @@
         });
     }
 
-    async function getFiles() {
+    async function readDirRecursively() {
         readDir(scannerPath)
-            .then(async newFiles => {
-                scannerPathTree = FileTreeType.fromDirEntries(newFiles).sort((a, b) => {
-                    if (a.path < b.path) return -1;
-                    if (a.path > b.path) return 1;
-                    return 0;
-                });
+            .then(async (newDirEntries: DirEntry[]) => {
+                scannerPathTree = FileTreeType.fromDirEntries(scannerPath, newDirEntries);
+                for (const fileTree of scannerPathTree) {
+                    fileTree.children = await fileTree.recursiveRead();
+                }
                 readDirFailed = undefined;
                 if (currentDirectory) {
                     let tmpCurrentDir = findCurrentDir(scannerPathTree);
@@ -186,7 +183,7 @@
         invoke<ConversionResult>('convert_directory_to_webp', { directoryPath: directoryPath })
             .then((result) => {
                 if (currentDirectory)
-                    getFiles();
+                    readDirRecursively();
             })
             .catch((err) => {
                 console.error(err);
@@ -248,7 +245,9 @@
 
     function getThumbnailFromCurrentDirectory(filename: string): FileTreeType | undefined {
         if (currentDirectory) {
+            console.log(currentDirectory);
             let thumbnailDirectory = currentDirectory.children?.find(child => child.name == '.thumbnails');
+            console.log(thumbnailDirectory);
             if (thumbnailDirectory) {
                 let foundThumbnail = thumbnailDirectory
                     .children
@@ -284,7 +283,7 @@
                 {#if currentDirectory && currentDirectory.children}
                     {#if currentDirectory.children.length !== 0}
                         {#each currentDirectory.children as child}
-                            {#if !child.name.startsWith('.thumbnails') && child.children}
+                            {#if !child.name.startsWith('.thumbnails') && child.isDirectory}
                                 <button class="directory" on:click={() => changeViewDirectory(child)}>
                                     <Folder size="96" />
                                     <i>{child.name}</i>

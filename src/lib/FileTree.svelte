@@ -42,7 +42,7 @@
 <div>
     <ul>
         {#each fileTree as file}
-            {#if file.children}
+            {#if file.isDirectory }
                 <li>
                     {#if !file.name.startsWith('.')}
                         <button
@@ -71,10 +71,12 @@
                             {/if}
                         </button>
                     {/if}
-                    {#if file.opened && !file.name.startsWith('.')}
+                    {#if file.opened && !file.name.startsWith('.') && file.children && file.children.length > 0}
                         <ul>
                             <svelte:self fileTree={file.children} on:directoryChange />
                         </ul>
+                    {:else if file.opened && !file.children}
+                        <ul class="no-files-in-dir">&emsp;Ingen filer i mappen</ul>
                     {/if}
                 </li>
             {:else}
@@ -165,5 +167,10 @@
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
+  }
+
+  .no-files-in-dir {
+    font-style: italic;
+    color: #d1d1d1;
   }
 </style>

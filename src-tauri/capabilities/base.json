@@ -16,6 +16,12 @@
       "allow": [
         {
           "path": "**"
+        },
+        {
+          "path": "**/.thumbnails"
+        },
+        {
+          "path": "**/.thumbnails/**"
         }
       ]
     },

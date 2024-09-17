@@ -3,8 +3,8 @@ use std::sync::Mutex;
 
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
-use tauri::RunEvent;
 use tauri::Window;
+use tauri::{Manager, RunEvent};
 use tokio::sync::OnceCell;
 
 #[cfg(debug_assertions)]
@@ -200,7 +200,8 @@ pub fn run() {
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_sentry::init())
 		.setup(|app| {
-			//#[cfg(debug_assertions)]
+			#[cfg(debug_assertions)]
+			app.get_webview_window("main").unwrap().open_devtools();
 			#[cfg(all(desktop))]
 			{
 				let handle = app.handle();
