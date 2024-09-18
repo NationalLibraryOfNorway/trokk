@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { ChevronRight, FileImage, Folder, FolderOpen, Upload } from 'lucide-svelte';
-    import { beforeUpdate, createEventDispatcher, onMount } from 'svelte';
+    import { ChevronDown, ChevronRight, FileImage, Folder, FolderOpen, Upload } from 'lucide-svelte';
+    import { createEventDispatcher, onMount } from 'svelte';
     import { FileTree } from './model/file-tree';
     import { formatFileNames } from './util/file-utils';
     import { writable, type Writable } from 'svelte/store';
@@ -12,9 +12,7 @@
     let uploadProgress: AllTransferProgress = { dir: {} };
     const dispatch = createEventDispatcher();
 
-    beforeUpdate(() => {
-        fileTree = sortFileTree();
-    });
+    $: sortedFileTree = sortFileTree(fileTree);
 
     onMount(() => {
         allUploadProgress.subscribe(value => {
@@ -22,7 +20,7 @@
         });
     });
 
-    function sortFileTree(): FileTree[] {
+    function sortFileTree(fileTree: FileTree[]): FileTree[] {
         return fileTree.sort((a, b) => {
             if (a.name < b.name) return -1;
             if (a.name > b.name) return 1;
@@ -34,6 +32,10 @@
         dispatch('directoryChange', file);
     }
 
+    function toggleFolderExpand(file: FileTree): void {
+        dispatch('toggleFolderExpand', file);
+    }
+
     function getSelectedDirectoryHighlight(dirName: string): string {
         return dirName === selectedDir ? 'selected-dir' : '';
     }
@@ -41,43 +43,54 @@
 
 <div>
     <ul>
-        {#each fileTree as file}
+        {#each sortedFileTree as file}
             {#if file.isDirectory }
                 <li>
                     {#if !file.name.startsWith('.')}
-                        <button
-                            class="directory-list-item {getSelectedDirectoryHighlight(file.path)}"
-                            on:click|preventDefault={() => changeViewDirectory(file)}
-                            on:keydown|preventDefault={() => changeViewDirectory(file)}
-                        >
-                            <span class="filename">
-                                <button class="expand-btn" on:click={() => file.opened = !file.opened}>
+                        <div style="display: flex; flex-direction: row">
+                            <button class="expand-btn"
+                                on:click={() => {toggleFolderExpand(file)}}>
+                                {#if !file.opened}
                                     <ChevronRight size="16" color="gray" />
-                                </button>
-                                {#if file.opened}
-                                    <FolderOpen size="16" />
-                                {:else}
-                                    <Folder size="16" />
+                                {:else if file.opened}
+                                    <ChevronDown size="16" color="gray" />
                                 {/if}
-                                <span>{formatFileNames(file.name)}</span>
-                            </span>
-                            {#if uploadProgress.dir[file.path]}
-                                <span class="progress" data-testid="progress-bar">
-                                    {calculateProgress(uploadProgress.dir[file.path])}
-                                    &nbsp;
-                                    <Upload style="margin-bottom: 6px" size="16" />
-
-                                </span>
-                            {/if}
-                        </button>
+                            </button>
+                            {#key selectedDir}
+                                <button
+                                    class="directory-list-item {getSelectedDirectoryHighlight(file.path)}"
+                                    on:click|preventDefault={() => changeViewDirectory(file)}
+                                    on:keydown|preventDefault={() => changeViewDirectory(file)}
+                                >
+                                    <span class="filename">
+                                        {#if file.opened}
+                                            <FolderOpen size="16" />
+                                        {:else}
+                                            <Folder size="16" />
+                                        {/if}
+                                        <span>{formatFileNames(file.name)}</span>
+                                    </span>
+                                    {#if uploadProgress.dir[file.path]}
+                                        <span class="progress" data-testid="progress-bar">
+                                            {calculateProgress(uploadProgress.dir[file.path])}
+                                            &nbsp;
+                                            <Upload style="margin-bottom: 6px" size="16" />
+        
+                                        </span>
+                                    {/if}
+                                </button>
+                            {/key}
+                        </div>
                     {/if}
-                    {#if file.opened && !file.name.startsWith('.') && file.children && file.children.length > 0}
-                        <ul>
-                            <svelte:self fileTree={file.children} on:directoryChange />
-                        </ul>
-                    {:else if file.opened && !file.children}
-                        <ul class="no-files-in-dir">&emsp;Ingen filer i mappen</ul>
-                    {/if}
+                    {#key sortedFileTree}
+                        {#if file.opened && !file.name.startsWith('.') && file.children && file.children.length > 0}
+                            <ul>
+                                <svelte:self fileTree={file.children} on:directoryChange on:toggleFolderExpand />
+                            </ul>
+                        {:else if file.opened && (!file.children || file.children.length < 1)}
+                            <ul class="no-files-in-dir">&emsp;Ingen filer i mappen</ul>
+                        {/if}
+                    {/key}
                 </li>
             {:else}
                 <li>
@@ -128,6 +141,12 @@
 
   .expand-btn {
     @extend %no-style-button;
+
+    &:hover {
+      background-color: rgba(180, 193, 208, 0.55);
+      border-radius: 5px;
+      cursor: pointer;
+    }
   }
 
   .directory-list-item {

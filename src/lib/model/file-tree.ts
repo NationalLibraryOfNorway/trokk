@@ -48,9 +48,6 @@ export class FileTree implements DirEntry {
     async recursiveRead(): Promise<FileTree[] | undefined> {
         if (this.isDirectory) {
             const newDirEntries = await readDir(this.path);
-            let filteredEntries = newDirEntries.filter(newDirEntry => {
-                return newDirEntry.name !== '.thumbnails';
-            });
             this.children = FileTree.fromDirEntries(this.path, newDirEntries);
             for (let child of this.children) {
                 if (child && child.isDirectory) {

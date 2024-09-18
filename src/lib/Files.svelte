@@ -2,9 +2,9 @@
     import {
         type DirEntry,
         readDir,
-        watch,
         type WatchEventKind,
-        type WatchEventKindCreate
+        type WatchEventKindAccess,
+        watchImmediate
     } from '@tauri-apps/plugin-fs';
     import { beforeUpdate, onDestroy, onMount } from 'svelte';
     import { convertFileSrc, invoke } from '@tauri-apps/api/core';
@@ -28,9 +28,9 @@
     let currentDirectory: FileTreeType | undefined = undefined;
     let readDirFailed: string | undefined = undefined;
     let scannerPathTree: FileTreeType[] = [];
+    let scannerPathMap = new Map<string, FileTreeType>();
     let stopWatching: UnlistenFn | void | null = null;
     const pathSeparator: string = path.sep();
-    const uriPathSeparator: string = encodeURIComponent(pathSeparator);
     const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
     $: initGetFilesAndWatch(scannerPath);
@@ -62,7 +62,7 @@
 
     async function initGetFilesAndWatch(path: string = scannerPath): Promise<void> {
         await unwatchFiles();
-        await readDirRecursively();
+        await readDirRecursivelyInit();
         let firstDir = scannerPathTree.find((file: FileTreeType): boolean => {
             return file.isDirectory;
         });
@@ -87,7 +87,7 @@
                     currentNode.children = [];
                 }
 
-                let childNode = currentNode.children.find(child => child.name === part);
+                let childNode = scannerPathMap.get(currentNode.path + pathSeparator + part);
 
                 if (!childNode) {
                     childNode = {
@@ -97,19 +97,103 @@
                         children: undefined
                     } as FileTreeType;
                     currentNode.children.push(childNode);
+                    scannerPathMap.set(childNode.path, childNode);
                 }
                 currentNode = childNode;
             }
         }
     }
 
-    function isCreateEvent(event: WatchEventKind): event is { create: WatchEventKindCreate } {
-        return (event as { create: WatchEventKindCreate }).create !== undefined;
+    function addChildToScannerPathTree2(pathToAdd: string): void {
+        if (!scannerPathTree)
+            return;
+        pathToAdd = pathToAdd.substring(scannerPath.length);
+        const pathParts = pathToAdd.split(pathSeparator).filter(part => part.length > 0);
+        let currentNode: FileTreeType | undefined = scannerPathMap.get(pathToAdd + pathSeparator + pathParts[0]);
+        console.log('addPath', pathToAdd, currentNode);
+        let parentChildren: FileTreeType[] | undefined = scannerPathTree;
+
+        for (const part of pathParts) {
+            if (!parentChildren) {
+                return; // No children to add to
+            }
+
+            let childNode: FileTreeType | undefined = parentChildren.find(child => child.name === part);
+
+            if (!childNode) {
+                childNode = new FileTreeType(
+                    part, // name
+                    false, // isDirectory
+                    true, // isFile
+                    false, // isSymlink
+                    (currentNode ? currentNode.path + pathSeparator : '') + part, // path
+                    false, // opened
+                    undefined // children
+                );
+
+                parentChildren.push(childNode);
+                scannerPathMap.set(childNode.path, childNode);
+            }
+            if (currentNode) { // If currentNode at this point, it will have children, therefore is a directory.
+                currentNode.isDirectory = true;
+                currentNode.isFile = false;
+                currentNode.isSymlink = false;
+            }
+
+            currentNode = childNode;
+            parentChildren = currentNode.children;
+
+            if (!parentChildren) { // TODO wtf?
+                currentNode.children = [];
+                parentChildren = currentNode.children;
+            }
+        }
     }
 
-    async function watchFiles() {
+    // TODO use
+    function removeChildFromScannerPathTree(path: string): void {
+        const pathParts = path.split(pathSeparator).filter(part => part.length > 0);
+        let currentNode: FileTreeType | undefined = undefined;
+        let parentNode: FileTreeType | undefined = undefined;
+        let parentChildren: FileTreeType[] | undefined = scannerPathTree;
+
+        for (let i = 0; i < pathParts.length; i++) {
+            const part = pathParts[i];
+            if (!parentChildren) {
+                return; // No children to remove
+            }
+
+            const childNodeIndex = parentChildren.findIndex(child => child.name === part);
+            if (childNodeIndex === -1) {
+                return; // Child not found
+            }
+
+            currentNode = parentChildren[childNodeIndex];
+
+            if (i === pathParts.length - 1) {
+                // Last part, remove the child
+                parentChildren.splice(childNodeIndex, 1);
+                scannerPathMap.delete(currentNode.path);
+            } else {
+                // Move to the next node
+                parentNode = currentNode;
+                parentChildren = currentNode.children;
+            }
+        }
+    }
+
+    function IsCloseWriteEvent(event: WatchEventKind): event is { access: WatchEventKindAccess } {
+        try {
+            let accessEvent = (event as { access: WatchEventKindAccess }).access;
+            return accessEvent.kind == 'close' && accessEvent.mode == 'write';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async function watchFiles(): Promise<void> {
         await unwatchFiles();
-        stopWatching = await watch(
+        stopWatching = await watchImmediate(
             /* TODO
              * vi burde oppdatere til tauri V2 for bedre håndtering av events som skjer på disk
              * se f.eks. https://v2.tauri.app/reference/javascript/fs/#watcheventkindremove
@@ -119,23 +203,26 @@
             async (event) => {
                 console.log('event');
                 console.log(event);
-
-                if (!isCreateEvent(event.type))
-                    return;
-                if (currentDirectory) {
-                    // New tif file, create thumbnail
-                    for (let eventPath in event.paths) {
-                        if (!eventPath.includes('.thumbnails') && eventPath.includes('.tif') && eventPath == currentDirectory.path + path.sep() + eventPath.split(path.sep()).pop()) {
+                if (IsCloseWriteEvent(event.type)) { // TODO handle deletion/moving of files, ex. sent to S3, moved, or user deleted from disk
+                    // TODO remove folder: { remove: WatchEventKindRemove } .kind = 'folder'
+                    for (let eventPath of event.paths) {
+                        addChildToScannerPathTree2(eventPath);
+                        //addChildToCurrentDirectoryFromPath(eventPath);
+                        // New tif file, create thumbnail
+                        if (!eventPath.includes('.thumbnails') && eventPath.includes('.tif')) {
                             createThumbnail(eventPath);
-                        } else if (eventPath.includes('.thumbnails')) {
-                            addChildToCurrentDirectoryFromPath(eventPath);
                         }
                     }
                     currentDirectory = currentDirectory; // To update view
                 } else {
-                    //await getFiles();
-                    await readDirRecursively();
+                    console.debug('watch event not close write', event.type);
+                    return;
                 }
+
+
+            /* else {
+                                                                                                                                                                                                                                                                                            await readDirRecursivelyUpdate(); // TODO avoid reading recursiv update for each event
+                                                                                                                                                                                                                                                                                        }*/
             },
             { recursive: true }
         ).catch((err) => {
@@ -143,20 +230,36 @@
         });
     }
 
-    async function readDirRecursively() {
-        readDir(scannerPath)
+    async function readDirRecursivelyInit(): Promise<void> {
+        const initScannerPathTree = (tmpTree: FileTreeType[]): void => {
+            scannerPathTree = tmpTree;
+            console.debug('Init scannertree', tmpTree);
+        };
+        readDirRecursively(initScannerPathTree);
+    }
+
+    async function readDirRecursivelyUpdate(): Promise<void> {
+        const updateScannerPathTreeFromDirEntries = (tmpTree: FileTreeType[]): void => {
+            updateScannerPathTree(tmpTree);
+        };
+        readDirRecursively(updateScannerPathTreeFromDirEntries);
+    }
+
+    async function readDirRecursively(doWithNewRead: (tmpTree: FileTreeType[]) => void): void {
+        await readDir(scannerPath)
             .then(async (newDirEntries: DirEntry[]) => {
-                scannerPathTree = FileTreeType.fromDirEntries(scannerPath, newDirEntries);
-                for (const fileTree of scannerPathTree) {
+                let scannerPathTreeTmp = FileTreeType.fromDirEntries(scannerPath, newDirEntries);
+                console.debug('fromDirEntries', scannerPathTreeTmp);
+                for (const fileTree of scannerPathTreeTmp) {
                     fileTree.children = await fileTree.recursiveRead();
                 }
+                console.debug('fromDirEntries; after recursive', scannerPathTreeTmp);
+
+                doWithNewRead(scannerPathTreeTmp);
+
                 readDirFailed = undefined;
                 if (currentDirectory) {
-                    let tmpCurrentDir = findCurrentDir(scannerPathTree);
-                    if (tmpCurrentDir)
-                        currentDirectory = tmpCurrentDir;
-                    else
-                        currentDirectory = undefined;
+                    currentDirectory = scannerPathMap.get(currentDirectory.path);
                 }
             })
             .catch(err => {
@@ -166,24 +269,24 @@
             });
     }
 
-    async function unwatchFiles() {
+    async function unwatchFiles(): Promise<void> {
         if (stopWatching) {
             stopWatching();
             stopWatching = null;
         }
     }
 
-    function createThumbnail(path: string) {
+    function createThumbnail(path: string): void {
         invoke('convert_to_webp', { filePath: path }).catch((err) => {
             console.error(err);
         });
     }
 
-    function createThumbnailsFromDirectory(directoryPath: string) {
+    function createThumbnailsFromDirectory(directoryPath: string): void {
         invoke<ConversionResult>('convert_directory_to_webp', { directoryPath: directoryPath })
             .then((result) => {
-                if (currentDirectory)
-                    readDirRecursively();
+                console.debug(directoryPath, result);
+                readDirRecursivelyUpdate();
             })
             .catch((err) => {
                 console.error(err);
@@ -199,66 +302,147 @@
         }
     }
 
-    function findCurrentDir(fileEntries: FileTreeType[]): FileTreeType | undefined {
-        if (currentDirectory) {
-            for (const fileEntry of fileEntries) {
-                if (fileEntry.path === currentDirectory.path) return fileEntry;
-                else if (fileEntry.children) {
-                    const result = findCurrentDir(fileEntry.children);
-                    if (result) return result;
-                }
+    function toggleExpand(expand: boolean): void {
+        scannerPathTree.forEach(entry => {
+            entry.opened = expand;
+            toggleExpandRecursively(expand, entry.children);
+        });
+        scannerPathTree = scannerPathTree;
+    }
+
+    function toggleExpandRecursively(expand: boolean, trees: FileTreeType[] | undefined): void {
+        if (!trees)
+            return;
+        for (let entry of trees) {
+            entry.opened = expand;
+            if (entry.children) {
+                toggleExpandRecursively(expand, entry.children);
             }
         }
     }
 
-    function toggleExpand(expand: boolean): void {
-        scannerPathTree.forEach(entry => {
-            entry.opened = expand;
-            if (entry.children) {
-                entry.children.forEach(child => {
-                    child.opened = expand;
-                });
-            }
-        });
+    function toggleFolderExpand(file: FileTreeType): void {
+        file.opened = !file.opened;
         scannerPathTree = scannerPathTree;
+    }
+
+    // TODO expand parents when folder clicked in file viwer (NOT filetree list on left side.)
+    function expandWithParents(file: FileTreeType): void {
+        console.debug('ExpandParents!', file);
+        let foundFile = scannerPathMap.get(file.path);
+        if (!foundFile)
+            return;
+
+        foundFile.opened = true;
+        let currentPath = file.path;
+        while (currentPath !== scannerPath) {
+            const parentPath = currentPath.substring(0, currentPath.lastIndexOf(pathSeparator));
+            const parentNode = scannerPathMap.get(parentPath);
+            if (parentNode) {
+                console.debug('ExpandParents!; parent', parentNode);
+                parentNode.opened = true;
+                currentPath = parentNode.path;
+                console.debug('ExpandParents!; parent', parentNode);
+                console.debug('ExpandParents!; parentFromTree', scannerPathMap.get(parentPath));
+
+            } else {
+                break;
+            }
+        }
+        scannerPathTree = scannerPathTree; // Trigger reactivity
     }
 
     function getFileExtension(path: string): string {
         return path?.split('.')?.pop() || '';
     }
 
-    function getThumbnailExtensionFromCurrentDirectory(filename: string): string | undefined {
-        let foundThumbnail = getThumbnailFromCurrentDirectory(filename);
+    function getThumbnailExtensionFromTree(tree: FileTreeType): string | undefined {
+        let foundThumbnail = getThumbnailFromTree(tree);
+        console.debug('foundThumbnail for tree', tree, foundThumbnail);
         if (foundThumbnail) {
             return getFileExtension(foundThumbnail.name);
         }
         return undefined;
     }
 
-    function getThumbnailURIFromCurrentDirectory(filename: string): string | undefined {
-        let foundThumbnail = getThumbnailFromCurrentDirectory(filename);
+    function getThumbnailURIFromTree(tree: FileTreeType): string | undefined {
+        let foundThumbnail = getThumbnailFromTree(tree);
         if (foundThumbnail) {
             return convertFileSrc(foundThumbnail.path);
         }
         return undefined;
     }
 
-    function getThumbnailFromCurrentDirectory(filename: string): FileTreeType | undefined {
-        if (currentDirectory) {
-            console.log(currentDirectory);
-            let thumbnailDirectory = currentDirectory.children?.find(child => child.name == '.thumbnails');
-            console.log(thumbnailDirectory);
-            if (thumbnailDirectory) {
-                let foundThumbnail = thumbnailDirectory
-                    .children
-                    ?.find( // Compare only names and not file extensions
-                        thumbnail => thumbnail.name.split('.')[0] == filename.split('.')[0]
-                    );
-                if (foundThumbnail) {
-                    return foundThumbnail;
-                }
+    function getThumbnailFromTree(tree: FileTreeType): FileTreeType | undefined {
+        let thumbnailPath = tree.path.substring(
+            0,
+            tree.path.length - tree.name.length
+        ) + '.thumbnails' + pathSeparator + tree.name.split('.')[0] + '.webp';
+        console.debug('scannerpathMap', scannerPathMap);
+        return scannerPathMap.get(thumbnailPath);
+    }
+
+    // Populate the map with existing tree nodes
+    function populateScannerPathMap(tree: FileTreeType[] = scannerPathTree): void {
+        for (const node of tree) {
+            scannerPathMap.set(node.path, node);
+            if (node.children) {
+                populateScannerPathMap(node.children);
             }
-            return undefined;
+        }
+    }
+
+    // Merge new tree with existing tree
+    function mergeScannerPathTreeWithNew(newTree: FileTreeType[]): FileTreeType[] {
+        return newTree.map(newNode => {
+            const existingNode = scannerPathMap.get(newNode.path);
+            if (existingNode) {
+                // If the node exists, merge children
+                if (newNode.children) {
+                    newNode.children = mergeScannerPathTreeWithNew(newNode.children);
+                }
+                existingNode.children = newNode.children;
+                return existingNode;
+            } else {
+                // If the node does not exist, add it
+                return newNode;
+            }
+        });
+    }
+
+    // Remove paths from existing tree that are not in the new tree
+    function removeNonExistentPathsFromScannerPath(tree: FileTreeType[], newTreePaths: Set<string>): FileTreeType[] {
+        return tree.filter(node => {
+            if (!newTreePaths.has(node.path)) {
+                return false;
+            }
+            if (node.children) {
+                node.children = removeNonExistentPathsFromScannerPath(node.children, newTreePaths);
+            }
+            return true;
+        });
+    }
+
+    function collectPathsInSet(tree: FileTreeType[], paths: Set<string>): void {
+        for (const node of tree) {
+            paths.add(node.path);
+            if (node.children) {
+                collectPathsInSet(node.children, paths);
+            }
+        }
+    }
+
+    function updateScannerPathTree(newTree: FileTreeType[]): void {
+        populateScannerPathMap(newTree);
+
+        const mergedTree = mergeScannerPathTreeWithNew(newTree);
+
+        const newTreePaths = new Set<string>();
+        collectPathsInSet(newTree, newTreePaths);
+
+        removeNonExistentPathsFromScannerPath(mergedTree, newTreePaths);
+        if (currentDirectory) {
+            currentDirectory = scannerPathMap.get(currentDirectory.path);
         }
     }
 
@@ -276,7 +460,8 @@
                 </button>
             </div>
             <FileTree fileTree={scannerPathTree} selectedDir={currentDirectory?.path}
-                bind:allUploadProgress on:directoryChange={(event) => changeViewDirectory(event.detail)} />
+                bind:allUploadProgress on:directoryChange={(event) => changeViewDirectory(event.detail)}
+                on:toggleFolderExpand={(event) => toggleFolderExpand(event.detail)} />
         </div>
         <div id="middle-pane" class="pane">
             <div class="images">
@@ -284,7 +469,8 @@
                     {#if currentDirectory.children.length !== 0}
                         {#each currentDirectory.children as child}
                             {#if !child.name.startsWith('.thumbnails') && child.isDirectory}
-                                <button class="directory" on:click={() => changeViewDirectory(child)}>
+                                <button class="directory"
+                                    on:click={() => {changeViewDirectory(child); expandWithParents(child)}}>
                                     <Folder size="96" />
                                     <i>{child.name}</i>
                                 </button>
@@ -294,9 +480,9 @@
                                         <img src={convertFileSrc(child.path)} alt={child.name} />
                                         <i>{formatFileNames(child.name)}</i>
                                     </div>
-                                {:else if getThumbnailExtensionFromCurrentDirectory(child.name) === 'webp' }
+                                {:else if getThumbnailExtensionFromTree(child) === 'webp' }
                                     <div>
-                                        <img src={getThumbnailURIFromCurrentDirectory(child.name)} alt={child.name} />
+                                        <img src={getThumbnailURIFromTree(child)} alt={child.name} />
                                         <i>{formatFileNames(child.name)}</i>
                                     </div>
                                 {:else if child.name !== '.thumbnails'}

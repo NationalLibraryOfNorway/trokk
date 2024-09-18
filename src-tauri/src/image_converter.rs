@@ -1,9 +1,9 @@
-use std::ffi::OsStr;
-use std::fs;
-use std::path::{Path, PathBuf};
-
 use image::ImageReader;
 use serde::{Deserialize, Serialize};
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+use std::{fs, thread};
 use webp::{Encoder, WebPMemory};
 
 use crate::error::ImageConversionError;
@@ -53,6 +53,12 @@ fn list_tif_files_in_directory<P: AsRef<Path>>(
 	Ok(files)
 }
 
+fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
+	fs::metadata(path)
+		.map(|metadata| metadata.is_dir())
+		.unwrap_or(false)
+}
+
 pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let image: image::DynamicImage = ImageReader::open(path_reference)?
@@ -74,7 +80,12 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageCo
 
 	let mut path = parent_directory.to_owned();
 	path.push(THUMBNAIL_FOLDER_NAME);
-	fs::create_dir_all(&path)?;
+
+	if !directory_exists(&path) {
+		fs::create_dir_all(&path)?;
+		thread::sleep(Duration::from_millis(500));
+	}
+
 	path.push(filename_original_image);
 	path.set_extension(WEBP_EXTENSION);
 	fs::write(&path, &*encoded_webp)?;
