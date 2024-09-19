@@ -8,7 +8,7 @@
     import { formatFileNames } from './util/file-utils';
     import Split from 'split.js';
     import type { AllTransferProgress } from './model/transfer-progress';
-    import { writable, type Writable } from 'svelte/store';
+    import { derived, type Readable, writable, type Writable } from 'svelte/store';
 
     export let scannerPath: string;
     export let useS3: boolean;
@@ -16,10 +16,15 @@
     let allUploadProgress: Writable<AllTransferProgress> = writable<AllTransferProgress>({ dir: {} });
     let readDirFailed: string | undefined = undefined;
     let scannerFiles: TrokkFiles;
+    let currentTree: Readable<FileTreeType | undefined>;
 
     const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
     $: initScannerFiles(scannerPath);
+    $: if ($currentTree) {
+        // This block will re-run whenever scannerFiles.current changes
+        console.debug('scannerFiles.current changed', $currentTree);
+    }
 
     onMount(async () => {
         // Applies the .gutter class from styles.css to the specified elements
@@ -32,13 +37,14 @@
     });
 
     beforeUpdate(() => {
-        if (scannerFiles.current) {
-            scannerFiles.current.children?.sort((a, b) => {
-                if (a.path < b.path) return -1;
-                if (a.path > b.path) return 1;
-                return 0;
-            });
-        }
+    /*if (get(scannerFiles.current)) {
+                            scannerFiles.sortCurrentTree();
+                            scannerFiles.current.children?.sort((a, b) => {
+                                if (a.path < b.path) return -1;
+                                if (a.path > b.path) return 1;
+                                return 0;
+                            });
+                        }*/
     });
 
     onDestroy(() => {
@@ -48,6 +54,7 @@
     async function initScannerFiles(path: string): Promise<void> {
         scannerFiles = new TrokkFiles(path);
         await scannerFiles.initGetFilesAndWatch();
+        currentTree = derived(scannerFiles.current, $current => $current);
         readDirFailed = undefined;
         console.debug('scannerFiles', scannerFiles);
     }
@@ -87,7 +94,7 @@
             </div>
             {#key $scannerFiles}
                 <FileTree fileTree={scannerFiles.fileTrees}
-                    selectedDir={scannerFiles.current?.path}
+                    selectedDir={$currentTree?.path}
                     bind:allUploadProgress
                     on:directoryChange={(event) => scannerFiles.changeViewDirectory(event.detail)}
                     on:toggleFolderExpand={(event) => scannerFiles.toggleFolderExpand(event.detail)} />
@@ -97,9 +104,9 @@
             <div class="images">
                 {#key $scannerFiles}
                     <!-- TODO figure out how to only update on this stores '.current', for non buggy reloading -->
-                    {#if scannerFiles.current && scannerFiles.current.children}
-                        {#if scannerFiles.current.children.length !== 0}
-                            {#each scannerFiles.current.children as child}
+                    {#if $currentTree && $currentTree.children}
+                        {#if $currentTree.children.length !== 0}
+                            {#each $currentTree.children as child}
                                 {#if !child.name.startsWith('.thumbnails') && child.isDirectory}
                                     <button class="directory"
                                         on:click={() => scannerFiles.changeViewDirectory(child, true, true)}>
@@ -125,7 +132,7 @@
                                     {/if}
                                 {/if}
                             {/each}
-                        {:else if scannerFiles.current.children.length === 0}
+                        {:else if $currentTree.children.length === 0}
                             <p class="dir-help-text">
                                 Ingen filer i mappen.
                             </p>
@@ -140,8 +147,8 @@
             </div>
         </div>
         <div id="right-pane" class="pane sticky-top">
-            {#if scannerFiles.current && scannerFiles.current.path}
-                <RegistrationSchema bind:currentPath="{scannerFiles.current.path}" bind:useS3 bind:allUploadProgress />
+            {#if $currentTree && $currentTree.path}
+                <RegistrationSchema bind:currentPath="{$currentTree.path}" bind:useS3 bind:allUploadProgress />
             {/if}
         </div>
     </div>

@@ -9,7 +9,7 @@ import { path } from '@tauri-apps/api';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import type { ConversionResult } from './thumbnail';
-import { type Updater, writable } from 'svelte/store';
+import { get, type Updater, type Writable, writable } from 'svelte/store';
 
 export class TrokkFiles {
     /* Svelte store contract */
@@ -23,7 +23,7 @@ export class TrokkFiles {
     basePath: string;                   // Base path for files, use 'scannerPath' that user configures.
     fileTrees: FileTree[];              // FileTrees to show in app
     treeIndex: Map<string, FileTree>;   // Index of file path -> FileTree Object
-    current: FileTree | undefined;      // Reference to current FileTree Object
+    current: Writable<FileTree | undefined>;  // Reference to current FileTree Object
     stopWatching: UnlistenFn | void | null = null; // Call to end file watcher
 
     constructor(
@@ -32,6 +32,7 @@ export class TrokkFiles {
         this.basePath = basePath;
         this.fileTrees = [] as FileTree[];
         this.treeIndex = new Map<string, FileTree>();
+        this.current = writable(undefined);
         let { subscribe, set, update } = writable(this);
         this.subscribe = subscribe;
         this._set = set;
@@ -59,9 +60,9 @@ export class TrokkFiles {
             return file.isDirectory;
         });
         if (firstDir) {
-            this.current = firstDir;
+            this.current.set(firstDir);
             await this.watchFiles();
-            this.createThumbnailsFromDirectory(this.current.path);
+            this.createThumbnailsFromDirectory(get(this.current)!!.path);
         } else {
             await this.watchFiles();
         }
@@ -74,13 +75,16 @@ export class TrokkFiles {
             if (a.path > b.path) return 1;
             return 0;
         });
+        for (const fileTree of this.fileTrees) {
+            fileTree.sortRecursive();
+        }
         this.updateStore();
     }
 
     public async reset(): Promise<void> {
         this.fileTrees = [];
         this.treeIndex = new Map<string, FileTree>();
-        this.current = undefined;
+        this.current.set(undefined);
         await this.unwatchFiles();
         this.updateStore();
     }
@@ -145,10 +149,11 @@ export class TrokkFiles {
     }
 
     public changeViewDirectory(fileTree: FileTree, generateThumbnails: boolean = true, expandParents: boolean = false): void {
-        this.current = fileTree;
+        // this.current = fileTree;
+        this.current.set(fileTree);
         if (fileTree.children && fileTree.children.length > 0) {
             if (generateThumbnails) {
-                this.createThumbnailsFromDirectory(this.current.path);
+                this.createThumbnailsFromDirectory(get(this.current)!!.path);
             }
         }
         if (expandParents) {
@@ -181,18 +186,18 @@ export class TrokkFiles {
         await readDir(this.basePath)
             .then(async (newDirEntries: DirEntry[]) => {
                 let scannerPathTreeTmp = FileTree.fromDirEntries(this.basePath, newDirEntries);
+
                 console.debug('fromDirEntries', scannerPathTreeTmp);
                 for (const fileTree of scannerPathTreeTmp) {
                     fileTree.children = await fileTree.recursiveRead();
+                    fileTree.sortRecursive();
                 }
                 console.debug('fromDirEntries; after recursive', scannerPathTreeTmp);
 
                 doWithNewRead(scannerPathTreeTmp);
 
                 //readDirFailed = undefined; // TODO figure out wtf to do here.
-                if (this.current) {
-                    this.current = this.treeIndex.get(this.current.path);
-                }
+                this.resetCurrent();
                 this.updateStore();
             })
             .catch(err => {
@@ -202,6 +207,12 @@ export class TrokkFiles {
                 this.treeIndex = new Map<string, FileTree>();
                 this.updateStore();
             });
+    }
+
+    private resetCurrent(): void {
+        if (get(this.current)) {
+            this.current.set(this.treeIndex.get(get(this.current)!!.path));
+        }
     }
 
     private async unwatchFiles(): Promise<void> {
@@ -272,9 +283,7 @@ export class TrokkFiles {
         this.collectPathsInSet(newTree, newTreePaths);
 
         this.removeNonExistentPathsFromTrees(mergedTree, newTreePaths);
-        if (this.current) {
-            this.current = this.treeIndex.get(this.current.path);
-        }
+        this.resetCurrent();
         console.debug('updateScannerPathTree; after', this.fileTrees);
         this.updateStore();
     }
@@ -464,6 +473,23 @@ export class FileTree implements DirEntry {
         this.path = path;
         this.opened = opened;
         this.children = children;
+    }
+
+    sort(): void {
+        this.children?.sort((a, b) => {
+            if (a.path < b.path) return -1;
+            if (a.path > b.path) return 1;
+            return 0;
+        });
+    }
+
+    sortRecursive(): void {
+        this.sort();
+        if (this.children) {
+            for (const child of this.children) {
+                child.sortRecursive();
+            }
+        }
     }
 
     static fromDirEntries(basePath: string, dirEntries: DirEntry[]): FileTree[] {
