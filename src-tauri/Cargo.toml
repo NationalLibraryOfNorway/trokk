@@ -10,37 +10,45 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.5", features = [] }
+tauri-build = { version = "2.0.1", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = ["window-show", "fs-exists", "dialog-open", "fs-write-file", "system-tray", "fs-read-dir", "window-close", "window-create", "http-all", "protocol-asset", "path-all", "shell-open", "test"] }
-tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
-tauri-plugin-fs-watch = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
-tauri-plugin-oauth = "0.0.0-alpha.0"
+tauri = { version = "2.0.2", features = ["protocol-asset", "test", "tray-icon"] }
+tauri-plugin-store = "2.1.0"
+tauri-plugin-fs = { version = "2", features = ["watch"] }
+tauri-plugin-oauth = "2"
+tauri-plugin-http = "2"
+sentry = "0.34.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-gethostname = "0.4.3"
-url = "2.4.1"
-reqwest = "0.11.22"
-once_cell = "1.18.0"
-image = "0.24.7"
-webp = "0.2.6"
+gethostname = "0.5.0"
+url = "2.5.0"
+reqwest = "0.12.7"
+once_cell = "1.19.0"
+image = "0.25.2"
+webp = "0.3.0"
 thiserror = "1.0.50"
 vaultrs = "0.7.2"
 vaultrs-login = "0.2.1"
 tokio = { version = "1.37.0", features = ["full"] }
-sentry-tauri = "0.3.0"
 aws-config = "1.5.3"
 aws-credential-types = { version = "1.2.0", features = ["hardcoded-credentials"] }
 aws-types = { version = "1.3.2" }
 aws-sdk-dynamodb = "1.36.0"
 aws-sdk-s3 = { version = "1.4.0", features = ["rt-tokio", "behavior-version-latest"] }
 log = "0.4.21"
+tauri-plugin-dialog = "2"
+tauri-plugin-process = "2"
 
 [dev-dependencies]
-tempfile = "3.9.0"
+tempfile = "3.10.1"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "lib"]
+#  "rlib",

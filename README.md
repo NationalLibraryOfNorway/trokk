@@ -24,13 +24,15 @@ Appen er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så l
 
 Sett disse environment variablene for å få appen til å fungere:
 
-| Variabel             | Beskrivelse                                 |
-|----------------------|---------------------------------------------|
-| `VAULT_BASE_URL`     | URL til VAULT instans.                      |
-| `VAULT_ROLE_ID`      | Vault rolle_id for app-role innlogging.     |
-| `VAULT_SECRET_ID`    | Vault secret_id for app-role innlogging.    |
-| `SENTRY_ENVIRONMENT` | "Environment" string som sendes til Sentry. |
-| `SENTRY_URL`         | Generert Sentry URL for Rust prosjekt.      |
+| Variabel                  | Beskrivelse                                            |
+|---------------------------|--------------------------------------------------------|
+| `VAULT_BASE_URL`          | URL til VAULT instans.                                 |
+| `VAULT_ROLE_ID`           | Vault rolle_id for app-role innlogging.                |
+| `VAULT_SECRET_ID`         | Vault secret_id for app-role innlogging.               |
+| `SENTRY_ENVIRONMENT`      | "Environment" string som sendes til Sentry.            |
+| `SENTRY_URL`              | Generert Sentry URL for Rust prosjekt.                 |
+| `VITE_SENTRY_ENVIRONMENT` | "Environment" string som sendes til Sentry. (for vite) |
+| `VITE_SENTRY_URL`         | Generert Sentry URL for Rust prosjekt. (for vite)      |
 
 ### Forventede variabler fra Vault
 

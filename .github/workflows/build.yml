@@ -35,6 +35,8 @@ jobs:
       VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
       SENTRY_ENVIRONMENT: "stage" # TODO set dynamically when we have prod/stage
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
+      VITE_SENTRY_ENVIRONMENT: "stage" # TODO set dynamically when we have prod/stage
+      VITE_SENTRY_URL: ${{ secrets.SENTRY_URL }}
       RUST_BACKTRACE: full
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
