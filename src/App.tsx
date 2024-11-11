@@ -15,7 +15,6 @@ import Button from "./components/ui/button.tsx";
 function App() {
     const [scannerPath, setScannerPath] = useState<string>("");
     const [openSettings, setOpenSettings] = useState<boolean>(false);
-    console.debug(import.meta.env.REACT_APP_SENTRY_URL);
 
     useEffect(() => {
         const initializeSettings = async () => {
