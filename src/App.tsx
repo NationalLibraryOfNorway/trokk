@@ -38,7 +38,7 @@ function App() {
 
     return (
         <AuthProvider>
-            <main className="mainContainer">
+            <main className="flex flex-col">
                 <Content
                     scannerPath={scannerPath}
                     openSettings={openSettings}
@@ -64,12 +64,12 @@ const Content: React.FC<ContentProps> = ({ scannerPath, openSettings, setOpenSet
     if (fetchSecretsError) {
         return (
             <>
-                <div className="topBar">
+                <div className="flex flex-row justify-between sticky top-0 h-[5vh]">
                     <p></p>
-                    <h1>Trøkk</h1>
+                    <h1 className={`text-center`}>Trøkk</h1>
                     <p></p>
                 </div>
-                <div className="vaultError errorColor">
+                <div className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 errorColor">
                     <h1>Feil ved innhenting av hemmeligheter</h1>
                     <p>{fetchSecretsError}</p>
                 </div>
@@ -110,7 +110,7 @@ const Content: React.FC<ContentProps> = ({ scannerPath, openSettings, setOpenSet
                 <h2 className="text-xl flex items-center pl-4">
                     <FolderOpen size="32" className="-ml-3 mr-1 mb-2 flex-shrink-0"/>{scannerPath}
                 </h2>
-                <h1 className="text-4xl content-end">Trøkk</h1>
+                <h1 className="text-4xl content-end text-center">Trøkk</h1>
                 <div className="flex justify-end gap-2">
                     <div className="flex pr-2 pt-3">
                         <User />
