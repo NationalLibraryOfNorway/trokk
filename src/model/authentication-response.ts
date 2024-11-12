@@ -1,10 +1,10 @@
-interface AuthenticationResponse {
+export interface AuthenticationResponse {
     tokenResponse: TokenResponse;
     expireInfo: ExpireInfo;
     userInfo: UserInfo;
 }
 
-interface TokenResponse {
+export interface TokenResponse {
     accessToken: string;
     expiresIn: number;
     refreshExpiresIn: number;
@@ -16,12 +16,12 @@ interface TokenResponse {
     scope: string;
 }
 
-interface ExpireInfo {
+export interface ExpireInfo {
     expiresAt: number;
     refreshExpiresAt: number;
 }
 
-interface UserInfo {
+export interface UserInfo {
     sub: string,
     name: string,
     groups: Array<string>,

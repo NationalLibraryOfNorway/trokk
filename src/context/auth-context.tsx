@@ -5,6 +5,8 @@ import {WebviewWindow} from "@tauri-apps/api/webviewWindow";
 import {settings} from '../tauri-store/settings.ts'; // Adjust the import path as necessary
 import {Event} from "@tauri-apps/api/event";
 import {cancel} from "@fabianlars/tauri-plugin-oauth";
+import {AuthenticationResponse} from "../model/authentication-response.ts";
+import {SecretVariables} from "../model/secret-variables.ts";
 
 export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
@@ -117,7 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     };
 
     const handleTokenExchangedEvent = (loginWebView: WebviewWindow, port: number) => async (event: Event<AuthenticationResponse>) => {
-        const authResponse = event.payload;
+        const authResponse = event.payload as AuthenticationResponse;
         setAuthResponse(authResponse);
         await settings.setAuthResponse(authResponse);
         await setRefreshAccessTokenInterval(authResponse);

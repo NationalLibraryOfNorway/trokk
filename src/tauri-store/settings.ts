@@ -1,4 +1,5 @@
 import {load, Store} from "@tauri-apps/plugin-store";
+import {AuthenticationResponse} from "../model/authentication-response.ts";
 
 
 class Settings {
@@ -67,11 +68,11 @@ class Settings {
     async getAuthResponse(): Promise<AuthenticationResponse | null> {
         await this.ensureStore();
         let authResponse: AuthenticationResponse | null = null;
-        // @ts-ignore
+
         authResponse = await this.store!.get<AuthenticationResponse>('authResponse')
             .catch(error => {
                 console.error('Error getting auth response:', error);
-            });
+            }) ?? null;
         return authResponse;
     }
 

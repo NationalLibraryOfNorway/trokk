@@ -13,6 +13,7 @@ import { useUploadProgress } from '../../context/upload-progress-context.tsx';
 import type { Event } from '@tauri-apps/api/event';
 import {TextItemResponse} from "../../model/text-input-response.ts";
 import {useTransferLog} from "../../context/transfer-log-context.tsx";
+import {SecretVariables} from "../../model/secret-variables.ts";
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -98,9 +99,7 @@ const RegistrationForm: React.FC = () => {
 
         const id = uuidv7().toString();
 
-        let transfer: Promise<number>;
-
-        transfer = uploadToS3(id).catch(error => {
+        const transfer = uploadToS3(id).catch(error => {
             handleError('Fikk ikke lastet opp filene', undefined, error);
             return Promise.reject(error);
         });
@@ -112,8 +111,7 @@ const RegistrationForm: React.FC = () => {
             return Promise.reject(error);
         });
 
-        // @ts-ignore
-        const materialTypeDTO = Object.keys(MaterialType).find((key: string) => MaterialType[key] === materialType)
+        const materialTypeDTO = Object.keys(MaterialType).find((key: string) => MaterialType[key as keyof typeof MaterialType] === materialType)
 
         return await fetch(`${papiPath}/v2/item`, {
             method: 'POST',
@@ -154,8 +152,7 @@ const RegistrationForm: React.FC = () => {
             return Promise.reject('Cannot move files from scanner dir');
         }
 
-        // @ts-ignore
-        const materialTypeEnum = Object.keys(MaterialType).find(key => MaterialType[key] === materialType);
+        const materialTypeEnum = Object.keys(MaterialType).find(key => MaterialType[key as keyof typeof MaterialType] === materialType);
 
         return invoke('upload_directory_to_s3', {
             directoryPath: state.current!.path,
