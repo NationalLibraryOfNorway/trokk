@@ -1,9 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-extern crate core;
 
-use core::panic::PanicInfo;
-use sentry::integrations::panic;
 use std::borrow::Cow;
 
 // This setup differs from the standard Tauri setup, as we want to use tokio runtime and Sentry

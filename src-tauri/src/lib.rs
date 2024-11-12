@@ -120,22 +120,6 @@ async fn convert_directory_to_webp(directory_path: String) -> Result<ConversionC
 }
 
 #[tauri::command]
-async fn get_total_size_of_files_in_folder(path: &str) -> Result<u64, String> {
-	file_utils::get_file_size(path)
-}
-
-#[tauri::command]
-async fn copy_dir<R: tauri::Runtime>(
-	// ^ Typed this way to handle both Wry and MockRuntime for testing purposes
-	old_dir: &str,
-	new_base_dir: &str,
-	new_dir_name: &str,
-	app_handle: tauri::AppHandle<R>,
-) -> Result<String, String> {
-	file_utils::copy_dir_contents(old_dir, new_base_dir, new_dir_name, app_handle)
-}
-
-#[tauri::command]
 async fn delete_dir(dir: &str) -> Result<(), String> {
 	file_utils::delete_dir(dir)
 }
@@ -206,8 +190,6 @@ pub fn run() {
 			refresh_token,
 			convert_to_webp,
 			convert_directory_to_webp,
-			get_total_size_of_files_in_folder,
-			copy_dir,
 			delete_dir,
 			pick_directory,
 			get_papi_access_token,
