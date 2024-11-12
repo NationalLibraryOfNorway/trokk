@@ -3,8 +3,8 @@
 extern crate core;
 
 use core::panic::PanicInfo;
-use std::borrow::Cow;
 use sentry::integrations::panic;
+use std::borrow::Cow;
 
 // This setup differs from the standard Tauri setup, as we want to use tokio runtime and Sentry
 // See sentry docs for details: https://docs.sentry.io/platforms/rust/#async-main-function
@@ -17,7 +17,7 @@ fn main() {
 			environment: Some(Cow::from(env!("SENTRY_ENVIRONMENT"))),
 			debug: true,
 			..Default::default()
-		}
+		},
 	));
 
 	tokio::runtime::Builder::new_multi_thread()

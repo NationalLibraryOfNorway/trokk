@@ -92,8 +92,6 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.expect("Time went backwards")
 		.as_millis();
 
-
-
 	let res = client
 		.post(format!("{}{}", secrets.oidc_base_url, "/token"))
 		.header("Content-Type", "application/x-www-form-urlencoded")

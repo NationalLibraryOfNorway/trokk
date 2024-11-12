@@ -3,8 +3,8 @@ use std::sync::Mutex;
 
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+use tauri::Manager;
 use tauri::Window;
-use tauri::{Manager};
 use tokio::sync::OnceCell;
 
 #[cfg(debug_assertions)]
