@@ -18,7 +18,6 @@ class Settings {
     async init(): Promise<void> {
         if (this.store == undefined) {
             return await load('.settings.json', {
-                // @ts-ignore is a bug in tauri, should be boolean, rust needs number
                 autoSave: true
             }).then(store => {
                 this.store = store;
