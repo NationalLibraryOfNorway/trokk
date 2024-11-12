@@ -83,7 +83,7 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageCo
 
 	if !directory_exists(&path) {
 		fs::create_dir_all(&path)?;
-		thread::sleep(Duration::from_millis(500));
+		thread::sleep(Duration::from_millis(500)); // Sleep here a bit so the file watcher can catch up
 	}
 
 	path.push(filename_original_image);

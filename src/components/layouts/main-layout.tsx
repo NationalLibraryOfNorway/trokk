@@ -11,7 +11,6 @@ const MainLayout: React.FC = () => {
     return (
         <Split
             sizes={[20, 60, 20]}
-            minSize={[5, 10, 5]}
             className="split h-screen"
         >
             <div className="sticky top-0 overflow-x-auto h-full">

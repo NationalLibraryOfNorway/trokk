@@ -134,7 +134,7 @@ const RegistrationForm: React.FC = () => {
                 if (response.ok) {
                     void deleteDir(pushedDir);
                     removeErrorMessage();
-                    displaySuccessMessage(await response.json() as TextItemResponse); // TODO check
+                    displaySuccessMessage(await response.json() as TextItemResponse);
                 } else {
                     console.error(response);
                     handleError(undefined, response.status);

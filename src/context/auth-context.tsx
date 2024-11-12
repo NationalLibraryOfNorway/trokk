@@ -22,16 +22,6 @@ const AuthContext = createContext<AuthContextType | null>(null);
 interface AuthProviderProps {
     children: ReactNode;
 }
-/*
-
-class RefreshTokenExpiredError extends Error {
-    constructor(message: string) {
-        super()
-        this.message = message
-    }
-    message: string;
-}
-*/
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     const [authResponse, setAuthResponse] = useState<AuthenticationResponse | null>(null);
@@ -45,7 +35,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     useEffect(() => {
         const initializeAuth = async () => {
             try {
-                //await settings.init();
                 await getSecrets();
             } catch (error) {
                 console.error('Error initializing auth:', error);
@@ -95,7 +84,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         if (!secrets?.oidcClientSecret) {
             await getSecrets();
         }
-        const port = await invoke('log_in') as unknown as number;
+        const port = await invoke<number>('log_in');
         if (secrets && "oidcBaseUrl" in secrets) {
             try {
                 const loginWebView =
