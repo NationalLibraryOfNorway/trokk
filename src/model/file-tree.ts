@@ -62,7 +62,7 @@ export class FileTree implements DirEntry {
         if (this.isDirectory) {
             const newDirEntries = await readDir(this.path);
             this.children = FileTree.fromDirEntries(this.path, newDirEntries);
-            for (let child of this.children) {
+            for (const child of this.children) {
                 if (child && child.isDirectory) {
                     await child.recursiveRead();
                 }

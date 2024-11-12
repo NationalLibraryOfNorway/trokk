@@ -26,7 +26,7 @@ const FilesContainer: React.FC = () => {
      *      └── image_3.webp
      */
     function getThumbnailFromTree(tree: FileTree): FileTree | undefined {
-        let thumbnailPath = tree.path.substring(
+        const thumbnailPath = tree.path.substring(
             0,
             tree.path.length - tree.name.length
         ) + '.thumbnails' + path.sep() + tree.name.split('.')[0] + '.webp';

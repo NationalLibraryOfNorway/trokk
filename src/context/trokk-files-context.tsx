@@ -89,7 +89,7 @@ const createThumbnail = async (filePath: string) => {
 
 // Populate the map with existing tree nodes
 const populateIndex = (fileTrees: FileTree[]): Map<string, FileTree> => {
-    let treeIndex = new Map<string, FileTree>();
+    const treeIndex = new Map<string, FileTree>();
     const populateRecursive = (index: Map<string, FileTree>, nodes: FileTree[]) => {
         for (const node of nodes) {
             index.set(node.path, node);
@@ -104,36 +104,36 @@ const populateIndex = (fileTrees: FileTree[]): Map<string, FileTree> => {
 
 function isCloseWriteEvent(event: WatchEventKind): event is { access: WatchEventKindAccess } {
     try {
-        let accessEvent = (event as { access: WatchEventKindAccess }).access;
+        const accessEvent = (event as { access: WatchEventKindAccess }).access;
         return accessEvent.kind == 'close' && accessEvent.mode == 'write';
-    } catch (e) {
+    } catch {
         return false;
     }
 }
 
 function isCreateFolder(event: WatchEventKind): event is { create: WatchEventKindCreate } {
     try {
-        let createEvent = (event as { create: WatchEventKindCreate }).create;
+        const createEvent = (event as { create: WatchEventKindCreate }).create;
         return createEvent.kind == 'folder';
-    } catch (e) {
+    } catch {
         return false;
     }
 }
 
 function isDeleteFolder(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
     try {
-        let createEvent = (event as { remove: WatchEventKindRemove }).remove;
+        const createEvent = (event as { remove: WatchEventKindRemove }).remove;
         return createEvent.kind == 'folder';
-    } catch (e) {
+    } catch {
         return false;
     }
 }
 
 function isModifyRenameFrom(event: WatchEventKind): event is { modify: WatchEventKindModify } {
     try {
-        let createEvent = (event as { modify: WatchEventKindModify }).modify;
+        const createEvent = (event as { modify: WatchEventKindModify }).modify;
         return createEvent.kind == 'rename' && createEvent.mode == 'from';
-    } catch (e) {
+    } catch {
         return false;
     }
 }
@@ -155,7 +155,7 @@ function splitWatchEvents(events: WatchEvent[]): PathsSorted {
             t.paths[0] === event.paths[0] && t.type === event.type
         ));
     })
-    let paths = deduplicatedEvents.reduce(
+    const paths = deduplicatedEvents.reduce(
         (acc, event) => {
             if (isCloseWriteEvent(event.type)) {
                 event.paths.forEach((path) => {

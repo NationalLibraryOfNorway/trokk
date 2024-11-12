@@ -114,7 +114,7 @@ const Content: React.FC<ContentProps> = ({ scannerPath, openSettings, setOpenSet
                 <div className="flex justify-end gap-2">
                     <div className="flex pr-2 pt-3">
                         <User />
-                        <p className="pt-0.5">{authResponse!!.userInfo.givenName}</p>
+                        <p className="pt-0.5">{authResponse!.userInfo.givenName}</p>
                     </div>
                     <Button onClick={() => setOpenSettings(!openSettings)}>Innstillinger</Button>
                     <Button onClick={logout}>Logg ut</Button>

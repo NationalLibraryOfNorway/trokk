@@ -113,7 +113,7 @@ const RegistrationForm: React.FC = () => {
         });
 
         // @ts-ignore
-        let materialTypeDTO = Object.keys(MaterialType).find((key: string) => MaterialType[key] === materialType)
+        const materialTypeDTO = Object.keys(MaterialType).find((key: string) => MaterialType[key] === materialType)
 
         return await fetch(`${papiPath}/v2/item`, {
             method: 'POST',
@@ -123,7 +123,7 @@ const RegistrationForm: React.FC = () => {
             },
             body: JSON.stringify(new TextInputDto(
                 id,
-                materialTypeDTO!!,
+                materialTypeDTO!,
                 auth.userInfo.name,
                 fraktur ? 'FRAKTUR' : 'ANTIQUA',
                 sami ? 'SME' : 'NOB',
@@ -158,7 +158,7 @@ const RegistrationForm: React.FC = () => {
         const materialTypeEnum = Object.keys(MaterialType).find(key => MaterialType[key] === materialType);
 
         return invoke('upload_directory_to_s3', {
-            directoryPath: state.current!!.path,
+            directoryPath: state.current!.path,
             objectId: id,
             materialType: materialTypeEnum,
             appWindow: appWindow
@@ -200,12 +200,12 @@ const RegistrationForm: React.FC = () => {
             setBarWidth(0);
             return;
         }
-        let currentProgress = progress.dir[state.current!!.path];
+        const currentProgress = progress.dir[state.current!.path];
         if (currentProgress) {
             setBarWidth((currentProgress.pageNr / currentProgress.totalPages) * 100);
         }
         if (barWidth === 100) {
-            let usedPath = state.current!!.path;
+            const usedPath = state.current!.path;
             setIsSubmitting(false);
             setTimeout(() => delete progress.dir[usedPath], 5000);
         }

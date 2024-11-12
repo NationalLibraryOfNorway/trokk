@@ -7,7 +7,7 @@ const FileTreeComponent: React.FC = () => {
   const { state, dispatch } = useTrokkFiles();
 
   useEffect(() => {
-    for (let child of state.fileTrees) {
+    for (const child of state.fileTrees) {
       if (child.isDirectory) {
         changeViewDirectory(child)
         break
