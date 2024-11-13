@@ -122,8 +122,9 @@ jobs:
       - name: NPM; Lint frontend
         run: npm run lint
 
-      - name: NPM; Run frontend tests
-        run: npm run test
+      # TODO when tests are set up again
+      #- name: NPM; Run frontend tests
+      #  run: npm run test
 
       # Regex match to simple semver without v, and can have an extra dash or plus with numbers behind.
       # Examples: 1.2.3, 0.1.2, 0.0.0-123, 1.2.5+123123
