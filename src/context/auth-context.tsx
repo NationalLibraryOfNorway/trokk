@@ -40,7 +40,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
                     setAuthResponse(await settings.getAuthResponse());
                 } else if (secrets) {
                     await login();
-                } else {
                 }
             } catch (error) {
                 console.error("Error logging in: ", error)
