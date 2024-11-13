@@ -10,7 +10,7 @@ interface UploadProgressContextType {
     setAllUploadProgress: React.Dispatch<React.SetStateAction<AllTransferProgress>>;
 }
 
-const UploadProgressContext = createContext<UploadProgressContextType | undefined>(undefined);
+const UploadProgressContext = createContext<UploadProgressContextType | null>(null);
 
 export const UploadProgressProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [allUploadProgress, setAllUploadProgress] = useState<AllTransferProgress>({ dir: {} } as AllTransferProgress);

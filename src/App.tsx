@@ -11,8 +11,16 @@ import Modal from "./components/ui/modal.tsx";
 import SettingsForm from "./features/settings/settings.tsx";
 import { UploadProgressProvider } from "./context/upload-progress-context.tsx";
 import Button from "./components/ui/button.tsx";
+import {SecretProvider} from "./context/secret-context.tsx";
 
 function App() {
+    // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
+    window.addEventListener('unhandledrejection', function (event) {
+        console.error('Unhandled rejection (promise: ', event.promise, ', reason: ', event.reason, ').');
+        console.error(event);
+        throw event;
+    })
+
     const [scannerPath, setScannerPath] = useState<string>("");
     const [openSettings, setOpenSettings] = useState<boolean>(false);
 
@@ -37,18 +45,20 @@ function App() {
     }, []);
 
     return (
-        <AuthProvider>
-            <main className="flex flex-col">
-                <Content
-                    scannerPath={scannerPath}
-                    openSettings={openSettings}
-                    setOpenSettings={setOpenSettings}
-                />
-            </main>
-            <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                <SettingsForm />
-            </Modal>
-        </AuthProvider>
+        <SecretProvider>
+            <AuthProvider>
+                <main className="flex flex-col">
+                    <Content
+                        scannerPath={scannerPath}
+                        openSettings={openSettings}
+                        setOpenSettings={setOpenSettings}
+                    />
+                </main>
+                <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
+                    <SettingsForm />
+                </Modal>
+            </AuthProvider>
+        </SecretProvider>
     );
 }
 

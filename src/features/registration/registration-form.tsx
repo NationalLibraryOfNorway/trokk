@@ -13,8 +13,8 @@ import { useUploadProgress } from '../../context/upload-progress-context.tsx';
 import type { Event } from '@tauri-apps/api/event';
 import {TextItemResponse} from "../../model/text-input-response.ts";
 import {useTransferLog} from "../../context/transfer-log-context.tsx";
-import {SecretVariables} from "../../model/secret-variables.ts";
 import {SubmitHandler, useForm } from 'react-hook-form';
+import { useSecrets } from '../../context/secret-context.tsx';
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -29,6 +29,7 @@ const RegistrationForm: React.FC = () => {
     const { state } = useTrokkFiles();
     const { allUploadProgress, setAllUploadProgress } = useUploadProgress();
     const { addLog } = useTransferLog();
+    const { secrets } = useSecrets();
     const auth = useAuth();
     const loggedOut = auth?.loggedOut
     const [successMessage, setSuccessMessage] = useState('');
@@ -66,8 +67,7 @@ const RegistrationForm: React.FC = () => {
 
     useEffect(() => {
         const initialize = async () => {
-            const secrets = await invoke<SecretVariables>('get_secret_variables');
-            setPapiPath(secrets.papiPath);
+            setPapiPath(secrets?.papiPath ?? '');
             setDisabled(state.current?.path === undefined);
         };
 
@@ -86,7 +86,7 @@ const RegistrationForm: React.FC = () => {
         return () => {
             unlistenProgress.then((unlisten) => unlisten());
         };
-    }, []);
+    }, [secrets]);
 
     useEffect(() => {
         if (state.current?.path === undefined) {

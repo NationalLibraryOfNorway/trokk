@@ -6,7 +6,7 @@ interface TransferLogContextType {
     addLog: (log: TransferLogItem) => void;
 }
 
-const TransferLogContext = createContext<TransferLogContextType | undefined>(undefined);
+const TransferLogContext = createContext<TransferLogContextType | null>(null);
 
 export const TransferLogProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [logs, setLogs] = useState<TransferLogItem[]>([]);

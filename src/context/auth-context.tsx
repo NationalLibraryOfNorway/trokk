@@ -4,9 +4,8 @@ import {getCurrentWindow, type WindowOptions} from '@tauri-apps/api/window';
 import {WebviewWindow} from "@tauri-apps/api/webviewWindow";
 import {settings} from '../tauri-store/settings.ts'; // Adjust the import path as necessary
 import {Event} from "@tauri-apps/api/event";
-import {cancel} from "@fabianlars/tauri-plugin-oauth";
 import {AuthenticationResponse} from "../model/authentication-response.ts";
-import {SecretVariables} from "../model/secret-variables.ts";
+import {useSecrets} from "./secret-context.tsx";
 
 export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
@@ -26,25 +25,11 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
     const [authResponse, setAuthResponse] = useState<AuthenticationResponse | null>(null);
     const [loggedOut, setLoggedOut] = useState(false);
-    const [fetchSecretsError, setFetchSecretsError] = useState(null);
-    const [secrets, setSecrets] = useState<SecretVariables | null>(null);
     const refreshIntervalId = useRef<number | null>(null);
     const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
     const appWindow = getCurrentWindow();
 
-    useEffect(() => {
-        const initializeAuth = async () => {
-            try {
-                await getSecrets();
-            } catch (error) {
-                console.error('Error initializing auth:', error);
-            }
-        };
-
-        void initializeAuth();
-        return () => {
-        }
-    }, []);
+    const {secrets, getSecrets, fetchSecretsError} = useSecrets();
 
     useEffect(() => {
         const logInOnSecretChange = async () => {
@@ -55,6 +40,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
                     setAuthResponse(await settings.getAuthResponse());
                 } else if (secrets) {
                     await login();
+                } else {
                 }
             } catch (error) {
                 console.error("Error logging in: ", error)
@@ -62,20 +48,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         }
         void logInOnSecretChange()
     }, [secrets]);
-
-
-    const getSecrets = async () => {
-        await invoke<SecretVariables>('get_secret_variables')
-            .then((fetchedSecrets) => {
-                setSecrets(fetchedSecrets)
-                setFetchSecretsError(null);
-            }).catch((error) => {
-                console.error(error)
-                setFetchSecretsError(error.toString());
-                throw new Error('Failed to fetch secrets');
-            })
-    };
-
 
     const login = async () => {
         setAuthResponse(null);
@@ -100,14 +72,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
                     } as WindowOptions);
                 void loginWebView.show()
 
-                await appWindow.once<AuthenticationResponse>('token_exchanged', handleTokenExchangedEvent(loginWebView, port));
+                await appWindow.once<AuthenticationResponse>('token_exchanged', handleTokenExchangedEvent(loginWebView));
             } catch (e) {
                 console.error(e)
             }
         }
     };
 
-    const handleTokenExchangedEvent = (loginWebView: WebviewWindow, port: number) => async (event: Event<AuthenticationResponse>) => {
+    const handleTokenExchangedEvent = (loginWebView: WebviewWindow) => async (event: Event<AuthenticationResponse>) => {
         const authResponse = event.payload as AuthenticationResponse;
         setAuthResponse(authResponse);
         await settings.setAuthResponse(authResponse);
@@ -116,7 +88,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
         await loginWebView.destroy(); // Use destroy() instead of close() to avoid issue with keycloak login not redirecting properly.
         setLoggedOut(false);
         setIsLoggingIn(false);
-        await cancel(port);
 
         if (await appWindow.isMinimized()) await appWindow.unminimize();
         if (!(await appWindow.isVisible())) await appWindow.show();
@@ -171,5 +142,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({children}) => {
 };
 
 export const useAuth = () => {
-    return useContext(AuthContext);
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };
