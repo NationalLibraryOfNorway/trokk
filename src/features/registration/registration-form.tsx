@@ -14,8 +14,16 @@ import type { Event } from '@tauri-apps/api/event';
 import {TextItemResponse} from "../../model/text-input-response.ts";
 import {useTransferLog} from "../../context/transfer-log-context.tsx";
 import {SecretVariables} from "../../model/secret-variables.ts";
+import {SubmitHandler, useForm } from 'react-hook-form';
 
 const appWindow = getCurrentWebviewWindow();
+
+type RegistrationFormProps = {
+    materialType: MaterialType,
+    font: 'ANTIQUA' | 'FRAKTUR',
+    language: 'NOB' | 'SME',
+    workingTitle: string,
+}
 
 const RegistrationForm: React.FC = () => {
     const { state } = useTrokkFiles();
@@ -23,16 +31,38 @@ const RegistrationForm: React.FC = () => {
     const { addLog } = useTransferLog();
     const auth = useAuth();
     const loggedOut = auth?.loggedOut
-    const [disabled, setDisabled] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [barWidth, setBarWidth] = useState(0);
-    const [materialType, setMaterialType] = useState(MaterialType.NEWSPAPER);
-    const [fraktur, setFraktur] = useState(false);
-    const [sami, setSami] = useState(false);
-    const [name, setName] = useState('');
     const [papiPath, setPapiPath] = useState('');
+
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [disabled, setDisabled] = useState(false);
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        resetField
+    } = useForm<RegistrationFormProps>({
+        disabled,
+        defaultValues: {
+            materialType: MaterialType.NEWSPAPER,
+            font: 'ANTIQUA',
+            language: 'NOB',
+            workingTitle: ''
+        }
+    });
+
+    const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
+        setIsSubmitting(true);
+        setDisabled(true);
+        await invoke<string>('get_hostname')
+            .then(async hostname => await postRegistration(hostname, registration))
+            .catch(error => {
+                console.error(error)
+            })
+            .finally(() => setIsSubmitting(false));
+    };
 
     useEffect(() => {
         const initialize = async () => {
@@ -69,7 +99,10 @@ const RegistrationForm: React.FC = () => {
             }
         }
         setDisabled(state.current?.path === undefined)
-        setName(state.current ? state.current.name : "")
+        resetField('materialType')
+        resetField('font')
+        resetField('language')
+        setValue('workingTitle', state.current ? state.current.name : "")
         setSuccessMessage('')
         setErrorMessage('')
         setBarWidth(0)
@@ -79,19 +112,7 @@ const RegistrationForm: React.FC = () => {
         setBarWidthFromProgress(allUploadProgress)
     }, [allUploadProgress])
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        setIsSubmitting(true);
-        setDisabled(true);
-        e.preventDefault();
-        await invoke<string>('get_hostname')
-            .then(async hostname => await postRegistration(hostname))
-            .catch(error => {
-                console.error(error)
-            })
-            .finally(() => setIsSubmitting(false));
-    };
-
-    const postRegistration = async (machineName: string) => {
+    const postRegistration = async (machineName: string, registration: RegistrationFormProps) => {
         if (!state.current?.path) return;
         const pushedDir = state.current?.path;
         const auth = await settings.getAuthResponse();
@@ -99,7 +120,7 @@ const RegistrationForm: React.FC = () => {
 
         const id = uuidv7().toString();
 
-        const transfer = uploadToS3(id).catch(error => {
+        const transfer = uploadToS3(id, registration).catch(error => {
             handleError('Fikk ikke lastet opp filene', undefined, error);
             return Promise.reject(error);
         });
@@ -111,7 +132,7 @@ const RegistrationForm: React.FC = () => {
             return Promise.reject(error);
         });
 
-        const materialTypeDTO = Object.keys(MaterialType).find((key: string) => MaterialType[key as keyof typeof MaterialType] === materialType)
+        const materialTypeDTO = Object.keys(MaterialType).find((key: string) => MaterialType[key as keyof typeof MaterialType] === registration.materialType)
 
         return await fetch(`${papiPath}/v2/item`, {
             method: 'POST',
@@ -123,10 +144,10 @@ const RegistrationForm: React.FC = () => {
                 id,
                 materialTypeDTO!,
                 auth.userInfo.name,
-                fraktur ? 'FRAKTUR' : 'ANTIQUA',
-                sami ? 'SME' : 'NOB',
+                registration.font,
+                registration.language,
                 machineName,
-                name,
+                registration.workingTitle,
                 numberOfPagesTransferred
             ))
         })
@@ -146,18 +167,18 @@ const RegistrationForm: React.FC = () => {
             });
     };
 
-    const uploadToS3 = async (id: string): Promise<number> => {
+    const uploadToS3 = async (id: string, registration: RegistrationFormProps): Promise<number> => {
         const filesPath = await settings.getScannerPath();
         if (filesPath === state.current?.path) {
             return Promise.reject('Cannot move files from scanner dir');
         }
 
-        const materialTypeEnum = Object.keys(MaterialType).find(key => MaterialType[key as keyof typeof MaterialType] === materialType);
+        const materialTypeDTO = Object.keys(MaterialType).find(key => MaterialType[key as keyof typeof MaterialType] === registration.materialType);
 
         return invoke('upload_directory_to_s3', {
             directoryPath: state.current!.path,
             objectId: id,
-            materialType: materialTypeEnum,
+            materialType: materialTypeDTO,
             appWindow: appWindow
         });
     };
@@ -209,15 +230,11 @@ const RegistrationForm: React.FC = () => {
     };
 
     return (
-        <form className="flex flex-col w-80 m-4" onSubmit={handleSubmit}>
+        <form className="flex flex-col w-80 m-4" onSubmit={handleSubmit(onSubmit)}>
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label htmlFor="materialType" className="text-stone-100">Materialtype</label>
+                <label className="text-stone-100">Materialtype</label>
                 <select
-                    disabled={disabled}
-                    name="materialType"
-                    id="materialType"
-                    value={materialType}
-                    onChange={(e) => setMaterialType(e.target.value as MaterialType)}
+                    {...register('materialType')}
                     style={{color: '#000000'}}
                     className={'bg-amber-600'}
                 >
@@ -233,47 +250,43 @@ const RegistrationForm: React.FC = () => {
                 </select>
             </div>
 
-            <div className={`flex flex-row mb-4 ${disabled ? 'opacity-30' : ''}`}>
+            <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
                 <label>
                     <input
-                        disabled={disabled}
                         type="radio"
-                        checked={!fraktur}
-                        onChange={() => setFraktur(false)}
+                        {...register('font')}
                         className="accent-amber-400"
+                        value={'ANTIQUA'}
                     />{' '}
                     Antiqua
                 </label>
                 <label>
                     <input
-                        disabled={disabled}
                         type="radio"
-                        checked={fraktur}
-                        onChange={() => setFraktur(true)}
+                        {...register('font')}
                         className="accent-amber-400"
+                        value={'FRAKTUR'}
                     />{' '}
                     Fraktur
                 </label>
             </div>
 
-            <div className={`flex flex-row mb-4 ${disabled ? 'opacity-30' : ''}`}>
+            <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
                 <label>
                     <input
-                        disabled={disabled}
                         type="radio"
-                        checked={!sami}
-                        onChange={() => setSami(false)}
+                        {...register('language')}
                         className="accent-amber-400"
+                        value={'NOB'}
                     />{' '}
                     Norsk
                 </label>
                 <label>
                     <input
-                        disabled={disabled}
                         type="radio"
-                        checked={sami}
-                        onChange={() => setSami(true)}
+                        {...register('language')}
                         className="accent-amber-400"
+                        value={'SME'}
                     />{' '}
                     Samisk
                 </label>
@@ -282,12 +295,9 @@ const RegistrationForm: React.FC = () => {
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
                 <label htmlFor="workingTitle">Arbeidstittel (Blir ikke brukt i produksjon)</label>
                 <input
-                    disabled={disabled}
                     type="text"
-                    name="workingTitle"
                     id="workingTitle"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    {...register('workingTitle')}
                 />
             </div>
 
