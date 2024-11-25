@@ -3,7 +3,7 @@ import { MaterialType } from '../../model/registration-enums';
 import { fetch } from '@tauri-apps/plugin-http';
 import { TextInputDto } from '../../model/text-input-dto';
 import { invoke } from '@tauri-apps/api/core';
-import { settings } from '../../tauri-store/settings';
+import { settings } from '../../tauri-store/setting-store.ts';
 import { uuidv7 } from 'uuidv7';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { useAuth} from "../../context/auth-context.tsx";

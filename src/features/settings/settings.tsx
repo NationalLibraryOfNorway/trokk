@@ -1,26 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { settings } from '../../tauri-store/settings';
 import { readDir } from '@tauri-apps/plugin-fs';
-import { getVersion } from '@tauri-apps/api/app';
+import {useSettings} from "../../context/setting-context.tsx";
 
 const SettingsForm: React.FC = () => {
-    const [scannerPath, setScannerPath] = useState<string>('');
+    const { scannerPath, setScannerPathSetting, version } = useSettings();
     const [scanPathError, setScanPathError] = useState<string | undefined>(undefined);
     const [scanPathSuccess, setScanPathSuccess] = useState<string | undefined>(undefined);
-    const [version, setVersion] = useState<string>('');
 
-    useEffect(() => {
-        const initialize = async () => {
-            setScannerPath(await settings.getScannerPath() ?? '');
-            setVersion(await getVersion());
-        };
-        void initialize();
-    }, []);
+    const [scannerPathEdit, setScannerPathEdit] = useState<string>(scannerPath);
 
     const pickScannerPath = async () => {
         try {
             const path = await invoke<string>('pick_directory', { startPath: scannerPath });
+            setScannerPathEdit(path);
             saveScannerPath(path);
         } catch (error) {
             console.error(error);
@@ -32,8 +25,7 @@ const SettingsForm: React.FC = () => {
         readDir(path)
             .then(async () => {
                 setScanPathError(undefined);
-                setScannerPath(path);
-                await settings.setScannerPath(path)
+                setScannerPathSetting(path);
                 setScanPathSuccess('Lagret!');
                 setTimeout(() => setScanPathSuccess(undefined), 5000);
             })
@@ -43,11 +35,16 @@ const SettingsForm: React.FC = () => {
             });
     };
 
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        saveScannerPath(scannerPathEdit);
+    }
+
 
     return (
-        <form className="flex flex-col">
+        <form className="flex flex-col" onSubmit={handleSubmit}>
             <div className="flex mb-2">
-                <div className="flex-grow-0 ml-4 text-xs">versjon {version}</div>
+                <div className="flex-grow-0 ml-4 text-xs">versjon {version.current}</div>
             </div>
 
             <div className="flex mb-2">
@@ -56,11 +53,11 @@ const SettingsForm: React.FC = () => {
                 <input
                     type="text"
                     id="scannerPath"
-                    value={scannerPath}
-                    onChange={(e) => setScannerPath(e.target.value)}
+                    value={scannerPathEdit}
+                    onChange={(e) => setScannerPathEdit(e.target.value)}
                     className="ml-2 w-80"
                 />
-                <button type="button" onClick={() => saveScannerPath(scannerPath)} className="ml-2">Lagre</button>
+                <button type="button" onClick={() => saveScannerPath(scannerPathEdit)} className="ml-2">Lagre</button>
                 {scanPathError && <p className="text-red-500 ml-2">{scanPathError}</p>}
                 {scanPathSuccess && <p className="text-green-500 ml-2">{scanPathSuccess}</p>}
             </div>

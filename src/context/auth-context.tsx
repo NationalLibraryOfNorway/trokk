@@ -2,7 +2,7 @@ import React, {createContext, ReactNode, useContext, useEffect, useRef, useState
 import {invoke} from '@tauri-apps/api/core';
 import {getCurrentWindow, type WindowOptions} from '@tauri-apps/api/window';
 import {WebviewWindow} from "@tauri-apps/api/webviewWindow";
-import {settings} from '../tauri-store/settings.ts'; // Adjust the import path as necessary
+import {settings} from '../tauri-store/setting-store.ts';
 import {Event} from "@tauri-apps/api/event";
 import {AuthenticationResponse} from "../model/authentication-response.ts";
 import {useSecrets} from "./secret-context.tsx";

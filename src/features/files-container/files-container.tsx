@@ -4,7 +4,7 @@ import { File, Folder } from 'lucide-react';
 import { formatFileNames } from '../../util/file-utils';
 import {useTrokkFiles} from "../../context/trokk-files-context.tsx";
 import {FileTree} from "../../model/file-tree.ts";
-import {path} from "@tauri-apps/api";
+import {sep} from "@tauri-apps/api/path";
 
 const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
@@ -29,7 +29,7 @@ const FilesContainer: React.FC = () => {
         const thumbnailPath = tree.path.substring(
             0,
             tree.path.length - tree.name.length
-        ) + '.thumbnails' + path.sep() + tree.name.split('.')[0] + '.webp';
+        ) + '.thumbnails' + sep() + tree.name.split('.')[0] + '.webp';
         return state.treeIndex.get(thumbnailPath);
     }
 

@@ -1,6 +1,5 @@
 import React, {createContext, useContext, useEffect, useReducer, useRef} from 'react';
 import {
-    BaseDirectory,
     WatchEvent,
     WatchEventKind,
     WatchEventKindAccess,
@@ -10,9 +9,9 @@ import {
     watchImmediate
 } from '@tauri-apps/plugin-fs';
 import {FileTree} from '../model/file-tree';
-import {path} from "@tauri-apps/api";
 import {invoke} from '@tauri-apps/api/core';
 import {ConversionResult} from '../model/thumbnail';
+import {sep, documentDir} from "@tauri-apps/api/path";
 
 interface TrokkFilesState {
     basePath: string;
@@ -38,7 +37,7 @@ type TrokkFilesAction =
     | { type: 'UPDATE_STORE' };
 
 const initialState: TrokkFilesState = {
-    basePath: BaseDirectory.Document + path.sep() + 'trokk' + path.sep() + 'files', // TODO set reasonable default for windows
+    basePath: await documentDir(),
     fileTrees: [],
     treeIndex: new Map<string, FileTree>(),
     current: undefined,
@@ -204,7 +203,7 @@ function createNewThumbnailFromEvents(currentPath: string, events: EventPathAndK
 
 function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: EventPathAndKind[]): TrokkFilesState {
     const insertFileTree = (fileTrees: FileTree[], newFileTree: FileTree): FileTree[] => {
-        const parentPath = newFileTree.path.split(path.sep()).slice(0, -1).join(path.sep());
+        const parentPath = newFileTree.path.split(sep()).slice(0, -1).join(sep());
 
         if (parentPath === state.basePath) {
             return [...fileTrees, newFileTree];
@@ -234,14 +233,14 @@ function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: 
                 );
             }
             return fileTree;
-        }) as FileTree[];
+        });
     };
 
     let updatedFileTrees = [...state.fileTrees];
 
     eventPathsSorted.forEach((eventPath) => {
         const newFileTree = new FileTree(
-            eventPath.path.split(path.sep()).slice(-1)[0],
+            eventPath.path.split(sep()).slice(-1)[0],
             eventPath.kind == "folder", // isDirectory
             eventPath.kind == "file", // isFile
             false, // isSymlink
@@ -281,7 +280,7 @@ function removeFileTree(state: TrokkFilesState, eventPathsSorted: EventPathAndKi
                 }
                 return fileTree;
             })
-            .filter(Boolean) as FileTree[];
+            .filter((fileTree): fileTree is FileTree => fileTree !== null);
     };
 
     let updatedFileTrees = [...state.fileTrees];
@@ -343,6 +342,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
     }, [scannerPath]);
 
     const initialize = async () => {
+        console.debug('Initializing TrokkFilesProvider', scannerPath);
         if (scannerPath) {
             const rootTree = new FileTree(
                 scannerPath,

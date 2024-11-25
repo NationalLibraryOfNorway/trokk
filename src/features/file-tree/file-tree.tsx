@@ -23,12 +23,12 @@ const FileTreeComponent: React.FC = () => {
     const updateFileTree = (files: FileTree[]): FileTree[] => {
       return files.map((file) => {
         if (file.path === fileTree.path) {
-          return { ...file, opened: !file.opened } as FileTree;
+          return FileTree.fromSpread({ ...file, opened: !file.opened });
         }
         if (file.children) {
-          return { ...file, children: updateFileTree(file.children) } as FileTree;
+          return FileTree.fromSpread({ ...file, children: updateFileTree(file.children) });
         }
-        return file as FileTree;
+        return file;
       });
     };
 

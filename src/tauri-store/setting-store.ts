@@ -1,19 +1,22 @@
 import {load, Store} from "@tauri-apps/plugin-store";
 import {AuthenticationResponse} from "../model/authentication-response.ts";
+import { documentDir } from "@tauri-apps/api/path";
+import {sep} from "@tauri-apps/api/path";
 
+const defaultScannerPath = documentDir() + sep() + 'trokk' + sep() + 'files';
 
-class Settings {
-    private static instance: Settings;
+class SettingStore {
+    private static instance: SettingStore;
     store: Store | undefined;
 
     private constructor() {
     }
 
-    static getInstance(): Settings {
-        if (!Settings.instance) {
-            Settings.instance = new Settings();
+    static getInstance(): SettingStore {
+        if (!SettingStore.instance) {
+            SettingStore.instance = new SettingStore();
         }
-        return Settings.instance;
+        return SettingStore.instance;
     }
 
     async init(): Promise<void> {
@@ -22,6 +25,11 @@ class Settings {
                 autoSave: true
             }).then(store => {
                 this.store = store;
+                this.store.get('scannerPath').then(path => {
+                    if (path == undefined || path == '') {
+                        this.setScannerPath(defaultScannerPath);
+                    }
+                })
             }).catch(error => {
                 console.error('Error initializing store:', error);
             });
@@ -41,15 +49,21 @@ class Settings {
         }
     }
 
-    async getScannerPath(): Promise<string | undefined> {
+    async getScannerPath(): Promise<string> {
         await this.ensureStore();
-        let scannerPath: string | undefined = undefined;
-        this.store!.get<string>('scannerPath').then(path => {
-            scannerPath = path;
-        }).catch(error => {
-            console.error('Error getting scanner path:', error);
-        });
-        return scannerPath;
+        return await this.store!.get<string>('scannerPath')
+            .catch(error => {
+                console.error('Error getting scanner path from store:', error);
+            }).then<string>(path => {
+                let scannerPath: string = '';
+                if (path == undefined || path == '') {
+                    scannerPath = defaultScannerPath;
+                    this.setScannerPath(scannerPath);
+                } else {
+                    scannerPath = path;
+                }
+                return scannerPath;
+            })
     }
 
     async setScannerPath(path: string): Promise<void> {
@@ -91,4 +105,4 @@ class Settings {
     }
 }
 
-export const settings = Settings.getInstance();
+export const settings = SettingStore.getInstance();

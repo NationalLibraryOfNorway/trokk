@@ -1,5 +1,5 @@
-import { readDir, type DirEntry } from '@tauri-apps/plugin-fs';
-import { path } from '@tauri-apps/api';
+import {type DirEntry, readDir} from '@tauri-apps/plugin-fs';
+import {sep} from '@tauri-apps/api/path';
 
 export class FileTree implements DirEntry {
     name: string;
@@ -28,6 +28,27 @@ export class FileTree implements DirEntry {
         this.children = children;
     }
 
+    static fromSpread(
+        {
+          name,
+          isDirectory,
+          isFile,
+          isSymlink,
+          path,
+          opened = false,
+          children = []
+        }: Partial<FileTree>): FileTree {
+        return new FileTree(
+            name || '',
+            isDirectory || false,
+            isFile || false,
+            isSymlink || false,
+            path || '',
+            opened,
+            children
+        );
+    }
+
     sort(): void {
         this.children?.sort((a, b) => {
             if (a.path < b.path) return -1;
@@ -52,7 +73,7 @@ export class FileTree implements DirEntry {
                 dirEntry.isDirectory,
                 dirEntry.isFile,
                 dirEntry.isSymlink,
-                basePath + path.sep() + dirEntry.name,
+                basePath + sep() + dirEntry.name,
                 false
             );
         });

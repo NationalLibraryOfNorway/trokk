@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FolderOpen, User } from "lucide-react";
-import { documentDir } from "@tauri-apps/api/path";
-import { settings } from "./tauri-store/settings";
-import { path } from "@tauri-apps/api";
 import "./App.css";
 import {AuthProvider, AuthContextType, useAuth} from "./context/auth-context.tsx";
 import {TrokkFilesProvider} from "./context/trokk-files-context.tsx";
@@ -12,6 +9,7 @@ import SettingsForm from "./features/settings/settings.tsx";
 import { UploadProgressProvider } from "./context/upload-progress-context.tsx";
 import Button from "./components/ui/button.tsx";
 import {SecretProvider} from "./context/secret-context.tsx";
+import {SettingProvider, useSettings} from "./context/setting-context.tsx";
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -21,55 +19,35 @@ function App() {
         throw event;
     })
 
-    const [scannerPath, setScannerPath] = useState<string>("");
     const [openSettings, setOpenSettings] = useState<boolean>(false);
-
-    useEffect(() => {
-        const initializeSettings = async () => {
-            try {
-                await settings.init();
-                const savedScanPath = await settings.getScannerPath();
-                if (savedScanPath) {
-                    setScannerPath(savedScanPath);
-                } else {
-                    const defaultPath = await documentDir() + path.sep() + "trokk" + path.sep() + "files";
-                    await settings.setScannerPath(defaultPath);
-                    setScannerPath(defaultPath);
-                }
-            } catch (error) {
-                console.error("Error initializing settings:", error);
-            }
-        };
-
-        void initializeSettings();
-    }, []);
 
     return (
         <SecretProvider>
             <AuthProvider>
-                <main className="flex flex-col">
-                    <Content
-                        scannerPath={scannerPath}
-                        openSettings={openSettings}
-                        setOpenSettings={setOpenSettings}
-                    />
-                </main>
-                <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                    <SettingsForm />
-                </Modal>
+                <SettingProvider>
+                    <main className="flex flex-col">
+                        <Content
+                            openSettings={openSettings}
+                            setOpenSettings={setOpenSettings}
+                        />
+                    </main>
+                    <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
+                        <SettingsForm />
+                    </Modal>
+                </SettingProvider>
             </AuthProvider>
         </SecretProvider>
     );
 }
 
 interface ContentProps {
-    scannerPath: string;
     openSettings: boolean;
     setOpenSettings: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-const Content: React.FC<ContentProps> = ({ scannerPath, openSettings, setOpenSettings }) => {
+const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
     const { authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout } = useAuth() as AuthContextType;
+    const { scannerPath } = useSettings();
 
     if (fetchSecretsError) {
         return (

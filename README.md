@@ -14,11 +14,18 @@ eller [rust-lang.org](https://www.rust-lang.org/tools/install) .
 For installasjon av nødvendige pakker og oppstart:
 
 ```bash
-    npm install
+    npm ci
     npm run tauri dev
 ```
 
 Appen er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så lag en mappe der med noen filer.
+
+### Telemetri
+Appen bruker Sentry for feillogging.
+Dette medfører at konsollen blir wrappet i en Sentry-klient.
+Som gjør at alle `console.<ANYTHING>` ser ut som det kommer fra Sentry-pakken.
+
+For å få reelle linjer i konsollen, kommenter ut instrumenteringen i `src/main.tsx`:
 
 ### Krevde environment variabler
 
