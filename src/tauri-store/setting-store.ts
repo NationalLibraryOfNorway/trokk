@@ -81,13 +81,11 @@ class SettingStore {
 
     async getAuthResponse(): Promise<AuthenticationResponse | null> {
         await this.ensureStore();
-        let authResponse: AuthenticationResponse | null = null;
 
-        authResponse = await this.store!.get<AuthenticationResponse>('authResponse')
+        return await this.store!.get<AuthenticationResponse>('authResponse')
             .catch(error => {
                 console.error('Error getting auth response:', error);
             }) ?? null;
-        return authResponse;
     }
 
     async setAuthResponse(authResponse: AuthenticationResponse | null): Promise<void> {

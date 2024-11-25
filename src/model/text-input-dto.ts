@@ -1,4 +1,5 @@
-import {MaterialType, PublicationType} from "./registration-enums.ts";
+import {getMaterialTypeAsKeyString, MaterialType, PublicationType} from "./registration-enums.ts";
+import {getVersion} from "@tauri-apps/api/app";
 
 export class TextInputDto {
     id: string;
@@ -15,7 +16,7 @@ export class TextInputDto {
 
     constructor(
         id: string,
-        materialType: string,
+        materialType: MaterialType,
         username: string,
         font: string,
         language: string,
@@ -24,13 +25,13 @@ export class TextInputDto {
         numberOfPages: number
     ) {
         this.id = id;
-        this.materialType = materialType;
+        this.materialType = getMaterialTypeAsKeyString(materialType);
         this.publicationType = this.publicationTypeFromMaterialType(materialType);
         this.username = username;
         this.digital = false
         this.font = font;
         this.language = language;
-        this.application = "Trøkk";
+        this.application = "Trøkk " + getVersion();
         this.machineName = machineName;
         this.workName = workName;
         this.numberOfPages = numberOfPages;

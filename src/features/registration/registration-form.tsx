@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { MaterialType } from '../../model/registration-enums';
+import {getMaterialTypeAsKeyString, MaterialType } from '../../model/registration-enums';
 import { fetch } from '@tauri-apps/plugin-http';
 import { TextInputDto } from '../../model/text-input-dto';
 import { invoke } from '@tauri-apps/api/core';
@@ -132,8 +132,6 @@ const RegistrationForm: React.FC = () => {
             return Promise.reject(error);
         });
 
-        const materialTypeDTO = Object.keys(MaterialType).find((key: string) => MaterialType[key as keyof typeof MaterialType] === registration.materialType)
-
         return await fetch(`${papiPath}/v2/item`, {
             method: 'POST',
             headers: {
@@ -142,7 +140,7 @@ const RegistrationForm: React.FC = () => {
             },
             body: JSON.stringify(new TextInputDto(
                 id,
-                materialTypeDTO!,
+                registration.materialType,
                 auth.userInfo.name,
                 registration.font,
                 registration.language,
@@ -173,12 +171,10 @@ const RegistrationForm: React.FC = () => {
             return Promise.reject('Cannot move files from scanner dir');
         }
 
-        const materialTypeDTO = Object.keys(MaterialType).find(key => MaterialType[key as keyof typeof MaterialType] === registration.materialType);
-
         return invoke('upload_directory_to_s3', {
             directoryPath: state.current!.path,
             objectId: id,
-            materialType: materialTypeDTO,
+            materialType: getMaterialTypeAsKeyString(registration.materialType),
             appWindow: appWindow
         });
     };
