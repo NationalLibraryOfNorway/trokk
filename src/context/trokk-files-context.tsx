@@ -359,8 +359,9 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             const processQueue = () => {
                 if (eventQueue.current.length > 0) {
                     const events = eventQueue.current;
+                    console.debug('Processing events', events);
                     eventQueue.current = [];
-                    const { create, remove } = splitWatchEvents(events);
+                    const { create, remove } = splitWatchEvents(events); // TODO handle rename
 
                     if (stateRef.current.current) { // Create thumbnails for new files that pops up in the current directory
                         createNewThumbnailFromEvents(stateRef.current.current.path, create);
@@ -370,6 +371,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                     const currentState = stateRef.current;
                     newState = updateFileTreesWithNewObject(currentState, create);
                     newState = removeFileTree(newState, remove);
+                    // TODO handle rename
 
                     const newTreeIndex = populateIndex(newState.fileTrees);
 
