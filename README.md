@@ -14,23 +14,32 @@ eller [rust-lang.org](https://www.rust-lang.org/tools/install) .
 For installasjon av nødvendige pakker og oppstart:
 
 ```bash
-    npm install
+    npm ci
     npm run tauri dev
 ```
 
 Appen er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så lag en mappe der med noen filer.
 
+### Telemetri
+Appen bruker Sentry for feillogging.
+Dette medfører at konsollen blir wrappet i en Sentry-klient.
+Som gjør at alle `console.<ANYTHING>` ser ut som det kommer fra Sentry-pakken.
+
+For å få reelle linjer i konsollen, kommenter ut instrumenteringen i `src/main.tsx`:
+
 ### Krevde environment variabler
 
 Sett disse environment variablene for å få appen til å fungere:
 
-| Variabel             | Beskrivelse                                 |
-|----------------------|---------------------------------------------|
-| `VAULT_BASE_URL`     | URL til VAULT instans.                      |
-| `VAULT_ROLE_ID`      | Vault rolle_id for app-role innlogging.     |
-| `VAULT_SECRET_ID`    | Vault secret_id for app-role innlogging.    |
-| `SENTRY_ENVIRONMENT` | "Environment" string som sendes til Sentry. |
-| `SENTRY_URL`         | Generert Sentry URL for Rust prosjekt.      |
+| Variabel                  | Beskrivelse                                            |
+|---------------------------|--------------------------------------------------------|
+| `VAULT_BASE_URL`          | URL til VAULT instans.                                 |
+| `VAULT_ROLE_ID`           | Vault rolle_id for app-role innlogging.                |
+| `VAULT_SECRET_ID`         | Vault secret_id for app-role innlogging.               |
+| `SENTRY_ENVIRONMENT`      | "Environment" string som sendes til Sentry.            |
+| `SENTRY_URL`              | Generert Sentry URL for Rust prosjekt.                 |
+| `VITE_SENTRY_ENVIRONMENT` | "Environment" string som sendes til Sentry. (for vite) |
+| `VITE_SENTRY_URL`         | Generert Sentry URL for Rust prosjekt. (for vite)      |
 
 ### Forventede variabler fra Vault
 

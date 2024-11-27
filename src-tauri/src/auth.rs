@@ -4,6 +4,7 @@ use std::error::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use reqwest::Client;
+use tauri::Emitter;
 use tauri::Window;
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
@@ -29,7 +30,6 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 				.query_pairs()
 				.into_owned()
 				.collect();
-
 			tauri::async_runtime::block_on(async {
 				// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 				let secrets = get_secret_variables().await.unwrap();

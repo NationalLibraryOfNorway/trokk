@@ -2,78 +2,48 @@
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
-    "devPath": "http://localhost:1420",
-    "distDir": "../dist",
-    "withGlobalTauri": false
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420"
   },
-  "package": {
-    "productName": "Trøkk",
-    "version": "../package.json"
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "windows": {
+      "webviewInstallMode": {
+        "type": "offlineInstaller"
+      }
+    },
+    "shortDescription": "Filflytting og registrering fra skannermaskiner",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
   },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "shell": {
-        "all": false,
-        "open": true
-      },
-      "fs": {
-        "exists": true,
-        "readDir": true,
-        "writeFile": true,
-        "scope": [
-          "**"
-        ]
-      },
-      "path": {
-        "all": true
-      },
-      "protocol": {
-        "asset": true,
-        "assetScope": {
+  "productName": "Trøkk",
+  "version": "../package.json",
+  "identifier": "no.nb.trokk",
+  "plugins": {},
+  "app": {
+    "withGlobalTauri": false,
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true
+    },
+    "security": {
+      "assetProtocol": {
+        "scope": {
           "allow": [
             "**"
           ],
+          "deny": [],
           "requireLiteralLeadingDot": false
-        }
+        },
+        "enable": true
       },
-      "http": {
-        "all": true,
-        "request": true,
-        "scope": [
-          "http://localhost:8087/*",
-          "https://*.nb.no/*"
-        ]
-      },
-      "window": {
-        "create": true,
-        "close": true,
-        "show": true
-      },
-      "dialog": {
-        "open": true
-      }
-    },
-    "bundle": {
-      "active": true,
-      "targets": "all",
-      "identifier": "no.nb.trokk",
-      "shortDescription": "Filflytting og registrering fra skannermaskiner",
-      "icon": [
-        "icons/32x32.png",
-        "icons/128x128.png",
-        "icons/128x128@2x.png",
-        "icons/icon.icns",
-        "icons/icon.ico"
-      ],
-      "windows": {
-        "webviewInstallMode": {
-          "type": "offlineInstaller"
-        }
-      }
-    },
-    "security": {
-      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost"
+      "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost; connect-src ipc: http://ipc.localhost"
     },
     "windows": [
       {
@@ -83,10 +53,6 @@
         "width": 800,
         "height": 600
       }
-    ],
-    "systemTray": {
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": true
-    }
+    ]
   }
 }

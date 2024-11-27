@@ -4,7 +4,7 @@ use aws_sdk_s3::config::{Credentials, Region};
 use aws_sdk_s3::operation::put_object::PutObjectOutput;
 use aws_sdk_s3::primitives::ByteStream;
 use aws_sdk_s3::Client;
-use tauri::Window;
+use tauri::{Emitter, Window};
 use tokio::sync::OnceCell;
 
 use crate::file_utils::get_file_paths_in_directory;
@@ -16,7 +16,7 @@ pub(crate) async fn upload_directory(
 	object_id: &str,
 	material_type: &str,
 	app_window: Window,
-) -> Result<(), String> {
+) -> Result<usize, String> {
 	let secret_variables = get_secret_variables()
 		.await
 		.map_err(|e| format!("Failed to get secret variables: {}", e))?;
@@ -48,7 +48,7 @@ pub(crate) async fn upload_directory(
 			)
 			.map_err(|e| e.to_string())?;
 	}
-	Ok(())
+	Ok(file_paths.len())
 }
 
 async fn put_object(
