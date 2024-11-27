@@ -194,11 +194,12 @@ pub fn run() {
 			get_papi_access_token,
 			upload_directory_to_s3
 		])
-		.on_window_event(|window, event|
+		.on_window_event(|window, event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-  				window.hide().unwrap();
-  				api.prevent_close();
-  			})
+				window.hide().unwrap();
+				api.prevent_close();
+			}
+		})
 		.build(tauri::generate_context!())
 		.expect("error while running tauri application")
 		.run(|_app_handle, _event| {});
