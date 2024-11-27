@@ -138,8 +138,8 @@ async fn pick_directory<R: tauri::Runtime>(
 	.await
 	.expect("Failed to run blocking task");
 
-	if opt.is_some() {
-		Ok(opt.unwrap())
+	if let Some(value) = opt {
+		Ok(value)
 	} else {
 		Err("Could not pick directory".to_string())
 	}
@@ -194,14 +194,11 @@ pub fn run() {
 			get_papi_access_token,
 			upload_directory_to_s3
 		])
-		.on_window_event(|window, event| match event {
-			// run frontend in background on close
-			tauri::WindowEvent::CloseRequested { api, .. } => {
-				window.hide().unwrap();
-				api.prevent_close();
-			}
-			_ => {}
-		})
+		.on_window_event(|window, event|
+			if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+  				window.hide().unwrap();
+  				api.prevent_close();
+  			})
 		.build(tauri::generate_context!())
 		.expect("error while running tauri application")
 		.run(|_app_handle, _event| {});
