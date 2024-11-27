@@ -176,7 +176,6 @@ pub fn run() {
 		.setup(|app| {
 			#[cfg(debug_assertions)]
 			app.get_webview_window("main").unwrap().open_devtools();
-			#[cfg(all(desktop))]
 			{
 				let handle = app.handle();
 				tray::create_tray(handle)?;
