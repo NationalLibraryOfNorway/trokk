@@ -1,9 +1,9 @@
 use std::error;
-use std::path::{Path};
+use std::path::Path;
 
 use tempfile::TempDir;
 
-use crate::{delete_dir};
+use crate::delete_dir;
 
 #[tokio::test]
 async fn test_delete_dir_should_delete_directory() -> Result<(), Box<dyn error::Error>> {
