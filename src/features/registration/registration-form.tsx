@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import {getMaterialTypeAsKeyString, MaterialType } from '../../model/registration-enums';
+import { getMaterialTypeAsKeyString, MaterialType } from '../../model/registration-enums';
 import { fetch } from '@tauri-apps/plugin-http';
 import { TextInputDto } from '../../model/text-input-dto';
 import { invoke } from '@tauri-apps/api/core';
 import { settings } from '../../tauri-store/setting-store.ts';
 import { uuidv7 } from 'uuidv7';
 import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { useAuth} from "../../context/auth-context.tsx";
+import { useAuth } from '../../context/auth-context.tsx';
 import { AllTransferProgress, TransferProgress } from '../../model/transfer-progress';
-import {useTrokkFiles} from "../../context/trokk-files-context.tsx";
+import { useTrokkFiles } from '../../context/trokk-files-context.tsx';
 import { useUploadProgress } from '../../context/upload-progress-context.tsx';
 import type { Event } from '@tauri-apps/api/event';
-import {TextItemResponse} from "../../model/text-input-response.ts";
-import {useTransferLog} from "../../context/transfer-log-context.tsx";
-import {SubmitHandler, useForm } from 'react-hook-form';
+import { TextItemResponse } from '../../model/text-input-response.ts';
+import { useTransferLog } from '../../context/transfer-log-context.tsx';
+import { SubmitHandler, useForm } from 'react-hook-form';
 import { useSecrets } from '../../context/secret-context.tsx';
 
 const appWindow = getCurrentWebviewWindow();
@@ -31,7 +31,7 @@ const RegistrationForm: React.FC = () => {
     const { addLog } = useTransferLog();
     const { secrets } = useSecrets();
     const auth = useAuth();
-    const loggedOut = auth?.loggedOut
+    const loggedOut = auth?.loggedOut;
     const [successMessage, setSuccessMessage] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [barWidth, setBarWidth] = useState(0);
@@ -60,7 +60,7 @@ const RegistrationForm: React.FC = () => {
         await invoke<string>('get_hostname')
             .then(async hostname => await postRegistration(hostname, registration))
             .catch(error => {
-                console.error(error)
+                console.error(error);
             })
             .finally(() => setIsSubmitting(false));
     };
@@ -80,7 +80,7 @@ const RegistrationForm: React.FC = () => {
                     ...progress.dir,
                     [event.payload.directory]: event.payload
                 }
-            }))
+            }));
         });
 
         return () => {
@@ -91,26 +91,35 @@ const RegistrationForm: React.FC = () => {
     useEffect(() => {
         if (state.current?.path === undefined) {
             setDisabled(true);
+            resetField('materialType');
+            resetField('font');
+            resetField('language');
+            setValue('workingTitle', state.current ? state.current.name : '');
+            setSuccessMessage('');
+            setErrorMessage('');
+            setBarWidth(0);
         } else {
             const currentUploadProgress = allUploadProgress.dir[state.current.path];
             if (currentUploadProgress) {
                 setBarWidthFromProgress(allUploadProgress);
+                setIsSubmitting(true);
                 setDisabled(true);
+            } else {
+                setBarWidth(0);
+                setIsSubmitting(false);
+                setDisabled(false);
+                resetField('materialType');
+                resetField('font');
+                resetField('language');
+                setValue('workingTitle', state.current ? state.current.name : '');
             }
         }
-        setDisabled(state.current?.path === undefined)
-        resetField('materialType')
-        resetField('font')
-        resetField('language')
-        setValue('workingTitle', state.current ? state.current.name : "")
-        setSuccessMessage('')
-        setErrorMessage('')
-        setBarWidth(0)
-    }, [state.current])
+
+    }, [state.current]);
 
     useEffect(() => {
-        setBarWidthFromProgress(allUploadProgress)
-    }, [allUploadProgress])
+        setBarWidthFromProgress(allUploadProgress);
+    }, [allUploadProgress]);
 
     const postRegistration = async (machineName: string, registration: RegistrationFormProps) => {
         if (!state.current?.path) return;
@@ -231,7 +240,7 @@ const RegistrationForm: React.FC = () => {
                 <label className="text-stone-100">Materialtype</label>
                 <select
                     {...register('materialType')}
-                    style={{color: '#000000'}}
+                    style={{ color: '#000000' }}
                     className={'bg-amber-600'}
                 >
                     {Object.values(MaterialType).map((type) => (
@@ -298,15 +307,18 @@ const RegistrationForm: React.FC = () => {
             </div>
 
             <div className={`flex ${disabled ? 'opacity-30' : ''}`}>
-                <button disabled={disabled || isSubmitting} type="submit" className="w-full flex items-center justify-center">
+                <button disabled={disabled || isSubmitting} type="submit"
+                        className="w-full flex items-center justify-center">
                     {isSubmitting ? (
-                        <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        <svg className="animate-spin h-6 w-5 mr-3" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                         </svg>
-                        ) : (
-                            'TRØKK!'
-                        )
+                    ) : (
+                        'TRØKK!'
+                    )
                     }
                 </button>
             </div>
@@ -318,7 +330,7 @@ const RegistrationForm: React.FC = () => {
                 <div className="absolute z-0 w-full rounded-full bg-stone-800 h-6 overflow-hidden">
                     <div
                         className="bg-amber-600 h-6 transition-width duration-500"
-                        style={{width: `${barWidth}%`}}
+                        style={{ width: `${barWidth}%` }}
                     ></div>
                 </div>
             </div>
