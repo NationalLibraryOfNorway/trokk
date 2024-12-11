@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useEffect, useReducer, useRef} from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import {
     WatchEvent,
     WatchEventKind,
@@ -8,10 +8,10 @@ import {
     WatchEventKindRemove,
     watchImmediate
 } from '@tauri-apps/plugin-fs';
-import {FileTree} from '../model/file-tree';
-import {invoke} from '@tauri-apps/api/core';
-import {ConversionResult} from '../model/thumbnail';
-import {sep, documentDir} from "@tauri-apps/api/path";
+import { FileTree } from '../model/file-tree';
+import { invoke } from '@tauri-apps/api/core';
+import { ConversionResult } from '../model/thumbnail';
+import { documentDir, sep } from '@tauri-apps/api/path';
 
 interface TrokkFilesState {
     basePath: string;
@@ -19,6 +19,7 @@ interface TrokkFilesState {
     treeIndex: Map<string, FileTree>;
     current: FileTree | undefined;
 }
+
 interface InitializeState {
     fileTrees: FileTree[];
     scannerPath: string;
@@ -30,7 +31,12 @@ type TrokkFilesAction =
     | { type: 'SET_FILE_TREES'; payload: FileTree[] }
     | { type: 'INIT_TREE_INDEX'; payload: FileTree[] }
     | { type: 'SET_TREE_INDEX'; payload: Map<string, FileTree> }
-    | { type: 'UPDATE_FILE_TREES_AND_TREE_INDEX'; payloadFileTrees: FileTree[]; payloadIndex: Map<string, FileTree>, payloadCurrent: FileTree | undefined }
+    | {
+    type: 'UPDATE_FILE_TREES_AND_TREE_INDEX';
+    payloadFileTrees: FileTree[];
+    payloadIndex: Map<string, FileTree>,
+    payloadCurrent: FileTree | undefined
+}
     | { type: 'SET_CURRENT'; payload: FileTree | undefined }
     | { type: 'SET_CURRENT_AND_EXPAND_PARENTS'; payload: FileTree }
     | { type: 'RESET' }
@@ -40,7 +46,7 @@ const initialState: TrokkFilesState = {
     basePath: await documentDir(),
     fileTrees: [],
     treeIndex: new Map<string, FileTree>(),
-    current: undefined,
+    current: undefined
 };
 
 const TrokkFilesContext = createContext<{
@@ -48,7 +54,7 @@ const TrokkFilesContext = createContext<{
     dispatch: React.Dispatch<TrokkFilesAction>;
 }>({
     state: initialState,
-    dispatch: () => null,
+    dispatch: () => null
 });
 
 const setCurrentAndExpandParents = (state: TrokkFilesState, fileTree: FileTree): TrokkFilesState => {
@@ -77,14 +83,14 @@ const createThumbnailsFromDirectory = async (directoryPath: string) => {
         .catch((err) => {
             console.error(err);
         });
-}
+};
 
 const createThumbnail = async (filePath: string) => {
     invoke('convert_to_webp', { filePath: filePath })
         .catch((err) => {
             console.error(err);
         });
-}
+};
 
 // Populate the map with existing tree nodes
 const populateIndex = (fileTrees: FileTree[]): Map<string, FileTree> => {
@@ -96,10 +102,10 @@ const populateIndex = (fileTrees: FileTree[]): Map<string, FileTree> => {
                 populateRecursive(index, node.children);
             }
         }
-    }
+    };
     populateRecursive(treeIndex, fileTrees);
-    return treeIndex
-}
+    return treeIndex;
+};
 
 function isCloseWriteEvent(event: WatchEventKind): event is { access: WatchEventKindAccess } {
     try {
@@ -144,7 +150,7 @@ interface PathsSorted {
 
 interface EventPathAndKind {
     path: string;
-    kind: "folder" | "file";
+    kind: 'folder' | 'file';
 }
 
 
@@ -153,24 +159,24 @@ function splitWatchEvents(events: WatchEvent[]): PathsSorted {
         return index === self.findIndex((t) => (
             t.paths[0] === event.paths[0] && t.type === event.type
         ));
-    })
+    });
     const paths = deduplicatedEvents.reduce(
         (acc, event) => {
             if (isCloseWriteEvent(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.create.push({ path: path, kind: "file" });
+                    acc.create.push({ path: path, kind: 'file' });
                 });
             } else if (isCreateFolder(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.create.push({ path: path, kind: "folder" });
+                    acc.create.push({ path: path, kind: 'folder' });
                 });
             } else if (isModifyRenameFrom(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.remove.push({ path: path, kind: "file" });
+                    acc.remove.push({ path: path, kind: 'file' });
                 });
             } else if (isDeleteFolder(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.remove.push({ path: path, kind: "folder" });
+                    acc.remove.push({ path: path, kind: 'folder' });
                 });
             }
             return acc;
@@ -182,8 +188,8 @@ function splitWatchEvents(events: WatchEvent[]): PathsSorted {
     );
 
     const sortByFolderFirst = (a: EventPathAndKind, b: EventPathAndKind) => {
-        if (a.kind === "folder" && b.kind === "file") return -1;
-        if (a.kind === "file" && b.kind === "folder") return 1;
+        if (a.kind === 'folder' && b.kind === 'file') return -1;
+        if (a.kind === 'file' && b.kind === 'folder') return 1;
         return 0;
     };
 
@@ -195,7 +201,7 @@ function splitWatchEvents(events: WatchEvent[]): PathsSorted {
 
 function createNewThumbnailFromEvents(currentPath: string, events: EventPathAndKind[]): void {
     events.forEach((event) => {
-        if (event.path.includes(currentPath) && event.kind === "file" && (event.path.endsWith(".tif") || event.path.endsWith(".tiff"))) {
+        if (event.path.includes(currentPath) && event.kind === 'file' && (event.path.endsWith('.tif') || event.path.endsWith('.tiff'))) {
             void createThumbnail(event.path);
         }
     });
@@ -241,8 +247,8 @@ function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: 
     eventPathsSorted.forEach((eventPath) => {
         const newFileTree = new FileTree(
             eventPath.path.split(sep()).slice(-1)[0],
-            eventPath.kind == "folder", // isDirectory
-            eventPath.kind == "file", // isFile
+            eventPath.kind == 'folder', // isDirectory
+            eventPath.kind == 'file', // isFile
             false, // isSymlink
             eventPath.path, // path
             false // opened
@@ -258,10 +264,11 @@ function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: 
     });
 
     updatedFileTrees.forEach((fileTree: FileTree) => {
+        // noinspection SuspiciousTypeOfGuard
         if (fileTree instanceof FileTree) {
             fileTree.sortRecursive();
         } else {
-            console.error("Not instance of FileTree", fileTree);
+            console.error('Not instance of FileTree', fileTree);
         }
     });
 
@@ -295,26 +302,36 @@ function removeFileTree(state: TrokkFilesState, eventPathsSorted: EventPathAndKi
 const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): TrokkFilesState => {
     switch (action.type) {
         case 'INIT_STATE':
-            return { ...state, fileTrees: action.payload.fileTrees, treeIndex: populateIndex(action.payload.fileTrees), basePath: action.payload.scannerPath };
+            return {
+                ...state,
+                fileTrees: action.payload.fileTrees,
+                treeIndex: populateIndex(action.payload.fileTrees),
+                basePath: action.payload.scannerPath
+            };
         case 'SET_BASE_PATH':
             return { ...state, basePath: action.payload };
         case 'SET_FILE_TREES':
             return { ...state, fileTrees: action.payload };
         case 'INIT_TREE_INDEX':
-            return {...state, treeIndex: populateIndex(state.fileTrees)};
+            return { ...state, treeIndex: populateIndex(state.fileTrees) };
         case 'SET_TREE_INDEX':
             return { ...state, treeIndex: action.payload };
         case 'UPDATE_FILE_TREES_AND_TREE_INDEX':
-            return { ...state, treeIndex: action.payloadIndex, fileTrees: action.payloadFileTrees, current: action.payloadCurrent};
+            return {
+                ...state,
+                treeIndex: action.payloadIndex,
+                fileTrees: action.payloadFileTrees,
+                current: action.payloadCurrent
+            };
         case 'SET_CURRENT': {
             if (action.payload) {
-                void createThumbnailsFromDirectory( action.payload.path)
+                void createThumbnailsFromDirectory(action.payload.path);
             }
             return { ...state, current: action.payload };
         }
         case 'SET_CURRENT_AND_EXPAND_PARENTS': {
-            void createThumbnailsFromDirectory(action.payload.path)
-            return setCurrentAndExpandParents(state, action.payload)
+            void createThumbnailsFromDirectory(action.payload.path);
+            return setCurrentAndExpandParents(state, action.payload);
         }
         case 'RESET':
             return initialState;
@@ -325,7 +342,10 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
     }
 };
 
-export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPath: string }> = ({ children, scannerPath }) => {
+export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPath: string }> = ({
+                                                                                                     children,
+                                                                                                     scannerPath
+                                                                                                 }) => {
     const [state, dispatch] = useReducer(trokkFilesReducer, initialState);
     const stateRef = useRef(state);
     const eventQueue = useRef<WatchEvent[]>([]);
@@ -367,7 +387,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                         createNewThumbnailFromEvents(stateRef.current.current.path, create);
                     }
 
-                    let newState = null
+                    let newState: null | TrokkFilesState;
                     const currentState = stateRef.current;
                     newState = updateFileTreesWithNewObject(currentState, create);
                     newState = removeFileTree(newState, remove);
@@ -381,16 +401,20 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                         current = newTreeIndex.get(currentState.current.path);
                     }
 
-                    dispatch({type: 'UPDATE_FILE_TREES_AND_TREE_INDEX', payloadFileTrees: newFileTrees, payloadIndex: newTreeIndex, payloadCurrent: current});
+                    dispatch({
+                        type: 'UPDATE_FILE_TREES_AND_TREE_INDEX',
+                        payloadFileTrees: newFileTrees,
+                        payloadIndex: newTreeIndex,
+                        payloadCurrent: current
+                    });
                 }
-            }
+            };
 
-            const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) =>
-                {
+            const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
                     eventQueue.current.push(event);
                 },
                 {
-                    recursive: true,
+                    recursive: true
                 }
             );
 

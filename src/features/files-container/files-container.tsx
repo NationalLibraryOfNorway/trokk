@@ -2,9 +2,9 @@ import React from 'react';
 import { convertFileSrc } from '@tauri-apps/api/core';
 import { File, Folder } from 'lucide-react';
 import { formatFileNames } from '../../util/file-utils';
-import {useTrokkFiles} from "../../context/trokk-files-context.tsx";
-import {FileTree} from "../../model/file-tree.ts";
-import {sep} from "@tauri-apps/api/path";
+import { useTrokkFiles } from '../../context/trokk-files-context.tsx';
+import { FileTree } from '../../model/file-tree.ts';
+import { sep } from '@tauri-apps/api/path';
 
 const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
@@ -54,33 +54,33 @@ const FilesContainer: React.FC = () => {
             {state.current && state.current.children ? (
                 state.current.children.length !== 0 ? (
                     state.current.children.map((child) => (
-                            !child.name.startsWith('.thumbnails') && child.isDirectory ? (
-                                <button
-                                    key={child.path}
-                                    className="max-w-[150px]"
-                                    onClick={() => dispatch({type: "SET_CURRENT_AND_EXPAND_PARENTS", payload: child})}
-                                >
-                                    <Folder size="96" />
-                                    <i>{child.name}</i>
-                                </button>
-                            ) : (
-                                supportedFileTypes.includes(getFileExtension(child.path)) ? (
-                                    <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2">
-                                        <img src={convertFileSrc(child.path)} alt={child.name} />
-                                        <i>{formatFileNames(child.name)}</i>
-                                    </div>
-                                ) : getThumbnailExtensionFromTree(child) === 'webp' ? (
-                                    <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2">
-                                        <img src={getThumbnailURIFromTree(child)} alt={child.name} />
-                                        <i>{truncateMiddle(formatFileNames(child.name), 7, 10)}</i>
-                                    </div>
-                                ) : child.name !== '.thumbnails' && (
-                                    <div key={child.path} className="max-w-[150px] mr-2 mb-2 flex flex-col items-center">
-                                        <File size="96" color="gray"/>
-                                        <i>{truncateMiddle(child.name, 7, 10)}</i>
-                                    </div>
-                                )
+                        !child.name.startsWith('.thumbnails') && child.isDirectory ? (
+                            <button
+                                key={child.path}
+                                className="max-w-[150px]"
+                                onClick={() => dispatch({ type: 'SET_CURRENT_AND_EXPAND_PARENTS', payload: child })}
+                            >
+                                <Folder size="96" />
+                                <i>{child.name}</i>
+                            </button>
+                        ) : (
+                            supportedFileTypes.includes(getFileExtension(child.path)) ? (
+                                <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2">
+                                    <img src={convertFileSrc(child.path)} alt={child.name} />
+                                    <i>{formatFileNames(child.name)}</i>
+                                </div>
+                            ) : getThumbnailExtensionFromTree(child) === 'webp' ? (
+                                <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2">
+                                    <img src={getThumbnailURIFromTree(child)} alt={child.name} />
+                                    <i>{truncateMiddle(formatFileNames(child.name), 7, 10)}</i>
+                                </div>
+                            ) : child.name !== '.thumbnails' && (
+                                <div key={child.path} className="max-w-[150px] mr-2 mb-2 flex flex-col items-center">
+                                    <File size="96" color="gray" />
+                                    <i>{truncateMiddle(child.name, 7, 10)}</i>
+                                </div>
                             )
+                        )
                     ))
                 ) : (
                     <p className="m-8 font-bold break-words">

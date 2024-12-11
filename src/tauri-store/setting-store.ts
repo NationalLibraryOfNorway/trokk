@@ -1,7 +1,6 @@
-import {load, Store} from "@tauri-apps/plugin-store";
-import {AuthenticationResponse} from "../model/authentication-response.ts";
-import { documentDir } from "@tauri-apps/api/path";
-import {sep} from "@tauri-apps/api/path";
+import { load, Store } from '@tauri-apps/plugin-store';
+import { AuthenticationResponse } from '../model/authentication-response.ts';
+import { documentDir, sep } from '@tauri-apps/api/path';
 
 const defaultScannerPath = documentDir() + sep() + 'trokk' + sep() + 'files';
 
@@ -29,7 +28,7 @@ class SettingStore {
                     if (path == undefined || path == '') {
                         this.setScannerPath(defaultScannerPath);
                     }
-                })
+                });
             }).catch(error => {
                 console.error('Error initializing store:', error);
             });
@@ -55,7 +54,7 @@ class SettingStore {
             .catch(error => {
                 console.error('Error getting scanner path from store:', error);
             }).then<string>(path => {
-                let scannerPath: string = '';
+                let scannerPath: string;
                 if (path == undefined || path == '') {
                     scannerPath = defaultScannerPath;
                     this.setScannerPath(scannerPath);
@@ -63,7 +62,7 @@ class SettingStore {
                     scannerPath = path;
                 }
                 return scannerPath;
-            })
+            });
     }
 
     async setScannerPath(path: string): Promise<void> {

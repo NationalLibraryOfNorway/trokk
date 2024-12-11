@@ -1,5 +1,5 @@
-import {MaterialType, PublicationType} from "./registration-enums.ts";
-import {TransferLogItem} from "./transfer-log-item.ts";
+import { MaterialType, PublicationType } from './registration-enums.ts';
+import { TransferLogItem } from './transfer-log-item.ts';
 
 export class TextItemResponse {
     id: string;
@@ -28,7 +28,7 @@ export class TextItemResponse {
             workName: this.scanInformation.tempName,
             pages: parseInt(this.statistics.numberOfPages),
             uuid: this.id
-        }
+        };
     }
 }
 
