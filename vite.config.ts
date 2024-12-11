@@ -1,5 +1,5 @@
-import {defineConfig} from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 const host = process.env.TAURI_DEV_HOST;
 
@@ -18,14 +18,17 @@ export default defineConfig(async () => ({
         host: host || false,
         hmr: host
             ? {
-                protocol: "ws",
+                protocol: 'ws',
                 host,
-                port: 1421,
+                port: 1421
             }
             : undefined,
         watch: {
             // 3. tell vite to ignore watching `src-tauri`
-            ignored: ["**/src-tauri/**"],
-        },
+            ignored: ['**/src-tauri/**']
+        }
     },
+    build: {
+        target: 'ES2022'
+    }
 }));
