@@ -1,5 +1,5 @@
-import {getMaterialTypeAsKeyString, MaterialType, PublicationType} from "./registration-enums.ts";
-import {getVersion} from "@tauri-apps/api/app";
+import { getMaterialTypeAsKeyString, MaterialType, PublicationType } from './registration-enums.ts';
+import { getVersion } from '@tauri-apps/api/app';
 
 export class TextInputDto {
     id: string;
@@ -28,10 +28,10 @@ export class TextInputDto {
         this.materialType = getMaterialTypeAsKeyString(materialType);
         this.publicationType = this.publicationTypeFromMaterialType(materialType);
         this.username = username;
-        this.digital = false
+        this.digital = false;
         this.font = font;
         this.language = language;
-        this.application = "Trøkk " + getVersion();
+        this.application = 'Trøkk ' + getVersion();
         this.machineName = machineName;
         this.workName = workName;
         this.numberOfPages = numberOfPages;
@@ -41,9 +41,9 @@ export class TextInputDto {
         switch (materialType) {
             case MaterialType.PERIODICAL:
             case MaterialType.NEWSPAPER:
-                return PublicationType.PERIODICAL
+                return PublicationType.PERIODICAL;
             default:
-                return PublicationType.MONOGRAPHIC
+                return PublicationType.MONOGRAPHIC;
         }
     }
 }

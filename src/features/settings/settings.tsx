@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { readDir } from '@tauri-apps/plugin-fs';
-import {useSettings} from "../../context/setting-context.tsx";
+import { useSettings } from '../../context/setting-context.tsx';
 
 const SettingsForm: React.FC = () => {
     const { scannerPath, setScannerPathSetting, version } = useSettings();
@@ -38,7 +38,7 @@ const SettingsForm: React.FC = () => {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         saveScannerPath(scannerPathEdit);
-    }
+    };
 
 
     return (

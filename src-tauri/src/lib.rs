@@ -7,7 +7,6 @@ use tauri::Manager;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
-#[cfg(debug_assertions)]
 use crate::image_converter::ConversionCount;
 use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables};
 

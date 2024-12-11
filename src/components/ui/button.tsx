@@ -1,5 +1,5 @@
 //import './button.scss';
-import React from "react";
+import React from 'react';
 
 interface ButtonProps {
     onClick: () => void;
@@ -7,7 +7,7 @@ interface ButtonProps {
     className?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({onClick, children, className}) => {
+const Button: React.FC<ButtonProps> = ({ onClick, children, className }) => {
     return (
         <button
             className={`

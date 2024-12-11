@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
-import {settings} from "../tauri-store/setting-store.ts";
-import {getVersion} from "@tauri-apps/api/app";
+import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { settings } from '../tauri-store/setting-store.ts';
+import { getVersion } from '@tauri-apps/api/app';
 
 interface SettingContextType {
     scannerPath: string;
