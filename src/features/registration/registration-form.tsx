@@ -171,6 +171,10 @@ const RegistrationForm: React.FC = () => {
                     console.error(response);
                     handleError(undefined, response.status);
                 }
+                setAllUploadProgress(progress => {
+                    delete progress.dir[pushedDir];
+                    return progress;
+                });
             })
             .catch(error => {
                 handleError();
