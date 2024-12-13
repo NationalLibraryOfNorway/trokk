@@ -1,5 +1,5 @@
-import { getMaterialTypeAsKeyString, MaterialType, PublicationType } from './registration-enums.ts';
-import { getVersion } from '@tauri-apps/api/app';
+import {getMaterialTypeAsKeyString, MaterialType, PublicationType} from './registration-enums.ts';
+import {getVersion} from '@tauri-apps/api/app';
 
 export class TextInputDto {
     id: string;
@@ -31,7 +31,7 @@ export class TextInputDto {
         this.digital = false;
         this.font = font;
         this.language = language;
-        this.application = 'Trøkk ' + getVersion();
+        this.application = 'Trøkk';
         this.machineName = machineName;
         this.workName = workName;
         this.numberOfPages = numberOfPages;
@@ -44,6 +44,14 @@ export class TextInputDto {
                 return PublicationType.PERIODICAL;
             default:
                 return PublicationType.MONOGRAPHIC;
+        }
+    }
+
+    async setVersion(): Promise<void> {
+        try {
+            this.application = 'Trøkk ' + await getVersion();
+        } catch (error) {
+            console.error('Failed to set version:', error);
         }
     }
 }

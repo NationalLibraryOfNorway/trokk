@@ -141,22 +141,26 @@ const RegistrationForm: React.FC = () => {
             return Promise.reject(error);
         });
 
+        const body = new TextInputDto(
+            id,
+            registration.materialType,
+            auth.userInfo.name,
+            registration.font,
+            registration.language,
+            machineName,
+            registration.workingTitle,
+            numberOfPagesTransferred
+        );
+
+        await body.setVersion();
+
         return await fetch(`${papiPath}/v2/item`, {
             method: 'POST',
             headers: {
                 'Authorization': 'Bearer ' + accessToken,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(new TextInputDto(
-                id,
-                registration.materialType,
-                auth.userInfo.name,
-                registration.font,
-                registration.language,
-                machineName,
-                registration.workingTitle,
-                numberOfPagesTransferred
-            ))
+            body: JSON.stringify(body)
         })
             .then(async response => {
                 if (response.ok) {
