@@ -5,11 +5,13 @@ import { formatFileNames } from '../../util/file-utils';
 import { useTrokkFiles } from '../../context/trokk-files-context.tsx';
 import { FileTree } from '../../model/file-tree.ts';
 import { sep } from '@tauri-apps/api/path';
+import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 
 const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
 const FilesContainer: React.FC = () => {
     const { state, dispatch } = useTrokkFiles();
+    const [selectedImgSrc, setselectedImgSrc] = React.useState<string | undefined>(undefined);
 
     const getFileExtension = (path: string) => path?.split('.')?.pop() || '';
 
@@ -51,6 +53,14 @@ const FilesContainer: React.FC = () => {
 
     return (
         <div className="flex flex-wrap overflow-y-auto h-[calc(96%)] justify-start content-start ml-4">
+            {
+                selectedImgSrc && (
+                    <DetailedImageView
+                        imageSrc={selectedImgSrc}
+                        onClose={() => setselectedImgSrc(undefined)}
+                    />
+                )
+            }
             {state.current && state.current.children ? (
                 state.current.children.length !== 0 ? (
                     state.current.children.map((child) => (
@@ -65,18 +75,21 @@ const FilesContainer: React.FC = () => {
                             </button>
                         ) : (
                             supportedFileTypes.includes(getFileExtension(child.path)) ? (
-                                <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2">
-                                    <img src={convertFileSrc(child.path)} alt={child.name} />
+                                <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2"
+                                     onClick={() => setselectedImgSrc(convertFileSrc(child.path))}>
+                                    <img src={convertFileSrc(child.path)} alt={child.name}/>
                                     <i>{formatFileNames(child.name)}</i>
                                 </div>
                             ) : getThumbnailExtensionFromTree(child) === 'webp' ? (
-                                <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2">
-                                    <img src={getThumbnailURIFromTree(child)} alt={child.name} />
+                                <div key={child.path} className="border-2 border-stone-500 max-w-[150px] mr-2 mb-2"
+                                     onClick={() => setselectedImgSrc(getThumbnailURIFromTree(child))}>
+                                    <img src={getThumbnailURIFromTree(child)} alt={child.name}/>
                                     <i>{truncateMiddle(formatFileNames(child.name), 7, 10)}</i>
                                 </div>
                             ) : child.name !== '.thumbnails' && (
-                                <div key={child.path} className="max-w-[150px] mr-2 mb-2 flex flex-col items-center">
-                                    <File size="96" color="gray" />
+                                <div key={child.path} className="max-w-[150px] mr-2 mb-2 flex flex-col items-center"
+                                     onClick={() => setselectedImgSrc(undefined)}>
+                                    <File size="96" color="gray"/>
                                     <i>{truncateMiddle(child.name, 7, 10)}</i>
                                 </div>
                             )
