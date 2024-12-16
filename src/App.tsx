@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FolderOpen, User } from 'lucide-react';
 import './App.css';
 import { AuthContextType, AuthProvider, useAuth } from './context/auth-context.tsx';
@@ -8,8 +8,10 @@ import Modal from './components/ui/modal.tsx';
 import SettingsForm from './features/settings/settings.tsx';
 import { UploadProgressProvider } from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
-import { SecretProvider } from './context/secret-context.tsx';
+import { SecretProvider, useSecrets } from './context/secret-context.tsx';
 import { SettingProvider, useSettings } from './context/setting-context.tsx';
+import { PapiVersionProvider, usePapiVersion } from './context/version-context.tsx';
+import { getVersion } from '@tauri-apps/api/app';
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -19,35 +21,45 @@ function App() {
         throw event;
     });
 
-    const [openSettings, setOpenSettings] = useState<boolean>(false);
 
     return (
         <SecretProvider>
-            <AuthProvider>
-                <SettingProvider>
-                    <main className="flex flex-col">
-                        <Content
-                            openSettings={openSettings}
-                            setOpenSettings={setOpenSettings}
-                        />
-                    </main>
-                    <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                        <SettingsForm />
-                    </Modal>
-                </SettingProvider>
-            </AuthProvider>
+            <PapiVersionProvider>
+                <AppGuard />
+            </PapiVersionProvider>
         </SecretProvider>
     );
 }
 
-interface ContentProps {
-    openSettings: boolean;
-    setOpenSettings: React.Dispatch<React.SetStateAction<boolean>>;
-}
+const AppGuard: React.FC = () => {
+    const { papiVersion, fetchPapiVersionError, loadingPapiVersion } = usePapiVersion();
+    const { fetchSecretsError } = useSecrets();
+    const [openSettings, setOpenSettings] = useState<boolean>(false);
+    const [localVersion, setLocalVersion] = useState<string | null>(null);
+    const [versionLoading, setVersionLoading] = useState<boolean>(true);
 
-const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
-    const { authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout } = useAuth() as AuthContextType;
-    const { scannerPath } = useSettings();
+
+    useEffect(() => {
+        const fetchLocalVersion = async () => {
+            const version = await getVersion();
+            setLocalVersion(version);
+            setVersionLoading(false);
+        };
+
+        void fetchLocalVersion();
+    }, []);
+
+    function isSameMajorMinorVersion(version1: string, version2: string): boolean {
+        const parseVersion = (version: string) => {
+            const [major, minor] = version.replace('v', '').split('.').map(Number);
+            return { major, minor };
+        };
+
+        const v1 = parseVersion(version1);
+        const v2 = parseVersion(version2);
+
+        return v1.major === v2.major && v1.minor === v2.minor;
+    }
 
     if (fetchSecretsError) {
         return (
@@ -64,6 +76,68 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
             </>
         );
     }
+
+    if (versionLoading || loadingPapiVersion) {
+        return (
+            <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <h2 className={'h-[75px]'}>Henter versjonsnummer...</h2>
+            </div>
+        );
+    }
+
+    if (fetchPapiVersionError) {
+        return (
+            <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <div className="w-full max-w-md p-4 bg-red-100 border border-red-400 text-red-700 rounded relative"
+                     role="alert">
+                    <strong className="font-bold">Feil ved innhenting av versjon</strong>
+                    <br />
+                    <span className="block sm:inline">{fetchPapiVersionError}</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (!isSameMajorMinorVersion(localVersion!, papiVersion!)) {
+        return (
+            <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <h2 className={'h-[75px]'}>Oppdater Trøkk</h2>
+                <p>Din versjon av Trøkk er utdatert. Vennligst oppdater til siste versjon.</p>
+                <p>Din versjon: {localVersion}</p>
+                <p>Siste versjon: {papiVersion}</p>
+            </div>
+        );
+    }
+
+    return (
+        <AuthProvider>
+            <SettingProvider>
+                <main className="flex flex-col">
+                    <Content
+                        openSettings={openSettings}
+                        setOpenSettings={setOpenSettings}
+                    />
+                </main>
+                <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
+                    <SettingsForm />
+                </Modal>
+            </SettingProvider>
+        </AuthProvider>
+    );
+};
+
+
+interface ContentProps {
+    openSettings: boolean;
+    setOpenSettings: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
+    const { authResponse, loggedOut, isLoggingIn, login, logout } = useAuth() as AuthContextType;
+    const { scannerPath } = useSettings();
 
     if (loggedOut && !isLoggingIn) {
         return (

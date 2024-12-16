@@ -11,7 +11,6 @@ export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
     loggedOut: boolean;
     isLoggingIn: boolean;
-    fetchSecretsError: string | null;
     login: () => Promise<void>;
     logout: () => Promise<void>;
 }
@@ -29,7 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
     const appWindow = getCurrentWindow();
 
-    const { secrets, getSecrets, fetchSecretsError } = useSecrets();
+    const { secrets, getSecrets } = useSecrets();
 
     useEffect(() => {
         const logInOnSecretChange = async () => {
@@ -134,7 +133,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout }}>
+        <AuthContext.Provider value={{ authResponse, loggedOut, isLoggingIn, login, logout }}>
             {children}
         </AuthContext.Provider>
     );
