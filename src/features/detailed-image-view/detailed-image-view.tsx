@@ -42,7 +42,6 @@ export default function DetailedImageView({ onClose, images, currentIndex, setCu
 
     return (
         <div className="relative">
-            {/*{displayTitle && <p className="text-xl text-center pt-4">{imageSrc?.split('%2F').pop() ?? ''}</p>}*/}
             <p className="text-center pt-4">Viser bilde {currentIndex + 1} av {images.length}</p>
             <div className="flex justify-center mt-4">
                 <button onClick={handlePrevious} className="mx-2 px-4 py-2 bg-gray-800 text-white rounded">
