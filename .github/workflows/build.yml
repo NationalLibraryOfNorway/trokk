@@ -47,7 +47,7 @@ jobs:
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
             kv/team/text/data/artifactory * | ART_ ;
-            kv/team/text/trokk-stage * | TROKK_ ;
+            kv/team/text/data/trokk-stage * | TROKK_ ;
 
       # Git fix for Windows, workaround for permission issues regarding self-hosted runners
       - name: Windows; Git fix
