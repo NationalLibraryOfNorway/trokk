@@ -21,7 +21,7 @@ const FilesContainer: React.FC = () => {
             {state.current && state.current.children ? (
                 <>
                     {selectedImgSrc && (
-                        <div className="bg-gray-200 bg-opacity-25 dark:bg-gray-700 dark:bg-opacity-25">
+                        <div className="w-full bg-gray-200 bg-opacity-25 dark:bg-gray-700 dark:bg-opacity-25">
                             <DetailedImageView
                                 onClose={() => setSelectedImgSrc(undefined)}
                                 images={files}
