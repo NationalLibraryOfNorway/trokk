@@ -4,16 +4,10 @@ import {Folder} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 import Thumbnail from '../thumbnail/thumbnail.tsx';
-import {FileTree} from '../../model/file-tree.ts';
 
 const FilesContainer: React.FC = () => {
     const { state, dispatch } = useTrokkFiles();
     const [selectedImgSrc, setselectedImgSrc] = React.useState<string | undefined>(undefined);
-
-    const handleDispatch = (child: FileTree) => {
-        dispatch({ type: 'SET_CURRENT_AND_EXPAND_PARENTS', payload: child });
-        setselectedImgSrc(undefined);
-    };
 
     useEffect(() => {
         setselectedImgSrc(undefined);
@@ -40,7 +34,7 @@ const FilesContainer: React.FC = () => {
                                     <button
                                         key={child.path}
                                         className="max-w-[150px]"
-                                        onClick={() => handleDispatch(child)}
+                                        onClick={() => dispatch({ type: 'SET_CURRENT_AND_EXPAND_PARENTS', payload: child })}
                                     >
                                         <Folder size="96" />
                                         <i>{child.name}</i>
