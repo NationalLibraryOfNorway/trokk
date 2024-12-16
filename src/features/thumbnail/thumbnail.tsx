@@ -1,4 +1,3 @@
-import React from 'react';
 import {formatFileNames} from '../../util/file-utils.ts';
 import {FileTree} from '../../model/file-tree.ts';
 import {convertFileSrc} from '@tauri-apps/api/core';

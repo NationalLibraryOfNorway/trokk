@@ -1,17 +1,37 @@
-import React, {useEffect} from 'react';
+import {useEffect} from 'react';
+import {ChevronLeft, ChevronRight} from 'lucide-react';
+import {convertFileSrc} from '@tauri-apps/api/core';
+import {FileTree} from '../../model/file-tree.ts';
 
 interface DetailedImageViewProps {
-    imageSrc?: string;
-    displayTitle: boolean;
     onClose: () => void;
+    images: FileTree[];
+    currentIndex: number;
+    setCurrentIndex: (index: number) => void;
 }
 
-export default function DetailedImageView({imageSrc, displayTitle, onClose}: DetailedImageViewProps) {
+export default function DetailedImageView({ onClose, images, currentIndex, setCurrentIndex }: DetailedImageViewProps) {
     const handleKeyPress = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
             onClose();
         }
+        if (event.key === 'ArrowLeft') {
+            handlePrevious();
+        }
+        if (event.key === 'ArrowRight') {
+            handleNext();
+        }
     }
+
+    const handlePrevious = () => {
+        const newIndex = (currentIndex - 1 + images.length) % images.length;
+        setCurrentIndex(newIndex);
+    };
+
+    const handleNext = () => {
+        const newIndex = (currentIndex + 1) % images.length;
+        setCurrentIndex(newIndex);
+    };
 
     useEffect(() => {
         document.addEventListener('keydown', handleKeyPress);
@@ -21,15 +41,26 @@ export default function DetailedImageView({imageSrc, displayTitle, onClose}: Det
     }, []);
 
     return (
-        <div className="relative bg-gray-200 bg-opacity-25 dark:bg-gray-700 dark:bg-opacity-25">
-            {displayTitle && <p className="text-xl text-center py-4">{imageSrc?.split('%2F').pop() ?? ''}</p>}
+        <div className="relative">
+            {/*{displayTitle && <p className="text-xl text-center pt-4">{imageSrc?.split('%2F').pop() ?? ''}</p>}*/}
+            <p className="text-center pt-4">Viser bilde {currentIndex + 1} av {images.length}</p>
+            <div className="flex justify-center mt-4">
+                <button onClick={handlePrevious} className="mx-2 px-4 py-2 bg-gray-800 text-white rounded">
+                    <ChevronLeft/>
+                </button>
+                <button onClick={handleNext} className="mx-2 px-4 py-2 bg-gray-800 text-white rounded">
+                    <ChevronRight/>
+                </button>
+            </div>
             <button
                 onClick={onClose}
-                className="absolute top-0 right-0 m-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-white"
+                className="absolute top-[100px] right-0 m-4 w-10 h-10 flex items-center justify-center rounded-full bg-gray-800 text-white"
             >
                 x
             </button>
-            <img src={imageSrc} alt="Image in full size" className="p-2.5 max-h-screen w-full object-contain" />
+            <img src={convertFileSrc(images[currentIndex].path)} alt="Image in full size"
+                 className="p-2.5 max-h-screen w-full object-contain"/>
+
         </div>
     );
 }
