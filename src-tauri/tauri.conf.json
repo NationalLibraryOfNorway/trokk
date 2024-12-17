@@ -10,7 +10,8 @@
     "targets": "all",
     "windows": {
       "webviewInstallMode": {
-        "type": "skip"
+        "type": "fixedRuntime",
+        "path": "./Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86/"
       }
     },
     "shortDescription": "Filflytting og registrering fra skannermaskiner",
