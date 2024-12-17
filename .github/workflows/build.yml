@@ -119,7 +119,7 @@ jobs:
       - name: Supply webview2
         if: ${{ matrix.windows }}
         run: |
-          Invoke-WebRequest -Uri "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/023aa9c1-c16d-4b52-a1dd-55f125aa3061/Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab" -OutFile "Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab"
+          Invoke-WebRequest -Uri "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/023aa9c1-c16d-4b52-a1dd-55f125aa3061/Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab" -OutFile "Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab" -Proxy "http://proxy3.lx.nb.no:3128"
           Expand Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab --directory=./src-tauri/
           Remove-Item Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab
 
