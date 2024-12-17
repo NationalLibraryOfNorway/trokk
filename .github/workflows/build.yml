@@ -123,7 +123,7 @@ jobs:
           curl -L -o Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/023aa9c1-c16d-4b52-a1dd-55f125aa3061/Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab"
           where expand
           where expand.exe
-          expand.exe Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab -f:* ./src-tauri
+          C:\Windows\System32\expand.exe Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab -f:* ./src-tauri
           del Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab
 
       - name: Tauri build
