@@ -118,7 +118,7 @@ jobs:
 
       - name: Supply webview2
         if: ${{ matrix.windows }}
-        shell: pwsh
+        shell: powershell
         run: |
           Invoke-WebRequest -Uri "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/023aa9c1-c16d-4b52-a1dd-55f125aa3061/Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab" -OutFile "Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab"
           expand .\Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab -f:* ./src-tauri
