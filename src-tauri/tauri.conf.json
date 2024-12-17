@@ -10,7 +10,7 @@
     "targets": "all",
     "windows": {
       "webviewInstallMode": {
-        "type": "offlineInstaller"
+        "type": "skip"
       }
     },
     "shortDescription": "Filflytting og registrering fra skannermaskiner",
