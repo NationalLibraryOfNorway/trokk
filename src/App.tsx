@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FolderOpen, User } from 'lucide-react';
 import './App.css';
 import { AuthContextType, AuthProvider, useAuth } from './context/auth-context.tsx';
@@ -10,6 +10,8 @@ import { UploadProgressProvider } from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
 import { SecretProvider } from './context/secret-context.tsx';
 import { SettingProvider, useSettings } from './context/setting-context.tsx';
+import { invoke } from '@tauri-apps/api/core';
+import { getTauriVersion, getVersion } from '@tauri-apps/api/app';
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -20,23 +22,46 @@ function App() {
     });
 
     const [openSettings, setOpenSettings] = useState<boolean>(false);
+    const [webviewVersion, setWebviewVersion] = useState<string | null>(null);
+    const [trokkVersion, setTrokkVersion] = useState<string | null>(null);
+    const [tauriVersion, setTauriVersion] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchWebviewVersion = async () => {
+            const webviewVersionFetched = await invoke<string>('get_webview_version');
+            const trokkVersionFetched = await getVersion();
+            const tauriVersion = await getTauriVersion();
+            setWebviewVersion(webviewVersionFetched);
+            setTrokkVersion(trokkVersionFetched);
+            setTauriVersion(tauriVersion);
+        };
+        void fetchWebviewVersion();
+    }, []);
+
 
     return (
-        <SecretProvider>
-            <AuthProvider>
-                <SettingProvider>
-                    <main className="flex flex-col">
-                        <Content
-                            openSettings={openSettings}
-                            setOpenSettings={setOpenSettings}
-                        />
-                    </main>
-                    <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                        <SettingsForm />
-                    </Modal>
-                </SettingProvider>
-            </AuthProvider>
-        </SecretProvider>
+        <>
+            <div className={'flex justify-between'}>
+                <p>WebviewVersion: {webviewVersion}</p>
+                <p>Trøkk version: {trokkVersion}</p>
+                <p>Tauri version: {tauriVersion}</p>
+            </div>
+            <SecretProvider>
+                <AuthProvider>
+                    <SettingProvider>
+                        <main className="flex flex-col">
+                            <Content
+                                openSettings={openSettings}
+                                setOpenSettings={setOpenSettings}
+                            />
+                        </main>
+                        <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
+                            <SettingsForm />
+                        </Modal>
+                    </SettingProvider>
+                </AuthProvider>
+            </SecretProvider>
+        </>
     );
 }
 

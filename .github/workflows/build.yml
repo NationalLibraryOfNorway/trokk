@@ -116,6 +116,14 @@ jobs:
             echo "'${{ github.ref_name }}' is not a valid version - using default. Must be a numerical only semver version."
           fi
 
+      - name: Supply webview2
+        if: ${{ matrix.windows }}
+        shell: cmd
+        run: |
+          curl -L -o Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab "https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/023aa9c1-c16d-4b52-a1dd-55f125aa3061/Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab"
+          C:\Windows\System32\expand.exe Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab -f:* ./src-tauri
+          del Microsoft.WebView2.FixedVersionRuntime.131.0.2903.99.x86.cab
+
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         env:

@@ -161,6 +161,11 @@ async fn upload_directory_to_s3(
 	s3::upload_directory(directory_path, object_id, material_type, app_window).await
 }
 
+#[tauri::command]
+fn get_webview_version() -> String {
+	tauri::webview_version().unwrap()
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
@@ -179,7 +184,6 @@ pub fn run() {
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_oauth::init())
 		.setup(|app| {
-			#[cfg(debug_assertions)]
 			app.get_webview_window("main").unwrap().open_devtools();
 			{
 				let handle = app.handle();
@@ -197,7 +201,8 @@ pub fn run() {
 			delete_dir,
 			pick_directory,
 			get_papi_access_token,
-			upload_directory_to_s3
+			upload_directory_to_s3,
+			get_webview_version
 		])
 		.on_window_event(|window, event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = event {
