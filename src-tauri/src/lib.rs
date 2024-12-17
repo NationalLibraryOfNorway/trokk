@@ -184,7 +184,6 @@ pub fn run() {
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_oauth::init())
 		.setup(|app| {
-			#[cfg(debug_assertions)]
 			app.get_webview_window("main").unwrap().open_devtools();
 			{
 				let handle = app.handle();
