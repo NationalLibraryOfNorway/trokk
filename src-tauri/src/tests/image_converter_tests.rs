@@ -33,7 +33,7 @@ fn test_convert_to_webp_creates_webp_of_original_in_thumbnails_directory() {
 #[test]
 fn test_check_if_webp_exists_returns_false_if_webp_doesnt_exist() {
 	setup_temp_dir(|tmp_img_path| {
-		let webp_exists = check_if_webp_exists(tmp_img_path).unwrap();
+		let webp_exists = check_if_preview_exists(tmp_img_path).unwrap();
 
 		assert!(!webp_exists);
 	});
@@ -44,7 +44,7 @@ fn test_check_if_webp_exists_returns_true_if_webp_exists() {
 	setup_temp_dir(|tmp_img_path| {
 		convert_to_webp(tmp_img_path.clone()).unwrap();
 
-		let webp_exists = check_if_webp_exists(tmp_img_path).unwrap();
+		let webp_exists = check_if_preview_exists(tmp_img_path).unwrap();
 
 		assert!(webp_exists);
 	});

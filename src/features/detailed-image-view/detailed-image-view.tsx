@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { convertFileSrc } from '@tauri-apps/api/core';
-import { FileTree } from '../../model/file-tree.ts';
+import {useEffect} from 'react';
+import {ChevronLeft, ChevronRight} from 'lucide-react';
+import {FileTree} from '../../model/file-tree.ts';
+import {getPreviewURIFromTree} from '../../util/file-utils.ts';
+import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 
 interface DetailedImageViewProps {
     onClose: () => void;
@@ -11,6 +12,13 @@ interface DetailedImageViewProps {
 }
 
 export default function DetailedImageView({ onClose, images, currentIndex, setCurrentIndex }: DetailedImageViewProps) {
+    const {state, dispatch} = useTrokkFiles();
+
+    useEffect(() => {
+        const currentImage = images[currentIndex];
+        dispatch({ type: 'UPDATE_PREVIEW', payload: currentImage });
+    }, []);
+
     const handleKeyPress = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
             onClose();
@@ -40,6 +48,11 @@ export default function DetailedImageView({ onClose, images, currentIndex, setCu
         };
     }, [currentIndex, images]);
 
+    const getImageSrc = () => {
+        const image = images[currentIndex];
+        return getPreviewURIFromTree(image, state);
+    };
+
     return (
         <div className="relative">
             <p className="text-center pt-4">Viser bilde {currentIndex + 1} av {images.length}</p>
@@ -57,7 +70,7 @@ export default function DetailedImageView({ onClose, images, currentIndex, setCu
             >
                 x
             </button>
-            <img src={convertFileSrc(images[currentIndex].path)} alt="Image in full size"
+            <img src={getImageSrc()} alt="Forhåndsvisning av bilde"
                  className="p-2.5 max-h-screen w-full object-contain" />
         </div>
     );

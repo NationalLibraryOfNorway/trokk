@@ -13,11 +13,12 @@ import { invoke } from '@tauri-apps/api/core';
 import { ConversionResult } from '../model/thumbnail';
 import { documentDir, sep } from '@tauri-apps/api/path';
 
-interface TrokkFilesState {
+export interface TrokkFilesState {
     basePath: string;
     fileTrees: FileTree[];
     treeIndex: Map<string, FileTree>;
     current: FileTree | undefined;
+    preview: FileTree | undefined;
 }
 
 interface InitializeState {
@@ -40,13 +41,15 @@ type TrokkFilesAction =
     | { type: 'SET_CURRENT'; payload: FileTree | undefined }
     | { type: 'SET_CURRENT_AND_EXPAND_PARENTS'; payload: FileTree }
     | { type: 'RESET' }
-    | { type: 'UPDATE_STORE' };
+    | { type: 'UPDATE_STORE' }
+    | { type: 'UPDATE_PREVIEW'; payload: FileTree | undefined };
 
 const initialState: TrokkFilesState = {
     basePath: await documentDir(),
     fileTrees: [],
     treeIndex: new Map<string, FileTree>(),
-    current: undefined
+    current: undefined,
+    preview: undefined
 };
 
 const TrokkFilesContext = createContext<{
@@ -75,7 +78,7 @@ const setCurrentAndExpandParents = (state: TrokkFilesState, fileTree: FileTree):
     const newFileTrees = [...state.fileTrees];
     updateFileTree(newFileTrees, fileTree);
 
-    return { ...state, fileTrees: newFileTrees, current: fileTree };
+    return { ...state, fileTrees: newFileTrees, current: fileTree, preview: undefined };
 };
 
 const createThumbnailsFromDirectory = async (directoryPath: string) => {
@@ -86,11 +89,18 @@ const createThumbnailsFromDirectory = async (directoryPath: string) => {
 };
 
 const createThumbnail = async (filePath: string) => {
-    invoke('convert_to_webp', { filePath: filePath })
+    invoke('create_thumbnail_webp', { filePath: filePath })
         .catch((err) => {
             console.error(err);
         });
 };
+
+const createPreview = async (filePath: string) => {
+    invoke('create_preview_webp', { filePath: filePath, preview: true })
+        .catch((err) => {
+            console.error(err);
+        });
+}
 
 // Populate the map with existing tree nodes
 const populateIndex = (fileTrees: FileTree[]): Map<string, FileTree> => {
@@ -327,7 +337,7 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
             if (action.payload) {
                 void createThumbnailsFromDirectory(action.payload.path);
             }
-            return { ...state, current: action.payload };
+            return { ...state, current: action.payload, preview: undefined };
         }
         case 'SET_CURRENT_AND_EXPAND_PARENTS': {
             void createThumbnailsFromDirectory(action.payload.path);
@@ -337,6 +347,9 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
             return initialState;
         case 'UPDATE_STORE':
             return { ...state };
+        case 'UPDATE_PREVIEW':
+            createPreview(action.payload?.path ?? '');
+            return { ...state, preview: action.payload };
         default:
             return state;
     }

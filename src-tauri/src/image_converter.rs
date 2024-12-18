@@ -9,6 +9,7 @@ use webp::{Encoder, WebPMemory};
 use crate::error::ImageConversionError;
 
 const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
+const PREVIEW_FOLDER_NAME: &str = ".previews";
 const WEBP_EXTENSION: &str = "webp";
 const WEBP_QUALITY: f32 = 25.0;
 
@@ -28,10 +29,10 @@ pub fn convert_directory_to_webp<P: AsRef<Path>>(
 		already_converted: 0,
 	};
 	for file in files {
-		if check_if_webp_exists(&file)? {
+		if check_if_preview_exists(&file)? {
 			count.already_converted += 1;
 		} else {
-			convert_to_webp(&file)?;
+			convert_to_webp(&file, false)?;
 			count.converted += 1;
 		}
 	}
@@ -59,17 +60,25 @@ fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
 		.unwrap_or(false)
 }
 
-pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageConversionError> {
+pub fn convert_to_webp<P: AsRef<Path>>(image_path: P, high_res: bool) -> Result<PathBuf, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let image: image::DynamicImage = ImageReader::open(path_reference)?
 		.with_guessed_format()?
 		.decode()?;
 
-	let image = image.resize(
-		image.width() / 8,
-		image.height() / 8,
-		image::imageops::FilterType::Nearest,
-	);
+	let image = if high_res {
+		image.resize(
+			image.width() / 4,
+			image.height() / 4,
+			image::imageops::FilterType::Nearest,
+		)
+	} else {
+		image.resize(
+			image.width() / 8,
+			image.height() / 8,
+			image::imageops::FilterType::Nearest,
+		)
+	};
 
 	let encoder: Encoder =
 		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
@@ -79,7 +88,7 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageCo
 	let filename_original_image = get_file_name(path_reference)?;
 
 	let mut path = parent_directory.to_owned();
-	path.push(THUMBNAIL_FOLDER_NAME);
+	path.push(if high_res { PREVIEW_FOLDER_NAME } else { THUMBNAIL_FOLDER_NAME });
 
 	if !directory_exists(&path) {
 		fs::create_dir_all(&path)?;
@@ -93,13 +102,25 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P) -> Result<PathBuf, ImageCo
 	Ok(path)
 }
 
-pub fn check_if_webp_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, ImageConversionError> {
+pub fn check_if_thumbnail_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let parent_directory = get_parent_directory(path_reference)?;
 	let filename_original_image = get_file_name(path_reference)?;
 
 	let mut path = parent_directory.to_owned();
 	path.push(THUMBNAIL_FOLDER_NAME);
+	path.push(filename_original_image);
+	path.set_extension(WEBP_EXTENSION);
+	Ok(path.exists())
+}
+
+pub fn check_if_preview_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, ImageConversionError> {
+	let path_reference = image_path.as_ref();
+	let parent_directory = get_parent_directory(path_reference)?;
+	let filename_original_image = get_file_name(path_reference)?;
+
+	let mut path = parent_directory.to_owned();
+	path.push(PREVIEW_FOLDER_NAME);
 	path.push(filename_original_image);
 	path.set_extension(WEBP_EXTENSION);
 	Ok(path.exists())

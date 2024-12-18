@@ -1,38 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { convertFileSrc } from '@tauri-apps/api/core';
-import { Folder } from 'lucide-react';
-import { useTrokkFiles } from '../../context/trokk-files-context.tsx';
+import React, {useState} from 'react';
+import {Folder} from 'lucide-react';
+import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 import Thumbnail from '../thumbnail/thumbnail.tsx';
 
 const FilesContainer: React.FC = () => {
     const { state, dispatch } = useTrokkFiles();
-    const [selectedImgSrc, setSelectedImgSrc] = useState<string | undefined>(undefined);
     const [currentIndex, setCurrentIndex] = useState<number>(0);
 
-    useEffect(() => {
-        setSelectedImgSrc(undefined);
-    }, [state.current]);
-
     const files = state.current?.children?.filter(child => !child.isDirectory) || [];
+
+    const handleIndexChange = (index: number) => {
+        setCurrentIndex(index);
+        dispatch({ type: 'UPDATE_PREVIEW', payload: files[index] });
+    };
 
     return (
         <div className="flex flex-wrap overflow-y-auto h-[calc(96%)] justify-start content-start ml-4">
             {state.current && state.current.children ? (
                 <>
-                    {selectedImgSrc && (
+                    {state.preview && (
                         <div className="w-full bg-gray-200 bg-opacity-25 dark:bg-gray-700 dark:bg-opacity-25">
                             <DetailedImageView
-                                onClose={() => setSelectedImgSrc(undefined)}
+                                onClose={() => dispatch({ type: 'UPDATE_PREVIEW', payload: undefined })}
                                 images={files}
                                 currentIndex={currentIndex}
-                                setCurrentIndex={setCurrentIndex}
+                                setCurrentIndex={handleIndexChange}
                             />
                         </div>
                     )}
                     {state.current.children.length !== 0 ? (
                         state.current.children.map((child) => (
-                            !child.name.startsWith('.thumbnails') && child.isDirectory ? (
+                            !(child.name.startsWith('.thumbnails') || child.name.startsWith('.previews')) && child.isDirectory ? (
                                 <button
                                     key={child.path}
                                     className="max-w-[150px]"
@@ -48,7 +47,7 @@ const FilesContainer: React.FC = () => {
                                 <Thumbnail
                                     key={child.name}
                                     onClick={() => {
-                                        setSelectedImgSrc(convertFileSrc(child.path));
+                                        dispatch({ type: 'UPDATE_PREVIEW', payload: child });
                                         setCurrentIndex(files.indexOf(child));
                                     }}
                                     fileTree={child}
