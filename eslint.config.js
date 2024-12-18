@@ -15,6 +15,6 @@ export default [
   {
     rules: {
       'quotes': ['error', 'single', { 'avoidEscape': true }],
-      'react/react-in-jsx-scope': "off"
+      'react/react-in-jsx-scope': 'off'
     } }
 ];
