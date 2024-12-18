@@ -96,7 +96,7 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
     if (loggedOut && !isLoggingIn) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
                 <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn</Button>
             </div>
         );
@@ -105,7 +105,7 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
     if (isLoggingIn && !authResponse) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
                 <h2 className={'h-[75px]'}>Nytt innloggingsvindu åpnet, vennligst logg inn der...</h2>
             </div>
         );
@@ -114,7 +114,7 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
     if (!authResponse) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
                 <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn</Button>
             </div>
         );
