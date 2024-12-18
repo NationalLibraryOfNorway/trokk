@@ -1,8 +1,7 @@
-use std::ffi::OsString;
-use std::sync::Mutex;
-
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+use std::ffi::OsString;
+use std::sync::Mutex;
 use tauri::Manager;
 use tauri::Window;
 use tokio::sync::OnceCell;

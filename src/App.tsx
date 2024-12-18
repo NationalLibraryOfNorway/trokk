@@ -21,6 +21,9 @@ function App() {
         throw event;
     });
 
+    console.log(import.meta.env.VITE_SENTRY_DSN);
+    console.log(import.meta.env.VITE_SENTRY_ENVIRONMENT);
+
     const [openSettings, setOpenSettings] = useState<boolean>(false);
     const [webviewVersion, setWebviewVersion] = useState<string | null>(null);
     const [trokkVersion, setTrokkVersion] = useState<string | null>(null);
