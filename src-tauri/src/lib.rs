@@ -26,8 +26,8 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	vault_base_url: env!("VAULT_BASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
 	vault_secret_id: env!("VAULT_SECRET_ID"),
-	sentry_environment: env!("SENTRY_ENVIRONMENT"),
-	sentry_url: env!("SENTRY_URL"),
+	sentry_environment: env!("RUST_SENTRY_ENVIRONMENT"),
+	sentry_dsn: env!("RUST_SENTRY_DSN"),
 };
 
 // Use Tokio's OnceCell to fetch secrets from Vault only once
