@@ -60,7 +60,10 @@ fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
 		.unwrap_or(false)
 }
 
-pub fn convert_to_webp<P: AsRef<Path>>(image_path: P, high_res: bool) -> Result<PathBuf, ImageConversionError> {
+pub fn convert_to_webp<P: AsRef<Path>>(
+	image_path: P,
+	high_res: bool,
+) -> Result<PathBuf, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let image: image::DynamicImage = ImageReader::open(path_reference)?
 		.with_guessed_format()?
@@ -88,7 +91,11 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P, high_res: bool) -> Result<
 	let filename_original_image = get_file_name(path_reference)?;
 
 	let mut path = parent_directory.to_owned();
-	path.push(if high_res { PREVIEW_FOLDER_NAME } else { THUMBNAIL_FOLDER_NAME });
+	path.push(if high_res {
+		PREVIEW_FOLDER_NAME
+	} else {
+		THUMBNAIL_FOLDER_NAME
+	});
 
 	if !directory_exists(&path) {
 		fs::create_dir_all(&path)?;
@@ -102,7 +109,9 @@ pub fn convert_to_webp<P: AsRef<Path>>(image_path: P, high_res: bool) -> Result<
 	Ok(path)
 }
 
-pub fn check_if_thumbnail_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, ImageConversionError> {
+pub fn check_if_thumbnail_exists<P: AsRef<Path>>(
+	image_path: P,
+) -> Result<bool, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let parent_directory = get_parent_directory(path_reference)?;
 	let filename_original_image = get_file_name(path_reference)?;
@@ -114,7 +123,9 @@ pub fn check_if_thumbnail_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, 
 	Ok(path.exists())
 }
 
-pub fn check_if_preview_exists<P: AsRef<Path>>(image_path: P) -> Result<bool, ImageConversionError> {
+pub fn check_if_preview_exists<P: AsRef<Path>>(
+	image_path: P,
+) -> Result<bool, ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let parent_directory = get_parent_directory(path_reference)?;
 	let filename_original_image = get_file_name(path_reference)?;

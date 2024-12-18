@@ -22,7 +22,7 @@ fn setup_temp_dir<F: FnMut(PathBuf)>(mut handler: F) {
 #[test]
 fn test_convert_to_webp_creates_webp_of_original_in_thumbnails_directory() {
 	setup_temp_dir(|tmp_img_path| {
-		let output_image_path = convert_to_webp(tmp_img_path).unwrap();
+		let output_image_path = convert_to_webp(tmp_img_path, false).unwrap();
 
 		assert!(output_image_path.exists());
 		assert!(output_image_path.is_file());
@@ -42,7 +42,7 @@ fn test_check_if_webp_exists_returns_false_if_webp_doesnt_exist() {
 #[test]
 fn test_check_if_webp_exists_returns_true_if_webp_exists() {
 	setup_temp_dir(|tmp_img_path| {
-		convert_to_webp(tmp_img_path.clone()).unwrap();
+		convert_to_webp(tmp_img_path.clone(), false).unwrap();
 
 		let webp_exists = check_if_preview_exists(tmp_img_path).unwrap();
 
