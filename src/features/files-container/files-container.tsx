@@ -23,7 +23,8 @@ const FilesContainer: React.FC = () => {
                         <div className="w-full bg-gray-200 bg-opacity-25 dark:bg-gray-700 dark:bg-opacity-25">
                             <DetailedImageView
                                 onClose={() => dispatch({ type: 'UPDATE_PREVIEW', payload: undefined })}
-                                images={files}
+                                image={files[currentIndex]}
+                                totalImagesInFolder={files.length}
                                 currentIndex={currentIndex}
                                 setCurrentIndex={handleIndexChange}
                             />

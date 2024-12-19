@@ -348,7 +348,9 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
         case 'UPDATE_STORE':
             return { ...state };
         case 'UPDATE_PREVIEW':
-            createPreview(action.payload?.path ?? '');
+            if (action.payload?.path) {
+                void createPreview(action.payload.path);
+            }
             return { ...state, preview: action.payload };
         default:
             return state;

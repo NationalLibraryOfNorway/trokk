@@ -1,23 +1,34 @@
-import {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {FileTree} from '../../model/file-tree.ts';
 import {getPreviewURIFromTree} from '../../util/file-utils.ts';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
 
 interface DetailedImageViewProps {
     onClose: () => void;
-    images: FileTree[];
+    image: FileTree;
+    totalImagesInFolder: number;
     currentIndex: number;
     setCurrentIndex: (index: number) => void;
 }
 
-export default function DetailedImageView({ onClose, images, currentIndex, setCurrentIndex }: DetailedImageViewProps) {
+export default function DetailedImageView({ onClose, image, totalImagesInFolder, currentIndex, setCurrentIndex }: DetailedImageViewProps) {
     const {state, dispatch} = useTrokkFiles();
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
-        const currentImage = images[currentIndex];
-        dispatch({ type: 'UPDATE_PREVIEW', payload: currentImage });
+        dispatch({ type: 'UPDATE_PREVIEW', payload: image });
     }, []);
+
+    useEffect(() => {
+        setIsLoading(true)
+    }, [state.preview]);
+
+    // Listen to UPDATE_FILE_TREES_AND_TREE_INDEX action.type
+    useEffect(() => {
+        setIsLoading(false);
+    }, [state.current]);
 
     const handleKeyPress = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
@@ -32,12 +43,12 @@ export default function DetailedImageView({ onClose, images, currentIndex, setCu
     };
 
     const handlePrevious = () => {
-        const newIndex = (currentIndex - 1 + images.length) % images.length;
+        const newIndex = (currentIndex - 1 + totalImagesInFolder) % totalImagesInFolder;
         setCurrentIndex(newIndex);
     };
 
     const handleNext = () => {
-        const newIndex = (currentIndex + 1) % images.length;
+        const newIndex = (currentIndex + 1) % totalImagesInFolder;
         setCurrentIndex(newIndex);
     };
 
@@ -46,22 +57,21 @@ export default function DetailedImageView({ onClose, images, currentIndex, setCu
         return () => {
             document.removeEventListener('keydown', handleKeyPress);
         };
-    }, [currentIndex, images]);
+    }, [currentIndex, image]);
 
     const getImageSrc = () => {
-        const image = images[currentIndex];
         return getPreviewURIFromTree(image, state);
     };
 
     return (
         <div className="relative">
-            <p className="text-center pt-4">Viser bilde {currentIndex + 1} av {images.length}</p>
+            <p className="text-center pt-4">Viser bilde {currentIndex + 1} av {totalImagesInFolder}</p>
             <div className="flex justify-center mt-4">
                 <button onClick={handlePrevious} className="mx-2 px-4 py-2 bg-gray-800 text-white rounded">
-                    <ChevronLeft />
+                    <ChevronLeft/>
                 </button>
                 <button onClick={handleNext} className="mx-2 px-4 py-2 bg-gray-800 text-white rounded">
-                    <ChevronRight />
+                    <ChevronRight/>
                 </button>
             </div>
             <button
@@ -70,8 +80,15 @@ export default function DetailedImageView({ onClose, images, currentIndex, setCu
             >
                 x
             </button>
-            <img src={getImageSrc()} alt="Forhåndsvisning av bilde"
-                 className="p-2.5 max-h-screen w-full object-contain" />
+            {isLoading ? (
+                <div className="flex justify-center my-8 ">
+                    <LoadingSpinner size={48}/>
+                </div>
+
+            ) : (
+                <img src={getImageSrc()} alt="Forhåndsvisning av bilde"
+                     className="p-2.5 max-h-screen w-full object-contain"/>
+            )}
         </div>
     );
 }
