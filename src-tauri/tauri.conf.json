@@ -6,11 +6,17 @@
     "devUrl": "http://localhost:1420"
   },
   "bundle": {
+    "publisher": "Team Tekst",
     "active": true,
     "targets": "all",
     "windows": {
       "webviewInstallMode": {
         "type": "offlineInstaller"
+      },
+      "wix": {
+        "bannerPath": "installer/assets/installer_banner.png",
+        "dialogImagePath": "installer/assets/dialog_image.png",
+        "language": "nb-NO"
       }
     },
     "shortDescription": "Filflytting og registrering fra skannermaskiner",
@@ -47,6 +53,7 @@
     },
     "windows": [
       {
+        "theme": "dark",
         "fullscreen": false,
         "resizable": true,
         "title": "Trøkk",

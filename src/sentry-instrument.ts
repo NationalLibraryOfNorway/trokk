@@ -23,10 +23,5 @@ Sentry.init({
     replaysSessionSampleRate: 0.1,
     replaysOnErrorSampleRate: 1.0,
 
-    debug: true,
-    beforeSend(event) {
-        // Modify the event here
-        console.log('Event before sending to Sentry:', event);
-        return event;
-    }
+    debug: true
 });
