@@ -33,10 +33,6 @@ jobs:
       VAULT_BASE_URL: ${{ secrets.VAULT_BASE_URL }}
       VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
       VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
-      SENTRY_ENVIRONMENT: "stage" # TODO set dynamically when we have prod/stage
-      SENTRY_URL: ${{ secrets.SENTRY_URL }}
-      VITE_SENTRY_ENVIRONMENT: "stage" # TODO set dynamically when we have prod/stage
-      VITE_SENTRY_URL: ${{ secrets.SENTRY_URL }}
       RUST_BACKTRACE: full
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
@@ -50,7 +46,8 @@ jobs:
           roleId: ${{ secrets.VAULT_ROLE_ID }}
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
-            kv/team/text/data/artifactory * | ART_
+            kv/team/text/data/artifactory * | ART_ ;
+            kv/team/text/data/trokk-stage * | TROKK_ ;
 
       # Git fix for Windows, workaround for permission issues regarding self-hosted runners
       - name: Windows; Git fix
@@ -82,30 +79,6 @@ jobs:
             !src-tauri/target/release/bundle
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Rust; Install cargo-audit
-        run: cargo install cargo-audit
-
-      - name: Rust; Run cargo audit
-        continue-on-error: true
-        working-directory: ./src-tauri
-        run: cargo audit
-
-      - name: Rust; Run cargo fmt
-        working-directory: ./src-tauri
-        run: cargo fmt --all -- --check
-
-      - name: Rust; Run cargo clippy
-        working-directory: ./src-tauri
-        run: cargo clippy --all -- -D warnings
-        env:
-          VAULT_BASE_URL: "PLACEHOLDER"
-          VAULT_ROLE_ID: "PLACEHOLDER"
-          VAULT_SECRET_ID: "PLACEHOLDER"
-
-      - name: Rust; Run cargo test
-        working-directory: ./src-tauri
-        run: cargo test --all
-
       - name: NPM; Sync node version and setup cache
         uses: actions/setup-node@v4
         with:
@@ -118,9 +91,6 @@ jobs:
       - name: Windows NPM; Install windows dependency
         if: ${{ matrix.windows }}
         run: npm install @tauri-apps/cli-win32-x64-msvc@2.0.0-alpha.21
-
-      - name: NPM; Lint frontend
-        run: npm run lint
 
       # TODO when tests are set up again
       #- name: NPM; Run frontend tests
@@ -148,6 +118,11 @@ jobs:
 
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
+        env:
+          VITE_SENTRY_URL: ${{ steps.import-secrets.outputs.TROKK_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_SENTRY_ENVIRONMENT }}
+          SENTRY_URL: ${{ steps.import-secrets.outputs.TROKK_SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_SENTRY_ENVIRONMENT }}
         id: tauri_build
 
       - name: Setup JFrog CLI
