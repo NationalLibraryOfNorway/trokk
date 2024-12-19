@@ -60,8 +60,8 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 }
 
 #[tauri::command]
-async fn convert_to_webp(file_path: String) -> Result<(), String> {
-	match image_converter::check_if_webp_exists(&file_path) {
+async fn create_thumbnail_webp(file_path: String) -> Result<(), String> {
+	match image_converter::check_if_thumbnail_exists(&file_path) {
 		Ok(exists) => {
 			if exists {
 				return Ok(());
@@ -72,7 +72,26 @@ async fn convert_to_webp(file_path: String) -> Result<(), String> {
 		}
 	}
 
-	match image_converter::convert_to_webp(file_path) {
+	match image_converter::convert_to_webp(file_path, false) {
+		Ok(_) => Ok(()),
+		Err(e) => Err(e.to_string()),
+	}
+}
+
+#[tauri::command]
+async fn create_preview_webp(file_path: String) -> Result<(), String> {
+	match image_converter::check_if_preview_exists(&file_path) {
+		Ok(exists) => {
+			if exists {
+				return Ok(());
+			}
+		}
+		Err(e) => {
+			e.to_string();
+		}
+	}
+
+	match image_converter::convert_to_webp(file_path, true) {
 		Ok(_) => Ok(()),
 		Err(e) => Err(e.to_string()),
 	}
@@ -192,7 +211,8 @@ pub fn run() {
 			get_secret_variables,
 			log_in,
 			refresh_token,
-			convert_to_webp,
+			create_thumbnail_webp,
+			create_preview_webp,
 			convert_directory_to_webp,
 			delete_dir,
 			pick_directory,

@@ -22,6 +22,12 @@
         },
         {
           "path": "**/.thumbnails/**"
+        },
+        {
+          "path": "**/.previews"
+        },
+        {
+          "path": "**/.previews/**"
         }
       ]
     },
