@@ -144,3 +144,16 @@ jobs:
           jq -r .[] |
           sed -n -e 's/^.*bundle\///p' |
           xargs -I % jf rt u --url ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }} --user ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }} --password ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
+
+      - name: Update version db
+        shell: bash
+        run: |
+          echo "Updating version db"
+          pattern="^[0-9]+.[0-9]+.[0-9]+([-+][0-9]+)?$"
+          version_modified=$(echo ${{ github.ref_name }} | sed -e '/^v/s/^v//')
+          if [[ $version_modified =~ $pattern ]]; then
+            curl -X PUT ${{ steps.import-secrets.outputs.PAPI_PATH }}/desktop/version/trokk/$version_modified
+            echo "Version set to '$version_modified'"
+          else
+            echo "'${{ github.ref_name }}' is not a valid version - using default. Must be a numerical only semver version."
+          fi
