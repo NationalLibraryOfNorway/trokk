@@ -53,7 +53,7 @@
     },
     "windows": [
       {
-        "theme": "dark",
+        "theme": "Dark",
         "fullscreen": false,
         "resizable": true,
         "title": "Trøkk",
