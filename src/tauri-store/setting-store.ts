@@ -1,8 +1,8 @@
-import { load, Store } from '@tauri-apps/plugin-store';
-import { AuthenticationResponse } from '../model/authentication-response.ts';
-import { documentDir, sep } from '@tauri-apps/api/path';
+import {load, Store} from '@tauri-apps/plugin-store';
+import {AuthenticationResponse} from '../model/authentication-response.ts';
+import {documentDir, sep} from '@tauri-apps/api/path';
 
-const defaultScannerPath = documentDir() + sep() + 'trokk' + sep() + 'files';
+const defaultScannerPath = await documentDir() + sep() + 'trokk' + sep() + 'files';
 
 class SettingStore {
     private static instance: SettingStore;
