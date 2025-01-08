@@ -1,8 +1,7 @@
-use std::ffi::OsString;
-use std::sync::Mutex;
-
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+use std::ffi::OsString;
+use std::sync::Mutex;
 use tauri::Manager;
 use tauri::Window;
 use tokio::sync::OnceCell;
@@ -27,8 +26,8 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	vault_base_url: env!("VAULT_BASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
 	vault_secret_id: env!("VAULT_SECRET_ID"),
-	sentry_environment: env!("SENTRY_ENVIRONMENT"),
-	sentry_url: env!("SENTRY_URL"),
+	sentry_environment: env!("RUST_SENTRY_ENVIRONMENT"),
+	sentry_dsn: env!("RUST_SENTRY_DSN"),
 };
 
 // Use Tokio's OnceCell to fetch secrets from Vault only once
@@ -198,7 +197,6 @@ pub fn run() {
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_oauth::init())
 		.setup(|app| {
-			#[cfg(debug_assertions)]
 			app.get_webview_window("main").unwrap().open_devtools();
 			{
 				let handle = app.handle();

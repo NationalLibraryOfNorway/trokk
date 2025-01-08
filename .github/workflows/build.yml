@@ -119,10 +119,10 @@ jobs:
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         env:
-          VITE_SENTRY_URL: ${{ steps.import-secrets.outputs.TROKK_SENTRY_DSN }}
-          VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_SENTRY_ENVIRONMENT }}
-          SENTRY_URL: ${{ steps.import-secrets.outputs.TROKK_SENTRY_DSN }}
-          SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_SENTRY_ENVIRONMENT }}
+          VITE_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_ENVIRONMENT }}
+          RUST_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_DSN }}
+          RUST_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_ENVIRONMENT }}
         id: tauri_build
 
       - name: Setup JFrog CLI
