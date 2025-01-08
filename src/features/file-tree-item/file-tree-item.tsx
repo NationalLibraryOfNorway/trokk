@@ -1,9 +1,9 @@
 import React from 'react';
-import { ChevronDown, ChevronRight, FileImage, Folder, FolderOpen, Upload } from 'lucide-react';
-import { FileTree } from '../../model/file-tree';
-import { formatFileNames } from '../../util/file-utils';
-import { calculateProgress } from '../../model/transfer-progress';
-import { useUploadProgress } from '../../context/upload-progress-context.tsx';
+import {ChevronDown, ChevronRight, FileImage, Folder, FolderOpen, Upload} from 'lucide-react';
+import {FileTree} from '../../model/file-tree';
+import {formatFileNames} from '../../util/file-utils';
+import {calculateProgress} from '../../model/transfer-progress';
+import {useUploadProgress} from '../../context/upload-progress-context.tsx';
 
 interface FileTreeItemProps {
     file: FileTree;
@@ -18,10 +18,10 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                                                        changeViewDirectory,
                                                        currentPath
                                                    }) => {
-    const { allUploadProgress } = useUploadProgress();
+    const {allUploadProgress} = useUploadProgress();
 
     const getSelectedDirectoryHighlight = (dirName: string): string => {
-        return dirName === currentPath ? 'bg-blue-500 text-white' : 'hover:bg-stone-200 dark:hover:bg-stone-700';
+        return dirName === currentPath ? 'bg-blue-500 text-white' : 'hover:bg-stone-700';
     };
 
     return (
@@ -31,9 +31,9 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                     <div className="flex items-center">
                         <span className="mr-2 cursor-pointer mb-0.5" onClick={() => toggleFolderExpand(file)}>
                             {!file.opened ? (
-                                <ChevronRight size="16" className="text-stone-500" />
+                                <ChevronRight size="16" className="text-stone-500"/>
                             ) : (
-                                <ChevronDown size="16" className="text-stone-500" />
+                                <ChevronDown size="16" className="text-stone-500"/>
                             )}
                         </span>
                         <span
@@ -48,13 +48,13 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                             }}
                         >
                             {file.opened ? (
-                                <FolderOpen size="16" className="mr-2 mb-1 flex-shrink-0" />
+                                <FolderOpen size="16" className="mr-2 mb-1 flex-shrink-0"/>
                             ) : (
-                                <Folder size="16" className="mr-2 mb-1 flex-shrink-0" />
+                                <Folder size="16" className="mr-2 mb-1 flex-shrink-0"/>
                             )}
                             {allUploadProgress.dir[file.path] && (
                                 <span className="flex items-center pr-1 text-amber-400">
-                                    <Upload className="mb-1" size="16" />
+                                    <Upload className="mb-1" size="16"/>
                                     &nbsp;
                                     {calculateProgress(allUploadProgress.dir[file.path])}
                                 </span>
@@ -66,7 +66,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 )
             ) : (
                 <div className="flex">
-                    <FileImage size="16" className="mr-2 mt-0.5 flex-shrink-0" />
+                    <FileImage size="16" className="mr-2 mt-0.5 flex-shrink-0"/>
                     <span>{formatFileNames(file.name)}</span>
                 </div>
             )}
