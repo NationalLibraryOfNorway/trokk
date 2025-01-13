@@ -46,7 +46,7 @@ fn list_tif_files_in_directory<P: AsRef<Path>>(
 	for entry in fs::read_dir(directory_path)? {
 		let entry = entry?;
 		let path = entry.path();
-		if path.is_file() && path.extension().map_or(false, |ext| ext == "tif") {
+		if path.is_file() && path.extension().is_some_and(|ext| ext == "tif") {
 			files.push(path);
 		}
 	}
