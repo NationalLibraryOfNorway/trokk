@@ -29,7 +29,7 @@ pub fn convert_directory_to_webp<P: AsRef<Path>>(
 		already_converted: 0,
 	};
 	for file in files {
-		if check_if_preview_exists(&file)? {
+		if check_if_thumbnail_exists(&file)? {
 			count.already_converted += 1;
 		} else {
 			convert_to_webp(&file, false)?;
