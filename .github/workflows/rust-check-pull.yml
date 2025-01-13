@@ -24,8 +24,10 @@ jobs:
       VAULT_BASE_URL: "placeholder"
       VAULT_ROLE_ID: "placeholder"
       VAULT_SECRET_ID: "placeholder"
-      SENTRY_ENVIRONMENT: "placeholder"
-      SENTRY_URL: "placeholder"
+      VITE_SENTRY_ENVIRONMENT: "placeholder"
+      VITE_SENTRY_DSN: "placeholder"
+      RUST_SENTRY_ENVIRONMENT: "placeholder"
+      RUST_SENTRY_DSN: "placeholder"
     steps:
       # Git fix for Windows, workaround for permission issues regarding self-hosted runners
       - name: Windows; Git fix
