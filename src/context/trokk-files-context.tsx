@@ -96,7 +96,7 @@ const createThumbnail = async (filePath: string) => {
 };
 
 const createPreview = async (filePath: string) => {
-    invoke('create_preview_webp', { filePath: filePath, preview: true })
+    invoke('create_preview_webp', { filePath: filePath })
         .catch((err) => {
             console.error(err);
         });
