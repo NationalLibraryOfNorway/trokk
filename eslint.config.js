@@ -12,5 +12,9 @@ export default [
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
   { ignores: ['src-tauri/**/*', 'dist/**/*', 'node_modules/**/*'] },
-  { rules: { 'quotes': ['error', 'single', { 'avoidEscape': true }] } }
+  {
+    rules: {
+      'quotes': ['error', 'single', { 'avoidEscape': true }],
+      'react/react-in-jsx-scope': 'off'
+    } }
 ];
