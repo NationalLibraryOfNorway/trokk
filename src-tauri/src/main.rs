@@ -8,10 +8,10 @@ use std::borrow::Cow;
 fn main() {
 	// Initialize Sentry
 	let _guard = sentry::init((
-		env!("SENTRY_URL"),
+		env!("RUST_SENTRY_DSN"),
 		sentry::ClientOptions {
 			release: sentry::release_name!(),
-			environment: Some(Cow::from(env!("SENTRY_ENVIRONMENT"))),
+			environment: Some(Cow::from(env!("RUST_SENTRY_ENVIRONMENT"))),
 			debug: true,
 			..Default::default()
 		},

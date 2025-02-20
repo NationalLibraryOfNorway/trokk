@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { FolderOpen, User } from 'lucide-react';
+import React, {useState} from 'react';
+import {FolderOpen, User} from 'lucide-react';
 import './App.css';
-import { AuthContextType, AuthProvider, useAuth } from './context/auth-context.tsx';
-import { TrokkFilesProvider } from './context/trokk-files-context.tsx';
+import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
+import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
 import MainLayout from './components/layouts/main-layout.tsx';
 import Modal from './components/ui/modal.tsx';
 import SettingsForm from './features/settings/settings.tsx';
-import { UploadProgressProvider } from './context/upload-progress-context.tsx';
+import {UploadProgressProvider} from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
-import { SecretProvider } from './context/secret-context.tsx';
-import { SettingProvider, useSettings } from './context/setting-context.tsx';
+import {SecretProvider} from './context/secret-context.tsx';
+import {SettingProvider, useSettings} from './context/setting-context.tsx';
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
-    window.addEventListener('unhandledrejection', function(event) {
+    window.addEventListener('unhandledrejection', function (event) {
         console.error('Unhandled rejection (promise: ', event.promise, ', reason: ', event.reason, ').');
         console.error(event);
         throw event;
@@ -32,7 +32,7 @@ function App() {
                         />
                     </main>
                     <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                        <SettingsForm />
+                        <SettingsForm/>
                     </Modal>
                 </SettingProvider>
             </AuthProvider>
@@ -45,9 +45,9 @@ interface ContentProps {
     setOpenSettings: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
-    const { authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout } = useAuth() as AuthContextType;
-    const { scannerPath } = useSettings();
+const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
+    const {authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
+    const {scannerPath} = useSettings();
 
     if (fetchSecretsError) {
         return (
@@ -68,7 +68,7 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
     if (loggedOut && !isLoggingIn) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
                 <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn</Button>
             </div>
         );
@@ -77,7 +77,7 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
     if (isLoggingIn && !authResponse) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
                 <h2 className={'h-[75px]'}>Nytt innloggingsvindu åpnet, vennligst logg inn der...</h2>
             </div>
         );
@@ -86,7 +86,7 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
     if (!authResponse) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="banner.png" className={'w-96 pb-10'}></img>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
                 <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn</Button>
             </div>
         );
@@ -96,12 +96,12 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
         <>
             <div className="grid grid-cols-3 mt-2 sticky top-0">
                 <h2 className="text-xl flex items-center pl-4">
-                    <FolderOpen size="32" className="-ml-3 mr-1 mb-2 flex-shrink-0" />{scannerPath}
+                    <FolderOpen size="32" className="-ml-3 mr-1 mb-2 flex-shrink-0"/>{scannerPath}
                 </h2>
                 <h1 className="text-4xl content-end text-center">Trøkk</h1>
                 <div className="flex justify-end gap-2">
                     <div className="flex pr-2 pt-3">
-                        <User />
+                        <User/>
                         <p className="pt-0.5">{authResponse!.userInfo.givenName}</p>
                     </div>
                     <Button onClick={() => setOpenSettings(!openSettings)}>Innstillinger</Button>
@@ -110,7 +110,7 @@ const Content: React.FC<ContentProps> = ({ openSettings, setOpenSettings }) => {
             </div>
             <TrokkFilesProvider scannerPath={scannerPath}>
                 <UploadProgressProvider>
-                    <MainLayout />
+                    <MainLayout/>
                 </UploadProgressProvider>
             </TrokkFilesProvider>
         </>

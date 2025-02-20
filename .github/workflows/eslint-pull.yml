@@ -8,10 +8,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - [ self-hosted ]
+          - [ self-hosted-linux ]
           - [ self-hosted, Windows ]
         include:
-          - platform: [ self-hosted ]
+          - platform: [ self-hosted-linux ]
             linux: true
           - platform: [ self-hosted, Windows ]
             windows: true
