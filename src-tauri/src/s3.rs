@@ -27,12 +27,13 @@ pub(crate) async fn upload_directory(
 
 	let file_paths = get_file_paths_in_directory(directory_path)?;
 	for (index, file_path) in file_paths.iter().enumerate() {
+		let page_nr = index + 1;
 		put_object(
 			client,
 			secret_variables,
 			file_path,
 			object_id,
-			index,
+			page_nr,
 			material_type,
 		)
 		.await?;
@@ -42,7 +43,7 @@ pub(crate) async fn upload_directory(
 				"transfer_progress",
 				TransferProgress {
 					directory: directory_path.to_string(),
-					page_nr: (index + 1),
+					page_nr,
 					total_pages: file_paths.len(),
 				},
 			)
