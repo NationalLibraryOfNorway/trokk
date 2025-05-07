@@ -178,7 +178,6 @@ pub fn run() {
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_oauth::init())
 		.setup(|app| {
-			app.get_webview_window("main").unwrap().open_devtools();
 			{
 				let handle = app.handle();
 				tray::create_tray(handle)?;
