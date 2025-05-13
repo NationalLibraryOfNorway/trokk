@@ -7,6 +7,8 @@ import { Event } from '@tauri-apps/api/event';
 import { AuthenticationResponse } from '../model/authentication-response.ts';
 import { useSecrets } from './secret-context.tsx';
 
+const IS_MOCK_AUTH: boolean =  process.env.USE_MOCK_AUTH == 'true';
+
 export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
     loggedOut: boolean;
@@ -14,6 +16,7 @@ export interface AuthContextType {
     fetchSecretsError: string | null;
     login: () => Promise<void>;
     logout: () => Promise<void>;
+    isMockAuth: boolean; 
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -21,6 +24,36 @@ const AuthContext = createContext<AuthContextType | null>(null);
 interface AuthProviderProps {
     children: ReactNode;
 }
+
+const createMockAuthResponse = (): AuthenticationResponse => {
+    const now = new Date().getTime();
+    return {
+        tokenResponse: {
+            accessToken: 'mock-access-token-' + Math.random().toString(36).substring(7),
+            refreshToken: 'mock-refresh-token-' + Math.random().toString(36).substring(7),
+            refreshExpiresIn:90000,
+            expiresIn: now + 3600000,
+            tokenType: 'Bearer',
+            idToken: 'mock-id-token',
+            notBeforePolicy: 1,
+            sessionState: 'mock-session-state',
+            scope: 'mock-scope'
+        },
+        expireInfo: {
+            expiresAt: now + 3600000,
+            refreshExpiresAt: now + 86400000
+        },
+        userInfo: {
+            sub: 'sub-mock',
+            name: 'mock-name',
+            groups: [],
+            preferredUsername: 'preferred-mock-username',
+            givenName: 'mock-given-name',
+            familyName: 'mock-family-name',
+            email: 'mock-email',
+        }
+    };
+};
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [authResponse, setAuthResponse] = useState<AuthenticationResponse | null>(null);
@@ -32,13 +65,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { secrets, getSecrets, fetchSecretsError } = useSecrets();
 
     useEffect(() => {
+
         const logInOnSecretChange = async () => {
             try {
                 if (await isLoggedIn() && await canRefresh()) {
                     await refreshAccessToken();
                     await setRefreshAccessTokenInterval(null);
                     setAuthResponse(await settings.getAuthResponse());
-                } else if (secrets) {
+                } else if (secrets || IS_MOCK_AUTH) {
                     await login();
                 }
             } catch (error) {
@@ -47,11 +81,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         };
         void logInOnSecretChange();
     }, [secrets]);
+    const loginWithMock = async () => {
+        await new Promise(resolve => setTimeout(resolve,800));
 
-    const login = async () => {
-        setAuthResponse(null);
+        const mockAuthResponse = createMockAuthResponse();
+        setAuthResponse(mockAuthResponse);
+        await settings.setAuthResponse(mockAuthResponse);
+        await setRefreshAccessTokenInterval(mockAuthResponse);
+
+        setLoggedOut(false);
+        setIsLoggingIn(false);
+    }
+
+    const loginWithReal = async () => {
+        if (IS_MOCK_AUTH) {
+            console.warn('Attempted to use real login in mock mode. Skipping...');
+            return;
+        }
         if (isLoggingIn) return;
         setIsLoggingIn(true);
+
         if (!secrets?.oidcClientSecret) {
             await getSecrets();
         }
@@ -78,6 +127,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
     };
 
+    const login = async () => {
+        setAuthResponse(null);
+        if(isLoggingIn) return;
+        setIsLoggingIn(true);
+
+        if(IS_MOCK_AUTH) {
+            await loginWithMock();
+        }else if(!IS_MOCK_AUTH) {
+            await loginWithReal();
+        }
+    }
     const handleTokenExchangedEvent = (loginWebView: WebviewWindow) => async (event: Event<AuthenticationResponse>) => {
         const authResponse = event.payload as AuthenticationResponse;
         setAuthResponse(authResponse);
@@ -102,15 +162,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     const refreshAccessToken = async () => {
-        const authResponse = await settings.getAuthResponse();
-        if (await canRefresh() && authResponse) {
-            const res = await invoke<AuthenticationResponse>('refresh_token', { refreshToken: authResponse.tokenResponse.refreshToken });
-            await settings.setAuthResponse(res);
-        } else {
-            await login();
-            throw new Error('Refresh token expired');
+
+        if (IS_MOCK_AUTH) {
+            if (await canRefresh() && authResponse) {
+                const mockAuthResponse = createMockAuthResponse();
+                await settings.setAuthResponse(mockAuthResponse);
+                setAuthResponse(mockAuthResponse);
+            } else {
+                await login();
+                throw new Error('Refresh token expired');
+            }
+        }else {
+            const authResponse = await settings.getAuthResponse();
+            if(await canRefresh() && authResponse) {
+                const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken});
+                await settings.setAuthResponse(res);
+            }else {
+                await login();
+                throw new Error('Refresh token expired');
+            }
         }
-    };
+    }
 
     const setRefreshAccessTokenInterval = async (authRes: null | AuthenticationResponse) => {
         const authResponse = authRes ?? await settings.getAuthResponse();
@@ -134,7 +206,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout }}>
+        <AuthContext.Provider value={{ authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout, isMockAuth: IS_MOCK_AUTH }}>
             {children}
         </AuthContext.Provider>
     );

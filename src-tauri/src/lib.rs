@@ -1,3 +1,4 @@
+use dotenv::dotenv;
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
 use std::ffi::OsString;
@@ -6,9 +7,11 @@ use tauri::Manager;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
+use std::env;
 use crate::image_converter::ConversionCount;
-use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables};
+use crate::model::AuthenticationResponse;
 
+use crate::model::{  RequiredEnvironmentVariables, SecretVariables};
 mod auth;
 mod error;
 mod file_utils;
@@ -22,6 +25,7 @@ mod vault;
 #[cfg(test)]
 mod tests;
 
+#[cfg(not(feature = "debug-mock" ))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	vault_base_url: env!("VAULT_BASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
@@ -30,9 +34,24 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	sentry_dsn: env!("RUST_SENTRY_DSN"),
 };
 
+#[cfg(feature = "debug-mock")]
+pub static ENVIRONMENT_VARIABLES: Lazy<RequiredEnvironmentVariables> = Lazy::new(|| RequiredEnvironmentVariables {
+	vault_base_url: "MOCK",
+	vault_role_id: "MOCK",
+	vault_secret_id: "MOCK",
+	sentry_environment: Box::leak(env::var("RUST_SENTRY_ENVIRONMENT")
+		.unwrap_or_else(|_| panic!("SENTRY_ENVIRONMENT environment variable is not set."))
+		.into_boxed_str()),
+	sentry_dsn: Box::leak(env::var("RUST_SENTRY_DSN")
+		.unwrap_or_else(|_| panic!("SENTRY_DSN environment variable is not set."))
+		.into_boxed_str()),
+});
+
+#[cfg(not(feature = "debug-mock"))]
 // Use Tokio's OnceCell to fetch secrets from Vault only once
 static VAULT_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
 
+#[cfg(not(feature = "debug-mock" ))]
 #[tauri::command]
 async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 	// Fetch secrets from Vault only once, the cell functions as a cache
@@ -42,15 +61,42 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 		.map_err(|e| e.to_string())
 }
 
+
+#[cfg(feature = "debug-mock")]
+#[tauri::command]
+async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
+	dotenv().ok();
+	static MOCK_SECRETS: OnceCell<SecretVariables> = OnceCell::const_new();
+	MOCK_SECRETS
+		.get_or_try_init(|| async {
+			Ok(SecretVariables {
+				s3_access_key_id: env::var("S3_ACCESS_KEY_ID").expect("S3_ACCESS_KEY_ID not set"),
+				s3_secret_access_key: env::var("S3_SECRET_ACCESS_KEY").expect("S3_SECRET_ACCESS_KEY not set"),
+				s3_region: env::var("S3_REGION").expect("S3_REGION not set"),
+				s3_bucket_name: env::var("S3_BUCKET_NAME").expect("S3_BUCKET_NAME not set"),
+				s3_url: env::var("S3_URL").expect("S3_URL not set"),
+				oidc_client_id: env::var("OIDC_CLIENT_ID").expect("OIDC_CLIENT_ID not set"),
+				oidc_client_secret: env::var("OIDC_CLIENT_SECRET").expect("OIDC_CLIENT_SECRET not set"),
+				oidc_base_url: env::var("OIDC_BASE_URL").expect("OIDC_BASE_URL not set"),
+				oidc_tekst_client_id: env::var("OIDC_TEKST_CLIENT_ID").expect("OIDC_TEKST_CLIENT_ID not set"),
+				oidc_tekst_client_secret: env::var("OIDC_TEKST_CLIENT_SECRET").expect("OIDC_TEKST_CLIENT_SECRET not set"),
+				oidc_tekst_base_url: env::var("OIDC_TEKST_BASE_URL").expect("OIDC_TEKST_BASE_URL not set"),
+				papi_path: env::var("PAPI_PATH").expect("PAPI_PATH not set"),
+			})
+		})
+		.await
+}
+
+
 #[tauri::command]
 fn get_hostname() -> Result<String, OsString> {
 	gethostname().into_string()
 }
 
 #[tauri::command]
-async fn log_in(window: Window) -> Result<u16, String> {
+async fn log_in(_window: Window) -> Result<u16, String> {
 	// Returns the token via the `token_exchanged` window event
-	auth::log_in_with_server_redirect(window)
+	auth::log_in_with_server_redirect(_window)
 }
 
 #[tauri::command]
@@ -162,13 +208,15 @@ async fn pick_directory<R: tauri::Runtime>(
 	}
 }
 
+#[cfg(not(feature = "debug-mock" ))]
 #[tauri::command]
 async fn get_papi_access_token() -> Result<String, String> {
-	auth::get_access_token_for_papi()
-		.await
-		.map_err(|e| format!("Could not get token for Papi. {e:?}"))
+		auth::get_access_token_for_papi()
+			.await
+			.map_err(|e| format!("Could not get token for Papi. {e:?}"))
 }
 
+#[cfg(not(feature = "debug-mock" ))]
 #[tauri::command]
 async fn upload_directory_to_s3(
 	directory_path: &str,
@@ -176,7 +224,7 @@ async fn upload_directory_to_s3(
 	material_type: &str,
 	app_window: Window,
 ) -> Result<usize, String> {
-	s3::upload_directory(directory_path, object_id, material_type, app_window).await
+		s3::upload_directory(directory_path, object_id, material_type, app_window).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -214,7 +262,9 @@ pub fn run() {
 			convert_directory_to_webp,
 			delete_dir,
 			pick_directory,
+			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
+			#[cfg(not(feature = "debug-mock"))]
 			upload_directory_to_s3
 		])
 		.on_window_event(|window, event| {

@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 use std::collections::HashMap;
+#[cfg(not(feature = "debug-mock" ))]
 use std::error::Error;
 use std::time::{SystemTime, UNIX_EPOCH};
-
 use reqwest::Client;
 use tauri::Emitter;
 use tauri::Window;
@@ -52,7 +52,6 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 	)
 	.map_err(|e| e.to_string())
 }
-
 pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();
@@ -63,7 +62,7 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 	);
 	create_token(client, body).await
 }
-
+#[cfg(not(feature = "debug-mock" ))]
 pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>> {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();
