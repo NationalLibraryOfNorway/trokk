@@ -39,6 +39,7 @@ aws-sdk-s3 = { version = "1.4.0", features = ["rt-tokio", "behavior-version-late
 log = "0.4.21"
 tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
+dotenv = "0.15"
 
 [dev-dependencies]
 tempfile = "3.10.1"
@@ -46,6 +47,7 @@ tempfile = "3.10.1"
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
+debug-mock = []
 custom-protocol = ["tauri/custom-protocol"]
 
 [lib]
