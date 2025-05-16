@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {FileTree} from '../../model/file-tree.ts';
 import {getPreviewURIFromTree} from '../../util/file-utils.ts';

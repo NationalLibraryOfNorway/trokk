@@ -1,17 +1,15 @@
-use dotenv::dotenv;
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
 use std::ffi::OsString;
+use std::string::ToString;
 use std::sync::Mutex;
 use tauri::Manager;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
-use std::env;
 use crate::image_converter::ConversionCount;
-use crate::model::AuthenticationResponse;
+use crate::model::{  RequiredEnvironmentVariables, SecretVariables, AuthenticationResponse};
 
-use crate::model::{  RequiredEnvironmentVariables, SecretVariables};
 mod auth;
 mod error;
 mod file_utils;
@@ -25,7 +23,6 @@ mod vault;
 #[cfg(test)]
 mod tests;
 
-#[cfg(not(feature = "debug-mock" ))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	vault_base_url: env!("VAULT_BASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
@@ -33,19 +30,6 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	sentry_environment: env!("RUST_SENTRY_ENVIRONMENT"),
 	sentry_dsn: env!("RUST_SENTRY_DSN"),
 };
-
-#[cfg(feature = "debug-mock")]
-pub static ENVIRONMENT_VARIABLES: Lazy<RequiredEnvironmentVariables> = Lazy::new(|| RequiredEnvironmentVariables {
-	vault_base_url: "MOCK",
-	vault_role_id: "MOCK",
-	vault_secret_id: "MOCK",
-	sentry_environment: Box::leak(env::var("RUST_SENTRY_ENVIRONMENT")
-		.unwrap_or_else(|_| panic!("SENTRY_ENVIRONMENT environment variable is not set."))
-		.into_boxed_str()),
-	sentry_dsn: Box::leak(env::var("RUST_SENTRY_DSN")
-		.unwrap_or_else(|_| panic!("SENTRY_DSN environment variable is not set."))
-		.into_boxed_str()),
-});
 
 #[cfg(not(feature = "debug-mock"))]
 // Use Tokio's OnceCell to fetch secrets from Vault only once
@@ -61,32 +45,31 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 		.map_err(|e| e.to_string())
 }
 
-
 #[cfg(feature = "debug-mock")]
 #[tauri::command]
 async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
-	dotenv().ok();
 	static MOCK_SECRETS: OnceCell<SecretVariables> = OnceCell::const_new();
 	MOCK_SECRETS
 		.get_or_try_init(|| async {
 			Ok(SecretVariables {
-				s3_access_key_id: env::var("S3_ACCESS_KEY_ID").expect("S3_ACCESS_KEY_ID not set"),
-				s3_secret_access_key: env::var("S3_SECRET_ACCESS_KEY").expect("S3_SECRET_ACCESS_KEY not set"),
-				s3_region: env::var("S3_REGION").expect("S3_REGION not set"),
-				s3_bucket_name: env::var("S3_BUCKET_NAME").expect("S3_BUCKET_NAME not set"),
-				s3_url: env::var("S3_URL").expect("S3_URL not set"),
-				oidc_client_id: env::var("OIDC_CLIENT_ID").expect("OIDC_CLIENT_ID not set"),
-				oidc_client_secret: env::var("OIDC_CLIENT_SECRET").expect("OIDC_CLIENT_SECRET not set"),
-				oidc_base_url: env::var("OIDC_BASE_URL").expect("OIDC_BASE_URL not set"),
-				oidc_tekst_client_id: env::var("OIDC_TEKST_CLIENT_ID").expect("OIDC_TEKST_CLIENT_ID not set"),
-				oidc_tekst_client_secret: env::var("OIDC_TEKST_CLIENT_SECRET").expect("OIDC_TEKST_CLIENT_SECRET not set"),
-				oidc_tekst_base_url: env::var("OIDC_TEKST_BASE_URL").expect("OIDC_TEKST_BASE_URL not set"),
-				papi_path: env::var("PAPI_PATH").expect("PAPI_PATH not set"),
+				s3_access_key_id: env!("S3_ACCESS_KEY_ID").to_string(),
+				s3_secret_access_key: env!("S3_SECRET_ACCESS_KEY").to_string(),
+				s3_region: env!("S3_REGION").to_string(),
+				s3_bucket_name: env!("S3_BUCKET_NAME").to_string(),
+				s3_url: env!("S3_URL").to_string(),
+				oidc_client_id: env!("OIDC_CLIENT_ID").to_string(),
+				oidc_client_secret: env!("OIDC_CLIENT_SECRET").to_string(),
+
+
+				oidc_base_url: env!("OIDC_BASE_URL").to_string(),
+				oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID").to_string(),
+				oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET").to_string(),
+				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string(),
+				papi_path: env!("PAPI_PATH").to_string(),
 			})
 		})
 		.await
 }
-
 
 #[tauri::command]
 fn get_hostname() -> Result<String, OsString> {
@@ -231,12 +214,12 @@ async fn upload_directory_to_s3(
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
 	tauri::Builder::default()
-		.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+		/*.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
 			let _ = app
 				.get_webview_window("main")
 				.expect("no main window")
 				.set_focus();
-		}))
+		}))*/
 		.plugin(tauri_plugin_store::Builder::new().build())
 		.plugin(tauri_plugin_http::init())
 		.plugin(tauri_plugin_process::init())

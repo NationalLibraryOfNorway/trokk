@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 #[cfg(not(feature = "debug-mock" ))]
 use std::error::Error;
+#[cfg(not(feature = "debug-mock" ))]
 use std::time::{SystemTime, UNIX_EPOCH};
 use reqwest::Client;
 use tauri::Emitter;
@@ -10,9 +11,9 @@ use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
 use crate::get_secret_variables;
-use crate::model::{
-	AuthenticationResponse, ExpireInfo, TokenResponse, TokenResponseWithoutRefresh, UserInfo,
-};
+use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo, };
+#[cfg(not(feature = "debug-mock" ))]
+use crate::model::TokenResponseWithoutRefresh;
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
 	start_with_config(
@@ -52,6 +53,7 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 	)
 	.map_err(|e| e.to_string())
 }
+
 pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();
@@ -82,7 +84,19 @@ pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>
 	let token_response: TokenResponseWithoutRefresh = serde_json::from_str(&res?.text().await?)?;
 	Ok(token_response.access_token)
 }
+#[cfg(feature = "debug-mock")]
+async fn create_token(_client: Client, _body: String) -> AuthenticationResponse {
+	AuthenticationResponse {
+		token_response: TokenResponse::mock(),
+		expire_info: ExpireInfo {
+			expires_at: 9999999999999,
+			refresh_expires_at: 9999999999999,
+		},
+		user_info: UserInfo::mock(),
+	}
+}
 
+#[cfg(not(feature = "debug-mock"))]
 async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();

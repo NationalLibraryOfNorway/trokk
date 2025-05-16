@@ -27,6 +27,21 @@ pub(crate) struct TokenResponse {
 	session_state: String,
 	scope: String,
 }
+#[cfg(feature = "debug-mock")]
+impl TokenResponse {
+	pub fn mock() -> Self {
+		Self {
+			access_token: "mock-access".to_string(),
+			refresh_token: "mock-refresh".to_string(),
+			expires_in: 99999999,
+			refresh_expires_in: 9999999,
+			token_type: String::new(),
+			not_before_policy: 0,
+			session_state: String::new(),
+			scope: String::new(),
+		}
+	}
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -47,6 +62,21 @@ pub(crate) struct UserInfo {
 	#[serde(rename(serialize = "familyName", deserialize = "family_name"))]
 	family_name: String,
 	email: String,
+}
+
+#[cfg(feature = "debug-mock")]
+impl UserInfo {
+	pub fn mock() -> Self {
+		Self {
+			sub: "mock-sub".to_string(),
+			name: "mock-name".to_string(),
+			groups: vec!["admin".to_string()],
+			family_name: "mock-family".to_string(),
+			given_name: "mock-given".to_string(),
+			preferred_username: "mock-preferred".to_string(),
+			email: "mock@email.com".to_string(),
+		}
+	}
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
