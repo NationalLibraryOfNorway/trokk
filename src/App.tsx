@@ -31,7 +31,6 @@ function App() {
                             openSettings={openSettings}
                             setOpenSettings={setOpenSettings}
                         />
-
                     </main>
                     <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
                         <SettingsForm/>
