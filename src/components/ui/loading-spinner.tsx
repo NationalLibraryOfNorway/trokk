@@ -1,10 +1,8 @@
-import React from 'react';
-
 interface LoadingSpinnerProps {
     size?: number;
 }
 
-const LoadingSpinner = ({ size = 24 }: LoadingSpinnerProps) => {
+const LoadingSpinner = ({size = 24}: LoadingSpinnerProps) => {
     return (
         <svg
             className="animate-spin"
