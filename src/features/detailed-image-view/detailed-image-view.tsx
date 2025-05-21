@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {FileTree} from '../../model/file-tree.ts';
 import {getPreviewURIFromTree} from '../../util/file-utils.ts';
@@ -13,12 +13,12 @@ interface DetailedImageViewProps {
     setCurrentIndex: (index: number) => void;
 }
 
-export default function DetailedImageView({ onClose, image, totalImagesInFolder, currentIndex, setCurrentIndex }: DetailedImageViewProps) {
+export default function DetailedImageView({onClose, image, totalImagesInFolder, currentIndex, setCurrentIndex}: DetailedImageViewProps) {
     const {state, dispatch} = useTrokkFiles();
     const [isLoading, setIsLoading] = useState<boolean>(false);
 
     useEffect(() => {
-        dispatch({ type: 'UPDATE_PREVIEW', payload: image });
+        dispatch({type: 'UPDATE_PREVIEW', payload: image});
     }, []);
 
     useEffect(() => {
