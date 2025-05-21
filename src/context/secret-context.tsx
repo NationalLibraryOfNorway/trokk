@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { invoke } from '@tauri-apps/api/core';
 import { SecretVariables } from '../model/secret-variables.ts';
 
-
 interface SecretContextType {
     secrets: SecretVariables | null;
     fetchSecretsError: string | null;

@@ -32,7 +32,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const { secrets, getSecrets, fetchSecretsError } = useSecrets();
 
     useEffect(() => {
-
         const logInOnSecretChange = async () => {
             try {
                 if (await isLoggedIn() && await canRefresh()) {
@@ -106,10 +105,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const refreshAccessToken = async () => {
         const authResponse = await settings.getAuthResponse();
-        if(await canRefresh() && authResponse) {
-            const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken});
+        if (await canRefresh() && authResponse) {
+            const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken });
             await settings.setAuthResponse(res);
-        }else {
+        } else {
             await login();
             throw new Error('Refresh token expired');
         }
