@@ -15,6 +15,8 @@ interface ThumbnailProps {
     onClick: () => void;
 }
 
+
+
 export default function Thumbnail({ fileTree, onClick }: ThumbnailProps) {
     const {state} = useTrokkFiles();
 
@@ -33,7 +35,7 @@ export default function Thumbnail({ fileTree, onClick }: ThumbnailProps) {
         ) : getThumbnailExtensionFromTree(fileTree, state) === 'webp' ? (
             <div key={fileTree.path} className="border-2 border-gray-300 dark:border-gray-600  max-w-[150px] mr-2 mb-2 hover:bg-gray-300 hover:dark:bg-gray-600"
                  onClick={onClick}>
-                <img src={getThumbnailURIFromTree(fileTree, state)} alt={fileTree.name}/>
+                <img src={getThumbnailURIFromTree(fileTree, state)} alt={fileTree.name} />
                 <i>{truncateMiddle(formatFileNames(fileTree.name), 7, 10)}</i>
             </div>
         ) : !(fileTree.name === '.thumbnails' || fileTree.name === '.previews') && (
