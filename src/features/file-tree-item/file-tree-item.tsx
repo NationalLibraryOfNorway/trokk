@@ -84,7 +84,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 </ul>
             )}
             {file.opened && (!file.children || file.children.length < 1) && (
-                <ul className="pl-4 text-stone-500 italic">&emsp;No files in this folder</ul>
+                <ul className="pl-4 text-stone-500 italic">&emsp;Ingen filer i denne mappen</ul>
             )}
         </li>
     );

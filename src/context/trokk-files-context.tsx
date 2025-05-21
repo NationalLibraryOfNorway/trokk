@@ -42,7 +42,7 @@ type TrokkFilesAction =
     | { type: 'SET_CURRENT_AND_EXPAND_PARENTS'; payload: FileTree }
     | { type: 'RESET' }
     | { type: 'UPDATE_STORE' }
-    | { type: 'UPDATE_PREVIEW'; payload: FileTree | undefined };
+    | { type: 'UPDATE_PREVIEW'; payload: FileTree | undefined }
 
 const initialState: TrokkFilesState = {
     basePath: await documentDir(),
@@ -378,69 +378,61 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
 
     const initialize = async () => {
         console.debug('Initializing TrokkFilesProvider', scannerPath);
-        if (scannerPath) {
-            const rootTree = new FileTree(
-                scannerPath,
-                true, // isDirectory
-                false, // isFile
-                false, // isSymlink
-                scannerPath,
-                false // opened
-            );
-            const fileTrees = await rootTree.recursiveRead();
 
-            dispatch({ type: 'INIT_STATE', payload: { fileTrees: fileTrees ?? [], scannerPath: scannerPath } });
-
-            const processQueue = () => {
-                if (eventQueue.current.length > 0) {
-                    const events = eventQueue.current;
-                    console.debug('Processing events', events);
-                    eventQueue.current = [];
-                    const { create, remove } = splitWatchEvents(events); // TODO handle rename
-
-                    if (stateRef.current.current) { // Create thumbnails for new files that pops up in the current directory
-                        createNewThumbnailFromEvents(stateRef.current.current.path, create);
-                    }
-
-                    let newState: null | TrokkFilesState;
-                    const currentState = stateRef.current;
-                    newState = updateFileTreesWithNewObject(currentState, create);
-                    newState = removeFileTree(newState, remove);
-                    // TODO handle rename
-
-                    const newTreeIndex = populateIndex(newState.fileTrees);
-
-                    const newFileTrees = newState.fileTrees;
-                    let current = undefined;
-                    if (currentState.current?.path) {
-                        current = newTreeIndex.get(currentState.current.path);
-                    }
-
-                    dispatch({
-                        type: 'UPDATE_FILE_TREES_AND_TREE_INDEX',
-                        payloadFileTrees: newFileTrees,
-                        payloadIndex: newTreeIndex,
-                        payloadCurrent: current
-                    });
-                }
-            };
-
-            const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
-                    eventQueue.current.push(event);
-                },
-                {
-                    recursive: true
-                }
-            );
-
-            const intervalId = setInterval(processQueue, 1000);
-
-            return () => {
-                unwatch();
-                clearInterval(intervalId);
-            };
+        if (!scannerPath) {
+            return () => {};
         }
+
+        const rootTree = new FileTree(
+            scannerPath,
+            true, // isDirectory
+            false, // isFile
+            false, // isSymlink
+            scannerPath,
+            false // opened
+        );
+        const fileTrees = await rootTree.recursiveRead();
+
+        dispatch({ type: 'INIT_STATE', payload: { fileTrees: fileTrees ?? [], scannerPath } });
+
+        const processQueue = () => {
+            if (eventQueue.current.length === 0) return;
+
+            const sortedEvents = splitWatchEvents(eventQueue.current);
+            eventQueue.current = [];
+
+            let updatedState = updateFileTreesWithNewObject(stateRef.current, sortedEvents.create);
+            updatedState = removeFileTree(updatedState, sortedEvents.remove);
+
+            const newTreeIndex = populateIndex(updatedState.fileTrees);
+
+            dispatch({
+                type: 'UPDATE_FILE_TREES_AND_TREE_INDEX',
+                payloadFileTrees: updatedState.fileTrees,
+                payloadIndex: newTreeIndex,
+                payloadCurrent: updatedState.current,
+            });
+
+            createNewThumbnailFromEvents(stateRef.current.basePath, sortedEvents.create);
+        };
+
+        const watcher = await watchImmediate(scannerPath, (event) => {
+            eventQueue.current.push(event);
+
+            if (processQueueTimeout.current) clearTimeout(processQueueTimeout.current);
+            processQueueTimeout.current = setTimeout(() => {
+                processQueue();
+            }, 100);
+        });
+
+        const processQueueTimeout = { current: undefined as ReturnType<typeof setTimeout> | undefined };
+
+        return () => {
+            if (watcher) watcher();
+            if (processQueueTimeout.current) clearTimeout(processQueueTimeout.current);
+        };
     };
+
 
     return (
         <TrokkFilesContext.Provider value={{ state, dispatch }}>
