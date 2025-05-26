@@ -1,23 +1,17 @@
 #[cfg(not(feature = "debug-mock" ))]
-use std::path::PathBuf;
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::config::{Credentials, Region};
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::operation::put_object::PutObjectOutput;
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::primitives::ByteStream;
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::Client;
-#[cfg(not(feature = "debug-mock" ))]
-use tauri::{Emitter, Window};
-#[cfg(not(feature = "debug-mock" ))]
-use tokio::sync::OnceCell;
-#[cfg(not(feature = "debug-mock" ))]
-use crate::file_utils::get_file_paths_in_directory;
-#[cfg(not(feature = "debug-mock" ))]
-use crate::get_secret_variables;
-#[cfg(not(feature = "debug-mock" ))]
-use crate::model::{SecretVariables, TransferProgress};
+mod packages{
+	use std::path::PathBuf;
+	use aws_sdk_s3::config::{Credentials, Region};
+	use aws_sdk_s3::operation::put_object::PutObjectOutput;
+	use aws_sdk_s3::primitives::ByteStream;
+	use aws_sdk_s3::Client;
+	use tauri::{Emitter, Window};
+	use tokio::sync::OnceCell;
+	use tokio::sync::OnceCell;
+	use crate::file_utils::get_file_paths_in_directory;
+	use crate::get_secret_variables;
+	use crate::model::{SecretVariables, TransferProgress};
+}
 
 #[cfg(not(feature = "debug-mock" ))]
 pub(crate) async fn upload_directory(

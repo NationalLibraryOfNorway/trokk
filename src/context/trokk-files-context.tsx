@@ -102,6 +102,63 @@ const createPreview = async (filePath: string) => {
         });
 }
 
+function updateRename(
+    state: TrokkFilesState,
+    oldPath: string,
+    newPath: string,
+    kind: 'file' | 'folder'
+): TrokkFilesState {
+    const updatedTreeIndex = new Map<string, FileTree>();
+    const pathSeparator = oldPath.includes('/') ? '/' : '\\';
+
+    const updateFileTreeRecursive = (fileTree: FileTree): FileTree => {
+        let shouldUpdate =
+            kind === 'folder'
+                ? fileTree.path === oldPath || fileTree.path.startsWith(oldPath + pathSeparator)
+                : fileTree.path === oldPath;
+
+        let updatedPath = fileTree.path;
+        let updatedName = fileTree.name;
+
+        if (shouldUpdate) {
+            updatedPath = fileTree.path.replace(oldPath, newPath);
+            updatedName = updatedPath.split(/[\\/]/).pop() ?? fileTree.name;
+        }
+
+        const updatedChildren = fileTree.children?.map(updateFileTreeRecursive) ?? [];
+
+        return new FileTree(
+            updatedName,
+            fileTree.isDirectory,
+            fileTree.isFile,
+            fileTree.isSymlink,
+            updatedPath,
+            fileTree.opened,
+            updatedChildren
+        );
+    };
+
+    const updatedFileTrees = state.fileTrees.map(tree => {
+        const updatedTree = updateFileTreeRecursive(tree);
+        populateIndexFromTree(updatedTree, updatedTreeIndex);
+        return updatedTree;
+    });
+
+    return {
+        ...state,
+        fileTrees: updatedFileTrees,
+        treeIndex: updatedTreeIndex,
+    };
+}
+
+// Helper to recursively populate the index
+function populateIndexFromTree(fileTree: FileTree, index: Map<string, FileTree>) {
+    index.set(fileTree.path, fileTree);
+    if (fileTree.children) {
+        fileTree.children.forEach(child => populateIndexFromTree(child, index));
+    }
+}
+
 // Populate the map with existing tree nodes
 const populateIndex = (fileTrees: FileTree[]): Map<string, FileTree> => {
     const treeIndex = new Map<string, FileTree>();
@@ -126,19 +183,20 @@ function isCloseWriteEvent(event: WatchEventKind): event is { access: WatchEvent
     }
 }
 
-function isCreateFolder(event: WatchEventKind): event is { create: WatchEventKindCreate } {
+function isCreate(event: WatchEventKind): event is { create: WatchEventKindCreate } {
     try {
         const createEvent = (event as { create: WatchEventKindCreate }).create;
-        return createEvent.kind == 'folder';
+        return createEvent.kind == 'any' || createEvent.kind == 'folder' || createEvent.kind == 'file';
     } catch {
         return false;
     }
 }
 
+
 function isDeleteFolder(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
     try {
         const createEvent = (event as { remove: WatchEventKindRemove }).remove;
-        return createEvent.kind == 'folder';
+        return createEvent.kind == 'folder' || createEvent.kind == 'any';
     } catch {
         return false;
     }
@@ -153,9 +211,29 @@ function isModifyRenameFrom(event: WatchEventKind): event is { modify: WatchEven
     }
 }
 
+function isModifyRenameTo(event: WatchEventKind): event is { modify: WatchEventKindModify } {
+    try {
+        const createEvent = (event as { modify: WatchEventKindModify }).modify;
+        return createEvent.kind == 'rename' && createEvent.mode == 'to';
+    } catch {
+        return false;
+    }
+}
+
+function isDeleteFile(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
+    try {
+        const createEvent = (event as { remove: WatchEventKindRemove }).remove;
+        return createEvent.kind == 'any';
+    } catch {
+        return false;
+    }
+}
+
 interface PathsSorted {
     create: EventPathAndKind[];
     remove: EventPathAndKind[];
+    renameFrom: EventPathAndKind[];
+    renameTo: EventPathAndKind[];
 }
 
 interface EventPathAndKind {
@@ -163,6 +241,9 @@ interface EventPathAndKind {
     kind: 'folder' | 'file';
 }
 
+function isFile(path: string): boolean {
+    return path.endsWith('.webp') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png') || path.endsWith(('.tif'));
+}
 
 function splitWatchEvents(events: WatchEvent[]): PathsSorted {
     const deduplicatedEvents = events.filter((event, index, self) => {
@@ -176,24 +257,34 @@ function splitWatchEvents(events: WatchEvent[]): PathsSorted {
                 event.paths.forEach((path) => {
                     acc.create.push({ path: path, kind: 'file' });
                 });
-            } else if (isCreateFolder(event.type)) {
+            } else if (isCreate(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.create.push({ path: path, kind: 'folder' });
+                    acc.create.push({ path: path, kind: isFile(path) ? 'file' : 'folder' });
                 });
             } else if (isModifyRenameFrom(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.remove.push({ path: path, kind: 'file' });
+                    acc.renameFrom.push({ path: path, kind: isFile(path) ? 'file' : 'folder' });
+                });
+            } else if (isModifyRenameTo(event.type)) {
+                event.paths.forEach((path) => {
+                    acc.renameTo.push({path: path, kind: isFile(path) ? 'file' : 'folder' });
                 });
             } else if (isDeleteFolder(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.remove.push({ path: path, kind: 'folder' });
+                    acc.remove.push({ path, kind: 'folder' });
                 });
-            }
+            } else if (isDeleteFile(event.type)) {
+                event.paths.forEach((path) => {
+                    acc.remove.push({ path, kind: 'file' });
+            });
+        }
             return acc;
         },
         {
             create: [] as EventPathAndKind[],
-            remove: [] as EventPathAndKind[]
+            remove: [] as EventPathAndKind[],
+            renameFrom: [] as EventPathAndKind[],
+            renameTo: [] as EventPathAndKind[],
         } as PathsSorted
     );
 
@@ -257,7 +348,7 @@ function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: 
     eventPathsSorted.forEach((eventPath) => {
         const newFileTree = new FileTree(
             eventPath.path.split(sep()).slice(-1)[0],
-            eventPath.kind == 'folder', // isDirectory
+            eventPath.kind == 'folder', // isFolder
             eventPath.kind == 'file', // isFile
             false, // isSymlink
             eventPath.path, // path
@@ -376,12 +467,10 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
         };
     }, [scannerPath]);
 
-    const initialize = async () => {
-        console.debug('Initializing TrokkFilesProvider', scannerPath);
 
-        if (!scannerPath) {
-            return () => {};
-        }
+    const initialize = async () => {
+        console.log('Initializing TrokkFilesProvider', scannerPath);
+        if (!scannerPath) return;
 
         const rootTree = new FileTree(
             scannerPath,
@@ -391,54 +480,71 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             scannerPath,
             false // opened
         );
+
         const fileTrees = await rootTree.recursiveRead();
 
-        dispatch({ type: 'INIT_STATE', payload: { fileTrees: fileTrees ?? [], scannerPath } });
+        dispatch({ type: 'INIT_STATE', payload: { fileTrees: fileTrees ?? [], scannerPath: scannerPath } });
 
         const processQueue = () => {
             if (eventQueue.current.length === 0) return;
 
-            const sortedEvents = splitWatchEvents(eventQueue.current);
+            const events = eventQueue.current;
+            console.debug('Processing events', events);
             eventQueue.current = [];
 
-            let updatedState = updateFileTreesWithNewObject(stateRef.current, sortedEvents.create);
-            updatedState = removeFileTree(updatedState, sortedEvents.remove);
+            const { create, remove, renameFrom, renameTo } = splitWatchEvents(events);
 
-            const newTreeIndex = populateIndex(updatedState.fileTrees);
+            if (stateRef.current?.current) {
+                createNewThumbnailFromEvents(stateRef.current.current.path, create);
+            }
+
+            let newState: TrokkFilesState | null = stateRef.current;
+
+            newState = updateFileTreesWithNewObject(newState, create);
+            newState = removeFileTree(newState, remove);
+
+            for (let i = 0; i < renameFrom.length; i++) {
+                const oldPath = renameFrom[i].path;
+                const newPath = renameTo[i].path;
+                const kind = renameFrom[i].kind;
+                newState = updateRename(newState, oldPath, newPath, kind);
+            }
+            // Rebuild index based on updated fileTrees (optional fallback)
+            const newTreeIndex = populateIndex(newState.fileTrees);
+
+            // Keep current selection if it exists
+            const current = stateRef.current.current?.path
+                ? newTreeIndex.get(stateRef.current.current.path)
+                : undefined;
 
             dispatch({
                 type: 'UPDATE_FILE_TREES_AND_TREE_INDEX',
-                payloadFileTrees: updatedState.fileTrees,
+                payloadFileTrees: newState.fileTrees,
                 payloadIndex: newTreeIndex,
-                payloadCurrent: updatedState.current,
+                payloadCurrent: current
             });
-
-            createNewThumbnailFromEvents(stateRef.current.basePath, sortedEvents.create);
         };
+        const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
+                eventQueue.current.push(event);
+            },
+            {
+                recursive: true
+            }
+        );
 
-        const watcher = await watchImmediate(scannerPath, (event) => {
-            eventQueue.current.push(event);
-
-            if (processQueueTimeout.current) clearTimeout(processQueueTimeout.current);
-            processQueueTimeout.current = setTimeout(() => {
-                processQueue();
-            }, 100);
-        });
-
-        const processQueueTimeout = { current: undefined as ReturnType<typeof setTimeout> | undefined };
+        const intervalId = setInterval(processQueue, 1000);
 
         return () => {
-            if (watcher) watcher();
-            if (processQueueTimeout.current) clearTimeout(processQueueTimeout.current);
+            unwatch();
+            clearInterval(intervalId);
         };
-    };
+    }
 
-
-    return (
-        <TrokkFilesContext.Provider value={{ state, dispatch }}>
-            {children}
-        </TrokkFilesContext.Provider>
-    );
+return (
+    <TrokkFilesContext.Provider value={{ state, dispatch }}>
+        {children}
+    </TrokkFilesContext.Provider>
+);
 };
 
 export const useTrokkFiles = () => useContext(TrokkFilesContext);

@@ -3,7 +3,6 @@ use once_cell::sync::Lazy;
 use std::ffi::OsString;
 use std::string::ToString;
 use std::sync::Mutex;
-use tauri::Manager;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
