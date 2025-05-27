@@ -112,7 +112,7 @@ function updateRename(
     const pathSeparator = oldPath.includes('/') ? '/' : '\\';
 
     const updateFileTreeRecursive = (fileTree: FileTree): FileTree => {
-        let shouldUpdate =
+        const shouldUpdate =
             kind === 'folder'
                 ? fileTree.path === oldPath || fileTree.path.startsWith(oldPath + pathSeparator)
                 : fileTree.path === oldPath;
@@ -308,7 +308,7 @@ function createNewThumbnailFromEvents(currentPath: string, events: EventPathAndK
     });
 }
 
-function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: EventPathAndKind[]): TrokkFilesState {
+async function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: EventPathAndKind[]): Promise<TrokkFilesState> {
     const insertFileTree = (fileTrees: FileTree[], newFileTree: FileTree): FileTree[] => {
         const parentPath = newFileTree.path.split(sep()).slice(0, -1).join(sep());
 
@@ -345,7 +345,8 @@ function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: 
 
     let updatedFileTrees = [...state.fileTrees];
 
-    eventPathsSorted.forEach((eventPath) => {
+    await Promise.all(
+        eventPathsSorted.map(async (eventPath) => {
         const newFileTree = new FileTree(
             eventPath.path.split(sep()).slice(-1)[0],
             eventPath.kind == 'folder', // isFolder
@@ -355,8 +356,13 @@ function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: 
             false // opened
         );
 
+        if (eventPath.kind === 'folder') {
+            await newFileTree.recursiveRead(); // Updates files in the folder
+        }
+
         updatedFileTrees = insertFileTree(updatedFileTrees, newFileTree);
-    });
+        })
+    );
 
     updatedFileTrees.sort((a, b) => {
         if (a.path < b.path) return -1;
@@ -485,7 +491,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
 
         dispatch({ type: 'INIT_STATE', payload: { fileTrees: fileTrees ?? [], scannerPath: scannerPath } });
 
-        const processQueue = () => {
+        const processQueue = async () => {
             if (eventQueue.current.length === 0) return;
 
             const events = eventQueue.current;
@@ -500,7 +506,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
 
             let newState: TrokkFilesState | null = stateRef.current;
 
-            newState = updateFileTreesWithNewObject(newState, create);
+            newState = await updateFileTreesWithNewObject(newState, create);
             newState = removeFileTree(newState, remove);
 
             for (let i = 0; i < renameFrom.length; i++) {
@@ -524,6 +530,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                 payloadCurrent: current
             });
         };
+
         const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
                 eventQueue.current.push(event);
             },
