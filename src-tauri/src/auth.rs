@@ -7,10 +7,9 @@ use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
 #[cfg(not(feature = "debug-mock" ))]
-mod packages {
-	use std::error::Error;
-	use std::time::{SystemTime, UNIX_EPOCH};
-}
+use std::error::Error;
+#[cfg(not(feature = "debug-mock" ))]
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::get_secret_variables;
 use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo, };

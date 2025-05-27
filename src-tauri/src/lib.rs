@@ -7,7 +7,9 @@ use tauri::Window;
 use tokio::sync::OnceCell;
 
 use crate::image_converter::ConversionCount;
-use crate::model::{  RequiredEnvironmentVariables, SecretVariables, AuthenticationResponse};
+#[cfg(not(feature = "debug-mock"))]
+use crate::model::{  RequiredEnvironmentVariables};
+use crate::model::{ SecretVariables, AuthenticationResponse};
 
 mod auth;
 mod error;
@@ -22,6 +24,7 @@ mod vault;
 #[cfg(test)]
 mod tests;
 
+#[cfg(not(feature = "debug-mock"))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	vault_base_url: env!("VAULT_BASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
@@ -51,20 +54,12 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 	MOCK_SECRETS
 		.get_or_try_init(|| async {
 			Ok(SecretVariables {
-				s3_access_key_id: env!("S3_ACCESS_KEY_ID").to_string(),
-				s3_secret_access_key: env!("S3_SECRET_ACCESS_KEY").to_string(),
-				s3_region: env!("S3_REGION").to_string(),
-				s3_bucket_name: env!("S3_BUCKET_NAME").to_string(),
-				s3_url: env!("S3_URL").to_string(),
 				oidc_client_id: env!("OIDC_CLIENT_ID").to_string(),
 				oidc_client_secret: env!("OIDC_CLIENT_SECRET").to_string(),
-
-
 				oidc_base_url: env!("OIDC_BASE_URL").to_string(),
 				oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID").to_string(),
 				oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET").to_string(),
-				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string(),
-				papi_path: env!("PAPI_PATH").to_string(),
+				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string()
 			})
 		})
 		.await

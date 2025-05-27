@@ -1,13 +1,17 @@
 #[cfg(not(feature = "debug-mock" ))]
-mod packages {
-	use vaultrs::client::{VaultClient, VaultClientSettingsBuilder};
-	use vaultrs::error::ClientError;
-	use vaultrs::kv2;
-	use vaultrs_login::engines::approle::AppRoleLogin;
-	use vaultrs_login::LoginClient;
-	use crate::SecretVariables;
-	use crate::ENVIRONMENT_VARIABLES;
-}
+use vaultrs::client::{VaultClient, VaultClientSettingsBuilder};
+#[cfg(not(feature = "debug-mock" ))]
+use vaultrs::error::ClientError;
+#[cfg(not(feature = "debug-mock" ))]
+use vaultrs::kv2;
+#[cfg(not(feature = "debug-mock" ))]
+use vaultrs_login::engines::approle::AppRoleLogin;
+#[cfg(not(feature = "debug-mock" ))]
+use vaultrs_login::LoginClient;
+#[cfg(not(feature = "debug-mock" ))]
+use crate::SecretVariables;
+#[cfg(not(feature = "debug-mock" ))]
+use crate::ENVIRONMENT_VARIABLES;
 
 #[cfg(not(feature = "debug-mock" ))]
 pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, ClientError> {
