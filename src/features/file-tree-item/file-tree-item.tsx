@@ -74,7 +74,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 <ul className="pl-10 relative before:content-[''] before:absolute before:-ml-8 before:top-0 before:bottom-0 before:w-px before:bg-stone-600">
                     {file.children.map((child) => (
                         <FileTreeItem
-                            key={child.path+child.kind}
+                            key={child.path}
                             file={child}
                             toggleFolderExpand={toggleFolderExpand}
                             changeViewDirectory={changeViewDirectory}
