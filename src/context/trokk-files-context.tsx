@@ -2,7 +2,6 @@ import React, { createContext, useContext, useEffect, useReducer, useRef } from 
 import {
     WatchEvent,
     WatchEventKind,
-    WatchEventKindAccess,
     WatchEventKindCreate,
     WatchEventKindModify,
     WatchEventKindRemove,
@@ -174,15 +173,6 @@ const populateIndex = (fileTrees: FileTree[]): Map<string, FileTree> => {
     return treeIndex;
 };
 
-function isCloseWriteEvent(event: WatchEventKind): event is { access: WatchEventKindAccess } {
-    try {
-        const accessEvent = (event as { access: WatchEventKindAccess }).access;
-        return accessEvent.kind == 'close' && accessEvent.mode == 'write';
-    } catch {
-        return false;
-    }
-}
-
 function isCreate(event: WatchEventKind): event is { create: WatchEventKindCreate } {
     try {
         const createEvent = (event as { create: WatchEventKindCreate }).create;
@@ -253,11 +243,7 @@ function splitWatchEvents(events: WatchEvent[]): PathsSorted {
     });
     const paths = deduplicatedEvents.reduce(
         (acc, event) => {
-            if (isCloseWriteEvent(event.type)) {
-                event.paths.forEach((path) => {
-                    acc.create.push({ path: path, kind: 'file' });
-                });
-            } else if (isCreate(event.type)) {
+            if (isCreate(event.type)) {
                 event.paths.forEach((path) => {
                     acc.create.push({ path: path, kind: isFile(path) ? 'file' : 'folder' });
                 });
@@ -509,11 +495,21 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             newState = await updateFileTreesWithNewObject(newState, create);
             newState = removeFileTree(newState, remove);
 
-            for (let i = 0; i < renameFrom.length; i++) {
-                const oldPath = renameFrom[i].path;
-                const newPath = renameTo[i].path;
-                const kind = renameFrom[i].kind;
-                newState = updateRename(newState, oldPath, newPath, kind);
+            if(renameTo.length == 0){
+                newState = removeFileTree(newState, renameFrom);
+            }
+
+            if (renameTo.length > 0 && renameFrom.length > 0) {
+                for (let i = 0; i < renameFrom.length; i++) {
+                    const oldPath = renameFrom[i].path;
+                    const newPath = renameTo[i].path;
+                    const kind = renameFrom[i].kind;
+                    newState = updateRename(newState, oldPath, newPath, kind);
+
+                    if (newPath.toLowerCase().endsWith('.tif') && stateRef.current?.current?.path) {
+                        createNewThumbnailFromEvents(stateRef.current.current.path, [{ path: newPath, kind }]); //makes webp when renaming tif
+                    }
+                }
             }
             // Rebuild index based on updated fileTrees (optional fallback)
             const newTreeIndex = populateIndex(newState.fileTrees);
