@@ -106,23 +106,29 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		sentry::Level::Info,
 	);
 	sentry::capture_message(
-		&format!("Using OIDC base URL: {}", secrets.oidc_client_id),
+		&format!("Using OIDC client id: {}", secrets.oidc_client_id),
 		sentry::Level::Info,
 	);
 	sentry::capture_message(
-		&format!("Using OIDC base URL: {}", secrets.oidc_client_secret),
+		&format!("Using OIDC client secret: {}", secrets.oidc_client_secret),
 		sentry::Level::Info,
 	);
 	sentry::capture_message(
-		&format!("Using OIDC base URL: {}", secrets.oidc_tekst_client_secret),
+		&format!(
+			"Using OIDC tekst client secret: {}",
+			secrets.oidc_tekst_client_secret
+		),
 		sentry::Level::Info,
 	);
 	sentry::capture_message(
-		&format!("Using OIDC base URL: {}", secrets.oidc_tekst_base_url),
+		&format!("Using OIDC tekst base url: {}", secrets.oidc_tekst_base_url),
 		sentry::Level::Info,
 	);
 	sentry::capture_message(
-		&format!("Using OIDC base URL: {}", secrets.oidc_tekst_client_id),
+		&format!(
+			"Using OIDC tekst client id: {}",
+			secrets.oidc_tekst_client_id
+		),
 		sentry::Level::Info,
 	);
 	let time_now = SystemTime::now()
