@@ -1,20 +1,23 @@
-#[cfg(not(feature = "debug-mock" ))]
-use vaultrs::client::{VaultClient, VaultClientSettingsBuilder};
-#[cfg(not(feature = "debug-mock" ))]
-use vaultrs::error::ClientError;
-#[cfg(not(feature = "debug-mock" ))]
-use vaultrs::kv2;
-#[cfg(not(feature = "debug-mock" ))]
-use vaultrs_login::engines::approle::AppRoleLogin;
-#[cfg(not(feature = "debug-mock" ))]
-use vaultrs_login::LoginClient;
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use crate::SecretVariables;
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use crate::ENVIRONMENT_VARIABLES;
+#[cfg(not(feature = "debug-mock"))]
+use vaultrs::client::{VaultClient, VaultClientSettingsBuilder};
+#[cfg(not(feature = "debug-mock"))]
+use vaultrs::error::ClientError;
+#[cfg(not(feature = "debug-mock"))]
+use vaultrs::kv2;
+#[cfg(not(feature = "debug-mock"))]
+use vaultrs_login::engines::approle::AppRoleLogin;
+#[cfg(not(feature = "debug-mock"))]
+use vaultrs_login::LoginClient;
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, ClientError> {
+	sentry::capture_message(ENVIRONMENT_VARIABLES.vault_base_url, sentry::Level::Info);
+	sentry::capture_message(ENVIRONMENT_VARIABLES.vault_secret_id, sentry::Level::Info);
+	sentry::capture_message(ENVIRONMENT_VARIABLES.vault_role_id, sentry::Level::Info);
 	let mut client = VaultClient::new(
 		VaultClientSettingsBuilder::default()
 			.address(ENVIRONMENT_VARIABLES.vault_base_url)
