@@ -2,10 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 #[cfg(not(feature = "debug-mock"))]
-mod packages {
-	use std::borrow::Cow;
-	use std::env;
-}
+use std::borrow::Cow;
+#[cfg(not(feature = "debug-mock"))]
+use std::env;
 
 
 // This setup differs from the standard Tauri setup, as we want to use tokio runtime and Sentry
@@ -13,31 +12,11 @@ mod packages {
 fn main() {
 	// Initialize Sentry
 	#[cfg(not(feature = "debug-mock"))]
-	let environment: Option<Cow<'static, str>> = {
-
-		{
-			Some(
-				env::var("RUST_SENTRY_ENVIRONMENT")
-					.map(Cow::from)
-					.unwrap_or_else(|_| Cow::from("mock-environment")),
-			)
-		}
-	};
-	#[cfg(not(feature = "debug-mock"))]
-	let dsn: &str = {
-		{
-			&env::var("RUST_SENTRY_DSN").unwrap_or_else(|_| {
-				panic!("RUST_SENTRY_DSN environment variable is not set.")
-			})
-		}
-
-	};
-	#[cfg(not(feature = "debug-mock"))]
 	let _guard = sentry::init((
-		dsn,
+		env!("RUST_SENTRY_DSN"),
 		sentry::ClientOptions {
 			release: sentry::release_name!(),
-			environment,
+			environment: Some(Cow::from(env!("RUST_SENTRY_ENVIRONMENT"))),
 			debug: true,
 			..Default::default()
 		},
