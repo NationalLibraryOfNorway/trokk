@@ -210,6 +210,9 @@ const RegistrationForm: React.FC = () => {
         console.error(tmpErrorMessage, error);
         setErrorMessage(tmpErrorMessage);
     };
+    useEffect(() => {
+        setErrorMessage('')
+    }, [state.current?.path]);
 
     const removeErrorMessage = () => {
         setErrorMessage('');
