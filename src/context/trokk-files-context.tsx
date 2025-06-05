@@ -51,7 +51,7 @@ const initialState: TrokkFilesState = {
     preview: undefined
 };
 
-const TrokkFilesContext = createContext<{
+export const TrokkFilesContext = createContext<{
     state: TrokkFilesState;
     dispatch: React.Dispatch<TrokkFilesAction>;
 }>({
@@ -461,7 +461,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
 
 
     const initialize = async () => {
-        console.log('Initializing TrokkFilesProvider', scannerPath);
+        console.debug('Initializing TrokkFilesProvider', scannerPath);
         if (!scannerPath) return;
 
         const rootTree = new FileTree(
