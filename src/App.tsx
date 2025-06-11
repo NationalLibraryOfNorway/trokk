@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {FolderOpen, User} from 'lucide-react';
 import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
@@ -10,6 +10,7 @@ import {UploadProgressProvider} from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
+import {invoke} from '@tauri-apps/api/core';
 
 
 function App() {
@@ -49,6 +50,15 @@ interface ContentProps {
 const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
     const {scannerPath} = useSettings();
+
+    useEffect(() => {
+        invoke('ensure_all_previews_and_thumbnails', {directoryPath: scannerPath})
+            .then(() => {
+            })
+            .catch((err) => {
+                console.error(err);
+            });
+    }, [scannerPath]);
 
     if (fetchSecretsError) {
         return (

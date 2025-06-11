@@ -1,7 +1,7 @@
 use std::fs;
-use std::path::{Path};
+use std::path::Path;
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use std::path::PathBuf;
 
 use tauri_plugin_dialog::DialogExt;
@@ -31,7 +31,7 @@ pub(crate) fn directory_picker<R: tauri::Runtime, P: AsRef<Path>>(
 }
 
 // Get all file paths in a directory, without subdirectories
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<PathBuf>, String> {
 	let mut file_paths = Vec::new();
 	for dir_entry_result in fs::read_dir(directory_path).map_err(|e| e.to_string())? {
@@ -43,4 +43,27 @@ pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<Pa
 	}
 	file_paths.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
 	Ok(file_paths)
+}
+
+pub fn find_all_images(directory: &str) -> Result<Vec<String>, String> {
+	let mut images = Vec::new();
+	let endings = ["tif", "tiff", "jpg", "jpeg", "png"];
+
+	fn visit_dirs(dir: &Path, endings: &[&str], images: &mut Vec<String>) -> Result<(), String> {
+		for entry in fs::read_dir(dir).map_err(|e| e.to_string())? {
+			let entry = entry.map_err(|e| e.to_string())?;
+			let path = entry.path();
+			if path.is_dir() {
+				visit_dirs(&path, endings, images)?;
+			} else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+				if endings.iter().any(|&x| x.eq_ignore_ascii_case(ext)) {
+					images.push(path.to_string_lossy().to_string());
+				}
+			}
+		}
+		Ok(())
+	}
+
+	visit_dirs(Path::new(directory), &endings, &mut images)?;
+	Ok(images)
 }

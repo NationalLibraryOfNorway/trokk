@@ -6,7 +6,6 @@ use std::borrow::Cow;
 #[cfg(not(feature = "debug-mock"))]
 use std::env;
 
-
 // This setup differs from the standard Tauri setup, as we want to use tokio runtime and Sentry
 // See sentry docs for details: https://docs.sentry.io/platforms/rust/#async-main-function
 fn main() {
