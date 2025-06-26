@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState} from 'react';
 import {FolderOpen, User} from 'lucide-react';
 import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
@@ -10,6 +10,8 @@ import {UploadProgressProvider} from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
+import {SelectionProvider} from './context/selection-context.tsx';
+
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -109,9 +111,11 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                 </div>
             </div>
             <TrokkFilesProvider scannerPath={scannerPath}>
-                <UploadProgressProvider>
-                    <MainLayout/>
-                </UploadProgressProvider>
+                <SelectionProvider>
+                    <UploadProgressProvider>
+                        <MainLayout/>
+                    </UploadProgressProvider>
+                </SelectionProvider>
             </TrokkFilesProvider>
         </>
     );

@@ -59,6 +59,21 @@ Sett disse environment variablene for å få appen til å fungere:
 | `S3_BUCKET_NAME`           |                                                                                      |
 | `S3_URL`                   |                                                                                      |
 
+### Lokal utvikling
+For å gjøre lokal utvikling må features flagget debug-mock være aktivert i configurations.
+Legg til "command" i configureringen av cargo: "run --no-default-features --features debug-mock"
+Samt, legg til environmental variabler nedenfor.
+
+### Lokal utvikling environmental variabler
+| Variabel                   | Beskrivelse                                                                          |
+|----------------------------|--------------------------------------------------------------------------------------|
+| `OIDC_BASE_URL`            | URL til OIDC server (nbauth-realm, inkludert "protocol/openid-connect").             |
+| `OIDC_CLIENT_ID`           | Client ID til OIDC server (nbauth-realm)                                             |
+| `OIDC_CLIENT_SECRET`       | Client secret til OIDC server (nbauth-realm)                                         |
+| `OIDC_TEKST_BASE_URL`      | URL til OIDC server for papi auth (tekst-realm, inkludert "protocol/openid-connect") |
+| `OIDC_TEKST_CLIENT_ID`     | Client ID til OIDC server (tekst-realm)                                              |
+| `OIDC_TEKST_CLIENT_SECRET` | Client secret til OIDC server (tekst-realm)                                          |
+
 ## Vedlikehold
 
 Tekst-teamet på Nasjonalbibliotekets IT-avdeling vedlikeholder **Trøkk**.
