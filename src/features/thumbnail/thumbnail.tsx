@@ -10,14 +10,15 @@ import {convertFileSrc} from '@tauri-apps/api/core';
 import {File} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 
-interface ThumbnailProps {
+export interface ThumbnailProps {
     fileTree: FileTree;
     onClick: () => void;
+    isChecked: boolean;
+    isFocused: boolean;
 }
 
 
-
-export default function Thumbnail({ fileTree, onClick }: ThumbnailProps) {
+export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: ThumbnailProps) {
     const {state} = useTrokkFiles();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
@@ -27,15 +28,19 @@ export default function Thumbnail({ fileTree, onClick }: ThumbnailProps) {
 
     return (
         supportedFileTypes.includes(getFileExtension(fileTree?.path)) ? (
-            <div key={fileTree.path} className="border-2 border-gray-300 dark:border-gray-600 rounded-sm max-w-[150px] mr-2 mb-2 hover:bg-gray-300 hover:dark:bg-gray-600"
+            <div key={fileTree.path}
+                 className={`border-2 rounded-sm max-w-[150px] mr-2 mb-2 hover:bg-gray-300 hover:dark:bg-gray-600 ${isChecked ? 'border-amber-400' : 'border-gray-300 dark:border-gray-600'} ${isFocused ? 'ring-2 ring-white' : ''}
+    `}
                  onClick={onClick}>
                 <img src={convertFileSrc(fileTree.path)} alt={fileTree.name}/>
                 <i>{truncateMiddle(formatFileNames(fileTree.name), 7, 10)}</i>
             </div>
         ) : getThumbnailExtensionFromTree(fileTree, state) === 'webp' ? (
-            <div key={fileTree.path} className="border-2 border-gray-300 dark:border-gray-600  max-w-[150px] mr-2 mb-2 hover:bg-gray-300 hover:dark:bg-gray-600"
+            <div key={fileTree.path}
+                 className={`border-2   max-w-[150px] mr-2 mb-2 hover:bg-gray-300 hover:dark:bg-gray-600 ${isChecked ? 'border-amber-400' : 'border-gray-300 dark:border-gray-600'} ${isFocused ? 'ring-2 ring-white' : ''}
+            `}
                  onClick={onClick}>
-                <img src={getThumbnailURIFromTree(fileTree, state)} alt={fileTree.name} />
+                <img src={getThumbnailURIFromTree(fileTree, state)} alt={fileTree.name}/>
                 <i>{truncateMiddle(formatFileNames(fileTree.name), 7, 10)}</i>
             </div>
         ) : !(fileTree.name === '.thumbnails' || fileTree.name === '.previews') && (
