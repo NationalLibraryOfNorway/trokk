@@ -1,10 +1,10 @@
 import { render } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import Thumbnail from '../features/thumbnail/thumbnail';
-import { FileTree } from '../model/file-tree.ts';
-import { useTrokkFiles } from '../context/trokk-files-context.tsx';
+import Thumbnail from '../src/features/thumbnail/thumbnail';
+import { FileTree } from '../src/model/file-tree.ts';
+import { useTrokkFiles } from '../src/context/trokk-files-context.tsx';
 
-vi.mock('../context/trokk-files-context.tsx', () => ({
+vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: vi.fn(),
 }));
 
@@ -12,9 +12,9 @@ vi.mock('@tauri-apps/api/core', () => ({
     convertFileSrc: (path: string) => `mock-src/${path}`,
 }));
 
-vi.mock('../util/file-utils.ts', async () => {
-    const actual = await vi.importActual<typeof import('../util/file-utils.ts')>(
-        '../util/file-utils.ts'
+vi.mock('../src/util/file-utils.ts', async () => {
+    const actual = await vi.importActual<typeof import('../src/util/file-utils.ts')>(
+        '../src/util/file-utils.ts'
     );
     return {
         ...actual,
@@ -76,7 +76,7 @@ describe('Thumbnail', () => {
     });
 
     it('renders a thumbnail if extension is webp', async () => {
-        const fileUtils = await import('../util/file-utils.ts');
+        const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('webp');
 
         const fileTree = createMockFileTree('example.other', '/mock/path/example.other');
@@ -89,7 +89,7 @@ describe('Thumbnail', () => {
     });
 
     it('does not render for system folders', async () => {
-        const fileUtils = await import('../util/file-utils.ts');
+        const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('unknown');
 
         const fileTree = createMockFileTree('.thumbnails', 'docs/.thumbnails');

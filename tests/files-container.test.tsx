@@ -1,12 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import FilesContainer from '../features/files-container/files-container';
-import {TrokkFilesProvider, useTrokkFiles} from '../context/trokk-files-context';
-import {SelectionProvider, useSelection} from '../context/selection-context';
+import FilesContainer from '../src/features/files-container/files-container';
+import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-context';
+import {SelectionProvider, useSelection} from '../src/context/selection-context';
 import {beforeAll, Mock, vi} from 'vitest';
 import '@testing-library/jest-dom';
 import React from 'react';
 
-vi.mock('../context/trokk-files-context', () => ({
+vi.mock('../src/context/trokk-files-context', () => ({
     useTrokkFiles: vi.fn(),
     TrokkFilesProvider: ({ children }:{children:React.ReactNode}) => <>{children}</>,
 }));
@@ -26,7 +26,7 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
     watchImmediate: vi.fn(() => Promise.resolve(() => {})),
 }));
 
-vi.mock('../context/selection-context', () => ({
+vi.mock('../src/context/selection-context', () => ({
     useSelection: vi.fn(),
     SelectionProvider: ({ children }:{children:React.ReactNode}) => <>{children}</>,
 }));

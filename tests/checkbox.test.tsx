@@ -1,5 +1,5 @@
 import { render, fireEvent } from '@testing-library/react';
-import Checkbox from '../components/ui/checkbox';
+import Checkbox from '../src/components/ui/checkbox';
 import '@testing-library/jest-dom';
 
 describe('Checkbox component', () => {
