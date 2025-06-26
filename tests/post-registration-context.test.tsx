@@ -1,48 +1,49 @@
 import { act, renderHook } from '@testing-library/react';
-import { usePostRegistration } from '../post-registration-context.tsx';
-import { settings } from '../../tauri-store/setting-store.ts';
-import { uploadToS3 } from '../../features/registration/upload-to-s3.tsx';
+import { usePostRegistration } from '../src/context/post-registration-context.tsx';
+import { settings } from '../src/tauri-store/setting-store.ts';
+import { uploadToS3 } from '../src/features/registration/upload-to-s3.tsx';
 import { invoke } from '@tauri-apps/api/core';
-import { MaterialType } from '../../model/registration-enums.ts';
-import { AuthContextType } from '../auth-context.tsx';
-import { RegistrationFormProps } from '../../features/registration/registration-form-props.tsx';
+import { MaterialType } from '../src/model/registration-enums.ts';
+import { AuthContextType } from '../src/context/auth-context.tsx';
+import { RegistrationFormProps } from '../src/features/registration/registration-form-props.tsx';
+import { vi, type Mock } from 'vitest';
 
-jest.mock('@tauri-apps/api/app', () => ({
-    getVersion: jest.fn(() => Promise.resolve('1.0.0')),
+vi.mock('@tauri-apps/api/app', () => ({
+    getVersion: vi.fn(() => Promise.resolve('1.0.0')),
 }));
-jest.mock('../../features/registration/upload-to-s3.tsx', () => ({
-    uploadToS3: jest.fn(),
+vi.mock('../src/features/registration/upload-to-s3.tsx', () => ({
+    uploadToS3: vi.fn(),
 }));
-jest.mock('../trokk-files-context.tsx', () => ({
+vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: () => ({ state: { current: { path: '/some/path' } } })
 }));
-jest.mock('../message-context.tsx', () => ({
+vi.mock('../src/context/message-context.tsx', () => ({
     useMessage: () => ({
         handleError: mockHandleError,
         clearError: mockClearError,
         displaySuccessMessage: mockDisplaySuccessMessage
     })
 }));
-jest.mock('@tauri-apps/api/webviewWindow', () => ({
-    getCurrentWebviewWindow: jest.fn().mockReturnValue(null),
+vi.mock('@tauri-apps/api/webviewWindow', () => ({
+    getCurrentWebviewWindow: vi.fn().mockReturnValue(null),
 }));
-jest.mock('../upload-progress-context.tsx', () => ({
+vi.mock('../src/context/upload-progress-context.tsx', () => ({
     useUploadProgress: () => ({
-        setAllUploadProgress: jest.fn()
+        setAllUploadProgress: vi.fn()
     })
 }));
-jest.mock('../../tauri-store/setting-store.ts', () => ({
+vi.mock('../src/tauri-store/setting-store.ts', () => ({
     settings: {
-        getAuthResponse: jest.fn()
+        getAuthResponse: vi.fn()
     }
 }));
-jest.mock('@tauri-apps/api/core', () => ({
-    invoke: jest.fn()
+vi.mock('@tauri-apps/api/core', () => ({
+    invoke: vi.fn()
 }));
 
-const mockHandleError = jest.fn();
-const mockClearError = jest.fn();
-const mockDisplaySuccessMessage = jest.fn();
+const mockHandleError = vi.fn();
+const mockClearError = vi.fn();
+const mockDisplaySuccessMessage = vi.fn();
 
 const registration: RegistrationFormProps = {
     materialType: MaterialType.PERIODICAL,
@@ -61,9 +62,9 @@ const auth: AuthContextType = {
 };
 
 const mockCommonSetup = () => {
-    (settings.getAuthResponse as jest.Mock).mockResolvedValue({ userInfo: { name: 'Test User' } });
-    (uploadToS3 as jest.Mock).mockResolvedValue(3);
-    (invoke as jest.Mock).mockImplementation((cmd: string) => {
+    (settings.getAuthResponse as Mock).mockResolvedValue({ userInfo: { name: 'Test User' } });
+    (uploadToS3 as Mock).mockResolvedValue(3);
+    (invoke as Mock).mockImplementation((cmd: string) => {
         if (cmd === 'get_papi_access_token') return Promise.resolve('access-token');
         if (cmd === 'delete_dir') return Promise.resolve();
     });
@@ -72,16 +73,16 @@ const mockCommonSetup = () => {
 
 describe('usePostRegistration', () => {
     beforeEach(() => {
-        jest.clearAllMocks();
+        vi.clearAllMocks();
     });
 
     it('successfully posts a registration', async () => {
         mockCommonSetup();
 
-        global.fetch = jest.fn().mockResolvedValue({
+        global.fetch = vi.fn().mockResolvedValue({
             ok: true,
             json: () => Promise.resolve({ id: '123' })
-        }) as jest.Mock;
+        }) as Mock;
 
         const { result } = renderHook(() => usePostRegistration());
 
@@ -101,7 +102,7 @@ describe('usePostRegistration', () => {
     });
 
     it('handles not logged in', async () => {
-        (settings.getAuthResponse as jest.Mock).mockResolvedValue(null);
+        (settings.getAuthResponse as Mock).mockResolvedValue(null);
 
         const { result } = renderHook(() => usePostRegistration());
 
@@ -118,10 +119,10 @@ describe('usePostRegistration', () => {
 
     it('handles upload-error', async () => {
         const error = new Error('upload failed');
-        (settings.getAuthResponse as jest.Mock).mockResolvedValue({
+        (settings.getAuthResponse as Mock).mockResolvedValue({
             userInfo: { name: 'Test User' }
         });
-        (uploadToS3 as jest.Mock).mockRejectedValue(error);
+        (uploadToS3 as Mock).mockRejectedValue(error);
 
         const { result } = renderHook(() => usePostRegistration());
 
@@ -147,12 +148,12 @@ describe('usePostRegistration', () => {
         for (const { status, message, statusText } of errorCases) {
             mockCommonSetup();
 
-            global.fetch = jest.fn().mockResolvedValue({
+            global.fetch = vi.fn().mockResolvedValue({
                 ok: false,
                 status,
                 statusText,
                 json: () => Promise.resolve({ message: statusText }),
-            }) as jest.Mock;
+            }) as Mock;
 
             const { result } = renderHook(() => usePostRegistration());
 
@@ -171,7 +172,7 @@ describe('usePostRegistration', () => {
                 status
             );
 
-            jest.clearAllMocks();
+            vi.clearAllMocks();
         }
     });
 });
