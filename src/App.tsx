@@ -10,6 +10,7 @@ import {UploadProgressProvider} from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
+import {SelectionProvider} from './context/selection-context.tsx';
 
 
 function App() {
@@ -110,9 +111,11 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                 </div>
             </div>
             <TrokkFilesProvider scannerPath={scannerPath}>
-                <UploadProgressProvider>
-                    <MainLayout/>
-                </UploadProgressProvider>
+                <SelectionProvider>
+                    <UploadProgressProvider>
+                        <MainLayout/>
+                    </UploadProgressProvider>
+                </SelectionProvider>
             </TrokkFilesProvider>
         </>
     );
