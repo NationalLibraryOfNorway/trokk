@@ -4,7 +4,7 @@ import {FileTree} from '../../model/file-tree.ts';
 import {getPreviewURIFromTree} from '../../util/file-utils.ts';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
-import {useSelectionContext} from '../../context/selection-context.tsx';
+import {useSelection} from '../../context/selection-context.tsx';
 
 export interface DetailedImageViewProps {
     image: FileTree;
@@ -14,7 +14,7 @@ export interface DetailedImageViewProps {
 export default function DetailedImageView({ image, totalImagesInFolder}: DetailedImageViewProps) {
     const {state, dispatch} = useTrokkFiles();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const { currentIndex, handleNext, handlePrevious, handleClose  } = useSelectionContext()
+    const { currentIndex, handleNext, handlePrevious, handleClose  } = useSelection()
     useEffect(() => {
         dispatch({type: 'UPDATE_PREVIEW', payload: image});
     }, []);

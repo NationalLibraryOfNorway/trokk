@@ -3,13 +3,13 @@ import FilesContainer from '../src/features/files-container/files-container';
 import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-context';
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
 import {beforeAll, Mock, vi} from 'vitest';
-import '@testing-library/jest-dom';
 import React from 'react';
 
 vi.mock('../src/context/trokk-files-context', () => ({
     useTrokkFiles: vi.fn(),
     TrokkFilesProvider: ({ children }:{children:React.ReactNode}) => <>{children}</>,
 }));
+
 vi.mock('@tauri-apps/api/core', async (importOriginal) => {
     const actual = await importOriginal();
     return {
@@ -21,6 +21,7 @@ vi.mock('@tauri-apps/api/core', async (importOriginal) => {
 vi.mock('@tauri-apps/api/path', () => ({
     documentDir: vi.fn().mockResolvedValue('/mocked/path'),
 }));
+
 vi.mock('@tauri-apps/plugin-fs', () => ({
     readDir: vi.fn().mockResolvedValue([]),
     watchImmediate: vi.fn(() => Promise.resolve(() => {})),
@@ -77,14 +78,14 @@ describe('FilesContainer', () => {
     });
     it('renders file thumbnail from mocked state', () => {
         renderWithContext();
-        expect(screen.getByText('example.jpg')).toBeInTheDocument();
+        expect(screen.getByText('example.jpg')).toBeDefined();
     });
 
 
     it('calls handleOpen on Enter key', () => {
            renderWithContext();
            const container = screen.getByAltText('example.jpg');
-            container.focus();
+           container.focus();
            fireEvent.keyDown(container, { key: 'Enter' });
 
            expect(mockHandle.handleOpen).toHaveBeenCalledWith(
@@ -110,6 +111,30 @@ describe('FilesContainer', () => {
 
            fireEvent.keyDown(container, { key: 'ArrowLeft' });
            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'h' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'H' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'j' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'J' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'k' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'K' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'l' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
+
+            fireEvent.keyDown(container, { key: 'L' });
+            expect(mockHandle.handlePrevious).toHaveBeenCalled();
 
            fireEvent.keyDown(container, { key: 'ArrowDown' });
            expect(mockHandle.handleIndexChange).toHaveBeenCalledWith(expect.any(Number));

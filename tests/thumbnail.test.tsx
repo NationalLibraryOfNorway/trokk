@@ -25,6 +25,7 @@ vi.mock('../src/util/file-utils.ts', async () => {
         supportedFileTypes: ['jpg', 'png'],
     };
 });
+
 const mockDispatch = vi.fn();
 
 const baseProps = {

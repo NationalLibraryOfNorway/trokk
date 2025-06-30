@@ -47,19 +47,27 @@ const FilesContainer: React.FC = () => {
             e.preventDefault();
             switch (e.key) {
                 case 'ArrowRight':
+                case 'l':
+                case 'L':
                     handleNext();
                     break;
                 case 'ArrowLeft':
+                case 'h':
+                case 'H':
                     handlePrevious();
                     break;
-                case 'ArrowDown': {
+                case 'ArrowDown':
+                case 'j':
+                case 'J': {
                     if (columns <= 0) return;
                     const newIndex = currentIndex + columns;
                     if (newIndex < files.length) handleIndexChange(newIndex);
 
                     break;
                 }
-                case 'ArrowUp': {
+                case 'ArrowUp':
+                case 'k':
+                case 'K': {
                     const newIndex = currentIndex - columns;
                     if (newIndex >= 0) handleIndexChange(newIndex);
                     break;
@@ -101,7 +109,6 @@ const FilesContainer: React.FC = () => {
 
     useEffect(() => {
         if (state.preview) return;
-        handleIndexChange(0);
         const currentFileElement = fileRefs.current[currentIndex];
         if (currentFileElement) {
             currentFileElement.scrollIntoView({

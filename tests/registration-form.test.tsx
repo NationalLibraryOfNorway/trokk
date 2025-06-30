@@ -1,8 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import { useEffect } from 'react';
-import '@testing-library/jest-dom';
-import { SelectionProvider, useSelectionContext } from '../src/context/selection-context';
+import { SelectionProvider, useSelection } from '../src/context/selection-context';
 import RegistrationForm from './../src/features/registration/registration-form.tsx';
 import { SecretProvider } from '../src/context/secret-context';
 import { AuthProvider } from '../src/context/auth-context';
@@ -56,7 +55,7 @@ function RegistrationFormWrapper({ checkedItems }: { checkedItems: string[] }) {
 }
 
 function SetSelection({ checkedItems }: { checkedItems: string[] }) {
-    const { setCheckedItems } = useSelectionContext();
+    const { setCheckedItems } = useSelection();
 
     useEffect(() => {
         setCheckedItems(checkedItems);
@@ -73,16 +72,16 @@ describe('RegistrationForm', () => {
 
     it('displays correct count based on selected items', async () => {
         const { rerender } = render(<RegistrationFormWrapper checkedItems={[]} />);
-        expect(screen.getByText(/0 forsider valgt/i)).toBeInTheDocument();
+        expect(screen.getByText(/0 forsider valgt/i)).toBeDefined();
 
         rerender(<RegistrationFormWrapper checkedItems={['id1']} />);
         await waitFor(() =>
-            expect(screen.getByText(/1 forside valgt/i)).toBeInTheDocument()
+            expect(screen.getByText(/1 forside valgt/i)).toBeDefined()
         );
 
         rerender(<RegistrationFormWrapper checkedItems={['id1', 'id2']} />);
         await waitFor(() =>
-            expect(screen.getByText(/2 forsider valgt/i)).toBeInTheDocument()
+            expect(screen.getByText(/2 forsider valgt/i)).toBeDefined()
         );
     });
 });

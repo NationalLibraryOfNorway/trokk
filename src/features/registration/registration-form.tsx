@@ -16,7 +16,7 @@ import {useTransferLog} from '../../context/transfer-log-context.tsx';
 import {SubmitHandler, useForm} from 'react-hook-form';
 import {useSecrets} from '../../context/secret-context.tsx';
 import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
-import {useSelectionContext} from '../../context/selection-context.tsx';
+import {useSelection} from '../../context/selection-context.tsx';
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -32,7 +32,7 @@ const RegistrationForm: React.FC = () => {
     const { allUploadProgress, setAllUploadProgress } = useUploadProgress();
     const { addLog } = useTransferLog();
     const { secrets } = useSecrets();
-    const { checkedItems } = useSelectionContext();
+    const { checkedItems } = useSelection();
     const auth = useAuth();
     const loggedOut = auth?.loggedOut;
     const [successMessage, setSuccessMessage] = useState('');
@@ -71,6 +71,7 @@ const RegistrationForm: React.FC = () => {
             setErrorMessage('Velg forsider før du kan gå videre!');
         }
     };
+    
     useEffect(() => {
         if (checkedItems.length > 0) {
             setErrorMessage('');

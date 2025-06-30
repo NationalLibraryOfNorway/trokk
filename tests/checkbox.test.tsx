@@ -1,6 +1,5 @@
 import { render, fireEvent } from '@testing-library/react';
 import Checkbox from '../src/components/ui/checkbox';
-import '@testing-library/jest-dom';
 
 describe('Checkbox component', () => {
     it('renders with amber color when checked is true', () => {

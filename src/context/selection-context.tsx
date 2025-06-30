@@ -10,7 +10,6 @@ import { useTrokkFiles } from './trokk-files-context.tsx';
 
 export interface SelectionContextProps {
     currentIndex: number;
-    setCurrentIndex: (index: number) => void;
     checkedItems: string[];
     setCheckedItems: React.Dispatch<React.SetStateAction<string[]>>;
     handleNext: () => void;
@@ -25,13 +24,6 @@ export interface SelectionContextProps {
 
 const SelectionContext = createContext<SelectionContextProps | undefined>(undefined);
 
-export const useSelection = () => {
-    const context = useContext(SelectionContext);
-    if (!context) {
-        throw new Error('useSelection must be used within a SelectionProvider');
-    }
-    return context;
-};
 
 export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -44,6 +36,7 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (folderPath !== currentFolderPath) {
             setCurrentFolderPath(folderPath);
             setCheckedItems([]);  // Reset only on folder change
+            handleIndexChange(0); // Reset index to 0 when folder changes
         }
     }, [state.current?.path]);
 
@@ -53,14 +46,53 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         () => state.current?.children?.filter(child => !child.isDirectory) || [],
         [state.current]
     );
+
+    /**
+     * Navigate to the previous image in the list.
+     *
+     * Calculates the new index by decrementing the current index.
+     * If the new index is less than zero, it wraps around to the last image in the list.
+     *
+     * Example:
+     * - totalImagesInFolder = 10
+     * - currentIndex = 7
+     * - newIndex = (7 - 1 + 10) % 10 = 16 % 10 = 6
+     *
+     * Alternatively:
+     * - totalImagesInFolder = 10
+     * - currentIndex = 0
+     * - newIndex = (0 - 1 + 10) % 10 = 9 % 10 = 9
+     * @returns {void}
+     */
     const handlePrevious = () => {
-        const newIndex = (currentIndex - 1 + files.length) % files.length;
-        setCurrentIndex(newIndex);
+        if (currentIndex != 0) {
+            const newIndex = (currentIndex - 1 + files.length) % files.length;
+            handleIndexChange(newIndex);
+        }
     };
 
+    /**
+     * Navigate to the next image in the list.
+     *
+     * Calculates the new index by incrementing the current index.
+     * If the new index exceeds the total number of images, it wraps around to the first image in the list.
+     *
+     * Example:
+     * - totalImagesInFolder = 10
+     * - currentIndex = 7
+     * - newIndex = (7 + 1) % 10 = 8 % 10 = 8
+     *
+     * Alternatively:
+     * - totalImagesInFolder = 10
+     * - currentIndex = 9
+     * - newIndex = (9 + 1) % 10 = 10 % 10 = 0
+     * @returns {void}
+     */
     const handleNext = () => {
-        const newIndex = (currentIndex + 1) % files.length;
-        setCurrentIndex(newIndex);
+        if (currentIndex != files.length - 1) {
+            const newIndex = (currentIndex + 1) % (files.length);
+            handleIndexChange(newIndex);
+        }
     };
 
     const handleCheck = () => {
@@ -82,7 +114,7 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
         const index = files.findIndex(f => f.path === child.path);
         if (index >= 0) {
-            setCurrentIndex(index);
+            handleIndexChange(index);
         } else {
             console.warn('handleOpen: file not found in current list', {
                 childPath: child.path,
@@ -116,7 +148,6 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         <SelectionContext.Provider
             value={{
                 currentIndex,
-                setCurrentIndex,
                 checkedItems,
                 setCheckedItems,
                 handleNext,
@@ -134,7 +165,7 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     );
 };
 
-export const useSelectionContext = (): SelectionContextProps => {
+export const useSelection = (): SelectionContextProps => {
     const context = useContext(SelectionContext);
     if (!context) {
         throw new Error('useSecrets must be used within a SelectionProvider');
