@@ -1,32 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { MaterialType } from '../../model/registration-enums';
-import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { AllTransferProgress, TransferProgress } from '../../model/transfer-progress';
-import { useTrokkFiles } from '../../context/trokk-files-context.tsx';
-import { useUploadProgress } from '../../context/upload-progress-context.tsx';
-import type { Event } from '@tauri-apps/api/event';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { useSecrets } from '../../context/secret-context.tsx';
-import { RegistrationFormProps } from './registration-form-props.tsx';
-import { usePostRegistration } from '../../context/post-registration-context.tsx';
+import React, {useEffect, useState} from 'react';
+import {MaterialType} from '../../model/registration-enums';
+import {invoke} from '@tauri-apps/api/core';
+import {AllTransferProgress, TransferProgress} from '../../model/transfer-progress';
+import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {SubmitHandler, useForm} from 'react-hook-form';
+import {RegistrationFormProps} from './registration-form-props.tsx';
+import {usePostRegistration} from '../../context/post-registration-context.tsx';
 import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
-import { uuidv7 } from 'uuidv7';
-import { useMessage } from '../../context/message-context.tsx';
-import {useAuth} from '../../context/auth-context.tsx';
+import {useMessage} from '../../context/message-context.tsx';
+import {useUploadProgress} from '../../context/upload-progress-context.tsx';
+import type {Event} from '@tauri-apps/api/event';
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
+import {useSecrets} from '../../context/secret-context.tsx';
 
-const appWindow = getCurrentWebviewWindow();
 
 const RegistrationForm: React.FC = () => {
-    const auth = useAuth();
-    const id = uuidv7().toString();
-    const { state } = useTrokkFiles();
-    const { postRegistration } = usePostRegistration();
-    const { errorMessage, successMessage, removeMessages } = useMessage();
-    const { allUploadProgress, setAllUploadProgress } = useUploadProgress();
-    const { secrets } = useSecrets();
+
+    const {state} = useTrokkFiles();
+    const {allUploadProgress} = useUploadProgress();
+    const {postRegistration} = usePostRegistration();
+    const {errorMessage, successMessage, removeMessages} = useMessage();
     const [barWidth, setBarWidth] = useState(0);
-    const [papiPath, setPapiPath] = useState('');
+    const appWindow = getCurrentWebviewWindow();
+    const {setAllUploadProgress} = useUploadProgress();
+    const {secrets} = useSecrets();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [disabled, setDisabled] = useState(false);
@@ -45,24 +42,8 @@ const RegistrationForm: React.FC = () => {
         }
     });
 
-    const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
-        setIsSubmitting(true);
-        setDisabled(true);
-        await invoke<string>('get_hostname')
-            .then(async hostname => await postRegistration(hostname, registration, papiPath, id, auth))
-            .catch(error => {
-                console.error(error);
-            })
-            .finally(() => setIsSubmitting(false));
-    };
-
     useEffect(() => {
-        const initialize = async () => {
-            setPapiPath(secrets?.papiPath ?? '');
-            setDisabled(state.current?.path === undefined);
-        };
-
-        void initialize();
+        setDisabled(state.current?.path === undefined);
 
         const unlistenProgress = appWindow.listen('transfer_progress', (event: Event<TransferProgress>) => {
             setAllUploadProgress(progress => ({
@@ -78,6 +59,17 @@ const RegistrationForm: React.FC = () => {
             unlistenProgress.then((unlisten) => unlisten());
         };
     }, [secrets]);
+
+    const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
+        setIsSubmitting(true);
+        setDisabled(true);
+        await invoke<string>('get_hostname')
+            .then(async hostname => await postRegistration(hostname, registration))
+            .catch(error => {
+                console.error(error);
+            })
+            .finally(() => setIsSubmitting(false));
+    };
 
     useEffect(() => {
         if (state.current?.path === undefined) {
@@ -137,7 +129,7 @@ const RegistrationForm: React.FC = () => {
                 <label className="text-stone-100">Materialtype</label>
                 <select
                     {...register('materialType')}
-                    style={{ color: '#000000' }}
+                    style={{color: '#000000'}}
                     className={'bg-amber-600'}
                 >
                     {Object.values(MaterialType).map((type) => (
@@ -221,7 +213,7 @@ const RegistrationForm: React.FC = () => {
                 <div className="absolute z-0 w-full rounded-full bg-stone-800 h-6 overflow-hidden">
                     <div
                         className="bg-amber-600 h-6 transition-width duration-500"
-                        style={{ width: `${barWidth}%` }}
+                        style={{width: `${barWidth}%`}}
                     ></div>
                 </div>
             </div>

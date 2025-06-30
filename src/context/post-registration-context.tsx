@@ -1,27 +1,30 @@
 // usePostRegistration.ts
-import { useTrokkFiles } from './trokk-files-context.tsx';
-import { invoke } from '@tauri-apps/api/core';
-import { TextInputDto } from '../model/text-input-dto.ts';
-import { RegistrationFormProps } from '../features/registration/registration-form-props.tsx';
-import { TextItemResponse } from '../model/text-input-response.ts';
-import { settings } from '../tauri-store/setting-store.ts';
-import { useMessage } from './message-context.tsx';
-import { useUploadProgress } from './upload-progress-context.tsx';
-import { AuthContextType } from './auth-context.tsx';
+import {useTrokkFiles} from './trokk-files-context.tsx';
+import {invoke} from '@tauri-apps/api/core';
+import {TextInputDto} from '../model/text-input-dto.ts';
+import {RegistrationFormProps} from '../features/registration/registration-form-props.tsx';
+import {TextItemResponse} from '../model/text-input-response.ts';
+import {settings} from '../tauri-store/setting-store.ts';
+import {useMessage} from './message-context.tsx';
+import {useUploadProgress} from './upload-progress-context.tsx';
+import {useAuth} from './auth-context.tsx';
 import {uploadToS3} from '../features/registration/upload-to-s3.tsx';
+import {useSecrets} from './secret-context.tsx';
+import {uuidv7} from 'uuidv7';
 
 export function usePostRegistration() {
-    const { state } = useTrokkFiles();
-    const { handleError, clearError, displaySuccessMessage } = useMessage();
-    const { setAllUploadProgress } = useUploadProgress();
+    const {state} = useTrokkFiles();
+    const {secrets} = useSecrets();
+    const auth = useAuth();
+    const {handleError, clearError, displaySuccessMessage} = useMessage();
+    const {setAllUploadProgress} = useUploadProgress();
 
     const postRegistration = async (
         machineName: string,
-        registration: RegistrationFormProps,
-        papiPath: string,
-        id: string,
-        auth: AuthContextType
+        registration: RegistrationFormProps
     ) => {
+        const papiPath = secrets?.papiPath;
+        const id = uuidv7().toString();
         const loggedOut = auth?.loggedOut;
 
         if (!state.current?.path) return;
@@ -42,7 +45,7 @@ export function usePostRegistration() {
         });
 
         const deleteDir = async (path: string): Promise<void> => {
-            return invoke('delete_dir', { dir: path });
+            return invoke('delete_dir', {dir: path});
         };
 
         const body = new TextInputDto(
@@ -93,5 +96,5 @@ export function usePostRegistration() {
             });
     };
 
-    return { postRegistration };
+    return {postRegistration};
 }

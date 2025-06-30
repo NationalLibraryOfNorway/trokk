@@ -24,3 +24,8 @@ dist-ssr
 *.iml
 
 src-tauri/gen
+.env
+
+.iml
+/target
+/src-tauri/target/

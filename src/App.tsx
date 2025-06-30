@@ -10,8 +10,8 @@ import {UploadProgressProvider} from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
-import { MessageProvider } from './context/message-context.tsx';
-import {TransferLogProvider} from "./context/transfer-log-context.tsx";
+import {MessageProvider} from './context/message-context.tsx';
+import {TransferLogProvider} from './context/transfer-log-context.tsx';
 
 
 function App() {

@@ -51,6 +51,7 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
         setErrorMessage(null);
         setSuccessMessage(null);
     };
+    
     const clearError = () => setErrorMessage(null);
 
     return (

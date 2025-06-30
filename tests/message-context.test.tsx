@@ -14,6 +14,7 @@ vi.mock('./src/context/transfer-log-context', () => ({
     }),
     TransferLogProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
+
 const renderWithContext = () => {
     render(
         <TransferLogProvider>
