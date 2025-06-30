@@ -15,27 +15,6 @@ use vaultrs_login::LoginClient;
 
 #[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, ClientError> {
-	sentry::capture_message(
-		&format!(
-			"Using vault base url: {}",
-			ENVIRONMENT_VARIABLES.vault_base_url
-		),
-		sentry::Level::Info,
-	);
-	sentry::capture_message(
-		&format!(
-			"Using vault secret id: {}",
-			ENVIRONMENT_VARIABLES.vault_secret_id
-		),
-		sentry::Level::Info,
-	);
-	sentry::capture_message(
-		&format!(
-			"Using vault role id: {}",
-			ENVIRONMENT_VARIABLES.vault_role_id
-		),
-		sentry::Level::Info,
-	);
 	let mut client = VaultClient::new(
 		VaultClientSettingsBuilder::default()
 			.address(ENVIRONMENT_VARIABLES.vault_base_url)

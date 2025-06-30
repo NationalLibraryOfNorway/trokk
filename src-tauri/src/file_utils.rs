@@ -1,7 +1,7 @@
 use std::fs;
-use std::path::{Path};
+use std::path::Path;
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use std::path::PathBuf;
 
 use tauri_plugin_dialog::DialogExt;
@@ -31,7 +31,7 @@ pub(crate) fn directory_picker<R: tauri::Runtime, P: AsRef<Path>>(
 }
 
 // Get all file paths in a directory, without subdirectories
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<PathBuf>, String> {
 	let mut file_paths = Vec::new();
 	for dir_entry_result in fs::read_dir(directory_path).map_err(|e| e.to_string())? {

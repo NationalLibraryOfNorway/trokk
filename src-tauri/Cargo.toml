@@ -55,5 +55,5 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "lib"]
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-# tauri-plugin-single-instance = "2"
+# tauri-plugin-single-instance = "2" disabled due to login windown not opening on windows
 #  "rlib",

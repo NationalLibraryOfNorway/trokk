@@ -78,9 +78,9 @@ fn get_hostname() -> Result<String, OsString> {
 }
 
 #[tauri::command]
-async fn log_in(_window: Window) -> Result<u16, String> {
+async fn log_in(window: Window) -> Result<u16, String> {
 	// Returns the token via the `token_exchanged` window event
-	auth::log_in_with_server_redirect(_window)
+	auth::log_in_with_server_redirect(window)
 }
 
 #[tauri::command]
