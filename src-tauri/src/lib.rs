@@ -8,8 +8,8 @@ use tokio::sync::OnceCell;
 
 use crate::image_converter::ConversionCount;
 #[cfg(not(feature = "debug-mock"))]
-use crate::model::{  RequiredEnvironmentVariables};
-use crate::model::{ SecretVariables, AuthenticationResponse};
+use crate::model::RequiredEnvironmentVariables;
+use crate::model::{AuthenticationResponse, SecretVariables};
 
 mod auth;
 mod error;
@@ -26,7 +26,7 @@ mod tests;
 
 #[cfg(not(feature = "debug-mock"))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
-	vault_base_url: env!("VAULT_BASE_URL"),
+	vault_base_url: env!("VAULT_ABASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
 	vault_secret_id: env!("VAULT_SECRET_ID"),
 	sentry_environment: env!("RUST_SENTRY_ENVIRONMENT"),
@@ -37,7 +37,7 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 // Use Tokio's OnceCell to fetch secrets from Vault only once
 static VAULT_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 	// Fetch secrets from Vault only once, the cell functions as a cache
@@ -59,7 +59,7 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 				oidc_base_url: env!("OIDC_BASE_URL").to_string(),
 				oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID").to_string(),
 				oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET").to_string(),
-				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string()
+				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string(),
 			})
 		})
 		.await
@@ -185,15 +185,15 @@ async fn pick_directory<R: tauri::Runtime>(
 	}
 }
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn get_papi_access_token() -> Result<String, String> {
-		auth::get_access_token_for_papi()
-			.await
-			.map_err(|e| format!("Could not get token for Papi. {e:?}"))
+	auth::get_access_token_for_papi()
+		.await
+		.map_err(|e| format!("Could not get token for Papi. {e:?}"))
 }
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn upload_directory_to_s3(
 	directory_path: &str,
@@ -201,7 +201,7 @@ async fn upload_directory_to_s3(
 	material_type: &str,
 	app_window: Window,
 ) -> Result<usize, String> {
-		s3::upload_directory(directory_path, object_id, material_type, app_window).await
+	s3::upload_directory(directory_path, object_id, material_type, app_window).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

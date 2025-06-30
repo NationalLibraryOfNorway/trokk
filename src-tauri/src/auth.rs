@@ -1,20 +1,20 @@
+use reqwest::Client;
 use std::borrow::Cow;
 use std::collections::HashMap;
-use reqwest::Client;
 use tauri::Emitter;
 use tauri::Window;
 use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use std::error::Error;
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::get_secret_variables;
-use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo, };
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use crate::model::TokenResponseWithoutRefresh;
+use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo};
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
 	start_with_config(
@@ -65,7 +65,7 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 	);
 	create_token(client, body).await
 }
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>> {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();

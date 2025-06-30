@@ -1,4 +1,3 @@
-
 use image::ImageReader;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;

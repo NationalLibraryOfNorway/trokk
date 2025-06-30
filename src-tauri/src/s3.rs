@@ -1,25 +1,25 @@
-#[cfg(not(feature = "debug-mock" ))]
-use std::path::PathBuf;
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::config::{Credentials, Region};
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::operation::put_object::PutObjectOutput;
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::primitives::ByteStream;
-#[cfg(not(feature = "debug-mock" ))]
-use aws_sdk_s3::Client;
-#[cfg(not(feature = "debug-mock" ))]
-use tauri::{Emitter, Window};
-#[cfg(not(feature = "debug-mock" ))]
-use tokio::sync::OnceCell;
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use crate::file_utils::get_file_paths_in_directory;
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use crate::get_secret_variables;
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
+#[cfg(not(feature = "debug-mock"))]
+use aws_sdk_s3::config::{Credentials, Region};
+#[cfg(not(feature = "debug-mock"))]
+use aws_sdk_s3::operation::put_object::PutObjectOutput;
+#[cfg(not(feature = "debug-mock"))]
+use aws_sdk_s3::primitives::ByteStream;
+#[cfg(not(feature = "debug-mock"))]
+use aws_sdk_s3::Client;
+#[cfg(not(feature = "debug-mock"))]
+use std::path::PathBuf;
+#[cfg(not(feature = "debug-mock"))]
+use tauri::{Emitter, Window};
+#[cfg(not(feature = "debug-mock"))]
+use tokio::sync::OnceCell;
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn upload_directory(
 	directory_path: &str,
 	object_id: &str,
@@ -60,7 +60,7 @@ pub(crate) async fn upload_directory(
 	}
 	Ok(file_paths.len())
 }
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 async fn put_object(
 	client: &Client,
 	secret_variables: &SecretVariables,
@@ -98,10 +98,10 @@ async fn put_object(
 }
 
 // Use Tokio's OnceCell to create the S3 client only once
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 static S3_CLIENT_CELL: OnceCell<Client> = OnceCell::const_new();
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 async fn get_client(secret_variables: &SecretVariables) -> Result<&'static Client, String> {
 	// Create the S3 client only once, the cell functions as a cache
 	S3_CLIENT_CELL
@@ -110,7 +110,7 @@ async fn get_client(secret_variables: &SecretVariables) -> Result<&'static Clien
 		.map_err(|e| e.to_string())
 }
 
-#[cfg(not(feature = "debug-mock" ))]
+#[cfg(not(feature = "debug-mock"))]
 async fn create_client(secret_variables: &SecretVariables) -> Result<Client, String> {
 	let credentials = Credentials::from_keys(
 		&secret_variables.s3_access_key_id,
