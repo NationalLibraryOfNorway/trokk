@@ -28,11 +28,11 @@ pub(crate) async fn upload_directory(
 ) -> Result<usize, String> {
 	let secret_variables = get_secret_variables()
 		.await
-		.map_err(|e| format!("Failed to get secret variables: {}", e))?;
+		.map_err(|e| format!("Failed to get secret variables: {e}"))?;
 
 	let client = get_client(secret_variables)
 		.await
-		.map_err(|e| format!("Failed to get S3 client: {}", e))?;
+		.map_err(|e| format!("Failed to get S3 client: {e}"))?;
 
 	let file_paths = get_file_paths_in_directory(directory_path)?;
 	for (index, file_path) in file_paths.iter().enumerate() {
@@ -73,7 +73,7 @@ async fn put_object(
 		.path(path)
 		.build()
 		.await
-		.map_err(|e| format!("Failed to read file: {}", e))?;
+		.map_err(|e| format!("Failed to read file: {e}"))?;
 
 	let result = client
 		.put_object()
@@ -90,9 +90,9 @@ async fn put_object(
 		.send()
 		.await
 		.inspect_err(|e| {
-			println!("Error: {:?}", e);
+			println!("Error: {e:?}");
 		})
-		.map_err(|e| format!("Failed to upload directory: {:?}", e))?;
+		.map_err(|e| format!("Failed to upload directory: {e:?}"))?;
 
 	Ok(result)
 }
