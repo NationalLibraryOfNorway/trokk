@@ -1,4 +1,4 @@
-import React, {useRef, useState, useEffect, useLayoutEffect} from 'react';
+import React, {useRef, useEffect} from 'react';
 import {Folder} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
@@ -18,29 +18,11 @@ const FilesContainer: React.FC = () => {
         handleCheck,
         handleClose,
     } = useSelection();
-    const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
+
     const files = state.current?.children?.filter(child => !child.isDirectory) || [];
 
     const containerRef = useRef<HTMLDivElement>(null);
-    const [columns, setColumns] = useState(1);
-
-    useLayoutEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-
-        const updateColumns = () => {
-            const containerWidth = container.clientWidth;
-            const child = container.querySelector('.filethumbnail') as HTMLElement;
-            const childWidth = child?.offsetWidth || 150;
-            const calculatedColumns = Math.floor(containerWidth / childWidth);
-            setColumns(Math.max(calculatedColumns, 1));
-        };
-
-        updateColumns();
-        const resizeObserver = new ResizeObserver(updateColumns);
-        resizeObserver.observe(container);
-        return () => resizeObserver.disconnect();
-    }, [state.current?.children?.length]);
+    const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -59,8 +41,7 @@ const FilesContainer: React.FC = () => {
                 case 'ArrowDown':
                 case 'j':
                 case 'J': {
-                    if (columns <= 0) return;
-                    const newIndex = currentIndex + columns;
+                    const newIndex = currentIndex + 2;
                     if (newIndex < files.length) handleIndexChange(newIndex);
 
                     break;
@@ -68,13 +49,13 @@ const FilesContainer: React.FC = () => {
                 case 'ArrowUp':
                 case 'k':
                 case 'K': {
-                    const newIndex = currentIndex - columns;
+                    const newIndex = currentIndex - 2;
                     if (newIndex >= 0) handleIndexChange(newIndex);
                     break;
                 }
                 case 'Enter': {
                     const currentFile = files[currentIndex];
-                    if (currentFile) handleOpen(currentFile);
+                    if (currentFile && !state.preview) handleOpen(currentFile);
                     break;
                 }
                 case 'Escape':
@@ -98,7 +79,6 @@ const FilesContainer: React.FC = () => {
         };
     }, [
         currentIndex,
-        columns,
         files,
         handleOpen,
         handleNext,
@@ -120,21 +100,25 @@ const FilesContainer: React.FC = () => {
         }
     }, [currentIndex, state.preview]);
 
-
     return (
         <div
             ref={containerRef}
-            className="flex flex-wrap overflow-y-auto h-[calc(96%)] justify-start content-start ml-4 focus:outline-none focus:ring-0"
+            className={`grid grid-cols-2 overflow-y-auto h-full justify-start content-start pl-4 pt-2 focus:outline-none focus:ring-0 ${state.preview? 'inset-0': ''}`}
             tabIndex={0}
         >
             {state.current && state.current.children ? (
                 <>
                     {state.preview && (
-                        <div className="w-full bg-gray-200 bg-opacity-25 dark:bg-gray-700 dark:bg-opacity-25">
-                            <DetailedImageView
-                                image={files[currentIndex]}
-                                totalImagesInFolder={files.length}
-                            />
+                        <div className="fixed inset-0 justify-center z-50 bg-stone-800/40" onClick={handleClose}>
+                            <div
+                                className="relative"
+                            >
+                                <DetailedImageView
+                                    image={files[currentIndex]}
+                                    totalImagesInFolder={files.length}
+                                    isChecked={checkedItems.includes(files[currentIndex]?.path)}
+                                />
+                            </div>
                         </div>
                     )}
 
@@ -163,7 +147,7 @@ const FilesContainer: React.FC = () => {
                                     <div
                                         key={child.path}
                                         ref={el => fileRefs.current[index] = el}
-                                        className="filethumbnail flex flex-col items-center py-5 focus:outline-none focus:ring-0"
+                                        className="space-y-2 w-[80%] grid-rows-2 py-5 focus:outline-none focus:ring-0"
                                         tabIndex={currentIndex === index ? 0 : -1}
                                         onFocus={() => handleIndexChange(index)}
                                     >
@@ -172,14 +156,16 @@ const FilesContainer: React.FC = () => {
                                             onClick={() => handleOpen(child)}
                                             isChecked={checkedItems.includes(child.path)}
                                             fileTree={child}
-                                            isFocused={currentIndex === index}
+                                            isFocused={!state.preview && currentIndex === index}
                                         />
-                                        <Checkbox
-                                            key={`${child.path}-2-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
-                                            isChecked={checkedItems.includes(child.path)}
-                                            onChange={() => handleCheck()}
-                                            isFocused={currentIndex === index}
-                                        />
+                                        <div className="flex justify-center">
+                                            <Checkbox
+                                                key={`${child.path}-2-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
+                                                isChecked={checkedItems.includes(child.path)}
+                                                onChange={() => handleCheck()}
+                                                isFocused={!state.preview && currentIndex === index}
+                                            />
+                                        </div>
                                     </div>
                                 )
                             )
