@@ -1,4 +1,4 @@
-import React, { useState} from 'react';
+import React, {useState} from 'react';
 import {FolderOpen, User} from 'lucide-react';
 import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
@@ -10,6 +10,8 @@ import {UploadProgressProvider} from './context/upload-progress-context.tsx';
 import Button from './components/ui/button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
+import {MessageProvider} from './context/message-context.tsx';
+import {TransferLogProvider} from './context/transfer-log-context.tsx';
 import {SelectionProvider} from './context/selection-context.tsx';
 
 
@@ -104,7 +106,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                 <div className="flex justify-end gap-2">
                     <div className="flex pr-2 pt-3">
                         <User/>
-                        <p className="pt-0.5">{authResponse!.userInfo.givenName}</p>
+                        <p className="pt-0.5">{authResponse.userInfo.givenName}</p>
                     </div>
                     <Button onClick={() => setOpenSettings(!openSettings)}>Innstillinger</Button>
                     <Button onClick={logout}>Logg ut</Button>
@@ -113,7 +115,11 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             <TrokkFilesProvider scannerPath={scannerPath}>
                 <SelectionProvider>
                     <UploadProgressProvider>
-                        <MainLayout/>
+                        <TransferLogProvider>
+                            <MessageProvider>
+                                <MainLayout/>
+                            </MessageProvider>
+                        </TransferLogProvider>
                     </UploadProgressProvider>
                 </SelectionProvider>
             </TrokkFilesProvider>

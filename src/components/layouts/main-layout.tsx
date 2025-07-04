@@ -4,7 +4,6 @@ import Split from 'react-split';
 import './main-layout.css';
 import RegistrationForm from '../../features/registration/registration-form.tsx';
 import FilesContainer from '../../features/files-container/files-container.tsx';
-import { TransferLogProvider } from '../../context/transfer-log-context.tsx';
 import TransferLog from '../../features/transfer-log/transfer-log.tsx';
 
 const MainLayout: React.FC = () => {
@@ -20,10 +19,8 @@ const MainLayout: React.FC = () => {
                 <FilesContainer />
             </div>
             <div className="h-full">
-                <TransferLogProvider>
                     <RegistrationForm />
                     <TransferLog />
-                </TransferLogProvider>
             </div>
         </Split>
     );

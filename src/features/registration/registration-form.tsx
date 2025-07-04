@@ -1,44 +1,30 @@
 import React, {useEffect, useState} from 'react';
-import {getMaterialTypeAsKeyString, MaterialType} from '../../model/registration-enums';
-import {fetch} from '@tauri-apps/plugin-http';
-import {TextInputDto} from '../../model/text-input-dto';
+import {MaterialType} from '../../model/registration-enums';
 import {invoke} from '@tauri-apps/api/core';
-import {settings} from '../../tauri-store/setting-store.ts';
-import {uuidv7} from 'uuidv7';
-import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
-import {useAuth} from '../../context/auth-context.tsx';
 import {AllTransferProgress, TransferProgress} from '../../model/transfer-progress';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {SubmitHandler, useForm} from 'react-hook-form';
+import {RegistrationFormProps} from './registration-form-props.tsx';
+import {usePostRegistration} from '../../context/post-registration-context.tsx';
+import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
+import {useMessage} from '../../context/message-context.tsx';
 import {useUploadProgress} from '../../context/upload-progress-context.tsx';
 import type {Event} from '@tauri-apps/api/event';
-import {TextItemResponse} from '../../model/text-input-response.ts';
-import {useTransferLog} from '../../context/transfer-log-context.tsx';
-import {SubmitHandler, useForm} from 'react-hook-form';
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {useSecrets} from '../../context/secret-context.tsx';
-import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
 
-const appWindow = getCurrentWebviewWindow();
-
-type RegistrationFormProps = {
-    materialType: MaterialType,
-    font: 'ANTIQUA' | 'FRAKTUR',
-    language: 'NOB' | 'SME',
-    workingTitle: string,
-}
 
 const RegistrationForm: React.FC = () => {
-    const { state } = useTrokkFiles();
-    const { allUploadProgress, setAllUploadProgress } = useUploadProgress();
-    const { addLog } = useTransferLog();
-    const { secrets } = useSecrets();
+
+    const {state} = useTrokkFiles();
     const { checkedItems } = useSelection();
-    const auth = useAuth();
-    const loggedOut = auth?.loggedOut;
-    const [successMessage, setSuccessMessage] = useState('');
-    const [errorMessage, setErrorMessage] = useState('');
+    const {allUploadProgress, setAllUploadProgress} = useUploadProgress();
+    const {postRegistration} = usePostRegistration();
+    const {errorMessage, handleError, successMessage, removeMessages} = useMessage();
     const [barWidth, setBarWidth] = useState(0);
-    const [papiPath, setPapiPath] = useState('');
+    const appWindow = getCurrentWebviewWindow();
+    const {secrets} = useSecrets();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [disabled, setDisabled] = useState(false);
@@ -57,34 +43,15 @@ const RegistrationForm: React.FC = () => {
         }
     });
 
-    const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
-        if (checkedItems.length > 0) {
-            setIsSubmitting(true);
-            setDisabled(true);
-            await invoke<string>('get_hostname')
-                .then(async hostname => await postRegistration(hostname, registration))
-                .catch(error => {
-                    console.error(error);
-                })
-                .finally(() => setIsSubmitting(false));
-        } else {
-            setErrorMessage('Velg forsider før du kan gå videre!');
-        }
-    };
-    
+
     useEffect(() => {
         if (checkedItems.length > 0) {
-            setErrorMessage('');
+            handleError('');
         }
     }, [checkedItems]);
 
     useEffect(() => {
-        const initialize = async () => {
-            setPapiPath(secrets?.papiPath ?? '');
-            setDisabled(state.current?.path === undefined);
-        };
-
-        void initialize();
+        setDisabled(state.current?.path === undefined);
 
         const unlistenProgress = appWindow.listen('transfer_progress', (event: Event<TransferProgress>) => {
             setAllUploadProgress(progress => ({
@@ -101,6 +68,21 @@ const RegistrationForm: React.FC = () => {
         };
     }, [secrets]);
 
+    const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
+        if (checkedItems.length > 0) {
+            setIsSubmitting(true);
+            setDisabled(true);
+            await invoke<string>('get_hostname')
+                .then(async hostname => await postRegistration(hostname, registration))
+                .catch(error => {
+                    console.error(error);
+                })
+                .finally(() => setIsSubmitting(false));
+        } else {
+            handleError('Velg forsider før du kan gå videre!');
+        }
+    };
+
     useEffect(() => {
         if (state.current?.path === undefined) {
             setDisabled(true);
@@ -108,8 +90,7 @@ const RegistrationForm: React.FC = () => {
             resetField('font');
             resetField('language');
             setValue('workingTitle', state.current ? state.current.name : '');
-            setSuccessMessage('');
-            setErrorMessage('');
+            removeMessages();
             setBarWidth(0);
         } else {
             const currentUploadProgress = state.current?.path && allUploadProgress?.dir?.[state.current.path];
@@ -134,122 +115,21 @@ const RegistrationForm: React.FC = () => {
         setBarWidthFromProgress(allUploadProgress);
     }, [allUploadProgress]);
 
-    const postRegistration = async (machineName: string, registration: RegistrationFormProps) => {
-        if (!state.current?.path) return;
-        const pushedDir = state.current?.path;
-        const auth = await settings.getAuthResponse();
-        if (!auth || loggedOut) return Promise.reject('Not logged in');
-
-        const id = uuidv7().toString();
-
-        const transfer = uploadToS3(id, registration).catch(error => {
-            handleError('Fikk ikke lastet opp filene', undefined, error);
-            return Promise.reject(error);
-        });
-
-        const numberOfPagesTransferred = await transfer;
-
-        const accessToken = await invoke('get_papi_access_token').catch(error => {
-            handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.', undefined, error);
-            return Promise.reject(error);
-        });
-
-        const body = new TextInputDto(
-            id,
-            registration.materialType,
-            auth.userInfo.name,
-            registration.font,
-            registration.language,
-            machineName,
-            registration.workingTitle,
-            numberOfPagesTransferred
-        );
-
-        await body.setVersion();
-
-        return await fetch(`${papiPath}/v2/item`, {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + accessToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        })
-            .then(async response => {
-                if (response.ok) {
-                    void deleteDir(pushedDir);
-                    removeErrorMessage();
-                    displaySuccessMessage(await response.json() as TextItemResponse);
-                } else {
-                    console.error(response);
-                    handleError(undefined, response.status);
-                }
-                setAllUploadProgress(progress => {
-                    delete progress.dir[pushedDir];
-                    return progress;
-                });
-            })
-            .catch(error => {
-                handleError();
-                return Promise.reject(error);
-            });
-    };
-
-    const uploadToS3 = async (id: string, registration: RegistrationFormProps): Promise<number> => {
-        const filesPath = await settings.getScannerPath();
-        if (filesPath === state.current?.path) {
-            return Promise.reject('Cannot move files from scanner dir');
-        }
-
-        return invoke('upload_directory_to_s3', {
-            directoryPath: state.current!.path,
-            objectId: id,
-            materialType: getMaterialTypeAsKeyString(registration.materialType),
-            appWindow: appWindow
-        });
-    };
-
-    const deleteDir = async (path: string): Promise<void> => {
-        return invoke('delete_dir', { dir: path });
-    };
-
-    const handleError = (extra_text?: string, code?: string | number, error?: Error) => {
-        let tmpErrorMessage = 'Kunne ikke TRØKKE dette videre.';
-        if (extra_text) tmpErrorMessage += ` ${extra_text}`;
-        tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.';
-        if (code) tmpErrorMessage += ` (Feilkode ${code})`;
-
-        console.error(tmpErrorMessage, error);
-        setErrorMessage(tmpErrorMessage);
-    };
-
-    const removeErrorMessage = () => {
-        setErrorMessage('');
-    };
-
-    function displaySuccessMessage(item: TextItemResponse) {
-        setSuccessMessage(`Item "${item.scanInformation.tempName}" sendt til produksjonsløypen med id ${item.id}`);
-        const parsedItem = new TextItemResponse(
-            item.id,
-            item.materialType,
-            item.publicationType,
-            item.scanInformation,
-            item.statistics
-        );
-        addLog(parsedItem.toTransferLogItem());
-    }
+    useEffect(() => {
+        removeMessages();
+    }, [state.current?.path]);
 
     const setBarWidthFromProgress = (progress: AllTransferProgress) => {
         if (!state.current?.path || !progress.dir[state.current?.path]) {
             setBarWidth(0);
             return;
         }
-        const currentProgress = progress.dir[state.current!.path];
+        const currentProgress = progress.dir[state.current.path];
         if (currentProgress) {
             setBarWidth((currentProgress.pageNr / currentProgress.totalPages) * 100);
         }
         if (barWidth === 100) {
-            const usedPath = state.current!.path;
+            const usedPath = state.current.path;
             setIsSubmitting(false);
             setTimeout(() => delete progress.dir[usedPath], 5000);
         }
@@ -261,7 +141,7 @@ const RegistrationForm: React.FC = () => {
                 <label className="text-stone-100">Materialtype</label>
                 <select
                     {...register('materialType')}
-                    style={{ color: '#000000' }}
+                    style={{color: '#000000'}}
                     className={'bg-amber-600'}
                 >
                     {Object.values(MaterialType).map((type) => (
@@ -347,7 +227,7 @@ const RegistrationForm: React.FC = () => {
                 <div className="absolute z-0 w-full rounded-full bg-stone-800 h-6 overflow-hidden">
                     <div
                         className="bg-amber-600 h-6 transition-width duration-500"
-                        style={{ width: `${barWidth}%` }}
+                        style={{width: `${barWidth}%`}}
                     ></div>
                 </div>
             </div>
