@@ -1,7 +1,7 @@
 import {useEffect, useState} from 'react';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {FileTree} from '../../model/file-tree.ts';
-import {getPreviewURIFromTree} from '../../util/file-utils.ts';
+import {getPreviewFromTree, getPreviewURIFromTree} from '../../util/file-utils.ts';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
@@ -20,13 +20,9 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
     }, []);
 
     useEffect(() => {
-        setIsLoading(true)
-    }, [state.preview]);
-
-    // Listen to UPDATE_FILE_TREES_AND_TREE_INDEX action.type
-    useEffect(() => {
-        setIsLoading(false);
-    }, [state.current]);
+        const previewExists = !!getPreviewFromTree(image, state);
+        setIsLoading(!previewExists);
+    }, [state.preview, state.treeIndex, image]);
 
 
     const getImageSrc = () => {
