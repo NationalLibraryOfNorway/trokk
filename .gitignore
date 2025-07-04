@@ -21,12 +21,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.env
-.iml
+*.iml
 
 src-tauri/gen
 .env
-
 .iml
 /target
 /src-tauri/target/

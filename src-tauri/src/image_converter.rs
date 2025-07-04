@@ -68,7 +68,6 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 	let image: image::DynamicImage = ImageReader::open(path_reference)?
 		.with_guessed_format()?
 		.decode()?;
-
 	let image = if high_res {
 		image.resize(
 			image.width() / 4,
