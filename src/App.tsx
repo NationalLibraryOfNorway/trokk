@@ -96,7 +96,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     return (
         <>
-            <div className="grid grid-cols-3 mt-2 sticky top-0">
+            <div className="grid grid-cols-3 pt-12 sticky top-0">
                 <h2 className="text-xl flex items-center pl-4">
                     <FolderOpen size="32" className="-ml-3 mr-1 mb-2 flex-shrink-0"/>{scannerPath}
                 </h2>
