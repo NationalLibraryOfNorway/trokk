@@ -1,13 +1,15 @@
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
 use std::ffi::OsString;
+use std::string::ToString;
 use std::sync::Mutex;
-use tauri::Manager;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
 use crate::image_converter::ConversionCount;
-use crate::model::{AuthenticationResponse, RequiredEnvironmentVariables, SecretVariables};
+#[cfg(not(feature = "debug-mock"))]
+use crate::model::RequiredEnvironmentVariables;
+use crate::model::{AuthenticationResponse, SecretVariables};
 
 mod auth;
 mod error;
@@ -22,6 +24,7 @@ mod vault;
 #[cfg(test)]
 mod tests;
 
+#[cfg(not(feature = "debug-mock"))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	vault_base_url: env!("VAULT_BASE_URL"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
@@ -30,16 +33,43 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 	sentry_dsn: env!("RUST_SENTRY_DSN"),
 };
 
+#[cfg(not(feature = "debug-mock"))]
 // Use Tokio's OnceCell to fetch secrets from Vault only once
 static VAULT_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
 
+#[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 	// Fetch secrets from Vault only once, the cell functions as a cache
 	VAULT_CELL
 		.get_or_try_init(|| async { vault::fetch_secrets_from_vault().await })
 		.await
-		.map_err(|e| e.to_string())
+		.map_err(|e| {
+			sentry::capture_message(
+				"Client failed to fetch secrets from Vault",
+				sentry::Level::Error,
+			);
+			sentry::capture_error(&e);
+			e.to_string()
+		})
+}
+
+#[cfg(feature = "debug-mock")]
+#[tauri::command]
+async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
+	static MOCK_SECRETS: OnceCell<SecretVariables> = OnceCell::const_new();
+	MOCK_SECRETS
+		.get_or_try_init(|| async {
+			Ok(SecretVariables {
+				oidc_client_id: env!("OIDC_CLIENT_ID").to_string(),
+				oidc_client_secret: env!("OIDC_CLIENT_SECRET").to_string(),
+				oidc_base_url: env!("OIDC_BASE_URL").to_string(),
+				oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID").to_string(),
+				oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET").to_string(),
+				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string(),
+			})
+		})
+		.await
 }
 
 #[tauri::command]
@@ -162,6 +192,7 @@ async fn pick_directory<R: tauri::Runtime>(
 	}
 }
 
+#[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn get_papi_access_token() -> Result<String, String> {
 	auth::get_access_token_for_papi()
@@ -169,6 +200,7 @@ async fn get_papi_access_token() -> Result<String, String> {
 		.map_err(|e| format!("Could not get token for Papi. {e:?}"))
 }
 
+#[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn upload_directory_to_s3(
 	directory_path: &str,
@@ -183,12 +215,12 @@ async fn upload_directory_to_s3(
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
 	tauri::Builder::default()
-		.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+		/*.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
 			let _ = app
 				.get_webview_window("main")
 				.expect("no main window")
 				.set_focus();
-		}))
+		}))*/
 		.plugin(tauri_plugin_store::Builder::new().build())
 		.plugin(tauri_plugin_http::init())
 		.plugin(tauri_plugin_process::init())
@@ -214,7 +246,9 @@ pub fn run() {
 			convert_directory_to_webp,
 			delete_dir,
 			pick_directory,
+			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
+			#[cfg(not(feature = "debug-mock"))]
 			upload_directory_to_s3
 		])
 		.on_window_event(|window, event| {

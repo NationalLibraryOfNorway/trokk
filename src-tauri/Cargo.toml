@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "2.0.1", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.2", features = ["protocol-asset", "test", "tray-icon"] }
+tauri = { version = "2.0.2", features = ["protocol-asset", "test", "tray-icon", "devtools"] }
 tauri-plugin-store = "2.1.0"
 tauri-plugin-fs = { version = "2", features = ["watch"] }
 tauri-plugin-oauth = "2"
@@ -39,6 +39,7 @@ aws-sdk-s3 = { version = "1.4.0", features = ["rt-tokio", "behavior-version-late
 log = "0.4.21"
 tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
+winnow = "0.6.20"
 
 [dev-dependencies]
 tempfile = "3.10.1"
@@ -46,6 +47,7 @@ tempfile = "3.10.1"
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
+debug-mock = []
 custom-protocol = ["tauri/custom-protocol"]
 
 [lib]
@@ -53,5 +55,5 @@ name = "app_lib"
 crate-type = ["staticlib", "cdylib", "lib"]
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-tauri-plugin-single-instance = "2"
+# tauri-plugin-single-instance = "2" disabled due to login windown not opening on windows
 #  "rlib",

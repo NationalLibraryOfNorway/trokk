@@ -52,10 +52,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setAuthResponse(null);
         if (isLoggingIn) return;
         setIsLoggingIn(true);
+
         if (!secrets?.oidcClientSecret) {
             await getSecrets();
         }
         const port = await invoke<number>('log_in');
+
         if (secrets && 'oidcBaseUrl' in secrets) {
             try {
                 const loginWebView =
@@ -104,13 +106,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const refreshAccessToken = async () => {
         const authResponse = await settings.getAuthResponse();
         if (await canRefresh() && authResponse) {
-            const res = await invoke<AuthenticationResponse>('refresh_token', { refreshToken: authResponse.tokenResponse.refreshToken });
+            const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken });
             await settings.setAuthResponse(res);
         } else {
             await login();
             throw new Error('Refresh token expired');
         }
-    };
+    }
 
     const setRefreshAccessTokenInterval = async (authRes: null | AuthenticationResponse) => {
         const authResponse = authRes ?? await settings.getAuthResponse();

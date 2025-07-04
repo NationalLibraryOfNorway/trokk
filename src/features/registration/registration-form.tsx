@@ -1,21 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import { getMaterialTypeAsKeyString, MaterialType } from '../../model/registration-enums';
-import { fetch } from '@tauri-apps/plugin-http';
-import { TextInputDto } from '../../model/text-input-dto';
-import { invoke } from '@tauri-apps/api/core';
-import { settings } from '../../tauri-store/setting-store.ts';
-import { uuidv7 } from 'uuidv7';
-import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { useAuth } from '../../context/auth-context.tsx';
-import { AllTransferProgress, TransferProgress } from '../../model/transfer-progress';
-import { useTrokkFiles } from '../../context/trokk-files-context.tsx';
-import { useUploadProgress } from '../../context/upload-progress-context.tsx';
-import type { Event } from '@tauri-apps/api/event';
-import { TextItemResponse } from '../../model/text-input-response.ts';
-import { useTransferLog } from '../../context/transfer-log-context.tsx';
-import { SubmitHandler, useForm } from 'react-hook-form';
-import { useSecrets } from '../../context/secret-context.tsx';
+import React, {useEffect, useState} from 'react';
+import {getMaterialTypeAsKeyString, MaterialType} from '../../model/registration-enums';
+import {fetch} from '@tauri-apps/plugin-http';
+import {TextInputDto} from '../../model/text-input-dto';
+import {invoke} from '@tauri-apps/api/core';
+import {settings} from '../../tauri-store/setting-store.ts';
+import {uuidv7} from 'uuidv7';
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
+import {useAuth} from '../../context/auth-context.tsx';
+import {AllTransferProgress, TransferProgress} from '../../model/transfer-progress';
+import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {useUploadProgress} from '../../context/upload-progress-context.tsx';
+import type {Event} from '@tauri-apps/api/event';
+import {TextItemResponse} from '../../model/text-input-response.ts';
+import {useTransferLog} from '../../context/transfer-log-context.tsx';
+import {SubmitHandler, useForm} from 'react-hook-form';
+import {useSecrets} from '../../context/secret-context.tsx';
 import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
+import {useSelection} from '../../context/selection-context.tsx';
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -31,6 +32,7 @@ const RegistrationForm: React.FC = () => {
     const { allUploadProgress, setAllUploadProgress } = useUploadProgress();
     const { addLog } = useTransferLog();
     const { secrets } = useSecrets();
+    const { checkedItems } = useSelection();
     const auth = useAuth();
     const loggedOut = auth?.loggedOut;
     const [successMessage, setSuccessMessage] = useState('');
@@ -56,15 +58,25 @@ const RegistrationForm: React.FC = () => {
     });
 
     const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
-        setIsSubmitting(true);
-        setDisabled(true);
-        await invoke<string>('get_hostname')
-            .then(async hostname => await postRegistration(hostname, registration))
-            .catch(error => {
-                console.error(error);
-            })
-            .finally(() => setIsSubmitting(false));
+        if (checkedItems.length > 0) {
+            setIsSubmitting(true);
+            setDisabled(true);
+            await invoke<string>('get_hostname')
+                .then(async hostname => await postRegistration(hostname, registration))
+                .catch(error => {
+                    console.error(error);
+                })
+                .finally(() => setIsSubmitting(false));
+        } else {
+            setErrorMessage('Velg forsider før du kan gå videre!');
+        }
     };
+    
+    useEffect(() => {
+        if (checkedItems.length > 0) {
+            setErrorMessage('');
+        }
+    }, [checkedItems]);
 
     useEffect(() => {
         const initialize = async () => {
@@ -100,7 +112,7 @@ const RegistrationForm: React.FC = () => {
             setErrorMessage('');
             setBarWidth(0);
         } else {
-            const currentUploadProgress = allUploadProgress.dir[state.current.path];
+            const currentUploadProgress = state.current?.path && allUploadProgress?.dir?.[state.current.path];
             if (currentUploadProgress) {
                 setBarWidthFromProgress(allUploadProgress);
                 setIsSubmitting(true);
@@ -314,7 +326,9 @@ const RegistrationForm: React.FC = () => {
                     {...register('workingTitle')}
                 />
             </div>
-
+            <p className="mb-4 font-semibold">
+                {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
+            </p>
             <div className={`flex ${disabled ? 'opacity-30' : ''}`}>
                 <button disabled={disabled || isSubmitting} type="submit"
                         className="w-full flex items-center justify-center">

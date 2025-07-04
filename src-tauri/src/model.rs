@@ -27,6 +27,21 @@ pub(crate) struct TokenResponse {
 	session_state: String,
 	scope: String,
 }
+#[cfg(feature = "debug-mock")]
+impl TokenResponse {
+	pub fn mock() -> Self {
+		Self {
+			access_token: "mock-access".to_string(),
+			refresh_token: "mock-refresh".to_string(),
+			expires_in: 99999999,
+			refresh_expires_in: 9999999,
+			token_type: String::new(),
+			not_before_policy: 0,
+			session_state: String::new(),
+			scope: String::new(),
+		}
+	}
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -49,6 +64,21 @@ pub(crate) struct UserInfo {
 	email: String,
 }
 
+#[cfg(feature = "debug-mock")]
+impl UserInfo {
+	pub fn mock() -> Self {
+		Self {
+			sub: "mock-sub".to_string(),
+			name: "mock-name".to_string(),
+			groups: vec!["admin".to_string()],
+			family_name: "mock-family".to_string(),
+			given_name: "mock-given".to_string(),
+			preferred_username: "mock-preferred".to_string(),
+			email: "mock@email.com".to_string(),
+		}
+	}
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub(crate) struct TokenResponseWithoutRefresh {
 	#[serde(rename(serialize = "accessToken", deserialize = "access_token"))]
@@ -63,6 +93,7 @@ pub(crate) struct TokenResponseWithoutRefresh {
 	scope: String,
 }
 
+#[cfg(not(feature = "debug-mock"))]
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct RequiredEnvironmentVariables {
@@ -77,6 +108,7 @@ pub struct RequiredEnvironmentVariables {
 #[serde(rename_all(serialize = "camelCase", deserialize = "SCREAMING_SNAKE_CASE"))]
 // "SCREAMING_SNAKE_CASE" is what we use in Vault, and we send "camelCase" to frontend
 pub struct SecretVariables {
+	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) papi_path: String,
 	pub(crate) oidc_base_url: String,
 	pub(crate) oidc_client_id: String,
@@ -84,10 +116,15 @@ pub struct SecretVariables {
 	pub(crate) oidc_tekst_base_url: String,
 	pub(crate) oidc_tekst_client_id: String,
 	pub(crate) oidc_tekst_client_secret: String,
+	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) s3_access_key_id: String,
+	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) s3_secret_access_key: String,
+	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) s3_url: String,
+	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) s3_bucket_name: String,
+	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) s3_region: String,
 }
 
