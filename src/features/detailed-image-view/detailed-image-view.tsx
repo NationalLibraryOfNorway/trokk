@@ -7,83 +7,92 @@ import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
 import Checkbox from '../../components/ui/checkbox.tsx';
 
-export interface DetailedImageViewProps {
-    image: FileTree;
-    totalImagesInFolder: number;
-    isChecked: boolean;
-}
-
-export default function DetailedImageView({image, totalImagesInFolder, isChecked}: DetailedImageViewProps) {
+export default function DetailedImageView({files}: { files: FileTree[] }) {
     const {state, dispatch} = useTrokkFiles();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const {currentIndex, handleNext, handlePrevious, handleClose, handleCheck} = useSelection();
+    const {currentIndex, handleNext, handlePrevious, handleClose, handleCheck, checkedItems} = useSelection();
 
-    useEffect(() => {
-        dispatch({type: 'UPDATE_PREVIEW', payload: image});
-    }, []);
-
-    useEffect(() => {
-        setIsLoading(true)
-    }, [state.preview]);
-
-    // Listen to UPDATE_FILE_TREES_AND_TREE_INDEX action.type
-    useEffect(() => {
-        setIsLoading(false);
-    }, [state.current]);
-
-
+    const isChecked = checkedItems.includes(files[currentIndex]?.path);
+    const image = files[currentIndex];
     const getImageSrc = () => {
         return getPreviewURIFromTree(image, state);
     };
+    const imageUrl = getImageSrc();
+
+    useEffect(() => {
+        dispatch({type: 'UPDATE_PREVIEW', payload: image});
+    }, [image]);
+
+    useEffect(() => {
+        if (!imageUrl) {
+            setIsLoading(true)
+        }
+    }, [imageUrl]);
+
+    // Listen to UPDATE_FILE_TREES_AND_TREE_INDEX action.type
+    useEffect(() => {
+        if (imageUrl) {
+            setIsLoading(false);
+        }
+    }, [imageUrl]);
 
     return (
-        <div className={'relative z-10'} onClick={handleClose}>
+        <div className={`relative z-10 ${isLoading ? '' : 'bg-stone-500 rounded-sm shadow-2xl'}`} onClick={handleClose}>
             {isLoading ? (
                 <div className="flex justify-center my-8 ">
                     <LoadingSpinner size={48}/>
                 </div>
 
             ) : (
-                <div className="flex justify-center items-start pt-5" >
+                <div className="flex justify-center items-start pt-2">
                     <button
-                            className="shadow-2xl h-20 px-6 bg-stone-200 hover:bg-stone-300 text-stone-600 rounded self-center"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handlePrevious();
-                            }}
-                    >
+                        className={`h-20 px-6 ml-4 rounded self-center ${
+                            currentIndex > 0
+                                ? 'bg-stone-300 hover:bg-stone-400 shadow-none text-stone-600'
+                                : 'bg-stone-600 text-stone-700 cursor-not-allowed opacity-50'
+                        }`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handlePrevious();
+                        }}
+                        disabled={currentIndex <= 0}>
                         <ChevronLeft/>
                     </button>
                     <div className="px-6" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex flex-col justify-center pt-4 bg-stone-300 rounded-t-xl">
-                            <div className="flex flex-row items-start justify-center" >
-                                <p className ="text-black text-2xl ml-10 ">{isChecked ? 'Forside valgt': 'Velg forside'}</p>
+                        <div className="flex flex-col justify-center pt-4">
+                            <div className="flex flex-row items-start space-x-2 justify-center">
+                                <p className="text-stone-100 font-bold text-3xl ml-10 ">{isChecked ? 'Forside valgt' : 'Velg forside'}</p>
                                 <Checkbox
                                     isChecked={isChecked}
                                     onChange={() => handleCheck()}
                                     isFocused={false}
                                 />
                             </div>
-                            <p className="text-center text-lg text-stone-700">Viser bilde {currentIndex + 1} av {totalImagesInFolder}</p>
+                            <p className="text-center text-lg text-stone-200">Viser
+                                bilde {currentIndex + 1} av {files.length}</p>
                         </div>
                         <img
-                            src={getImageSrc()}
+                            src={imageUrl}
                             alt="Forhåndsvisning av bilde"
-                            className={`shadow-2xl max-h-[calc(100vh-110px)] object-contain ${isChecked ? 'border-amber-400 border-8' : ''}`}
+                            className={`max-h-[calc(100vh-200px)]  border-2 mt-4 mb-10 object-contain ${isChecked ? 'ring-amber-400 ring-4' : 'border-gray-300'}`}
                         />
                     </div>
-
                     <button
-                        className="shadow-2xl h-20 px-6 py-2 bg-stone-200 hover:bg-stone-300 text-stone-600 rounded self-center"
+                        className={`h-20 px-6 mr-4 rounded self-center ${
+                            currentIndex < files.length - 1
+                                ? 'bg-stone-300 hover:bg-stone-400 shadow-none text-stone-600'
+                                : 'bg-stone-600 text-stone-700 cursor-not-allowed opacity-50'
+                        }`}
                         onClick={(e) => {
                             e.stopPropagation();
                             handleNext();
                         }}
-                    >
+                        disabled={currentIndex >= files.length - 1}
+                        >
                         <ChevronRight/>
                     </button>
                 </div>
-            )}
+                )}
         </div>
-    );
+    )
 }
