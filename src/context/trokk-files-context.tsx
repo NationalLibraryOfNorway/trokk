@@ -488,13 +488,17 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             if (eventQueue.current.length === 0) return;
 
             const events = eventQueue.current;
-            console.debug('Processing events', events);
             eventQueue.current = [];
 
-            const {create, remove, renameFrom, renameTo} = splitWatchEvents(events);
+            const { create, remove, renameFrom, renameTo } = splitWatchEvents(events);
+
+            const visibleCreates = create.filter(e =>
+                !e.path.includes('/.previews') && !e.path.includes('/.thumbnails')
+            );
 
             if (stateRef.current?.current) {
-                createNewThumbnailFromEvents(stateRef.current.current.path, create);
+                // Only generate thumbnails from actual user-visible file events
+                createNewThumbnailFromEvents(stateRef.current.current.path, visibleCreates);
             }
 
             let newState: TrokkFilesState | null = stateRef.current;
@@ -517,7 +521,6 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             // Rebuild index based on updated fileTrees (optional fallback)
             const newTreeIndex = populateIndex(newState.fileTrees);
 
-            // Keep current selection if it exists
             const current = stateRef.current.current?.path
                 ? newTreeIndex.get(stateRef.current.current.path)
                 : undefined;
@@ -530,13 +533,40 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             });
         };
 
-        const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
+
+        const unwatch = await watchImmediate(
+            scannerPath,
+            async (event: WatchEvent) => {
+                const normalizePath = (p: string): string =>
+                    p.replace(/\\/g, '/').replace(/\/+/g, '/');
+
+                const normalizedPaths = event.paths.map(p => normalizePath(p));
+
+                const containsInvalidPath = normalizedPaths.some(p =>
+                    p.includes('/.previews/.thumbnails') ||
+                    p.includes('/.previews/.previews') ||
+                    p.includes('/.thumbnails/.thumbnails')
+                );
+
+                if (containsInvalidPath) {
+                    console.log('Ignoring whole event due to .previews/.thumbnails –', event.paths);
+                    return;
+                }
+
                 eventQueue.current.push(event);
+
+
+            if (!containsInvalidPath) {
+                    eventQueue.current.push(event);
+                } else {
+                    console.debug('Ignoring invalid event:', normalizedPaths);
+                }
             },
             {
                 recursive: true
             }
         );
+
 
         const intervalId = setInterval(processQueue, 1000);
 
