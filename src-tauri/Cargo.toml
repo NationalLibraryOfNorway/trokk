@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "2.0.1", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.2", features = ["protocol-asset", "test", "tray-icon", "devtools"] }
+tauri = { version = "2.0.2", features = ["protocol-asset", "test", "tray-icon"] }
 tauri-plugin-store = "2.1.0"
 tauri-plugin-fs = { version = "2", features = ["watch"] }
 tauri-plugin-oauth = "2"
