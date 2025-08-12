@@ -159,7 +159,7 @@ const RegistrationForm: React.FC = () => {
             <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
                 <label>
                     <input
-                        type="radio"
+                        type='radio'
                         {...register('font')}
                         className="accent-amber-400"
                         value={'ANTIQUA'}
@@ -168,7 +168,7 @@ const RegistrationForm: React.FC = () => {
                 </label>
                 <label>
                     <input
-                        type="radio"
+                        type='radio'
                         {...register('font')}
                         className="accent-amber-400"
                         value={'FRAKTUR'}
@@ -180,7 +180,7 @@ const RegistrationForm: React.FC = () => {
             <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
                 <label>
                     <input
-                        type="radio"
+                        type='radio'
                         {...register('language')}
                         className="accent-amber-400"
                         value={'NOB'}
@@ -189,7 +189,7 @@ const RegistrationForm: React.FC = () => {
                 </label>
                 <label>
                     <input
-                        type="radio"
+                        type='radio'
                         {...register('language')}
                         className="accent-amber-400"
                         value={'SME'}
@@ -199,10 +199,10 @@ const RegistrationForm: React.FC = () => {
             </div>
 
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label htmlFor="workingTitle">Arbeidstittel (Blir ikke brukt i produksjon)</label>
+                <label htmlFor='workingTitle'>Arbeidstittel (Blir ikke brukt i produksjon)</label>
                 <input
-                    type="text"
-                    id="workingTitle"
+                    type='text'
+                    id='workingTitle'
                     {...register('workingTitle')}
                 />
             </div>
@@ -210,7 +210,7 @@ const RegistrationForm: React.FC = () => {
                 {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
             </p>
             <div className={`flex ${disabled ? 'opacity-30' : ''}`}>
-                <button disabled={disabled || isSubmitting} type="submit"
+                <button disabled={disabled || isSubmitting} type='submit'
                         className="w-full flex items-center justify-center">
                     {isSubmitting ? (
                         <LoadingSpinner size={24}/>
