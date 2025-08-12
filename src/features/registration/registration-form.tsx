@@ -317,18 +317,14 @@ const RegistrationForm: React.FC = () => {
                     Samisk
                 </label>
             </div>
-
-            <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
+            {/*<div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
                 <label htmlFor="workingTitle">Arbeidstittel (Blir ikke brukt i produksjon)</label>
                 <input
                     type="text"
                     id="workingTitle"
                     {...register('workingTitle')}
                 />
-            </div>
-            <p className="mb-4 font-semibold">
-                {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
-            </p>
+            </div>*/}
             <div className={`flex ${disabled ? 'opacity-30' : ''}`}>
                 <button disabled={disabled || isSubmitting} type="submit"
                         className="w-full flex items-center justify-center">
