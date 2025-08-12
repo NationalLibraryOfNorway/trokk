@@ -16,15 +16,14 @@ import {useSelection} from '../../context/selection-context.tsx';
 
 
 const RegistrationForm: React.FC = () => {
-
     const {state} = useTrokkFiles();
-    const { checkedItems } = useSelection();
     const {allUploadProgress, setAllUploadProgress} = useUploadProgress();
+    const {secrets} = useSecrets();
+    const {checkedItems} = useSelection();
     const {postRegistration} = usePostRegistration();
     const {errorMessage, handleError, successMessage, removeMessages} = useMessage();
     const [barWidth, setBarWidth] = useState(0);
     const appWindow = getCurrentWebviewWindow();
-    const {secrets} = useSecrets();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [disabled, setDisabled] = useState(false);
@@ -197,15 +196,14 @@ const RegistrationForm: React.FC = () => {
                     Samisk
                 </label>
             </div>
-
-            <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label htmlFor='workingTitle'>Arbeidstittel (Blir ikke brukt i produksjon)</label>
+            {/*<div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
+                <label htmlFor="workingTitle">Arbeidstittel (Blir ikke brukt i produksjon)</label>
                 <input
                     type='text'
                     id='workingTitle'
                     {...register('workingTitle')}
                 />
-            </div>
+            </div>*/}
             <p className="mb-4 font-semibold">
                 {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
             </p>

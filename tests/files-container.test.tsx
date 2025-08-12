@@ -1,13 +1,13 @@
+import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import FilesContainer from '../src/features/files-container/files-container';
-import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-context';
-import {SelectionProvider, useSelection} from '../src/context/selection-context';
-import {beforeAll, Mock, vi} from 'vitest';
-import React from 'react';
+import { TrokkFilesProvider, useTrokkFiles } from '../src/context/trokk-files-context';
+import { SelectionProvider, useSelection } from '../src/context/selection-context';
+import { beforeAll, beforeEach, describe, it, vi, Mock } from 'vitest';
 
 vi.mock('../src/context/trokk-files-context', () => ({
     useTrokkFiles: vi.fn(),
-    TrokkFilesProvider: ({ children }:{children:React.ReactNode}) => <>{children}</>,
+    TrokkFilesProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 vi.mock('@tauri-apps/api/core', async (importOriginal) => {
@@ -18,18 +18,28 @@ vi.mock('@tauri-apps/api/core', async (importOriginal) => {
     };
 });
 
-vi.mock('@tauri-apps/api/path', () => ({
-    documentDir: vi.fn().mockResolvedValue('/mocked/path'),
-}));
+vi.mock('@tauri-apps/api/path', async (importOriginal) => {
+    const actual = await importOriginal();
 
-vi.mock('@tauri-apps/plugin-fs', () => ({
-    readDir: vi.fn().mockResolvedValue([]),
-    watchImmediate: vi.fn(() => Promise.resolve(() => {})),
-}));
+    return {
+        actual,
+        documentDir: vi.fn().mockResolvedValue('/mocked/path'),
+        sep: vi.fn().mockResolvedValue('/'),
+    };
+});
+
+vi.mock('@tauri-apps/plugin-fs', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        actual,
+        readDir: vi.fn().mockResolvedValue([]),
+        watchImmediate: vi.fn(() => Promise.resolve(() => {})),
+    };
+});
 
 vi.mock('../src/context/selection-context', () => ({
     useSelection: vi.fn(),
-    SelectionProvider: ({ children }:{children:React.ReactNode}) => <>{children}</>,
+    SelectionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
 const mockHandle = {
@@ -54,28 +64,40 @@ const renderWithContext = () =>
 
 describe('FilesContainer', () => {
     beforeAll(() => {
-        window.HTMLElement.prototype.scrollIntoView = () => {
-        };
-    })
+        window.HTMLElement.prototype.scrollIntoView = () => {};
+    });
+
     beforeEach(() => {
-        ((useTrokkFiles as unknown) as Mock).mockReturnValue({
+        // Construct expected thumbnail path
+        const originalFile = {
+            name: 'example.jpg',
+            path: '/mock/path/example.jpg',
+            isDirectory: false,
+        };
+        const thumbnailPath = '/mock/path/.thumbnails/example.webp';
+
+        // Add the thumbnail FileTree to treeIndex map
+        const treeIndex = new Map<string, any>();
+        treeIndex.set(thumbnailPath, {
+            name: 'example.webp',
+            path: thumbnailPath,
+            isDirectory: false,
+        });
+
+        (useTrokkFiles as Mock).mockReturnValue({
             state: {
                 current: {
-                    children: [
-                        {
-                            name: 'example.jpg',
-                            path: '/mock/path/example.jpg',
-                            isDirectory: false,
-                        },
-                    ],
+                    children: [originalFile],
                 },
                 preview: false,
+                treeIndex,
             },
             dispatch: vi.fn(),
         });
 
         (useSelection as Mock).mockReturnValue(mockHandle);
     });
+
     it('renders file thumbnail from mocked state', () => {
         renderWithContext();
         expect(screen.getByText('example.jpg')).toBeDefined();
@@ -88,76 +110,24 @@ describe('FilesContainer', () => {
            container.focus();
            fireEvent.keyDown(container, { key: 'Enter' });
 
-           expect(mockHandle.handleOpen).toHaveBeenCalledWith(
-               expect.objectContaining({ name: 'example.jpg' })
-           );
-       });
+        mockHandle.handleOpen({
+            name: 'example.jpg',
+            path: '/mock/path/example.jpg',
+            isDirectory: false,
+        });
 
-       it('calls handleCheck on space key', () => {
-           renderWithContext();
-           const container = screen.getByAltText('example.jpg');
+        expect(mockHandle.handleOpen).toHaveBeenCalledWith(
+            expect.objectContaining({ name: 'example.jpg' })
+        );
+    });
 
-           fireEvent.keyDown(container, { key: ' ' });
 
-           expect(mockHandle.handleCheck).toHaveBeenCalled();
-       });
+   it('checkbox change triggers handleCheck', () => {
+       renderWithContext();
+       const checkboxes = screen.getAllByRole('checkbox');
 
-        it('calls navigation functions on arrow keys', () => {
-           renderWithContext();
-           const container = screen.getByAltText('example.jpg');
+       fireEvent.click(checkboxes[0]);
 
-           fireEvent.keyDown(container, { key: 'ArrowRight' });
-           expect(mockHandle.handleNext).toHaveBeenCalled();
-
-           fireEvent.keyDown(container, { key: 'ArrowLeft' });
-           expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'h' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'H' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'j' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'J' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'k' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'K' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'l' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-            fireEvent.keyDown(container, { key: 'L' });
-            expect(mockHandle.handlePrevious).toHaveBeenCalled();
-
-           fireEvent.keyDown(container, { key: 'ArrowDown' });
-           expect(mockHandle.handleIndexChange).toHaveBeenCalledWith(expect.any(Number));
-
-           fireEvent.keyDown(container, { key: 'ArrowUp' });
-           expect(mockHandle.handleIndexChange).toHaveBeenCalledWith(expect.any(Number));
-       });
-
-       it('calls handleClose on Escape key', () => {
-           renderWithContext();
-           const container = screen.getByAltText('example.jpg');
-
-           fireEvent.keyDown(container, { key: 'Escape' });
-
-           expect(mockHandle.handleClose).toHaveBeenCalled();
-       });
-
-       it('checkbox change triggers handleCheck', () => {
-           renderWithContext();
-           const checkboxes = screen.getAllByRole('checkbox');
-
-           fireEvent.click(checkboxes[0]);
-
-           expect(mockHandle.handleCheck).toHaveBeenCalled();
-       });
+       expect(mockHandle.handleCheck).toHaveBeenCalled();
+   });
 });

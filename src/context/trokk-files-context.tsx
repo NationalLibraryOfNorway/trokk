@@ -183,7 +183,6 @@ function isCreate(event: WatchEventKind): event is { create: WatchEventKindCreat
     }
 }
 
-
 function isDeleteFolder(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
     try {
         const removeEvent = (event as { remove: WatchEventKindRemove }).remove;
@@ -219,6 +218,7 @@ function isDeleteFile(event: WatchEventKind): event is { remove: WatchEventKindR
         return false;
     }
 }
+
 
 interface PathsSorted {
     create: EventPathAndKind[];
@@ -468,7 +468,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
 
 
     const initialize = async () => {
-        console.debug('Initializing TrokkFilesProvider', scannerPath);
+        console.log('Initializing TrokkFilesProvider', scannerPath);
         if (!scannerPath) return;
 
         const rootTree = new FileTree(
@@ -488,23 +488,23 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             if (eventQueue.current.length === 0) return;
 
             const events = eventQueue.current;
-            console.debug('Processing events', events);
             eventQueue.current = [];
 
-            const {create, remove, renameFrom, renameTo} = splitWatchEvents(events);
+            const { create, remove, renameFrom, renameTo } = splitWatchEvents(events);
+
+            const visibleCreates = create.filter(e =>
+                !e.path.includes('/.previews') && !e.path.includes('/.thumbnails')
+            );
 
             if (stateRef.current?.current) {
-                createNewThumbnailFromEvents(stateRef.current.current.path, create);
+                // Only generate thumbnails from actual user-visible file events
+                createNewThumbnailFromEvents(stateRef.current.current.path, visibleCreates);
             }
 
             let newState: TrokkFilesState | null = stateRef.current;
 
             newState = await updateFileTreesWithNewObject(newState, create);
             newState = removeFileTree(newState, remove);
-
-            if (renameTo.length == 0) {
-                newState = removeFileTree(newState, renameFrom);
-            }
 
             if (renameTo.length > 0 && renameFrom.length > 0) {
                 for (let i = 0; i < renameFrom.length; i++) {
@@ -518,7 +518,6 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                     }
                 }
             }
-
             // Rebuild index based on updated fileTrees (optional fallback)
             const newTreeIndex = populateIndex(newState.fileTrees);
 
@@ -535,13 +534,40 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             });
         };
 
-        const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
+
+        const unwatch = await watchImmediate(
+            scannerPath,
+            async (event: WatchEvent) => {
+                const normalizePath = (p: string): string =>
+                    p.replace(/\\/g, '/').replace(/\/+/g, '/');
+
+                const normalizedPaths = event.paths.map(p => normalizePath(p));
+
+                const containsInvalidPath = normalizedPaths.some(p =>
+                    p.includes('/.previews/.thumbnails') ||
+                    p.includes('/.previews/.previews') ||
+                    p.includes('/.thumbnails/.thumbnails')
+                );
+
+                if (containsInvalidPath) {
+                    console.log('Ignoring whole event due to .previews/.thumbnails –', event.paths);
+                    return;
+                }
+
                 eventQueue.current.push(event);
+
+
+            if (!containsInvalidPath) {
+                    eventQueue.current.push(event);
+                } else {
+                    console.debug('Ignoring invalid event:', normalizedPaths);
+                }
             },
             {
                 recursive: true
             }
         );
+
 
         const intervalId = setInterval(processQueue, 1000);
 

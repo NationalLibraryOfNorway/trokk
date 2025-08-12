@@ -16,10 +16,12 @@ export interface SelectionContextProps {
     handleClose: () => void;
     handlePrevious: () => void;
     handleCheck: () => void;
-    handleOpen: (child: FileTree) => void;
+    handleOpen: () => void;
     handleIndexChange: (index: number) => void;
     requestInitialFocus: () => void;
     registerFocusTarget: (el: HTMLElement | null) => void;
+    columns: number,
+    setColumns: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const SelectionContext = createContext<SelectionContextProps | undefined>(undefined);
@@ -29,6 +31,8 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [currentFolderPath, setCurrentFolderPath] = useState<string | undefined>(undefined);
     const [checkedItems, setCheckedItems] = useState<string[]>([]);
+    const [columns, setColumns] = useState<number>(2);
+
     const { state, dispatch } = useTrokkFiles();
 
     useEffect(() => {
@@ -109,8 +113,9 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     };
 
 
-    const handleOpen = (child: FileTree) => {
-        dispatch({ type: 'UPDATE_PREVIEW', payload: child });
+    const handleOpen = () => {
+        const child: FileTree = files[currentIndex];
+        dispatch({type: 'UPDATE_PREVIEW', payload: child});
 
         const index = files.findIndex(f => f.path === child.path);
         if (index >= 0) {
@@ -157,7 +162,9 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 handleOpen,
                 handleIndexChange,
                 requestInitialFocus,
-                registerFocusTarget
+                registerFocusTarget,
+                columns,
+                setColumns
             }}
         >
             {children}
