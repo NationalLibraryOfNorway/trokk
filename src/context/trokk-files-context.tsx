@@ -301,14 +301,6 @@ function createNewThumbnailFromEvents(currentPath: string, events: EventPathAndK
     });
 }
 
-function createNewPreviewFromEvents(events: EventPathAndKind[]): void {
-    events.forEach((event) => {
-        if (event.kind === 'file' && (event.path.endsWith('.tif') || event.path.endsWith('.tiff'))) {
-            void createPreview(event.path);
-        }
-    });
-}
-
 async function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSorted: EventPathAndKind[]): Promise<TrokkFilesState> {
     const insertFileTree = (fileTrees: FileTree[], newFileTree: FileTree): FileTree[] => {
         const parentPath = newFileTree.path.split(sep()).slice(0, -1).join(sep());
@@ -526,7 +518,6 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                     }
                 }
             }
-            createNewPreviewFromEvents(create);
 
             // Rebuild index based on updated fileTrees (optional fallback)
             const newTreeIndex = populateIndex(newState.fileTrees);

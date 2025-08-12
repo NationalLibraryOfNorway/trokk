@@ -115,7 +115,7 @@ async fn create_thumbnail_webp(file_path: String) -> Result<(), String> {
 		}
 	}
 
-	match image_converter::convert_to_webp(file_path, true) {
+	match image_converter::convert_to_webp(file_path, false) {
 		Ok(_) => Ok(()),
 		Err(e) => Err(e.to_string()),
 	}
