@@ -35,24 +35,24 @@ export default function Thumbnail({ fileTree, onClick, isChecked, isFocused }: T
     let className = '';
 
     if (isChecked) {
-        className += `${isFocused ? ' ring-4 ring-blue-600' : ''} border-8 border-amber-400 hover:border-amber-300 `;
+        className += `borderBox  ${isFocused ? ' ring-4 ring-blue-600' : ''} border-8 border-amber-400 hover:border-amber-500 `;
     } else if (isFocused) {
         className += 'ring-4 ring-blue-600 hover:ring-blue-500';
     }
 
     let content: React.ReactNode;
     if (isSupported) {
-        content = <img className={`${className} w-full`} src={convertFileSrc(fileTree.path)} alt={fileTree.name} />;
+        content = <img className={`${className} max-h-[calc(100vh-250px)]`} src={convertFileSrc(fileTree.path)} alt={fileTree.name} />;
     } else if (isWebp) {
-        content = <img className={`${className} w-full`} src={getThumbnailURIFromTree(fileTree, state)} alt={fileTree.name} />;
+        content = <img className={`${className} max-h-[calc(100vh-250px)]`} src={getThumbnailURIFromTree(fileTree, state)} alt={fileTree.name} />;
     } else {
         content = <File size="96" color="gray" />;
     }
 
     return (
-        <div key={fileTree.path} className="flex flex-col items-center justify-center hover:bg-stone-700" onClick={onClick}>
+        <div key={fileTree.path} className="flex flex-col p-3 items-center justify-center " onClick={onClick}>
             {content}
-            <i className={`flex content-center justify-center text-lg ${isChecked? 'text-amber-400' : ''}`}>{fileName}</i>
+            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked? 'text-amber-400' : ''}`}>{fileName}</i>
         </div>
     );
 }
