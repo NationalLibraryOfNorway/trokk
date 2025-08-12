@@ -29,7 +29,7 @@ export function getThumbnailFromTree(tree: FileTree, state: TrokkFilesState): Fi
     const thumbnailPath = tree.path.substring(
         0,
         tree.path.length - tree.name.length
-    ) + '.previews' + sep() + tree.name.split('.')[0] + '.webp'; //Temporary changed from .thumbnails to .previews to get better quality images
+    ) + '.thumbnails' + sep() + tree.name.split('.')[0] + '.webp';
     return state.treeIndex.get(thumbnailPath);
 }
 
