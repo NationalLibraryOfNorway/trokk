@@ -1,15 +1,10 @@
-import {useEffect, useRef} from 'react';
-import {useSelection} from '../context/selection-context.tsx';
-import {FileTree} from '../model/file-tree.ts';
-import {useTrokkFiles} from '../context/trokk-files-context.tsx';
+import { useEffect, useRef } from 'react';
+import { useSelection } from '../context/selection-context.tsx';
+import { FileTree } from '../model/file-tree.ts';
+import { useTrokkFiles } from '../context/trokk-files-context.tsx';
 
-export function useKeyboardNavigation({
-                                              containerRef,
-                                          }: {
-    containerRef: React.RefObject<HTMLDivElement>;
-}) {
+export function useKeyboardNavigation() {
     const keyHoldRef = useRef(false);
-    const hasFocused = useRef(false);
 
     const {
         currentIndex,
@@ -22,32 +17,33 @@ export function useKeyboardNavigation({
         columns,
     } = useSelection();
 
-    const {state} = useTrokkFiles();
+    const { state } = useTrokkFiles();
 
     const files: FileTree[] =
-        state.current?.children?.filter(
-            (child: { isDirectory: boolean }) => !child.isDirectory
-        ) || [];
-
-    // Ensure initial focus on mount
-    useEffect(() => {
-        if (containerRef.current && files.length > 0 && !hasFocused.current) {
-            containerRef.current.focus();
-            hasFocused.current = true;
-        }
-    }, [state.current?.path, files.length]);
+        state.current?.children?.filter(child => !child.isDirectory) || [];
 
     useEffect(() => {
-        const container = containerRef.current;
-        if (!container || !state.current?.children?.length) return;
-
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (keyHoldRef.current) return;
             e.preventDefault();
+            console.log(e.key)
+            if (keyHoldRef.current) return;
 
-            if (e.ctrlKey && /^[1-9]$/.test(e.key)) {
-                setColumns(Number(e.key));
+            const target = e.target as HTMLElement;
+            if (
+                target.tagName === 'INPUT' ||
+                target.tagName === 'TEXTAREA' ||
+                target.isContentEditable
+            ) {
                 return;
+            }
+
+            if (e.ctrlKey) {
+                if ( /^[1-9]$/.test(e.key)) {
+                    setColumns(Number(e.key));
+                    return;
+                }else if( e.key === '0') {
+                    setColumns(10);
+                }
             }
 
             switch (e.key) {
@@ -76,8 +72,6 @@ export function useKeyboardNavigation({
                     const newIndex = currentIndex - columns;
                     if (newIndex >= 0) {
                         handleIndexChange(newIndex);
-                    } else {
-                        handleIndexChange(currentIndex);
                     }
                     break;
                 }
@@ -85,7 +79,7 @@ export function useKeyboardNavigation({
                     handleClose();
                     break;
                 case ' ':
-                case 'Space':
+                case 'Spacebar':
                     handleCheck();
                     break;
                 case 'End':
@@ -102,26 +96,9 @@ export function useKeyboardNavigation({
             }, 150);
         };
 
-        const handleBlur = () => {
-            requestAnimationFrame(() => {
-                if (
-                    document.activeElement === document.body &&
-                    containerRef.current
-                ) {
-                    containerRef.current.focus();
-                }
-            });
-        };
-
-        container.addEventListener('keydown', handleKeyDown);
-        container.addEventListener('blur', handleBlur);
-
-        return () => {
-            container.removeEventListener('keydown', handleKeyDown);
-            container.removeEventListener('blur', handleBlur);
-        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, [
-        containerRef,
         currentIndex,
         files.length,
         columns,
@@ -131,6 +108,5 @@ export function useKeyboardNavigation({
         handleNext,
         handlePrevious,
         setColumns,
-        state.current?.children?.length,
     ]);
 }

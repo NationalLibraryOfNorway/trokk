@@ -1,10 +1,10 @@
-import React, {useRef, useEffect} from 'react';
+import React, {useRef} from 'react';
 import {Folder} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
-import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 import Thumbnail from '../thumbnail/thumbnail.tsx';
 import Checkbox from '../../components/ui/checkbox.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
+import {useAutoFocusOnThumbnail} from '../../hooks/use-auto-focus-on-thumbnail.tsx';
 
 const FilesContainer: React.FC = () => {
     const {state, dispatch} = useTrokkFiles();
@@ -13,172 +13,125 @@ const FilesContainer: React.FC = () => {
         checkedItems,
         handleOpen,
         handleIndexChange,
-        handleNext,
-        handlePrevious,
         handleCheck,
-        handleClose,
+        columns,
+        setColumns
     } = useSelection();
-
-    const files = state.current?.children?.filter(child => !child.isDirectory) || [];
 
     const containerRef = useRef<HTMLDivElement>(null);
     const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            e.preventDefault();
-            switch (e.key) {
-                case 'ArrowRight':
-                case 'l':
-                case 'L':
-                    handleNext();
-                    break;
-                case 'ArrowLeft':
-                case 'h':
-                case 'H':
-                    handlePrevious();
-                    break;
-                case 'ArrowDown':
-                case 'j':
-                case 'J': {
-                    const newIndex = currentIndex + 2;
-                    if (newIndex < files.length) handleIndexChange(newIndex);
+    const columnClasses: { [key: number]: string } = {
+        1: 'grid-cols-1',
+        2: 'grid-cols-2',
+        3: 'grid-cols-3',
+        4: 'grid-cols-4',
+        5: 'grid-cols-5',
+        6: 'grid-cols-6',
+        7: 'grid-cols-7',
+        8: 'grid-cols-8',
+        9: 'grid-cols-9',
+        10: 'grid-cols-10',
+    };
 
-                    break;
-                }
-                case 'ArrowUp':
-                case 'k':
-                case 'K': {
-                    const newIndex = currentIndex - 2;
-                    if (newIndex >= 0) handleIndexChange(newIndex);
-                    break;
-                }
-                case 'Enter': {
-                    const currentFile = files[currentIndex];
-                    if (currentFile && !state.preview) handleOpen(currentFile);
-                    break;
-                }
-                case 'Escape':
-                    handleClose();
-                    break;
-                case ' ':
-                    handleCheck();
-                    break;
-            }
-        };
-
-        const container = containerRef.current;
-
-        if (state.current?.children?.length) {
-            container?.addEventListener('keydown', handleKeyDown);
-            container?.focus();
-        }
-
-        return () => {
-            container?.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [
-        currentIndex,
-        files,
-        handleOpen,
-        handleNext,
-        handlePrevious,
-        handleIndexChange,
-        handleCheck,
-    ]);
-
-    useEffect(() => {
-        if (state.preview) return;
-        const currentFileElement = fileRefs.current[currentIndex];
-        if (currentFileElement) {
-            currentFileElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-                inline: 'nearest',
-            });
-            currentFileElement.focus();
-        }
-    }, [currentIndex, state.preview]);
+    useAutoFocusOnThumbnail({fileRefs, containerRef});
 
     return (
-        <div
-            ref={containerRef}
-            className={`grid grid-cols-2 overflow-y-auto h-full justify-start content-start pl-4 pt-2 focus:outline-none focus:ring-0 ${state.preview? 'inset-0': ''}`}
-            tabIndex={0}
-        >
-            {state.current && state.current.children ? (
-                <>
-                    {state.preview && (
-                        <div className="fixed inset-0 justify-center z-50 bg-stone-800/40" onClick={handleClose}>
-                            <div
-                                className="relative"
-                            >
-                                <DetailedImageView
-                                    image={files[currentIndex]}
-                                    totalImagesInFolder={files.length}
-                                    isChecked={checkedItems.includes(files[currentIndex]?.path)}
-                                />
-                            </div>
-                        </div>
-                    )}
+        <div className="relative h-full flex w-full flex-col">
+            {state.current && state.current.children?.length !== 0 && (
+                <div className="p-4 border-b border-stone-600 flex items-center gap-4">
+                    <p className="font-semibold">
+                        {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
+                    </p>
+                    <label htmlFor="columns" className="text-sm font-medium text-gray-300 ml-auto ">
+                        Visning: {columns}
+                    </label>
+                    <input
+                        id="columns"
+                        type="range"
+                        min={1}
+                        max={10}
+                        value={columns}
+                        onChange={(e) => setColumns(Number(e.target.value))}
+                        className="w-full max-w-[150px] h-2 bg-stone-500 rounded-lg appearance-none cursor-pointer"
+                    />
 
-                    {state.current.children.length !== 0 ? (
-                        state.current.children
-                            .filter(child =>
-                                !child.name.startsWith('.thumbnails') &&
-                                !child.name.startsWith('.previews')
-                            )
-                            .map((child, index) =>
-                                child.isDirectory ? (
-                                    <button
-                                        key={child.path}
-                                        className="max-w-[150px]"
-                                        onClick={() =>
-                                            dispatch({
-                                                type: 'SET_CURRENT_AND_EXPAND_PARENTS',
-                                                payload: child,
-                                            })
-                                        }
-                                    >
-                                        <Folder size="96"/>
-                                        <i>{child.name}</i>
-                                    </button>
-                                ) : (
-                                    <div
-                                        key={child.path}
-                                        ref={el => fileRefs.current[index] = el}
-                                        className="space-y-2 w-[80%] grid-rows-2 py-5 focus:outline-none focus:ring-0"
-                                        tabIndex={currentIndex === index ? 0 : -1}
-                                        onFocus={() => handleIndexChange(index)}
-                                    >
-                                        <Thumbnail
-                                            key={`${child.path}-1-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
-                                            onClick={() => handleOpen(child)}
-                                            isChecked={checkedItems.includes(child.path)}
-                                            fileTree={child}
-                                            isFocused={!state.preview && currentIndex === index}
-                                        />
-                                        <div className="flex justify-center">
-                                            <Checkbox
-                                                key={`${child.path}-2-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
+                </div>
+            )}
+            <div
+                ref={containerRef}
+                className={`grid ${columnClasses[columns] ?? 'grid-cols-2'} 
+                gap-4 overflow-y-auto grow w-full
+                p-4 justify-start self-center focus-visible:outline-none focus:ring-0`}
+                tabIndex={0}
+                aria-activedescendant={`file-${currentIndex}`}
+            >
+                {state.current && state.current.children ? (
+                    <>
+                        {state.current.children.length !== 0 ? (
+                            state.current.children
+                                .filter(child =>
+                                    !child.name.startsWith('.thumbnails') &&
+                                    !child.name.startsWith('.previews')
+                                )
+                                .map((child, index) =>
+                                    child.isDirectory ? (
+                                        <button
+                                            key={child.path}
+                                            onClick={() =>
+                                                dispatch({
+                                                    type: 'SET_CURRENT_AND_EXPAND_PARENTS',
+                                                    payload: child,
+                                                })
+                                            }
+                                        >
+                                            <Folder size="96"/>
+                                            <i>{child.name}</i>
+                                        </button>
+                                    ) : (
+                                        <div
+                                            key={child.path}
+                                            ref={el => fileRefs.current[index] = el}
+                                            className="space-y-2 py-2 focus-visible:outline-none focus:ring-0"
+                                            tabIndex={currentIndex === index ? 0 : -1}
+                                            onFocus={() => handleIndexChange(index)}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    handleOpen();
+                                                }
+                                            }}
+                                        >
+                                            <Thumbnail
+                                                key={`${child.path}-1-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
+                                                onClick={() => handleOpen()}
                                                 isChecked={checkedItems.includes(child.path)}
-                                                onChange={() => handleCheck()}
+                                                fileTree={child}
                                                 isFocused={!state.preview && currentIndex === index}
                                             />
+                                            <div className="flex justify-center">
+                                                <Checkbox
+                                                    aria-label={'Velg forside'}
+                                                    aria-checked={'Forside valgt'}
+                                                    key={`${child.path}-2-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
+                                                    isChecked={checkedItems.includes(child.path)}
+                                                    onChange={() => handleCheck()}
+                                                    isFocused={!state.preview && currentIndex === index}
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                    )
                                 )
-                            )
-                    ) : (
-                        <p className="m-8 font-bold break-words">Ingen filer i mappen.</p>
-                    )}
-                </>
-            ) : (
-                <p className="m-8 font-bold break-words">
-                    Velg en mappe i listen til venstre. <br/>
-                    Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
-                </p>
-            )}
+                        ) : (
+                            <p className="m-8 font-bold break-words">Ingen filer i mappen.</p>
+                        )}
+                    </>
+                ) : (
+                    <p className="m-8 font-bold break-words">
+                        Velg en mappe i listen til venstre. <br/>
+                        Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
+                    </p>
+                )}
+            </div>
         </div>
     );
 };
