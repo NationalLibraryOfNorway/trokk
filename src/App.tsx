@@ -53,6 +53,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
     const {scannerPath} = useSettings();
 
+
     if (fetchSecretsError) {
         return (
             <>

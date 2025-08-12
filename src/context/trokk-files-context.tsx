@@ -502,6 +502,10 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             newState = await updateFileTreesWithNewObject(newState, create);
             newState = removeFileTree(newState, remove);
 
+            if (renameTo.length == 0) {
+                newState = removeFileTree(newState, renameFrom);
+            }
+
             if (renameTo.length > 0 && renameFrom.length > 0) {
                 for (let i = 0; i < renameFrom.length; i++) {
                     const oldPath = renameFrom[i].path;
@@ -514,6 +518,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                     }
                 }
             }
+
             // Rebuild index based on updated fileTrees (optional fallback)
             const newTreeIndex = populateIndex(newState.fileTrees);
 
