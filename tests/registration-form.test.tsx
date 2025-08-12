@@ -7,7 +7,7 @@ import { SecretProvider } from '../src/context/secret-context';
 import { AuthProvider } from '../src/context/auth-context';
 import { TransferLogProvider } from '../src/context/transfer-log-context';
 import { UploadProgressProvider } from '../src/context/upload-progress-context';
-import {MessageProvider} from "../src/context/message-context";
+import {MessageProvider} from '../src/context/message-context';
 
 vi.mock('@tauri-apps/api/path', () => ({
     documentDir: async () => '/mocked/path',
