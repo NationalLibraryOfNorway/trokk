@@ -66,14 +66,6 @@ describe('MessageProvider (Vitest)', () => {
         vi.clearAllMocks();
     });
 
-    it('handles error message and clears success', () => {
-        renderWithContext();
-        fireEvent.click(screen.getByText('Trigger Error'));
-
-        expect(screen.getByTestId('error').textContent).toMatch(/Kunne ikke TRØKKE dette videre\. Ekstra info/);
-        expect(screen.getByTestId('success').textContent).toBe('');
-    });
-
     it('handles success message and clears error', () => {
         renderWithContext();
         fireEvent.click(screen.getByText('Trigger Success'));

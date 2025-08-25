@@ -5,10 +5,10 @@ import {
     getThumbnailURIFromTree,
     supportedFileTypes
 } from '../../util/file-utils.ts';
-import { FileTree } from '../../model/file-tree.ts';
-import { convertFileSrc } from '@tauri-apps/api/core';
-import { File } from 'lucide-react';
-import { useTrokkFiles } from '../../context/trokk-files-context.tsx';
+import {FileTree} from '../../model/file-tree.ts';
+import {convertFileSrc} from '@tauri-apps/api/core';
+import {File} from 'lucide-react';
+import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -17,8 +17,8 @@ export interface ThumbnailProps {
     isFocused: boolean;
 }
 
-export default function Thumbnail({ fileTree, onClick, isChecked, isFocused }: ThumbnailProps) {
-    const { state } = useTrokkFiles();
+export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: ThumbnailProps) {
+    const {state} = useTrokkFiles();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
@@ -32,27 +32,38 @@ export default function Thumbnail({ fileTree, onClick, isChecked, isFocused }: T
 
     if (isHiddenDir) return null;
 
-    let className = '';
+    let initialStyle = 'max-h-[calc(100vh-250px)] ';
+    let imageClass = 'w-full object-contain';
+    let containerClass = 'p-[8px]';
 
     if (isChecked) {
-        className += `borderBox  ${isFocused ? ' ring-4 ring-blue-600' : ''} border-8 border-amber-400 hover:border-amber-500 `;
+        imageClass = `${isFocused ? ' ring-4 ring-blue-600' : ''} border-8 border-amber-400 hover:border-amber-500`;
+        containerClass = 'p-0';
     } else if (isFocused) {
-        className += 'ring-4 ring-blue-600 hover:ring-blue-500';
+        imageClass = 'ring-4 ring-blue-600 hover:ring-blue-500';
     }
 
     let content: React.ReactNode;
     if (isSupported) {
-        content = <img className={`${className} max-h-[calc(100vh-250px)]`} src={convertFileSrc(fileTree.path)} alt={fileTree.name} />;
+        content = <img className={`${imageClass}`} src={convertFileSrc(fileTree.path)}
+                       alt={fileTree.name}/>;
     } else if (isWebp) {
-        content = <img className={`${className} max-h-[calc(100vh-250px)]`} src={getThumbnailURIFromTree(fileTree, state)} alt={fileTree.name} />;
+        content =
+            <img className={`${imageClass}`} src={getThumbnailURIFromTree(fileTree, state)}
+                 alt={fileTree.name}/>;
     } else {
-        content = <File size="96" color="gray" />;
+        content = <File size="96" color="gray"/>;
     }
 
     return (
-        <div key={fileTree.path} className="flex flex-col p-3 items-center justify-center " onClick={onClick}>
-            {content}
-            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked? 'text-amber-400' : ''}`}>{fileName}</i>
+        <div
+            key={fileTree.path}
+            className="flex flex-col p-1 items-center"
+            onClick={onClick}>
+            <div className={`${initialStyle} ${containerClass}`}>
+                {content}
+            </div>
+            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>{fileName}</i>
         </div>
     );
 }

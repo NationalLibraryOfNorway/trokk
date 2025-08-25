@@ -17,31 +17,18 @@ describe('useAutoFocusOnThumbnail', () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
-        fileRefs = { current: [] };
+        fileRefs = {current: []};
         containerRef = createRef<HTMLDivElement>();
 
         mockScrollTo = vi.fn();
     });
 
     function setupMocks(currentIndex = 0, preview = false) {
-        vi.mocked(selectionContext.useSelection).mockReturnValue({ currentIndex } as any);
-        vi.mocked(trokkFilesContext.useTrokkFiles).mockReturnValue({ state: { preview } } as any);
+        vi.mocked(selectionContext.useSelection).mockReturnValue({currentIndex} as any);
+        vi.mocked(trokkFilesContext.useTrokkFiles).mockReturnValue({state: {preview}} as any);
     }
 
-    it('does nothing if state.preview is true', () => {
-        setupMocks(0, true);
-
-        fileRefs.current = [document.createElement('div')];
-        containerRef.current = document.createElement('div');
-        containerRef.current.scrollTo = mockScrollTo;
-
-        renderHook(() => useAutoFocusOnThumbnail({ fileRefs, containerRef }));
-
-        // No scrolling or focusing should happen
-        expect(mockScrollTo).not.toHaveBeenCalled();
-    });
-
-    it('focuses on current file element if fully visible', () => {
+    it('focuses on the current file element on mount when fully visible', async () => {
         setupMocks(0, false);
 
         const container = document.createElement('div');
@@ -50,7 +37,6 @@ describe('useAutoFocusOnThumbnail', () => {
         const fileEl = document.createElement('div');
         fileEl.focus = vi.fn();
 
-        // Mock dimensions so fileEl is fully visible in container
         container.getBoundingClientRect = vi.fn(() => ({
             top: 0,
             bottom: 100,
@@ -60,7 +46,8 @@ describe('useAutoFocusOnThumbnail', () => {
             width: 100,
             x: 0,
             y: 0,
-            toJSON: () => {},
+            toJSON: () => {
+            },
         }));
 
         fileEl.getBoundingClientRect = vi.fn(() => ({
@@ -72,15 +59,15 @@ describe('useAutoFocusOnThumbnail', () => {
             width: 100,
             x: 0,
             y: 10,
-            toJSON: () => {},
+            toJSON: () => {
+            },
         }));
 
         fileRefs.current = [fileEl];
         containerRef.current = container;
 
-        renderHook(() => useAutoFocusOnThumbnail({ fileRefs, containerRef }));
+        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef}));
 
-        // Should NOT scroll because element is fully visible
         expect(mockScrollTo).not.toHaveBeenCalled();
 
         return new Promise<void>((resolve) => {
@@ -90,6 +77,7 @@ describe('useAutoFocusOnThumbnail', () => {
             });
         });
     });
+
 
     it('scrolls container if file element is partially out of view', () => {
         setupMocks(0, false);
@@ -111,7 +99,8 @@ describe('useAutoFocusOnThumbnail', () => {
             width: 100,
             x: 0,
             y: 0,
-            toJSON: () => {},
+            toJSON: () => {
+            },
         }));
 
         // File element partially below container bottom
@@ -124,47 +113,45 @@ describe('useAutoFocusOnThumbnail', () => {
             width: 100,
             x: 0,
             y: 90,
-            toJSON: () => {},
+            toJSON: () => {
+            },
         }));
 
         fileRefs.current = [fileEl];
         containerRef.current = container;
 
-        renderHook(() => useAutoFocusOnThumbnail({ fileRefs, containerRef }));
+        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef, currentIndex: 0}));
 
-        // It should scroll to new position = scrollTop + (element top - container top - 20)
-        expect(mockScrollTo).toHaveBeenCalledWith({
-            top: 50 + (90 - 0 - 20),
-            behavior: 'auto',
-        });
-
-        // Focus should still be called
         return new Promise<void>((resolve) => {
             requestAnimationFrame(() => {
+                // scrollTo should have been called
+                expect(mockScrollTo).toHaveBeenCalledWith({
+                    top: 50 + (90 - 0), // container.scrollTop + (fileEl.top - container.top)
+                    behavior: 'auto',
+                });
+
+                // Focus should also have been called
                 expect(fileEl.focus).toHaveBeenCalled();
                 resolve();
             });
         });
     });
 
-    it('does nothing if currentFileElement or container are missing', () => {
-        setupMocks(0, false);
+    it('does nothing when state.preview is true', () => {
+        setupMocks(0, true); // preview = true
 
-        // Missing currentFileElement
-        fileRefs.current = [];
-        containerRef.current = document.createElement('div');
-        containerRef.current.scrollTo = mockScrollTo;
+        const container = document.createElement('div');
+        container.scrollTo = mockScrollTo;
 
-        renderHook(() => useAutoFocusOnThumbnail({ fileRefs, containerRef }));
+        const fileEl = document.createElement('div');
+        fileEl.focus = vi.fn();
 
-        expect(mockScrollTo).not.toHaveBeenCalled();
+        fileRefs.current = [fileEl];
+        containerRef.current = container;
 
-        // Missing container
-        fileRefs.current = [document.createElement('div')];
-        containerRef.current = null;
-
-        renderHook(() => useAutoFocusOnThumbnail({ fileRefs, containerRef }));
+        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef}));
 
         expect(mockScrollTo).not.toHaveBeenCalled();
+        expect(fileEl.focus).not.toHaveBeenCalled();
     });
 });

@@ -86,7 +86,7 @@ export class FileTree implements DirEntry {
                     await child.recursiveRead();
                 }
             }
-            this.sortRecursive();
+            this.sort();
             return this.children;
         } else {
             return undefined;

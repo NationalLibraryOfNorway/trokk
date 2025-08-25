@@ -1,4 +1,4 @@
-import React, {
+import {
     createContext,
     useContext,
     useState,
@@ -16,7 +16,6 @@ export interface SelectionContextProps {
     handleClose: () => void;
     handlePrevious: () => void;
     handleCheck: () => void;
-    handleOpen: () => void;
     handleIndexChange: (index: number) => void;
     requestInitialFocus: () => void;
     registerFocusTarget: (el: HTMLElement | null) => void;
@@ -112,22 +111,6 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         });
     };
 
-
-    const handleOpen = () => {
-        const child: FileTree = files[currentIndex];
-        dispatch({type: 'UPDATE_PREVIEW', payload: child});
-
-        const index = files.findIndex(f => f.path === child.path);
-        if (index >= 0) {
-            handleIndexChange(index);
-        } else {
-            console.warn('handleOpen: file not found in current list', {
-                childPath: child.path,
-                files: files.map(f => f.path)
-            });
-        }
-    };
-
     const handleClose = () => {
         dispatch({ type: 'UPDATE_PREVIEW', payload: undefined });
     };
@@ -140,6 +123,7 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const requestInitialFocus = () => {
         setTimeout(() => {
+            setCurrentIndex(0);
             focusTargetRef.current?.focus();
             setCurrentFolderPath(state.current?.path);
         }, 0);
@@ -159,7 +143,6 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
                 handleClose,
                 handlePrevious,
                 handleCheck,
-                handleOpen,
                 handleIndexChange,
                 requestInitialFocus,
                 registerFocusTarget,

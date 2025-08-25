@@ -1,66 +1,69 @@
-import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import {act, fireEvent, render, screen} from '@testing-library/react';
 import FilesContainer from '../src/features/files-container/files-container';
-import { TrokkFilesProvider, useTrokkFiles } from '../src/context/trokk-files-context';
-import { SelectionProvider, useSelection } from '../src/context/selection-context';
-import { beforeAll, beforeEach, describe, it, vi, Mock } from 'vitest';
+import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-context';
+import {SelectionProvider, useSelection} from '../src/context/selection-context';
+import {beforeAll, beforeEach, describe, expect, it, Mock, vi} from 'vitest';
 
-vi.mock('../src/context/trokk-files-context', () => ({
-    useTrokkFiles: vi.fn(),
-    TrokkFilesProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock('../src/context/trokk-files-context', () => {
+    return {
+        useTrokkFiles: vi.fn(),
+        TrokkFilesProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+
+    }
+});
+
+vi.mock('@tauri-apps/api/core', () => ({
+        convertFileSrc: vi.fn((src: string) => `mocked://${src}`),
+    })
+);
+
+vi.mock("@tauri-apps/api/path", () => ({
+    documentDir: vi.fn().mockResolvedValue('mocked/path'),
+    sep: vi.fn().mockResolvedValue('/'),
 }));
 
-vi.mock('@tauri-apps/api/core', async (importOriginal) => {
-    const actual = await importOriginal();
+vi.mock('@tauri-apps/plugin-fs', () => {
     return {
-        actual,
-        convertFileSrc: vi.fn((src: string) => `mocked://${src}`),
-    };
-});
-
-vi.mock('@tauri-apps/api/path', async (importOriginal) => {
-    const actual = await importOriginal();
-
-    return {
-        actual,
-        documentDir: vi.fn().mockResolvedValue('/mocked/path'),
-        sep: vi.fn().mockResolvedValue('/'),
-    };
-});
-
-vi.mock('@tauri-apps/plugin-fs', async (importOriginal) => {
-    const actual = await importOriginal();
-    return {
-        actual,
         readDir: vi.fn().mockResolvedValue([]),
-        watchImmediate: vi.fn(() => Promise.resolve(() => {})),
-    };
+        watchImmediate: vi.fn(() => Promise.resolve(() => {
+        }))
+    }
 });
 
-vi.mock('../src/context/selection-context', () => ({
-    useSelection: vi.fn(),
-    SelectionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+vi.mock('../src/context/selection-context', () => {
+    return {
+        useSelection: vi.fn(),
+        SelectionProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    }
+});
+
+vi.mock('../src/hooks/use-auto-focus-on-thumbnail.tsx', () => {
+    return {
+        useAutoFocusOnThumbnail: vi.fn(),
+    }
+});
+
+vi.mock('../src/hooks/use-keyboard-navigation.tsx', () => ({
+    useKeyboardNavigation: vi.fn(),
 }));
 
 const mockHandle = {
     currentIndex: 0,
     checkedItems: [],
-    handleOpen: vi.fn(),
     handleCheck: vi.fn(),
-    handleNext: vi.fn(),
-    handlePrevious: vi.fn(),
     handleIndexChange: vi.fn(),
     handleClose: vi.fn(),
 };
 
-const renderWithContext = () =>
-    render(
+const renderWithContext = () => {
+    return render(
         <TrokkFilesProvider scannerPath="/mock/path">
             <SelectionProvider>
-                <FilesContainer />
+                <FilesContainer/>
             </SelectionProvider>
         </TrokkFilesProvider>
     );
+};
 
 describe('FilesContainer', () => {
     beforeAll(() => {
@@ -103,31 +106,45 @@ describe('FilesContainer', () => {
         expect(screen.getByText('example.jpg')).toBeDefined();
     });
 
-
-    it('calls handleOpen on Enter key', () => {
-           renderWithContext();
-           const container = screen.getByAltText('example.jpg');
-           container.focus();
-           fireEvent.keyDown(container, { key: 'Enter' });
-
-        mockHandle.handleOpen({
-            name: 'example.jpg',
-            path: '/mock/path/example.jpg',
-            isDirectory: false,
-        });
-
-        expect(mockHandle.handleOpen).toHaveBeenCalledWith(
-            expect.objectContaining({ name: 'example.jpg' })
-        );
+    it('Clicking on thumbnail opens detail image view', () => {
+        renderWithContext();
+        const thumbnail = screen.getByAltText('example.jpg');
+        act(() => {
+            fireEvent.click(thumbnail);
+        })
+        expect(screen.getByText('Velg Forside')).toBeDefined();
     });
 
+    it('opens detailed view when Enter is pressed on thumbnail container', async () => {
+        renderWithContext();
+        const thumbnailContainer = screen.getByAltText('example.jpg');
+        thumbnailContainer && thumbnailContainer.focus();
+        mockHandle.currentIndex=0;
+        act(() => {
+            fireEvent.keyDown(thumbnailContainer!, {key: 'Enter', code: 'Enter', charCode: 13});
+        });
 
-   it('checkbox change triggers handleCheck', () => {
-       renderWithContext();
-       const checkboxes = screen.getAllByRole('checkbox');
+        expect(screen.getByText('Velg Forside')).toBeDefined();
+    });
 
-       fireEvent.click(checkboxes[0]);
+    it('checkbox change triggers handleCheck', () => {
+        renderWithContext();
+        const checkboxes = screen.getAllByRole('checkbox');
+        act(() => {
+            fireEvent.click(checkboxes[0]);
+        })
+        expect(mockHandle.handleCheck).toHaveBeenCalled();
+    });
 
-       expect(mockHandle.handleCheck).toHaveBeenCalled();
-   });
-});
+    it("renders empty folder message when selected folder has no children", () => {
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {current: {name: "Empty", path: "/empty", children: []}},
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        expect(screen.queryByText(/Ingen filer i mappen/i)).not.toBeNull();
+    });
+})
+;

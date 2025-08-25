@@ -1,10 +1,11 @@
-import { useEffect, useRef } from 'react';
-import { useSelection } from '../context/selection-context.tsx';
-import { FileTree } from '../model/file-tree.ts';
-import { useTrokkFiles } from '../context/trokk-files-context.tsx';
+import {useEffect, useRef} from 'react';
+import {useSelection} from '../context/selection-context.tsx';
+import {FileTree} from '../model/file-tree.ts';
+import {useTrokkFiles} from '../context/trokk-files-context.tsx';
 
 export function useKeyboardNavigation() {
     const keyHoldRef = useRef(false);
+    const keypressDelay = 100;
 
     const {
         currentIndex,
@@ -17,7 +18,7 @@ export function useKeyboardNavigation() {
         columns,
     } = useSelection();
 
-    const { state } = useTrokkFiles();
+    const {state} = useTrokkFiles();
 
     const files: FileTree[] =
         state.current?.children?.filter(child => !child.isDirectory) || [];
@@ -25,7 +26,6 @@ export function useKeyboardNavigation() {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             e.preventDefault();
-            console.log(e.key)
             if (keyHoldRef.current) return;
 
             const target = e.target as HTMLElement;
@@ -38,10 +38,10 @@ export function useKeyboardNavigation() {
             }
 
             if (e.ctrlKey) {
-                if ( /^[1-9]$/.test(e.key)) {
+                if (/^[1-9]$/.test(e.key)) {
                     setColumns(Number(e.key));
                     return;
-                }else if( e.key === '0') {
+                } else if (e.key === '0') {
                     setColumns(10);
                 }
             }
@@ -93,7 +93,7 @@ export function useKeyboardNavigation() {
             keyHoldRef.current = true;
             setTimeout(() => {
                 keyHoldRef.current = false;
-            }, 150);
+            }, keypressDelay);
         };
 
         window.addEventListener('keydown', handleKeyDown);
