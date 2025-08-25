@@ -61,42 +61,42 @@ fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
 }
 
 pub fn convert_to_webp<P: AsRef<Path>>(
-    image_path: P,
-    high_res: bool,
+	image_path: P,
+	high_res: bool,
 ) -> Result<PathBuf, ImageConversionError> {
-    let path_reference = image_path.as_ref();
+	let path_reference = image_path.as_ref();
 
-    //Skip conversion if path contains .thumbnails or .previews
-    if path_reference
-        .components()
-        .any(|c| c.as_os_str() == PREVIEW_FOLDER_NAME || c.as_os_str() == THUMBNAIL_FOLDER_NAME)
-    {
-        return Ok(path_reference.to_path_buf());
-    }
+	//Skip conversion if path contains .thumbnails or .previews
+	if path_reference
+		.components()
+		.any(|c| c.as_os_str() == PREVIEW_FOLDER_NAME || c.as_os_str() == THUMBNAIL_FOLDER_NAME)
+	{
+		return Ok(path_reference.to_path_buf());
+	}
 
-    let image: image::DynamicImage = ImageReader::open(path_reference)?
-        .with_guessed_format()?
-        .decode()?;
-    let image = if high_res {
-        image.resize(
-            image.width() / 4,
-            image.height() / 4,
-            image::imageops::FilterType::Nearest,
-        )
-    } else {
-        image.resize(
-            image.width() / 8,
-            image.height() / 8,
-            image::imageops::FilterType::Nearest,
-        )
-    };
+	let image: image::DynamicImage = ImageReader::open(path_reference)?
+		.with_guessed_format()?
+		.decode()?;
+	let image = if high_res {
+		image.resize(
+			image.width() / 4,
+			image.height() / 4,
+			image::imageops::FilterType::Nearest,
+		)
+	} else {
+		image.resize(
+			image.width() / 8,
+			image.height() / 8,
+			image::imageops::FilterType::Nearest,
+		)
+	};
 
-    let encoder: Encoder =
-        Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
-    let encoded_webp: WebPMemory = encoder.encode_simple(false, WEBP_QUALITY)?;
+	let encoder: Encoder =
+		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
+	let encoded_webp: WebPMemory = encoder.encode_simple(false, WEBP_QUALITY)?;
 
-    let parent_directory = get_parent_directory(path_reference)?;
-    let filename_original_image = get_file_name(path_reference)?;
+	let parent_directory = get_parent_directory(path_reference)?;
+	let filename_original_image = get_file_name(path_reference)?;
 
 	let mut path = parent_directory.to_owned();
 	path.push(if high_res {
@@ -110,11 +110,11 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		thread::sleep(Duration::from_millis(500)); // Sleep here a bit so the file watcher can catch up
 	}
 
-    path.push(filename_original_image);
-    path.set_extension(WEBP_EXTENSION);
-    fs::write(&path, &*encoded_webp)?;
+	path.push(filename_original_image);
+	path.set_extension(WEBP_EXTENSION);
+	fs::write(&path, &*encoded_webp)?;
 
-    Ok(path)
+	Ok(path)
 }
 
 pub fn check_if_thumbnail_exists<P: AsRef<Path>>(
