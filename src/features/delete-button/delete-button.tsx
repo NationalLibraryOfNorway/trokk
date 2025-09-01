@@ -6,10 +6,10 @@ import {
     DialogDescription,
     DialogTitle,
     DialogTrigger
-} from '@/components/ui/dialog.tsx';
-import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
-import {FileTree} from '@/model/file-tree.ts';
-import {useSelection} from '@/context/selection-context.tsx';
+} from '../../components/ui/dialog.tsx';
+import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {FileTree} from '../../model/file-tree.ts';
+import {useSelection} from '../../context/selection-context.tsx';
 import {invoke} from '@tauri-apps/api/core';
 
 export interface DeleteBtnProps {
