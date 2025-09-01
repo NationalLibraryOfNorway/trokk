@@ -51,7 +51,7 @@ export class FileTree implements DirEntry {
 
     sort(): void {
         this.children?.sort((a, b) => {
-            return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+            return a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: 'base' });
         });
     }
 

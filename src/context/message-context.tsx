@@ -21,7 +21,8 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
 
     const handleError = (extra_text?: string, code?: string | number, error?: string | undefined) => {
         let tmpErrorMessage = '';
-        if (extra_text) tmpErrorMessage += ` ${extra_text}`;
+        if (extra_text) tmpErrorMessage += ` ${extra_text} \n`;
+        tmpErrorMessage += '  Kontakt tekst-teamet om problemet vedvarer. \n ';
         if (code) tmpErrorMessage += ` (Feilkode ${code})`;
 
         console.error(tmpErrorMessage, error);
