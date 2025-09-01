@@ -5,19 +5,18 @@ import Thumbnail from '../thumbnail/thumbnail.tsx';
 import Checkbox from '../../components/ui/checkbox.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
 import {useAutoFocusOnThumbnail} from '../../hooks/use-auto-focus-on-thumbnail.tsx';
-import DetailedImageView from "../detailed-image-view/detailed-image-view.tsx";
+import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 import {
     Dialog,
     DialogPortal,
     DialogOverlay,
-    DialogTrigger,
     DialogContent,
     DialogTitle,
     DialogDescription
-} from "../../components/ui/dialog.tsx";
+} from '../../components/ui/dialog.tsx';
 import '../detailed-image-view/detailed-image-view.css';
 import {useKeyboardNavigation} from '../../hooks/use-keyboard-navigation.tsx';
-import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
+import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 
 const FilesContainer: React.FC = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -117,7 +116,7 @@ const FilesContainer: React.FC = () => {
                                             <div
                                                 key={child.path}
                                                 ref={el => fileRefs.current[index] = el}
-                                                className="space-y-2 py-2 focus-visible:outline-none focus:ring-0"
+                                                className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0"
                                                 tabIndex={currentIndex === index ? 0 : -1}
                                                 onFocus={() => handleIndexChange(index)}
                                                 onKeyDown={(e) => {
@@ -126,17 +125,13 @@ const FilesContainer: React.FC = () => {
                                                     }
                                                 }}
                                             >
-                                                <DialogTrigger asChild>
-                                                    <Thumbnail
-                                                        key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
-                                                        isChecked={checkedItems.includes(child.path)}
-                                                        fileTree={child}
-                                                        isFocused={!state.preview && currentIndex === index}
-                                                        onClick={() => {
-                                                            setDialogOpen(true)
-                                                        }}
-                                                    />
-                                                </DialogTrigger>
+                                                <Thumbnail
+                                                    key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
+                                                    isChecked={checkedItems.includes(child.path)}
+                                                    fileTree={child}
+                                                    isFocused={!state.preview && currentIndex === index}
+                                                    onClick={() => setDialogOpen(true)}
+                                                />
                                                 <div className="flex justify-center">
                                                     <Checkbox
                                                         aria-label={'Velg forside'}
