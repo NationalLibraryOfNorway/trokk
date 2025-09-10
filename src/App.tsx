@@ -13,6 +13,7 @@ import {SettingProvider, useSettings} from './context/setting-context.tsx';
 import {MessageProvider} from './context/message-context.tsx';
 import {TransferLogProvider} from './context/transfer-log-context.tsx';
 import {SelectionProvider} from './context/selection-context.tsx';
+import {DialogProvider} from './context/dialog-context.tsx';
 
 
 function App() {
@@ -117,7 +118,9 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     <UploadProgressProvider>
                         <TransferLogProvider>
                             <MessageProvider>
-                                <MainLayout/>
+                                <DialogProvider>
+                                    <MainLayout/>
+                                </DialogProvider>
                             </MessageProvider>
                         </TransferLogProvider>
                     </UploadProgressProvider>

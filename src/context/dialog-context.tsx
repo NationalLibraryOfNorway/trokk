@@ -1,8 +1,8 @@
 import {createContext, ReactNode, useContext, useState} from 'react';
 import {invoke} from '@tauri-apps/api/core';
-import {FileTree} from '@/model/file-tree.ts';
-import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
-import {useSelection} from '@/context/selection-context.tsx';
+import {FileTree} from '../model/file-tree.ts';
+import {useTrokkFiles} from '../context/trokk-files-context.tsx';
+import {useSelection} from '../context/selection-context.tsx';
 
 type DialogContextType = {
     delFilePath: string | null;
@@ -14,7 +14,7 @@ type DialogContextType = {
 
 export const DialogContext = createContext<DialogContextType | undefined>(undefined);
 
-export const DialogProvider= ({ children }: { children: ReactNode }) => {
+export const DialogProvider = ({children}: { children: ReactNode }) => {
     const {dispatch, state} = useTrokkFiles();
     const {checkedItems, handleCheck} = useSelection();
     const [delFilePath, setDelFilePath] = useState<string | null>(null);
@@ -30,24 +30,25 @@ export const DialogProvider= ({ children }: { children: ReactNode }) => {
 
     const handleDelete = async (filePath?: string) => {
         const path = filePath ?? delFilePath;
-        if(path) {
+        if (path) {
             await deleteImage(path);
+            updateFileTrees(path);
+            openDelDialog(null);
 
-            // Update the whole tree
-            const updatedTree = removeFileFromTree(state.fileTrees, path);
-            dispatch({type: 'SET_FILE_TREES', payload: updatedTree});
-
-            // If the deleted file was inside the currently opened directory, update current
             if (state.current) {
                 const updatedCurrent = updateCurrent(state.current, path);
                 dispatch({type: 'SET_CURRENT', payload: updatedCurrent});
             }
 
-            if(checkedItems.includes(path)) {
+            if (checkedItems.includes(path)) {
                 handleCheck();
             }
-            openDelDialog(null);
         }
+    };
+
+    const updateFileTrees = (path: string) => {
+        const updatedTree = removeFileFromTree(state.fileTrees, path);
+        dispatch({type: 'SET_FILE_TREES', payload: updatedTree});
     };
 
     const updateCurrent = (file: FileTree, targetPath: string): FileTree => {
@@ -83,9 +84,9 @@ export const DialogProvider= ({ children }: { children: ReactNode }) => {
             })
             .filter(Boolean) as FileTree[];
     };
-    
+
     return (
-        <DialogContext.Provider value={{ handleDelete, delFilePath, openDelDialog, openPreview, previewOpen }}>
+        <DialogContext.Provider value={{handleDelete, delFilePath, openDelDialog, openPreview, previewOpen}}>
             {children}
         </DialogContext.Provider>
     );
