@@ -3,9 +3,11 @@ import {vi} from 'vitest';
 import {useSelection} from '../src/context/selection-context';
 import {useTrokkFiles} from '../src/context/trokk-files-context';
 import {useKeyboardNavigation} from '../src/hooks/use-keyboard-navigation';
+import {useDialog} from '../src/context/dialog-context';
 
 vi.mock('../src/context/selection-context');
 vi.mock('../src/context/trokk-files-context');
+vi.mock('../src/context/dialog-context');
 
 const keypressDelay = 100;
 const mockChildren = [
@@ -26,6 +28,10 @@ const setupMocks = (currentIndex = 0) => {
     const handleCheck = vi.fn();
     const handleClose = vi.fn();
     const setColumns = vi.fn();
+    const previewOpen = false;
+    const delFilePath = null;
+    const openPreview = vi.fn();
+    const openDelDialog = vi.fn();
 
     (useSelection as vi.Mock).mockReturnValue({
         currentIndex,
@@ -47,8 +53,26 @@ const setupMocks = (currentIndex = 0) => {
         },
     });
 
+    (useDialog as vi.Mock).mockReturnValue({
+        previewOpen: false,
+        delFilePath: null,
+        openPreview,
+        openDelDialog,
+    });
+
     render(<TestComponent/>);
-    return {handleIndexChange, handleNext, handlePrevious, handleCheck, handleClose, setColumns};
+    return {
+        handleIndexChange,
+        handleNext,
+        handlePrevious,
+        handleCheck,
+        handleClose,
+        setColumns,
+        previewOpen,
+        delFilePath,
+        openPreview,
+        openDelDialog
+    };
 };
 
 beforeAll(() => {
@@ -133,5 +157,17 @@ describe('useKeyboardNavigation', () => {
         const {setColumns} = setupMocks();
         window.dispatchEvent(new KeyboardEvent('keydown', {key: '0', ctrlKey: true}));
         expect(setColumns).toHaveBeenCalledWith(10);
+    });
+
+    it('Enter should open preview', () => {
+        const {openPreview} = setupMocks(2);
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter'}));
+        expect(openPreview).toHaveBeenCalledWith(true);
+    });
+
+    it('Delete should open delete dialog', () => {
+        const {openDelDialog} = setupMocks(2);
+        window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Delete'}));
+        expect(openDelDialog).toHaveBeenCalled();
     });
 });

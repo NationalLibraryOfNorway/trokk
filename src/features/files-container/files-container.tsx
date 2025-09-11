@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useRef} from 'react';
 import {Folder} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import Thumbnail from '../thumbnail/thumbnail.tsx';
@@ -17,9 +17,9 @@ import {
 import '../detailed-image-view/detailed-image-view.css';
 import {useKeyboardNavigation} from '../../hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
+import {useDialog} from '../../context/dialog-context.tsx';
 
 const FilesContainer: React.FC = () => {
-    const [dialogOpen, setDialogOpen] = useState(false);
     const {state, dispatch} = useTrokkFiles();
     const {
         currentIndex,
@@ -29,6 +29,7 @@ const FilesContainer: React.FC = () => {
         columns,
         setColumns,
     } = useSelection();
+    const {openPreview, previewOpen} = useDialog();
 
     const files = state.current?.children?.filter(child => !child.isDirectory) || [];
 
@@ -41,11 +42,11 @@ const FilesContainer: React.FC = () => {
     return (
         <div className="relative h-full flex w-full flex-col overscroll-none"
              onClick={() => {
-                 if (dialogOpen) {
-                     setDialogOpen(false)
+                 if (previewOpen) {
+                     openPreview(false)
                  }
              }}>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={previewOpen} onOpenChange={(open) => openPreview(open)}>
                 <DialogPortal>
                     <DialogOverlay className="fixed inset-0 preview z-20 bg-stone-800/90"/>
                     <DialogContent
@@ -119,18 +120,13 @@ const FilesContainer: React.FC = () => {
                                                 className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0"
                                                 tabIndex={currentIndex === index ? 0 : -1}
                                                 onFocus={() => handleIndexChange(index)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        setDialogOpen(true);
-                                                    }
-                                                }}
                                             >
                                                 <Thumbnail
                                                     key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
                                                     isChecked={checkedItems.includes(child.path)}
                                                     fileTree={child}
                                                     isFocused={!state.preview && currentIndex === index}
-                                                    onClick={() => setDialogOpen(true)}
+                                                    onClick={() => openPreview(true)}
                                                 />
                                                 <div className="flex justify-center">
                                                     <Checkbox

@@ -1,8 +1,11 @@
-import { render } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import {render} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
 import Thumbnail from '../src/features/thumbnail/thumbnail';
-import { FileTree } from '../src/model/file-tree.ts';
-import { useTrokkFiles } from '../src/context/trokk-files-context.tsx';
+import {FileTree} from '../src/model/file-tree.ts';
+import {useTrokkFiles} from '../src/context/trokk-files-context.tsx';
+import {DialogProvider} from '../src/context/dialog-context';
+import {SelectionProvider} from '../src/context/selection-context';
+import {SecretProvider} from '../src/context/secret-context';
 
 vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: vi.fn(),
@@ -10,6 +13,7 @@ vi.mock('../src/context/trokk-files-context.tsx', () => ({
 
 vi.mock('@tauri-apps/api/core', () => ({
     convertFileSrc: (path: string) => `mock-src/${path}`,
+    invoke: vi.fn().mockResolvedValue('mocked-response'),
 }));
 
 vi.mock('../src/util/file-utils.ts', async () => {
@@ -53,10 +57,24 @@ function createMockFileTree(name: string, path: string): FileTree {
         async recursiveRead(): Promise<FileTree[] | undefined> {
             return Promise.resolve(undefined);
         },
-        sort(): void {},
-        sortRecursive(): void {},
+        sort(): void {
+        },
+        sortRecursive(): void {
+        },
     };
 }
+
+const renderWithContext = (fileTree: FileTree, baseProps: any) => {
+    return render(
+        <SelectionProvider>
+            <SecretProvider>
+                <DialogProvider>
+                    <Thumbnail fileTree={fileTree} {...baseProps} />
+                </DialogProvider>
+            </SecretProvider>
+        </SelectionProvider>
+    );
+};
 
 describe('Thumbnail', () => {
     beforeEach(() => {
@@ -69,9 +87,7 @@ describe('Thumbnail', () => {
     it('renders an image if the file type is supported', async () => {
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
 
-        const { getByAltText } = render(
-            <Thumbnail fileTree={fileTree} {...baseProps} />
-        );
+        const {getByAltText} = renderWithContext(fileTree, baseProps);
 
         expect(getByAltText('example.jpg')).toBeDefined();
     });
@@ -82,9 +98,7 @@ describe('Thumbnail', () => {
 
         const fileTree = createMockFileTree('example.other', '/mock/path/example.other');
 
-        const { getByAltText } = render(
-            <Thumbnail fileTree={fileTree} {...baseProps} />
-        );
+        const {getByAltText} = renderWithContext(fileTree, baseProps);
 
         expect(getByAltText('example.other')).toBeDefined();
     });
@@ -95,9 +109,7 @@ describe('Thumbnail', () => {
 
         const fileTree = createMockFileTree('.thumbnails', 'docs/.thumbnails');
 
-        const { container } = render(
-            <Thumbnail fileTree={fileTree} {...baseProps} />
-        );
+        const {container} = renderWithContext(fileTree, baseProps);
 
         expect(container.innerHTML).toBe('');
     });

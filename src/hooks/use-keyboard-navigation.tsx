@@ -2,6 +2,7 @@ import {useEffect, useRef} from 'react';
 import {useSelection} from '../context/selection-context.tsx';
 import {FileTree} from '../model/file-tree.ts';
 import {useTrokkFiles} from '../context/trokk-files-context.tsx';
+import {useDialog} from '../context/dialog-context.tsx';
 
 export function useKeyboardNavigation() {
     const keyHoldRef = useRef(false);
@@ -17,17 +18,15 @@ export function useKeyboardNavigation() {
         setColumns,
         columns,
     } = useSelection();
-
     const {state} = useTrokkFiles();
+    const {openDelDialog, delFilePath, openPreview, previewOpen} = useDialog();
 
     const files: FileTree[] =
         state.current?.children?.filter(child => !child.isDirectory) || [];
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            e.preventDefault();
             if (keyHoldRef.current) return;
-
             const target = e.target as HTMLElement;
             if (
                 target.tagName === 'INPUT' ||
@@ -77,9 +76,11 @@ export function useKeyboardNavigation() {
                 }
                 case 'Escape':
                     handleClose();
+                    openPreview(false);
                     break;
                 case ' ':
                 case 'Spacebar':
+                    e.preventDefault();
                     handleCheck();
                     break;
                 case 'End':
@@ -87,6 +88,16 @@ export function useKeyboardNavigation() {
                     break;
                 case 'Home':
                     handleIndexChange(0);
+                    break;
+                case 'Delete':
+                    if(!previewOpen) {
+                        openDelDialog(files[currentIndex].path);
+                    }
+                    break;
+                case 'Enter':
+                    if(!delFilePath) {
+                        openPreview(true);
+                    }
                     break;
             }
 

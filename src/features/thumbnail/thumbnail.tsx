@@ -9,9 +9,9 @@ import {FileTree} from '../../model/file-tree.ts';
 import {convertFileSrc} from '@tauri-apps/api/core';
 import {File} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
-import DeleteButton from '@/features/delete-button/delete-button.tsx';
+import DeleteFile from '../delete-file/delete-file.tsx';
 import React from 'react';
-import {useSelection} from '@/context/selection-context.tsx';
+import {useSelection} from '../../context/selection-context.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -72,7 +72,7 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
             className="flex flex-col p-1 items-center relative group"
         >
             <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <DeleteButton childPath={fileTree.path} />
+                <DeleteFile childPath={fileTree.path} />
             </div>
 
             <div

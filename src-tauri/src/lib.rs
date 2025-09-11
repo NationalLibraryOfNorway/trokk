@@ -187,8 +187,7 @@ async fn delete_dir(dir: &str) -> Result<(), String> {
 
 #[tauri::command]
 async fn delete_image(file_name: &str) -> Result<String, String> {
-    file_utils::delete_image(file_name)
-        .map_err(|e| e.to_string())
+	file_utils::delete_image(file_name).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -271,7 +270,7 @@ pub fn run() {
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]
 			upload_directory_to_s3,
-            delete_image
+			delete_image
 		])
 		.on_window_event(|window, event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = event {

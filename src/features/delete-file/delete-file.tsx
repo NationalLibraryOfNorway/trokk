@@ -8,14 +8,14 @@ import {
     DialogTrigger
 } from '../../components/ui/dialog.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
-import {useDialog} from '@/context/dialog-context.tsx';
+import {useDialog} from '../../context/dialog-context.tsx';
 
 
 export interface DeleteFile {
     childPath: string;
 }
 
-const DeleteFile: React.FC<DeleteBtnProps> = ({childPath}: DeleteBtnProps) => {
+const DeleteFile: React.FC<DeleteFile> = ({childPath}: DeleteFile) => {
     const {columns} = useSelection();
     const {openDelDialog, handleDelete, delFilePath} = useDialog();
 
@@ -27,11 +27,8 @@ const DeleteFile: React.FC<DeleteBtnProps> = ({childPath}: DeleteBtnProps) => {
     };
 
     return (
-        <Dialog open={delFilePath === childPath}
-                onOpenChange={(open) => openDelDialog(open ? childPath : null)}
-        >
-            <DialogContent className={'bg-stone-700 w-3/12 min-w-[400px]'}
-                           onCloseAutoFocus={(e) => e.preventDefault()}>
+        <Dialog open={delFilePath === childPath} onOpenChange={(open) => openDelDialog(open ? childPath : null)}>
+            <DialogContent className={'bg-stone-700 w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
                 <DialogTitle>Er du sikker på at du ønsker å slette bildet?</DialogTitle>
                 <DialogDescription className="text-gray-200">
                     Handlingen kan ikke angres.
@@ -63,4 +60,4 @@ const DeleteFile: React.FC<DeleteBtnProps> = ({childPath}: DeleteBtnProps) => {
     );
 };
 
-export default DeleteButton;
+export default DeleteFile;
