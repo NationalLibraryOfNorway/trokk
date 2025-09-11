@@ -37,7 +37,7 @@ const FileTreeComponent: React.FC = () => {
     };
 
     return (
-        <div className="h-[calc(96vh)] overflow-y-scroll w-screen">
+        <div className="h-[calc(96vh)] overflow-y-scroll w-full mt-4 mx-2">
             <ul>
                 {state.fileTrees.length > 0 && state.fileTrees.map((file) => (
                     <FileTreeItem

@@ -20,9 +20,9 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
     const { addLog } = useTransferLog();
 
     const handleError = (extra_text?: string, code?: string | number, error?: string | undefined) => {
-        let tmpErrorMessage = 'Kunne ikke TRØKKE dette videre.';
-        if (extra_text) tmpErrorMessage += ` ${extra_text}`;
-        tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer.';
+        let tmpErrorMessage = 'Kunne ikke TRØKKE dette videre.\n';
+        if (extra_text) tmpErrorMessage += `${extra_text} \n`;
+        tmpErrorMessage += ' Kontakt tekst-teamet om problemet vedvarer. \n ';
         if (code) tmpErrorMessage += ` (Feilkode ${code})`;
 
         console.error(tmpErrorMessage, error);

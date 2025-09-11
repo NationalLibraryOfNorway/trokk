@@ -183,7 +183,6 @@ function isCreate(event: WatchEventKind): event is { create: WatchEventKindCreat
     }
 }
 
-
 function isDeleteFolder(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
     try {
         const removeEvent = (event as { remove: WatchEventKindRemove }).remove;
@@ -219,6 +218,7 @@ function isDeleteFile(event: WatchEventKind): event is { remove: WatchEventKindR
         return false;
     }
 }
+
 
 interface PathsSorted {
     create: EventPathAndKind[];
@@ -488,7 +488,6 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             if (eventQueue.current.length === 0) return;
 
             const events = eventQueue.current;
-            console.debug('Processing events', events);
             eventQueue.current = [];
 
             const {create, remove, renameFrom, renameTo} = splitWatchEvents(events);
@@ -502,10 +501,6 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             newState = await updateFileTreesWithNewObject(newState, create);
             newState = removeFileTree(newState, remove);
 
-            if (renameTo.length == 0) {
-                newState = removeFileTree(newState, renameFrom);
-            }
-
             if (renameTo.length > 0 && renameFrom.length > 0) {
                 for (let i = 0; i < renameFrom.length; i++) {
                     const oldPath = renameFrom[i].path;
@@ -518,7 +513,6 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                     }
                 }
             }
-
             // Rebuild index based on updated fileTrees (optional fallback)
             const newTreeIndex = populateIndex(newState.fileTrees);
 

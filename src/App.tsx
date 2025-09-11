@@ -53,7 +53,6 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
     const {scannerPath} = useSettings();
 
-
     if (fetchSecretsError) {
         return (
             <>
@@ -98,8 +97,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     }
 
     return (
-        <>
-            <div className="grid grid-cols-3 mt-2 sticky top-0">
+        <div className="relative h-full flex-col">
+            <div className="grid grid-cols-3 py-2 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800">
                 <h2 className="text-xl flex items-center pl-4">
                     <FolderOpen size="32" className="-ml-3 mr-1 mb-2 flex-shrink-0"/>{scannerPath}
                 </h2>
@@ -124,7 +123,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     </UploadProgressProvider>
                 </SelectionProvider>
             </TrokkFilesProvider>
-        </>
+        </div>
     );
 };
 

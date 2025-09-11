@@ -1,27 +1,74 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
-import { useEffect } from 'react';
-import { SelectionProvider, useSelection } from '../src/context/selection-context';
-import RegistrationForm from './../src/features/registration/registration-form.tsx';
-import { SecretProvider } from '../src/context/secret-context';
-import { AuthProvider } from '../src/context/auth-context';
-import { TransferLogProvider } from '../src/context/transfer-log-context';
-import { UploadProgressProvider } from '../src/context/upload-progress-context';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {cleanup, render, screen, waitFor} from '@testing-library/react';
+import RegistrationForm from '../src/features/registration/registration-form';
+import {UploadProgressProvider} from '../src/context/upload-progress-context';
+import {TransferLogProvider} from '../src/context/transfer-log-context';
+import {SecretProvider} from '../src/context/secret-context';
+import {SelectionProvider, useSelection} from '../src/context/selection-context';
+import {AuthProvider} from '../src/context/auth-context';
+import {useEffect} from 'react';
 import {MessageProvider} from '../src/context/message-context';
 
-vi.mock('@tauri-apps/api/path', () => ({
-    documentDir: async () => '/mocked/path',
-    sep: () => '/',
+vi.mock('@tauri-apps/api/core', () => ({
+    invoke: vi.fn().mockResolvedValue({ oidcBaseUrl: 'http://mock-url' }),
 }));
 
-vi.mock('../src/context/auth-context', () => ({
-    AuthProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    useAuth: () => ({ user: null, login: vi.fn() }),
+const mockStoreData: Record<string, any> = {};
+
+vi.mock("@tauri-apps/plugin-store", () => ({
+    load: vi.fn().mockResolvedValue({
+        get: vi.fn(async (key: string) => mockStoreData[key] ?? null),
+        set: vi.fn(async (key: string, val: any) => { mockStoreData[key] = val; }),
+        save: vi.fn(async () => {}),
+    }),
+    Store: vi.fn(),
 }));
 
-vi.mock('../src/context/secret-context', () => ({
-    SecretProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    useSecrets: () => ({ secret: 'mock-secret' }),
+vi.mock('@tauri-apps/plugin-http', () => ({
+    fetch: vi.fn(() => Promise.resolve({ok: true, json: () => ({id: '123', scanInformation: {tempName: 'Test'}})}))
+}));
+
+vi.mock('uuidv7', () => ({
+    uuidv7: () => 'mocked-uuid'
+}));
+
+vi.mock('../../tauri-store/setting-store.ts', () => ({
+    settings: {
+        getAuthResponse: vi.fn(() => Promise.resolve({userInfo: {name: 'Test User'}})),
+        getScannerPath: vi.fn(() => Promise.resolve('/scanner'))
+    }
+}));
+
+vi.mock('@tauri-apps/api/path', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        actual,
+        documentDir: vi.fn().mockResolvedValue('/mocked/path'),
+        sep: vi.fn().mockResolvedValue('/'),
+    };
+});
+
+vi.mock('../../context/auth-context.tsx', () => ({
+    useAuth: () => ({loggedOut: false}),
+    AuthProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
+}));
+
+vi.mock('../../context/selection-context.tsx', () => ({
+    useSelection: () => ({
+        checkedItems: [],
+        setCheckedItems: vi.fn()
+    }),
+    SelectionProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
+}));
+
+vi.mock('../../context/secret-context.tsx', () => ({
+    useSecrets: () => ({secrets: {papiPath: 'http://mock-papi'}}),
+    SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
+}));
+
+vi.mock('../../context/transfer-log-context.tsx', () => ({
+    useTransferLog: () => ({addLog: vi.fn()}),
+    TransferLogProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
 vi.mock('../src/context/upload-progress-context', () => ({
@@ -30,6 +77,22 @@ vi.mock('../src/context/upload-progress-context', () => ({
         progress: 0,
         setProgress: vi.fn(),
         dir: { '/mock/path': {} },
+    }),
+}));
+
+vi.mock('@tauri-apps/api/webviewWindow', () => ({
+    getCurrentWebviewWindow: () => ({
+        listen: vi.fn(() => Promise.resolve(() => {})),
+        once: vi.fn(() => Promise.resolve(() => {})),
+    }),
+    WebviewWindow: vi.fn(() => ({
+        show: vi.fn(),
+    })),
+}));
+
+vi.mock('@tauri-apps/api/window', () => ({
+    getCurrentWindow: () => ({
+        once: vi.fn(() => Promise.resolve(() => {})),
     }),
 }));
 
@@ -71,6 +134,35 @@ describe('RegistrationForm', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         cleanup();
+    });
+
+    it('renders without crashing', async () => {
+        render(<RegistrationFormWrapper checkedItems={['id1']}/>);
+
+        await waitFor(() => {
+            expect(screen.getByText(/Materialtype/i)).toBeDefined();
+            expect(screen.getByText(/Antiqua/i)).toBeDefined();
+            expect(screen.getByText(/Fraktur/i)).toBeDefined();
+        });
+    });
+
+    it('disables submit button when state.current.path is undefined', async () => {
+        vi.doMock('../../context/trokk-files-context.tsx', () => ({
+            useTrokkFiles: () => ({
+                state: {
+                    current: {
+                        path: undefined,
+                        name: 'Test File'
+                    }
+                }
+            })
+        }));
+
+        render(<RegistrationFormWrapper checkedItems={['id1']} />);
+        await waitFor(() => {
+            const button = screen.getByRole("button", { name: /TRØKK!/i });
+            expect(button.hasAttribute("disabled")).toBe(true);
+        });
     });
 
     it('displays correct count based on selected items', async () => {

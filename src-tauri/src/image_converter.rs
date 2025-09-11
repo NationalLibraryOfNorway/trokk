@@ -65,6 +65,15 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 	high_res: bool,
 ) -> Result<PathBuf, ImageConversionError> {
 	let path_reference = image_path.as_ref();
+
+	//Skip conversion if path contains .thumbnails or .previews
+	if path_reference
+		.components()
+		.any(|c| c.as_os_str() == PREVIEW_FOLDER_NAME || c.as_os_str() == THUMBNAIL_FOLDER_NAME)
+	{
+		return Ok(path_reference.to_path_buf());
+	}
+
 	let image: image::DynamicImage = ImageReader::open(path_reference)?
 		.with_guessed_format()?
 		.decode()?;

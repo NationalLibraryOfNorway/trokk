@@ -51,9 +51,7 @@ export class FileTree implements DirEntry {
 
     sort(): void {
         this.children?.sort((a, b) => {
-            if (a.path < b.path) return -1;
-            if (a.path > b.path) return 1;
-            return 0;
+            return a.path.localeCompare(b.path, undefined, { numeric: true, sensitivity: 'base' });
         });
     }
 
@@ -88,7 +86,7 @@ export class FileTree implements DirEntry {
                     await child.recursiveRead();
                 }
             }
-            this.sort()
+            this.sort();
             return this.children;
         } else {
             return undefined;
