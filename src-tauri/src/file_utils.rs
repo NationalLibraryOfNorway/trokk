@@ -18,7 +18,7 @@ pub(crate) fn delete_image(file_name: &str) -> Result<String, String> {
 	let file_path = Path::new(file_name);
 
 	if file_path.exists() {
-		fs::remove_file(&file_path).map_err(|e| e.to_string())?;
+		fs::remove_file(file_path).map_err(|e| e.to_string())?;
 		println!("Deleted {:?}", file_path);
 		Ok(format!("Deleted {:?}", file_path))
 	} else {
