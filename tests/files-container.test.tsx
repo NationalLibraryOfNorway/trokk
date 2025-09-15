@@ -87,8 +87,7 @@ const renderWithContext = () => {
 
 describe('FilesContainer', () => {
     beforeAll(() => {
-        window.HTMLElement.prototype.scrollIntoView = () => {
-        };
+        window.HTMLElement.prototype.scrollIntoView = () => {};
     });
 
     beforeEach(() => {

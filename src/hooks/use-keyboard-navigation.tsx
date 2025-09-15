@@ -27,6 +27,7 @@ export function useKeyboardNavigation() {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (keyHoldRef.current) return;
+        
             const target = e.target as HTMLElement;
             if (
                 target.tagName === 'INPUT' ||

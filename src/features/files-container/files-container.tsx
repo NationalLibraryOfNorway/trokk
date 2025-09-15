@@ -1,11 +1,11 @@
-import React, {useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import {Folder} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import Thumbnail from '../thumbnail/thumbnail.tsx';
 import Checkbox from '../../components/ui/checkbox.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
 import {useAutoFocusOnThumbnail} from '../../hooks/use-auto-focus-on-thumbnail.tsx';
-import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
+import DetailedImageView from "../detailed-image-view/detailed-image-view.tsx";
 import {
     Dialog,
     DialogPortal,
@@ -20,6 +20,7 @@ import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 import {useDialog} from '../../context/dialog-context.tsx';
 
 const FilesContainer: React.FC = () => {
+    const [dialogOpen, setDialogOpen] = useState(false);
     const {state, dispatch} = useTrokkFiles();
     const {
         currentIndex,

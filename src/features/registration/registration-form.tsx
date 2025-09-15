@@ -45,7 +45,7 @@ const RegistrationForm: React.FC = () => {
 
     useEffect(() => {
         if (checkedItems.length > 0) {
-            handleError('');
+            removeMessages();
         }
     }, [checkedItems]);
 
@@ -231,7 +231,15 @@ const RegistrationForm: React.FC = () => {
             </div>
 
             {successMessage && <p className="text-green-500 mt-4">{successMessage}</p>}
-            {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
+            {errorMessage && (
+                <div className="mt-4">
+                    {errorMessage.split('\n').map((line, idx) => (
+                        <span key={idx} className="text-red-600 block">
+                            {line}
+                        </span>
+                    ))}
+                </div>
+            )}
         </form>
     );
 };

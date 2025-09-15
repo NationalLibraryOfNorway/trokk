@@ -36,7 +36,7 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
 
     if (isHiddenDir) return null;
 
-    const initialStyle = 'max-h-[calc(100vh-250px)]';
+    let initialStyle = 'max-h-[calc(100vh-250px)] ';
     let imageClass = 'w-full object-contain';
     let containerClass = 'p-[8px]';
 
@@ -89,7 +89,7 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
             >
                 {fileName}
             </i>
+
         </div>
     );
-
 }
