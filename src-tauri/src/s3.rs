@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
 use crate::file_utils::get_file_paths_in_directory;
 #[cfg(not(feature = "debug-mock"))]
@@ -14,6 +12,8 @@ use aws_sdk_s3::operation::put_object::PutObjectOutput;
 use aws_sdk_s3::primitives::ByteStream;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::Client;
+use std::collections::HashMap;
+use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
 use std::path::PathBuf;
 #[cfg(not(feature = "debug-mock"))]
@@ -64,24 +64,22 @@ pub(crate) async fn upload_directory(
 }
 
 #[cfg(not(feature = "debug-mock"))]
-pub(crate) async fn upload_batches_to_s3(
-    batch_map: HashMap<String, Vec<String>>,
-    material_type: &str,
-    app_window: Window,
+pub(crate) async fn upload_batch_to_s3(
+	batch_map: HashMap<String, Vec<String>>,
+	material_type: &str,
+	app_window: Window,
 ) -> Result<usize, String> {
-    let secret_variables = get_secret_variables()
-        .await
-        .map_err(|e| format!("Failed to get secret variables: {e}"))?;
-    let client = get_client(&secret_variables.clone())
-        .await
-        .map_err(|e| format!("Failed to get S3 client: {e}"))?;
+	let secret_variables = get_secret_variables()
+		.await
+		.map_err(|e| format!("Failed to get secret variables: {e}"))?;
+	let client = get_client(&secret_variables.clone())
+		.await
+		.map_err(|e| format!("Failed to get S3 client: {e}"))?;
 
-    let mut uploaded_count = 0;
+	let mut uploaded_count = 0;
 	let total_files: usize = batch_map.values().map(|v| v.len()).sum();
-	
-	
-	for(batch_id, batch) in batch_map.iter() {
 
+	for (batch_id, batch) in batch_map.iter() {
 		for (file_index, file_path_str) in batch.iter().enumerate() {
 			let page_nr = file_index + 1;
 			let file_path = PathBuf::from(file_path_str);
@@ -93,19 +91,19 @@ pub(crate) async fn upload_batches_to_s3(
 				page_nr,
 				material_type,
 			)
-				.await?;
+			.await?;
 			uploaded_count += 1;
-			
+
 			let directory = Path::new(file_path_str)
 				.parent()
 				.map(|p| p.to_string_lossy().to_string())
 				.unwrap_or_else(|| "".to_string());
-			
+
 			app_window
 				.emit(
 					"transfer_progress",
-					TransferProgress { 
-						directory, 
+					TransferProgress {
+						directory,
 						page_nr: uploaded_count,
 						total_pages: total_files,
 					},
@@ -113,7 +111,7 @@ pub(crate) async fn upload_batches_to_s3(
 				.map_err(|e| e.to_string())?;
 		}
 	}
-    Ok(total_files)
+	Ok(total_files)
 }
 
 #[cfg(not(feature = "debug-mock"))]

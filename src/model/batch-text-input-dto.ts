@@ -13,7 +13,6 @@ export class BatchTextInputDto {
     application: string;
     machineName: string;
     workName: string;
-    transferPageArray: number[];
 
     constructor(
         batchId: string,
@@ -23,8 +22,7 @@ export class BatchTextInputDto {
         font: string,
         language: string,
         machineName: string,
-        workName: string,
-        transferPageArray: number[]
+        workName: string
     ) {
         this.batchId = batchId;
         this.batchMap = batchMap;
@@ -37,7 +35,6 @@ export class BatchTextInputDto {
         this.application = 'Trøkk';
         this.machineName = machineName;
         this.workName = workName;
-        this.transferPageArray = transferPageArray;
     }
 
     publicationTypeFromMaterialType(materialType: MaterialType): PublicationType {

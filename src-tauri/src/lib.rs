@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::ffi::OsString;
 use std::string::ToString;
 use std::sync::Mutex;
@@ -227,12 +227,12 @@ async fn upload_directory_to_s3(
 }
 
 #[tauri::command]
-async fn upload_batches_to_s3(
-    batchMap: HashMap<String, Vec<String>>,
-    material_type: &str,
-    app_window: tauri::Window,
+async fn upload_batch_to_s3(
+	batch_map: HashMap<String, Vec<String>>,
+	material_type: &str,
+	app_window: tauri::Window,
 ) -> Result<usize, String> {
-    s3::upload_batches_to_s3(batchMap, material_type, app_window).await
+	s3::upload_batch_to_s3(batch_map, material_type, app_window).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -275,8 +275,8 @@ pub fn run() {
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]
 			upload_directory_to_s3,
-            #[cfg(not(feature = "debug-mock"))]
-            upload_batches_to_s3,
+			#[cfg(not(feature = "debug-mock"))]
+			upload_batch_to_s3,
 		])
 		.on_window_event(|window, event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = event {

@@ -8,7 +8,7 @@ export async function uploadToS3(
 ): Promise<number[]> {
     const materialType = getMaterialTypeAsKeyString(registration.materialType);
 
-    const uploadedCounts: number[] = await invoke('upload_batches_to_s3', {
+    const uploadedCounts: number[] = await invoke('upload_batch_to_s3', {
         batchMap,
         materialType,
     });

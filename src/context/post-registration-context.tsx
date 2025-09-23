@@ -24,15 +24,14 @@ function groupFilesByCheckedItems(
 
     for (const file of allFilesInFolder) {
         if (!file) continue;
-        if (checkedItems.includes(file.path))  {
+        if (checkedItems.includes(file.path)) {
             objectId = uuidv7().toString();
             batchMap.set(
                 objectId,
                 [file.path]
             )
-        }
-        else {
-            if(batchMap.get(objectId) !== undefined) batchMap.get(objectId)!.push(file.path);
+        } else {
+            if (batchMap.get(objectId) !== undefined) batchMap.get(objectId)!.push(file.path);
         }
     }
     return batchMap;
@@ -42,7 +41,7 @@ async function handleApiResponse(
     response: Response,
     clearError: () => void,
     displaySuccessMessage: (item: TextItemResponse) => void,
-    handleError: (message:string) => void,
+    handleError: (message: string) => void,
     pushedDir: string,
     deleteDirFromProgress: () => void,
 ) {
@@ -93,9 +92,7 @@ export function usePostRegistration() {
             return Promise.reject(error);
         });
 
-
-
-        const transferPageArray = await uploadToS3(registration, batchMap);
+        await uploadToS3(registration, batchMap);
 
         const body = new BatchTextInputDto(
             uuidv7().toString(),
@@ -105,8 +102,7 @@ export function usePostRegistration() {
             registration.font,
             registration.language,
             machineName,
-            registration.workingTitle,
-            transferPageArray
+            registration.workingTitle
         );
 
         await body.setVersion();
