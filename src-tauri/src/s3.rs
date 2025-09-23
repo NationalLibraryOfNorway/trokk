@@ -60,6 +60,61 @@ pub(crate) async fn upload_directory(
 	}
 	Ok(file_paths.len())
 }
+
+#[cfg(not(feature = "debug-mock"))]
+pub(crate) async fn upload_batches_to_s3(
+    batches: Vec<Vec<String>>,
+    batch_ids: Vec<String>,
+    material_type: &str,
+    app_window: Window,
+) -> Result<Vec<usize>, String> {
+    if batches.len() != batch_ids.len() {
+        return Err("batches and batch_ids must have the same length".to_string());
+    }
+
+    let secret_variables = get_secret_variables()
+        .await
+        .map_err(|e| format!("Failed to get secret variables: {e}"))?;
+    let client = get_client(&secret_variables.clone())
+        .await
+        .map_err(|e| format!("Failed to get S3 client: {e}"))?;
+
+    let mut uploaded_counts = Vec::with_capacity(batches.len());
+
+    for (batch_idx, batch) in batches.iter().enumerate() {
+        let batch_id = &batch_ids[batch_idx];
+        let total_files = batch.len();
+
+        for (file_idx, file_path_str) in batch.iter().enumerate() {
+            let page_nr = file_idx + 1;
+            let file_path = PathBuf::from(file_path_str);
+            put_object(
+                &client,
+                &secret_variables,
+                &file_path,
+                batch_id,
+                page_nr,
+                material_type,
+            )
+                .await?;
+
+            app_window
+                .emit(
+                    "transfer_progress",
+                    TransferProgress {
+                        directory: format!("batch_{}", batch_id),
+                        page_nr,
+                        total_pages: total_files,
+                    },
+                )
+                .map_err(|e| e.to_string())?;
+        }
+        uploaded_counts.push(total_files);
+    }
+
+    Ok(uploaded_counts)
+}
+
 #[cfg(not(feature = "debug-mock"))]
 async fn put_object(
 	client: &Client,

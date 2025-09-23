@@ -225,6 +225,16 @@ async fn upload_directory_to_s3(
 	s3::upload_directory(directory_path, object_id, material_type, app_window).await
 }
 
+#[tauri::command]
+async fn upload_batches_to_s3(
+    batches: Vec<Vec<String>>,
+    batch_ids: Vec<String>,
+    material_type: &str,
+    app_window: tauri::Window,
+) -> Result<Vec<usize>, String> {
+    s3::upload_batches_to_s3(batches, batch_ids, material_type, app_window).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
@@ -264,7 +274,9 @@ pub fn run() {
 			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]
-			upload_directory_to_s3
+			upload_directory_to_s3,
+            #[cfg(not(feature = "debug-mock"))]
+            upload_batches_to_s3,
 		])
 		.on_window_event(|window, event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = event {

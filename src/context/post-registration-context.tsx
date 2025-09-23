@@ -1,16 +1,65 @@
 // usePostRegistration.ts
 import {useTrokkFiles} from './trokk-files-context.tsx';
 import {invoke} from '@tauri-apps/api/core';
-import {TextInputDto} from '../model/text-input-dto.ts';
 import {RegistrationFormProps} from '../features/registration/registration-form-props.tsx';
-import {TextItemResponse} from '../model/text-input-response.ts';
 import {settings} from '../tauri-store/setting-store.ts';
 import {useMessage} from './message-context.tsx';
 import {useUploadProgress} from './upload-progress-context.tsx';
 import {useAuth} from './auth-context.tsx';
 import {uploadToS3} from '../features/registration/upload-to-s3.tsx';
 import {useSecrets} from './secret-context.tsx';
+import {useSelection} from '../context/selection-context.tsx';
 import {uuidv7} from 'uuidv7';
+import {FileTree} from '@/model/file-tree.ts';
+import {fetch} from '@tauri-apps/plugin-http';
+import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
+import {TextItemResponse} from '../model/text-input-response.ts';
+
+function groupFilesByCheckedItems(
+    allFilesInFolder: FileTree[],
+    checkedItems: string[]
+): [string[][], string[]] {
+    const batches: string[][] = [];
+    const batchIds: string[] = [];
+    let fileBatch: string[] = [];
+
+    for (const file of allFilesInFolder) {
+        if (!file) continue;
+        if (checkedItems.includes(file.path) && fileBatch.length > 0) {
+            batches.push(fileBatch);
+            batchIds.push(uuidv7().toString());
+            fileBatch = [];
+        }
+        if (file.isFile) {
+            fileBatch.push(file.path);
+        }
+    }
+    if (fileBatch.length > 0) {
+        batches.push(fileBatch);
+        batchIds.push(uuidv7().toString());
+    }
+    return [batches, batchIds];
+}
+
+function handleApiResponse(
+    response: Response,
+    clearError: () => void,
+    displaySuccessMessage: (item: TextItemResponse) => void,
+    handleError: (message:string) => void
+) {
+    if (response.status >= 200 && response.status < 300) {
+        clearError();
+        return response.json().then(displaySuccessMessage);
+    } else {
+        const messages: Record<number, string> = {
+            401: 'Not logged in or token expired',
+            403: 'No access to register this object',
+            409: 'Object already exists',
+            500: 'Server error while saving object'
+        };
+        handleError(messages[response.status] || 'Unknown error: ' + response.status);
+    }
+}
 
 export function usePostRegistration() {
     const {state} = useTrokkFiles();
@@ -18,13 +67,13 @@ export function usePostRegistration() {
     const auth = useAuth();
     const {handleError, clearError, displaySuccessMessage} = useMessage();
     const {setAllUploadProgress} = useUploadProgress();
+    const {checkedItems} = useSelection();
 
-    const postRegistration = async (
+    async function postRegistration(
         machineName: string,
         registration: RegistrationFormProps
-    ) => {
+    ) {
         const papiPath = secrets?.papiPath;
-        const id = uuidv7().toString();
         const loggedOut = auth?.loggedOut;
 
         if (!state.current?.path) return;
@@ -32,12 +81,10 @@ export function usePostRegistration() {
         const authResp = await settings.getAuthResponse();
         if (!authResp || loggedOut) return Promise.reject('Not logged in');
 
-        const transfer = uploadToS3(id, registration, state).catch(error => {
-            handleError('Fikk ikke lastet opp filene', undefined, error);
-            return Promise.reject(error);
-        });
-
-        const numberOfPagesTransferred = await transfer;
+        const [batches, batchIds] = groupFilesByCheckedItems(
+            state.current?.children ?? [],
+            checkedItems
+        );
 
         const accessToken = await invoke('get_papi_access_token').catch(error => {
             handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.', undefined, error);
@@ -48,53 +95,43 @@ export function usePostRegistration() {
             return invoke('delete_dir', {dir: path});
         };
 
-        const body = new TextInputDto(
-            id,
+        const transferPageArray = await uploadToS3(registration, batches, batchIds);
+
+        const body = new BatchTextInputDto(
+            batchIds,
             registration.materialType,
             authResp.userInfo.name,
             registration.font,
             registration.language,
             machineName,
             registration.workingTitle,
-            numberOfPagesTransferred
+            transferPageArray
         );
 
         await body.setVersion();
 
-        return await fetch(`${papiPath}/v2/item`, {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + accessToken,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        })
-            .then(async response => {
-                if (response.ok) {
-                    void deleteDir(pushedDir);
-                    clearError();
-                    displaySuccessMessage(await response.json() as TextItemResponse);
-                } else {
-                    const status = response.status;
-                    const messages: Record<number, string> = {
-                        401: 'Du er ikke logget inn eller tilgangstokenet er utløpt',
-                        403: 'Du har ikke tilgang til å registrere dette objektet',
-                        409: 'Objektet finnes allerede i databasen',
-                        500: 'Serverfeil ved lagring av objektet'
-                    };
-                    handleError(messages[status] || 'Ukjent feil ved lagring av objektet', status);
-                }
-
-                setAllUploadProgress(progress => {
-                    delete progress.dir[pushedDir];
-                    return progress;
-                });
-            })
-            .catch(error => {
-                handleError('Nettverksfeil ved lagring av objektet');
-                return Promise.reject(error);
+        try {
+            const response = await fetch(`${papiPath}/v2/item/batch`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + accessToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
             });
-    };
+
+            await handleApiResponse(response, clearError, displaySuccessMessage, handleError);
+
+            setAllUploadProgress(progress => {
+                delete progress.dir[pushedDir];
+                return progress;
+            });
+        } catch (error) {
+            handleError('Nettverksfeil ved lagring av objektet');
+            console.error(error);
+        }
+        await deleteDir(pushedDir);
+    }
 
     return {postRegistration};
 }
