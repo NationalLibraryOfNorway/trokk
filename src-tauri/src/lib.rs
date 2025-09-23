@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
 use std::ffi::OsString;
@@ -227,12 +228,11 @@ async fn upload_directory_to_s3(
 
 #[tauri::command]
 async fn upload_batches_to_s3(
-    batches: Vec<Vec<String>>,
-    batch_ids: Vec<String>,
+    batchMap: HashMap<String, Vec<String>>,
     material_type: &str,
     app_window: tauri::Window,
-) -> Result<Vec<usize>, String> {
-    s3::upload_batches_to_s3(batches, batch_ids, material_type, app_window).await
+) -> Result<usize, String> {
+    s3::upload_batches_to_s3(batchMap, material_type, app_window).await
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

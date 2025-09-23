@@ -2,7 +2,8 @@ import {getMaterialTypeAsKeyString, MaterialType, PublicationType} from './regis
 import {getVersion} from '@tauri-apps/api/app';
 
 export class BatchTextInputDto {
-    batchIds: string[];
+    batchId: string;
+    batchMap: Map<string, string[]>;
     materialType: string;
     publicationType: PublicationType;
     username: string;
@@ -15,7 +16,8 @@ export class BatchTextInputDto {
     transferPageArray: number[];
 
     constructor(
-        batchIds: string[],
+        batchId: string,
+        batchMap: Map<string, string[]>,
         materialType: MaterialType,
         username: string,
         font: string,
@@ -24,7 +26,8 @@ export class BatchTextInputDto {
         workName: string,
         transferPageArray: number[]
     ) {
-        this.batchIds = batchIds;
+        this.batchId = batchId;
+        this.batchMap = batchMap;
         this.materialType = getMaterialTypeAsKeyString(materialType);
         this.publicationType = this.publicationTypeFromMaterialType(materialType);
         this.username = username;

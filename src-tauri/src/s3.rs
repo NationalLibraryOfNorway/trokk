@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
 use crate::file_utils::get_file_paths_in_directory;
 #[cfg(not(feature = "debug-mock"))]
@@ -63,15 +65,10 @@ pub(crate) async fn upload_directory(
 
 #[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn upload_batches_to_s3(
-    batches: Vec<Vec<String>>,
-    batch_ids: Vec<String>,
+    batch_map: HashMap<String, Vec<String>>,
     material_type: &str,
     app_window: Window,
-) -> Result<Vec<usize>, String> {
-    if batches.len() != batch_ids.len() {
-        return Err("batches and batch_ids must have the same length".to_string());
-    }
-
+) -> Result<usize, String> {
     let secret_variables = get_secret_variables()
         .await
         .map_err(|e| format!("Failed to get secret variables: {e}"))?;
@@ -79,40 +76,44 @@ pub(crate) async fn upload_batches_to_s3(
         .await
         .map_err(|e| format!("Failed to get S3 client: {e}"))?;
 
-    let mut uploaded_counts = Vec::with_capacity(batches.len());
+    let mut uploaded_count = 0;
+	let total_files: usize = batch_map.values().map(|v| v.len()).sum();
+	
+	
+	for(batch_id, batch) in batch_map.iter() {
 
-    for (batch_idx, batch) in batches.iter().enumerate() {
-        let batch_id = &batch_ids[batch_idx];
-        let total_files = batch.len();
-
-        for (file_idx, file_path_str) in batch.iter().enumerate() {
-            let page_nr = file_idx + 1;
-            let file_path = PathBuf::from(file_path_str);
-            put_object(
-                &client,
-                &secret_variables,
-                &file_path,
-                batch_id,
-                page_nr,
-                material_type,
-            )
-                .await?;
-
-            app_window
-                .emit(
-                    "transfer_progress",
-                    TransferProgress {
-                        directory: format!("batch_{}", batch_id),
-                        page_nr,
-                        total_pages: total_files,
-                    },
-                )
-                .map_err(|e| e.to_string())?;
-        }
-        uploaded_counts.push(total_files);
-    }
-
-    Ok(uploaded_counts)
+		for (file_index, file_path_str) in batch.iter().enumerate() {
+			let page_nr = file_index + 1;
+			let file_path = PathBuf::from(file_path_str);
+			put_object(
+				&client,
+				&secret_variables,
+				&file_path,
+				batch_id,
+				page_nr,
+				material_type,
+			)
+				.await?;
+			uploaded_count += 1;
+			
+			let directory = Path::new(file_path_str)
+				.parent()
+				.map(|p| p.to_string_lossy().to_string())
+				.unwrap_or_else(|| "".to_string());
+			
+			app_window
+				.emit(
+					"transfer_progress",
+					TransferProgress { 
+						directory, 
+						page_nr: uploaded_count,
+						total_pages: total_files,
+					},
+				)
+				.map_err(|e| e.to_string())?;
+		}
+	}
+    Ok(total_files)
 }
 
 #[cfg(not(feature = "debug-mock"))]

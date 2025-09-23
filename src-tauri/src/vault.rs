@@ -31,7 +31,7 @@ pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, Client
 
 	// Use the client to interact with the Vault API
 	let secrets: SecretVariables =
-		kv2::read(&client, "secret/v1/application/k8s/tekst/", "trokk-stage").await?; // TODO set dynamically for prod/stage
+		kv2::read(&client, "secret/v1/application/k8s/tekst/", "trokk-dev").await?; // TODO set dynamically for prod/stage
 
 	Ok(secrets)
 }

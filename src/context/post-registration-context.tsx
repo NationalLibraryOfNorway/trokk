@@ -18,37 +18,39 @@ import {TextItemResponse} from '../model/text-input-response.ts';
 function groupFilesByCheckedItems(
     allFilesInFolder: FileTree[],
     checkedItems: string[]
-): [string[][], string[]] {
-    const batches: string[][] = [];
-    const batchIds: string[] = [];
-    let fileBatch: string[] = [];
+): Map<string, string[]> {
+    const batchMap = new Map<string, string[]>();
+    let objectId: string = '';
 
     for (const file of allFilesInFolder) {
         if (!file) continue;
-        if (checkedItems.includes(file.path) && fileBatch.length > 0) {
-            batches.push(fileBatch);
-            batchIds.push(uuidv7().toString());
-            fileBatch = [];
+        if (checkedItems.includes(file.path))  {
+            objectId = uuidv7().toString();
+            batchMap.set(
+                objectId,
+                [file.path]
+            )
         }
-        if (file.isFile) {
-            fileBatch.push(file.path);
+        else {
+            if(batchMap.get(objectId) !== undefined) batchMap.get(objectId)!.push(file.path);
         }
     }
-    if (fileBatch.length > 0) {
-        batches.push(fileBatch);
-        batchIds.push(uuidv7().toString());
-    }
-    return [batches, batchIds];
+    return batchMap;
 }
 
-function handleApiResponse(
+async function handleApiResponse(
     response: Response,
     clearError: () => void,
     displaySuccessMessage: (item: TextItemResponse) => void,
-    handleError: (message:string) => void
+    handleError: (message:string) => void,
+    pushedDir: string,
+    deleteDirFromProgress: () => void,
 ) {
+
     if (response.status >= 200 && response.status < 300) {
         clearError();
+        await invoke('delete_dir', {dir: pushedDir});
+        deleteDirFromProgress();
         return response.json().then(displaySuccessMessage);
     } else {
         const messages: Record<number, string> = {
@@ -81,7 +83,7 @@ export function usePostRegistration() {
         const authResp = await settings.getAuthResponse();
         if (!authResp || loggedOut) return Promise.reject('Not logged in');
 
-        const [batches, batchIds] = groupFilesByCheckedItems(
+        const batchMap = groupFilesByCheckedItems(
             state.current?.children ?? [],
             checkedItems
         );
@@ -91,14 +93,13 @@ export function usePostRegistration() {
             return Promise.reject(error);
         });
 
-        const deleteDir = async (path: string): Promise<void> => {
-            return invoke('delete_dir', {dir: path});
-        };
 
-        const transferPageArray = await uploadToS3(registration, batches, batchIds);
+
+        const transferPageArray = await uploadToS3(registration, batchMap);
 
         const body = new BatchTextInputDto(
-            batchIds,
+            uuidv7().toString(),
+            batchMap,
             registration.materialType,
             authResp.userInfo.name,
             registration.font,
@@ -120,17 +121,17 @@ export function usePostRegistration() {
                 body: JSON.stringify(body)
             });
 
-            await handleApiResponse(response, clearError, displaySuccessMessage, handleError);
-
-            setAllUploadProgress(progress => {
+            const deleteDirFromProgress = () => setAllUploadProgress(progress => {
                 delete progress.dir[pushedDir];
                 return progress;
             });
+
+            await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress);
+
         } catch (error) {
             handleError('Nettverksfeil ved lagring av objektet');
             console.error(error);
         }
-        await deleteDir(pushedDir);
     }
 
     return {postRegistration};
