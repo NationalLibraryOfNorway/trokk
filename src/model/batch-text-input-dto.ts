@@ -3,7 +3,7 @@ import {getVersion} from '@tauri-apps/api/app';
 
 export class BatchTextInputDto {
     batchId: string;
-    batchMap: Map<string, string[]>;
+    itemToNumberOfPages: Map<string, number>;
     materialType: string;
     publicationType: PublicationType;
     username: string;

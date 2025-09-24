@@ -96,7 +96,9 @@ export function usePostRegistration() {
 
         const body = new BatchTextInputDto(
             uuidv7().toString(),
-            batchMap,
+            batchMap.map{(value, key) =>
+                [key, value] // TODO finish this
+            },
             registration.materialType,
             authResp.userInfo.name,
             registration.font,
