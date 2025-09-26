@@ -11,7 +11,7 @@ import {useSecrets} from './secret-context.tsx';
 import {useSelection} from '../context/selection-context.tsx';
 import {uuidv7} from 'uuidv7';
 import {FileTree} from '@/model/file-tree.ts';
-import {fetch} from '@tauri-apps/plugin-http';
+import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
 import {TextItemResponse} from '../model/text-input-response.ts';
 
@@ -113,7 +113,7 @@ export function usePostRegistration() {
         await body.setVersion();
 
         try {
-            const response = await fetch(`${papiPath}/v2/item/batch`, {
+            const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
                 headers: {
                     'Authorization': 'Bearer ' + accessToken,
