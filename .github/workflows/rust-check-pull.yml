@@ -24,6 +24,7 @@ jobs:
       VAULT_BASE_URL: "placeholder"
       VAULT_ROLE_ID: "placeholder"
       VAULT_SECRET_ID: "placeholder"
+      VAULT_ENVIRONMENT: "placeholder"
       VITE_SENTRY_ENVIRONMENT: "placeholder"
       VITE_SENTRY_DSN: "placeholder"
       RUST_SENTRY_ENVIRONMENT: "placeholder"

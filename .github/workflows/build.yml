@@ -33,6 +33,7 @@ jobs:
       VAULT_BASE_URL: ${{ secrets.VAULT_BASE_URL }}
       VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
       VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+      VAULT_ENVIRONMENT: trokk-stage
       RUST_BACKTRACE: full
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
