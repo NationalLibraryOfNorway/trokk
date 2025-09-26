@@ -94,11 +94,14 @@ export function usePostRegistration() {
 
         await uploadToS3(registration, batchMap);
 
+        const itemIdToCountOfItems = new Map<string, number>();
+        for (const [batchId, pages] of batchMap.entries()) {
+             itemIdToCountOfItems.set(batchId, pages.length);
+        }
+
         const body = new BatchTextInputDto(
             uuidv7().toString(),
-            batchMap.map{(value, key) =>
-                [key, value] // TODO finish this
-            },
+            itemIdToCountOfItems,
             registration.materialType,
             authResp.userInfo.name,
             registration.font,
