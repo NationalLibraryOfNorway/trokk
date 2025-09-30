@@ -3,7 +3,6 @@ import FilesContainer from '../src/features/files-container/files-container';
 import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-context';
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
 import {beforeAll, beforeEach, describe, expect, it, Mock, vi} from 'vitest';
-import {DialogProvider} from '../src/context/dialog-context';
 import {useState} from 'react';
 
 vi.mock('../src/context/trokk-files-context', () => {
@@ -39,22 +38,6 @@ vi.mock('../src/context/selection-context', () => {
     }
 });
 
-vi.mock('../src/context/dialog-context', () => {
-    return {
-        useDialog: () => {
-            const [previewOpen, setPreviewOpen] = useState(false);
-            return {
-                previewOpen,
-                openPreview: setPreviewOpen,
-                openDelDialog: vi.fn(),
-                handleDelete: vi.fn(),
-                delFilePath: null,
-            };
-        },
-        DialogProvider: ({children}: { children: React.ReactNode }) => <>{children}</>,
-    };
-});
-
 vi.mock('../src/hooks/use-auto-focus-on-thumbnail.tsx', () => {
     return {
         useAutoFocusOnThumbnail: vi.fn(),
@@ -77,9 +60,7 @@ const renderWithContext = () => {
     return render(
         <TrokkFilesProvider scannerPath="/mock/path">
             <SelectionProvider>
-                <DialogProvider>
-                    <FilesContainer/>
-                </DialogProvider>
+                <FilesContainer/>
             </SelectionProvider>
         </TrokkFilesProvider>
     );

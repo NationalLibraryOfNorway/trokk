@@ -5,7 +5,7 @@ import Thumbnail from '../thumbnail/thumbnail.tsx';
 import Checkbox from '../../components/ui/checkbox.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
 import {useAutoFocusOnThumbnail} from '../../hooks/use-auto-focus-on-thumbnail.tsx';
-import DetailedImageView from "../detailed-image-view/detailed-image-view.tsx";
+import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 import {
     Dialog,
     DialogPortal,
@@ -17,10 +17,11 @@ import {
 import '../detailed-image-view/detailed-image-view.css';
 import {useKeyboardNavigation} from '../../hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
-import {useDialog} from '../../context/dialog-context.tsx';
 
 const FilesContainer: React.FC = () => {
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [delFilePath, setDelFilePath] = useState<string | null>(null);
+    const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+
     const {state, dispatch} = useTrokkFiles();
     const {
         currentIndex,
@@ -30,7 +31,6 @@ const FilesContainer: React.FC = () => {
         columns,
         setColumns,
     } = useSelection();
-    const {openPreview, previewOpen} = useDialog();
 
     const files = state.current?.children?.filter(child => !child.isDirectory) || [];
 
@@ -38,16 +38,20 @@ const FilesContainer: React.FC = () => {
     const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useAutoFocusOnThumbnail({fileRefs, containerRef});
-    useKeyboardNavigation();
-
+    useKeyboardNavigation({
+        delFilePath,
+        setDelFilePath,
+        previewDialogOpen,
+        setPreviewDialogOpen,
+    });
     return (
         <div className="relative h-full flex w-full flex-col overscroll-none"
              onClick={() => {
-                 if (previewOpen) {
-                     openPreview(false)
+                 if (previewDialogOpen) {
+                     setPreviewDialogOpen(false)
                  }
              }}>
-            <Dialog open={previewOpen} onOpenChange={(open) => openPreview(open)}>
+            <Dialog open={previewDialogOpen} onOpenChange={(open) => setPreviewDialogOpen(open)}>
                 <DialogPortal>
                     <DialogOverlay className="fixed inset-0 preview z-20 bg-stone-800/90"/>
                     <DialogContent
@@ -127,7 +131,9 @@ const FilesContainer: React.FC = () => {
                                                     isChecked={checkedItems.includes(child.path)}
                                                     fileTree={child}
                                                     isFocused={!state.preview && currentIndex === index}
-                                                    onClick={() => openPreview(true)}
+                                                    onClick={() => setPreviewDialogOpen(true)}
+                                                    setDelFilePath={setDelFilePath}
+                                                    delFilePath={delFilePath}
                                                 />
                                                 <div className="flex justify-center">
                                                     <Checkbox

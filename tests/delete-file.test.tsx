@@ -1,17 +1,17 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {fireEvent, render, screen} from '@testing-library/react';
 import DeleteFile from '../src/features/delete-file/delete-file';
-import {DialogProvider} from '../src/context/dialog-context';
+import {useState} from 'react';
+import {remove} from '@tauri-apps/plugin-fs';
 
-const handleDeleteMock = vi.fn();
 const testFileName = 'file1';
+
+vi.mock('@tauri-apps/plugin-fs', () => ({
+    remove: vi.fn(),
+}));
 
 vi.mock('../src/context/selection-context.tsx', () => ({
     useSelection: () => ({columns: 3})
-}));
-
-vi.mock('@tauri-apps/api/core', () => ({
-    invoke: vi.fn().mockResolvedValue('deleted')
 }));
 
 vi.mock('@/model/file-tree.ts', () => ({
@@ -20,20 +20,10 @@ vi.mock('@/model/file-tree.ts', () => ({
     }
 }));
 
-vi.mock('../src/context/dialog-context', () => ({
-    useDialog: () => ({
-        openDelDialog: vi.fn(),
-        handleDelete: handleDeleteMock,
-        delFilePath: testFileName
-    }),
-    DialogProvider: ({children}: any) => <>{children}</>
-}));
-
-const renderWithContext = () => {
-    return render(
-        <DialogProvider>
-            <DeleteFile childPath={testFileName}/>
-        </DialogProvider>
+const TestWrapper = () => {
+    const [delFilePath, setDelFilePath] = useState<string | null>(null);
+    return(
+        <DeleteFile childPath={testFileName} delFilePath={delFilePath} setDelFilePath={setDelFilePath}/>
     );
 };
 
@@ -43,12 +33,12 @@ describe('DeleteFile', () => {
     });
 
     it('renders dialog trigger', () => {
-        renderWithContext();
+        render(<TestWrapper />);
         expect(screen.getByText('✕')).toBeDefined();
     });
 
     it('shows dialog content on trigger click', async () => {
-        renderWithContext();
+        render(<TestWrapper />);
         fireEvent.click(screen.getByText('✕'));
         expect(await screen.findByText(/Er du sikker/)).toBeDefined();
         expect(screen.getByText('Slett')).toBeDefined();
@@ -56,15 +46,9 @@ describe('DeleteFile', () => {
     });
 
     it('calls handleDelete when opening dialog and clicking "slett"', async () => {
-        renderWithContext();
+        render(<TestWrapper />);
         fireEvent.click(screen.getByText('✕'));
         fireEvent.click(screen.getByText('Slett'));
-        expect(handleDeleteMock).toHaveBeenCalled();
-    });
-
-    it('shows dialog content when pressing Delete key', async () => {
-        renderWithContext();
-        fireEvent.keyDown(document, {key: 'Delete', code: 'Delete'});
-        expect(await screen.findByText(/Er du sikker/)).toBeDefined();
+        expect(remove).toHaveBeenCalledWith(testFileName);
     });
 });

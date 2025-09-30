@@ -3,7 +3,6 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import Thumbnail from '../src/features/thumbnail/thumbnail';
 import {FileTree} from '../src/model/file-tree.ts';
 import {useTrokkFiles} from '../src/context/trokk-files-context.tsx';
-import {DialogProvider} from '../src/context/dialog-context';
 import {SelectionProvider} from '../src/context/selection-context';
 import {SecretProvider} from '../src/context/secret-context';
 
@@ -68,9 +67,7 @@ const renderWithContext = (fileTree: FileTree, baseProps: any) => {
     return render(
         <SelectionProvider>
             <SecretProvider>
-                <DialogProvider>
-                    <Thumbnail fileTree={fileTree} {...baseProps} />
-                </DialogProvider>
+                <Thumbnail fileTree={fileTree} {...baseProps} />
             </SecretProvider>
         </SelectionProvider>
     );

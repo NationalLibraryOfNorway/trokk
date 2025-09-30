@@ -3,21 +3,30 @@ import {vi} from 'vitest';
 import {useSelection} from '../src/context/selection-context';
 import {useTrokkFiles} from '../src/context/trokk-files-context';
 import {useKeyboardNavigation} from '../src/hooks/use-keyboard-navigation';
-import {useDialog} from '../src/context/dialog-context';
+import React from 'react';
 
 vi.mock('../src/context/selection-context');
 vi.mock('../src/context/trokk-files-context');
-vi.mock('../src/context/dialog-context');
 
 const keypressDelay = 100;
 const mockChildren = [
-    {isDirectory: false},
-    {isDirectory: false},
-    {isDirectory: false},
+    {isDirectory: false, path: '/test/file1'},
+    {isDirectory: false, path: '/test/file2'},
+    {isDirectory: false, path: '/test/file3'},
 ];
 
-function TestComponent() {
-    useKeyboardNavigation();
+function TestComponent({
+                           delFilePath,
+                           setDelFilePath,
+                           previewDialogOpen,
+                           setPreviewDialogOpen,
+                       }: any) {
+    useKeyboardNavigation({
+        delFilePath,
+        setDelFilePath,
+        previewDialogOpen,
+        setPreviewDialogOpen,
+    });
     return null;
 }
 
@@ -28,10 +37,9 @@ const setupMocks = (currentIndex = 0) => {
     const handleCheck = vi.fn();
     const handleClose = vi.fn();
     const setColumns = vi.fn();
-    const previewOpen = false;
-    const delFilePath = null;
-    const openPreview = vi.fn();
-    const openDelDialog = vi.fn();
+
+    const setDelFilePath = vi.fn();
+    const setPreviewDialogOpen = vi.fn();
 
     (useSelection as vi.Mock).mockReturnValue({
         currentIndex,
@@ -53,14 +61,15 @@ const setupMocks = (currentIndex = 0) => {
         },
     });
 
-    (useDialog as vi.Mock).mockReturnValue({
-        previewOpen: false,
-        delFilePath: null,
-        openPreview,
-        openDelDialog,
-    });
+    render(
+        <TestComponent
+            delFilePath={null}
+            setDelFilePath={setDelFilePath}
+            previewDialogOpen={false}
+            setPreviewDialogOpen={setPreviewDialogOpen}
+        />
+    );
 
-    render(<TestComponent/>);
     return {
         handleIndexChange,
         handleNext,
@@ -68,10 +77,8 @@ const setupMocks = (currentIndex = 0) => {
         handleCheck,
         handleClose,
         setColumns,
-        previewOpen,
-        delFilePath,
-        openPreview,
-        openDelDialog
+        setDelFilePath,
+        setPreviewDialogOpen,
     };
 };
 
@@ -80,8 +87,6 @@ beforeAll(() => {
 });
 
 describe('useKeyboardNavigation', () => {
-
-
     it('ArrowDown and j/J should handleIndexChange', () => {
         const {handleIndexChange} = setupMocks(0);
         ['ArrowDown', 'j', 'J'].forEach(key => {
@@ -91,7 +96,7 @@ describe('useKeyboardNavigation', () => {
         expect(handleIndexChange).toHaveBeenCalledTimes(3);
     });
 
-    it('ArrowUp, and k/K should handleIndexChange', () => {
+    it('ArrowUp and k/K should handleIndexChange', () => {
         const {handleIndexChange} = setupMocks(1);
         ['ArrowUp', 'k', 'K'].forEach(key => {
             window.dispatchEvent(new KeyboardEvent('keydown', {key}));
@@ -130,10 +135,11 @@ describe('useKeyboardNavigation', () => {
         expect(handlePrevious).toHaveBeenCalledTimes(3);
     });
 
-    it('Escape should handleClose', () => {
-        const {handleClose} = setupMocks();
+    it('Escape should handleClose and close preview dialog', () => {
+        const {handleClose, setPreviewDialogOpen} = setupMocks();
         window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'}));
         expect(handleClose).toHaveBeenCalled();
+        expect(setPreviewDialogOpen).toHaveBeenCalledWith(false);
     });
 
     it('Spacebar should handleCheck', () => {
@@ -145,7 +151,7 @@ describe('useKeyboardNavigation', () => {
         expect(handleCheck).toHaveBeenCalledTimes(2);
     });
 
-    it('Ctrl + 1-9 should set colums to 1-9', () => {
+    it('Ctrl + 1-9 should set columns to 1-9', () => {
         const {setColumns} = setupMocks();
         for (let i = 1; i < 10; i++) {
             window.dispatchEvent(new KeyboardEvent('keydown', {key: i.toString(), ctrlKey: true}));
@@ -153,21 +159,21 @@ describe('useKeyboardNavigation', () => {
         }
     });
 
-    it('Ctrl+0 should set colums to 10', () => {
+    it('Ctrl+0 should set columns to 10', () => {
         const {setColumns} = setupMocks();
         window.dispatchEvent(new KeyboardEvent('keydown', {key: '0', ctrlKey: true}));
         expect(setColumns).toHaveBeenCalledWith(10);
     });
 
-    it('Enter should open preview', () => {
-        const {openPreview} = setupMocks(2);
+    it('Enter should open preview dialog if no delete path', () => {
+        const {setPreviewDialogOpen} = setupMocks(2);
         window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter'}));
-        expect(openPreview).toHaveBeenCalledWith(true);
+        expect(setPreviewDialogOpen).toHaveBeenCalledWith(true);
     });
 
-    it('Delete should open delete dialog', () => {
-        const {openDelDialog} = setupMocks(2);
+    it('Delete should set delete file path if no preview open', () => {
+        const {setDelFilePath} = setupMocks(1);
         window.dispatchEvent(new KeyboardEvent('keydown', {key: 'Delete'}));
-        expect(openDelDialog).toHaveBeenCalled();
+        expect(setDelFilePath).toHaveBeenCalledWith(mockChildren[1].path);
     });
 });
