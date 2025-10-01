@@ -1,6 +1,6 @@
 [package]
 name = "trokk"
-version = "0.0.0"
+version = "0.0.1"
 description = "A Tauri App"
 authors = ["Team Tekst"]
 license = ""
@@ -10,40 +10,40 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "2.0.1", features = [] }
+tauri-build = { version = "2.4.1", features = [] }
 
 [dependencies]
-tauri = { version = "2.0.2", features = ["protocol-asset", "test", "tray-icon", "devtools"] }
-tauri-plugin-store = "2.1.0"
-tauri-plugin-fs = { version = "2", features = ["watch"] }
+tauri = { version = "2.8.5", features = ["protocol-asset", "test", "tray-icon", "devtools"] }
+tauri-plugin-store = "2.4.0"
+tauri-plugin-fs = { version = "2.4.2", features = ["watch"] }
 tauri-plugin-oauth = "2"
-tauri-plugin-http = "2"
-sentry = "0.34.0"
-serde = { version = "1.0", features = ["derive"] }
+tauri-plugin-http = "2.5.2"
+sentry = "0.43.0"
+serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0"
-gethostname = "0.5.0"
-url = "2.5.0"
-reqwest = "0.12.7"
-once_cell = "1.19.0"
-image = "0.25.2"
-webp = "0.3.0"
-thiserror = "1.0.50"
-vaultrs = "0.7.2"
-vaultrs-login = "0.2.1"
-tokio = { version = "1.37.0", features = ["full"] }
-aws-config = "1.5.3"
-aws-credential-types = { version = "1.2.0", features = ["hardcoded-credentials"] }
-aws-types = { version = "1.3.2" }
-aws-sdk-dynamodb = "1.36.0"
-aws-sdk-s3 = { version = "1.4.0", features = ["rt-tokio", "behavior-version-latest"] }
+gethostname = "1.0.2"
+url = "2.5.7"
+reqwest = "0.12.23"
+once_cell = "1.21.3"
+image = "0.25.8"
+webp = "0.3.1"
+thiserror = "2.0.17"
+vaultrs = "0.7.4"
+vaultrs-login = "0.2.3"
+tokio = { version = "1.47.1", features = ["full"] }
+aws-config = "1.8.6"
+aws-credential-types = { version = "1.2.6", features = ["hardcoded-credentials"] }
+aws-types = { version = "1.3.8" }
+aws-sdk-dynamodb = "1.93.0"
+aws-sdk-s3 = { version = "1.106.0", features = ["rt-tokio", "behavior-version-latest"] }
 log = "0.4.21"
-tauri-plugin-dialog = "2"
-tauri-plugin-process = "2"
-winnow = "0.6.20"
-anyhow = "1.0.93"
+tauri-plugin-dialog = "2.4.0"
+tauri-plugin-process = "2.3.0"
+winnow = "0.7.13"
+anyhow = "1.0.100"
 
 [dev-dependencies]
-tempfile = "3.10.1"
+tempfile = "3.23.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
