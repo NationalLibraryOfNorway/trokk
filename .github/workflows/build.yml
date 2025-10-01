@@ -93,6 +93,12 @@ jobs:
         if: ${{ matrix.windows }}
         run: npm install @tauri-apps/cli-win32-x64-msvc@2.8.4
 
+      - name: cmake dependency for Windows
+        if: ${{ matrix.windows }}
+        run: |
+          choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+          cmake --version
+
       # TODO when tests are set up again
       #- name: NPM; Run frontend tests
       #  run: npm run test
