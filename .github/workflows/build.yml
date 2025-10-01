@@ -95,7 +95,7 @@ jobs:
 
       - name: Windows; install Cmake dependency
         if: ${{ matrix.windows }}
-        shell: pwsh
+        shell: powershell
         run: |
           $v = '3.29.9'
           $url = "https://github.com/Kitware/CMake/releases/download/v$v/cmake-$v-windows-x86_64.zip"
@@ -109,7 +109,7 @@ jobs:
       - name: Windows; cmake version
         if: ${{ matrix.windows }}
         run: cmake --version
-        shell: pwsh
+        shell: powershell
 
       # TODO when tests are set up again
       #- name: NPM; Run frontend tests
