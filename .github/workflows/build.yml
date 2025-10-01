@@ -93,11 +93,12 @@ jobs:
         if: ${{ matrix.windows }}
         run: npm install @tauri-apps/cli-win32-x64-msvc@2.8.4
 
-      - name: Windows; install Cmake dependency using Chocolatey
+      - name: Windows; install Cmake dependency
         if: ${{ matrix.windows }}
-        uses: crazy-max/ghaction-chocolatey@v3
+        uses: lukka/get-cmake@latest
         with:
-          args: install cmake --installargs 'ADD_CMAKE_TO_PATH=System' -y
+          cmakeVersion: 3.29.9
+
 
       # TODO when tests are set up again
       #- name: NPM; Run frontend tests
