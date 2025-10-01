@@ -97,7 +97,7 @@ jobs:
         if: ${{ matrix.windows }}
         uses: lukka/get-cmake@latest
         with:
-          cmakeVersion: 3.29.9
+          cmakeVersion: 4.1.1
 
 
       # TODO when tests are set up again
