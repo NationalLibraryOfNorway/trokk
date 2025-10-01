@@ -16,11 +16,11 @@ tauri-build = { version = "2.4.1", features = [] }
 tauri = { version = "2.8.5", features = ["protocol-asset", "test", "tray-icon", "devtools"] }
 tauri-plugin-store = "2.4.0"
 tauri-plugin-fs = { version = "2.4.2", features = ["watch"] }
-tauri-plugin-oauth = "2"
+tauri-plugin-oauth = "2.0.0"
 tauri-plugin-http = "2.5.2"
 sentry = "0.43.0"
 serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0"
+serde_json = "1.0.145"
 gethostname = "1.0.2"
 url = "2.5.7"
 reqwest = "0.12.23"
