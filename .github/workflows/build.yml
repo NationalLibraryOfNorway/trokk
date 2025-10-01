@@ -93,6 +93,12 @@ jobs:
         if: ${{ matrix.windows }}
         run: npm install @tauri-apps/cli-win32-x64-msvc@2.8.4
 
+      - name: Install Chocolatey
+        if: ${{ matrix.windows }}
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          choco --version
+
       - name: cmake dependency for Windows
         if: ${{ matrix.windows }}
         run: |
