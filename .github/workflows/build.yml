@@ -95,10 +95,21 @@ jobs:
 
       - name: Windows; install Cmake dependency
         if: ${{ matrix.windows }}
-        uses: lukka/get-cmake@latest
-        with:
-          cmakeVersion: 4.1.1
+        shell: pwsh
+        run: |
+          $v = '3.29.9'
+          $url = "https://github.com/Kitware/CMake/releases/download/v$v/cmake-$v-windows-x86_64.zip"
+          $zip = "$env:RUNNER_TEMP\cmake-$v.zip"
+          $dest = "$env:RUNNER_TEMP\cmake"
+          Invoke-WebRequest $url -OutFile $zip
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          [System.IO.Compression.ZipFile]::ExtractToDirectory($zip, $dest, $true)
+          "$dest\cmake-$v-windows-x86_64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
+      - name: Windows; cmake version
+        if: ${{ matrix.windows }}
+        run: cmake --version
+        shell: pwsh
 
       # TODO when tests are set up again
       #- name: NPM; Run frontend tests
