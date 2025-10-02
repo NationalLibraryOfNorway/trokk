@@ -7,13 +7,9 @@ use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::config::{Credentials, Region};
 #[cfg(not(feature = "debug-mock"))]
-use aws_sdk_s3::operation::put_object::PutObjectOutput;
-#[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::primitives::ByteStream;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::Client;
-use std::collections::HashMap;
-use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
 use std::path::PathBuf;
 #[cfg(not(feature = "debug-mock"))]
@@ -24,7 +20,10 @@ use tokio::sync::OnceCell;
 use tokio::{fs::File, io::{AsyncReadExt, BufReader}};
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
-
+#[cfg(not(feature = "debug-mock"))]
+use std::path::Path;
+#[cfg(not(feature = "debug-mock"))]
+use crate::HashMap;
 const MULTIPART_PART_SIZE: usize = 16 * 1024 * 1024; // 16 MiB (server limit)
 
 #[cfg(not(feature = "debug-mock"))]
@@ -90,8 +89,8 @@ pub(crate) async fn upload_batch_to_s3(
 			let page_nr = file_index + 1;
 			let file_path = PathBuf::from(file_path_str);
 			put_object(
-				&client,
-				&secret_variables,
+				client,
+				secret_variables,
 				&file_path,
 				batch_id,
 				page_nr,
@@ -103,7 +102,7 @@ pub(crate) async fn upload_batch_to_s3(
 			let directory = Path::new(file_path_str)
 				.parent()
 				.map(|p| p.to_string_lossy().to_string())
-				.unwrap_or_else(|| "".to_string());
+				.unwrap_or_default();
 
 			app_window
 				.emit(
@@ -152,7 +151,7 @@ async fn put_object(
             .await
             .map_err(|e| format!("Failed to read file: {e}"))?;
 
-        let result = client
+        client
             .put_object()
             .bucket(&secret_variables.s3_bucket_name)
             .key(&key)
@@ -211,7 +210,7 @@ async fn put_object(
                 .await
                 .map_err(|e| {
                     // Try to abort on failure to avoid leaked multiparts
-                    let _ = tokio::spawn({
+                    let _task = tokio::spawn({
                         let client = client.clone();
                         let bucket = bucket;
                         let key = key.to_owned();
@@ -238,7 +237,7 @@ async fn put_object(
             part_number += 1;
         }
 
-        let result = client
+        client
             .complete_multipart_upload()
             .bucket(&secret_variables.s3_bucket_name)
             .key(key)
