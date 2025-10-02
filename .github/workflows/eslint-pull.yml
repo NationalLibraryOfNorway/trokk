@@ -33,7 +33,7 @@ jobs:
         run: npm ci
       - name: Windows NPM; Install windows dependency
         if: ${{ matrix.windows }}
-        run: npm install @tauri-apps/cli-win32-x64-msvc@2.0.0-alpha.21
+        run: npm install @tauri-apps/cli-win32-x64-msvc@2.8.4
       - name: Run EsLint
         if: always()
         run: npm run lint

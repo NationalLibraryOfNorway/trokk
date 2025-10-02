@@ -9,6 +9,7 @@ import {FileTree} from '../../model/file-tree.ts';
 import {convertFileSrc} from '@tauri-apps/api/core';
 import {File} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import React, {forwardRef} from 'react';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -17,7 +18,8 @@ export interface ThumbnailProps {
     isFocused: boolean;
 }
 
-export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: ThumbnailProps) {
+ const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
+  ({ fileTree, onClick, isChecked, isFocused }, ref) => {
     const {state} = useTrokkFiles();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
@@ -32,7 +34,7 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
 
     if (isHiddenDir) return null;
 
-    let initialStyle = 'max-h-[calc(100vh-250px)] ';
+    const initialStyle = 'max-h-[calc(100vh-250px)] ';
     let imageClass = 'w-full object-contain';
     let containerClass = 'p-[8px]';
 
@@ -56,14 +58,21 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
     }
 
     return (
-        <div
+        <button
+            type="button"
             key={fileTree.path}
             className="flex flex-col p-1 items-center"
-            onClick={onClick}>
+            onClick={onClick}
+            ref={ref}
+        >
             <div className={`${initialStyle} ${containerClass}`}>
                 {content}
             </div>
-            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>{fileName}</i>
-        </div>
+            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
+                {fileName}
+            </i>
+        </button>
     );
-}
+  });
+Thumbnail.displayName = 'Thumbnail';
+export default Thumbnail;

@@ -5,7 +5,7 @@ import Thumbnail from '../thumbnail/thumbnail.tsx';
 import Checkbox from '../../components/ui/checkbox.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
 import {useAutoFocusOnThumbnail} from '../../hooks/use-auto-focus-on-thumbnail.tsx';
-import DetailedImageView from "../detailed-image-view/detailed-image-view.tsx";
+import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 import {
     Dialog,
     DialogPortal,
@@ -14,10 +14,10 @@ import {
     DialogContent,
     DialogTitle,
     DialogDescription
-} from "../../components/ui/dialog.tsx";
+} from '../../components/ui/dialog.tsx';
 import '../detailed-image-view/detailed-image-view.css';
 import {useKeyboardNavigation} from '../../hooks/use-keyboard-navigation.tsx';
-import {VisuallyHidden} from "@radix-ui/react-visually-hidden";
+import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 
 const FilesContainer: React.FC = () => {
     const [dialogOpen, setDialogOpen] = useState(false);

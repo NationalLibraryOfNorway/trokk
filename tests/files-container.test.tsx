@@ -17,7 +17,7 @@ vi.mock('@tauri-apps/api/core', () => ({
     })
 );
 
-vi.mock("@tauri-apps/api/path", () => ({
+vi.mock('@tauri-apps/api/path', () => ({
     documentDir: vi.fn().mockResolvedValue('mocked/path'),
     sep: vi.fn().mockResolvedValue('/'),
 }));
