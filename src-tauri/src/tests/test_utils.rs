@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 #[cfg(test)]
 mod tests {
-	use crate::file_utils::{find_all_images};
+	use crate::file_utils::find_all_images;
 	use std::fs::File;
 	use std::path::PathBuf;
 	use tempfile::tempdir;
@@ -10,7 +10,6 @@ mod tests {
 	fn create_file(path: &PathBuf) {
 		File::create(path).expect("Failed to create test file");
 	}
-
 
 	#[test]
 	fn test_find_all_images() {
