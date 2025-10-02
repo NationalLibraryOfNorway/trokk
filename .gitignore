@@ -27,3 +27,5 @@ dist-ssr
 src-tauri/gen
 /target
 /src-tauri/target/
+
+out

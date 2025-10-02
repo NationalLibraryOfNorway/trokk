@@ -2,34 +2,13 @@ use std::path::PathBuf;
 
 #[cfg(test)]
 mod tests {
-	use crate::file_utils::{delete_dir, find_all_images};
+	use crate::file_utils::find_all_images;
 	use std::fs::File;
 	use std::path::PathBuf;
 	use tempfile::tempdir;
 
 	fn create_file(path: &PathBuf) {
 		File::create(path).expect("Failed to create test file");
-	}
-
-	#[test]
-	fn test_delete_dir_success() {
-		let temp = tempdir().expect("Could not create temp dir");
-		let test_dir = temp.path().to_path_buf();
-
-		let dummy_file = test_dir.join("dummy.tif");
-		create_file(&dummy_file);
-
-		assert!(test_dir.exists());
-
-		let result = delete_dir(test_dir.to_str().unwrap());
-		assert!(result.is_ok());
-		assert!(!test_dir.exists());
-	}
-
-	#[test]
-	fn test_delete_dir_failure() {
-		let result = delete_dir("non_existent_dir_hopefully");
-		assert!(result.is_err());
 	}
 
 	#[test]

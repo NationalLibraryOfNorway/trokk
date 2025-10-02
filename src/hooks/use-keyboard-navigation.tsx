@@ -3,7 +3,21 @@ import {useSelection} from '../context/selection-context.tsx';
 import {FileTree} from '../model/file-tree.ts';
 import {useTrokkFiles} from '../context/trokk-files-context.tsx';
 
-export function useKeyboardNavigation() {
+type KeyboardNavigationProps = {
+    delFilePath: string | null;
+    setDelFilePath: (path: string | null) => void;
+    previewDialogOpen: boolean;
+    setPreviewDialogOpen: (open: boolean) => void;
+};
+
+export function useKeyboardNavigation(
+    {
+        delFilePath,
+        setDelFilePath,
+        previewDialogOpen,
+        setPreviewDialogOpen
+    }: KeyboardNavigationProps) {
+
     const keyHoldRef = useRef(false);
     const keypressDelay = 100;
 
@@ -17,7 +31,6 @@ export function useKeyboardNavigation() {
         setColumns,
         columns,
     } = useSelection();
-
     const {state} = useTrokkFiles();
 
     const files: FileTree[] =
@@ -25,7 +38,6 @@ export function useKeyboardNavigation() {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            e.preventDefault();
             if (keyHoldRef.current) return;
 
             const target = e.target as HTMLElement;
@@ -77,9 +89,11 @@ export function useKeyboardNavigation() {
                 }
                 case 'Escape':
                     handleClose();
+                    setPreviewDialogOpen(false);
                     break;
                 case ' ':
                 case 'Spacebar':
+                    e.preventDefault();
                     handleCheck();
                     break;
                 case 'End':
@@ -87,6 +101,16 @@ export function useKeyboardNavigation() {
                     break;
                 case 'Home':
                     handleIndexChange(0);
+                    break;
+                case 'Delete':
+                    if (!previewDialogOpen) {
+                        setDelFilePath(files[currentIndex].path);
+                    }
+                    break;
+                case 'Enter':
+                    if (!delFilePath) {
+                        setPreviewDialogOpen(true);
+                    }
                     break;
             }
 

@@ -6,14 +6,6 @@ use std::path::PathBuf;
 
 use tauri_plugin_dialog::DialogExt;
 
-pub(crate) fn delete_dir(dir: &str) -> Result<(), String> {
-	let path = Path::new(dir);
-	match fs::remove_dir_all(path) {
-		Ok(_) => Ok(()),
-		Err(e) => Err(e.to_string()),
-	}
-}
-
 pub(crate) fn directory_picker<R: tauri::Runtime, P: AsRef<Path>>(
 	start_path: P,
 	app_handle: tauri::AppHandle<R>,

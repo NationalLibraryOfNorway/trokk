@@ -11,6 +11,7 @@ import {useAuth} from './auth-context.tsx';
 import {uploadToS3} from '../features/registration/upload-to-s3.tsx';
 import {useSecrets} from './secret-context.tsx';
 import {uuidv7} from 'uuidv7';
+import {remove} from '@tauri-apps/plugin-fs';
 
 export function usePostRegistration() {
     const {state} = useTrokkFiles();
@@ -44,10 +45,6 @@ export function usePostRegistration() {
             return Promise.reject(error);
         });
 
-        const deleteDir = async (path: string): Promise<void> => {
-            return invoke('delete_dir', {dir: path});
-        };
-
         const body = new TextInputDto(
             id,
             registration.materialType,
@@ -71,7 +68,7 @@ export function usePostRegistration() {
         })
             .then(async response => {
                 if (response.ok) {
-                    void deleteDir(pushedDir);
+                    void remove(pushedDir, {recursive: true});
                     clearError();
                     displaySuccessMessage(await response.json() as TextItemResponse);
                 } else {

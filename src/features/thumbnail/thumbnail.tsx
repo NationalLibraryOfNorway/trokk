@@ -9,16 +9,22 @@ import {FileTree} from '../../model/file-tree.ts';
 import {convertFileSrc} from '@tauri-apps/api/core';
 import {File} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import DeleteFile from '../delete-file/delete-file.tsx';
+import React from 'react';
+import {useSelection} from '../../context/selection-context.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
     onClick: () => void;
     isChecked: boolean;
     isFocused: boolean;
+    setDelFilePath: (path: string | null) => void;
+    delFilePath: string | null;
 }
 
-export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: ThumbnailProps) {
+export default function Thumbnail({fileTree, onClick, isChecked, isFocused, setDelFilePath, delFilePath}: ThumbnailProps) {
     const {state} = useTrokkFiles();
+    const {columns} = useSelection();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
@@ -32,7 +38,7 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
 
     if (isHiddenDir) return null;
 
-    let initialStyle = 'max-h-[calc(100vh-250px)] ';
+    const initialStyle = 'max-h-[calc(100vh-250px)] ';
     let imageClass = 'w-full object-contain';
     let containerClass = 'p-[8px]';
 
@@ -55,15 +61,37 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
         content = <File size="96" color="gray"/>;
     }
 
+    const getPaddingSize = (columns: number) => {
+        if (columns <= 1) return 'pt-8';
+        if (columns <= 5) return 'pt-2';
+        if (columns <= 10) return 'pt-1';
+        return 'p-2';
+    };
+
     return (
         <div
             key={fileTree.path}
-            className="flex flex-col p-1 items-center"
-            onClick={onClick}>
-            <div className={`${initialStyle} ${containerClass}`}>
+            className="flex flex-col p-1 items-center relative group"
+        >
+            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <DeleteFile childPath={fileTree.path} setDelFilePath={setDelFilePath} delFilePath={delFilePath}/>
+            </div>
+
+            <div
+                className={`${initialStyle} ${containerClass}`}
+                onClick={onClick}
+            >
                 {content}
             </div>
-            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>{fileName}</i>
+
+            <i
+                className={`flex content-center justify-center ${getPaddingSize(columns)} w-full text-md ${
+                    isChecked ? 'text-amber-400' : ''
+                }`}
+            >
+                {fileName}
+            </i>
+
         </div>
     );
 }
