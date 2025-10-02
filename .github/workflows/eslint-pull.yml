@@ -37,7 +37,7 @@ jobs:
       - name: Run EsLint
         if: always()
         run: npm run lint
-      # # TODO when tests are set up again
-      #- name: Run frontend tests
-      #  if: always()
-      #  run: npm run test
+
+      - name: Run frontend tests
+        if: always()
+        run: npm run test
