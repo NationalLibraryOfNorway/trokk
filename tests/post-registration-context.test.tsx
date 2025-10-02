@@ -68,8 +68,13 @@ vi.mock('../src/tauri-store/setting-store.ts', () => ({
     },
 }));
 
+
 vi.mock('@tauri-apps/plugin-http', () => ({
     fetch: vi.fn((url: string, init?: RequestInit) => (global.fetch as any)(url, init)),
+}));
+
+vi.mock('@tauri-apps/plugin-fs', () => ({
+    remove: vi.fn(),
 }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (

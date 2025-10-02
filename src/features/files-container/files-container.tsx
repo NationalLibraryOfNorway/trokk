@@ -10,7 +10,6 @@ import {
     Dialog,
     DialogPortal,
     DialogOverlay,
-    DialogTrigger,
     DialogContent,
     DialogTitle,
     DialogDescription
@@ -20,7 +19,9 @@ import {useKeyboardNavigation} from '../../hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 
 const FilesContainer: React.FC = () => {
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [delFilePath, setDelFilePath] = useState<string | null>(null);
+    const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
+
     const {state, dispatch} = useTrokkFiles();
     const {
         currentIndex,
@@ -37,16 +38,20 @@ const FilesContainer: React.FC = () => {
     const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useAutoFocusOnThumbnail({fileRefs, containerRef});
-    useKeyboardNavigation();
-
+    useKeyboardNavigation({
+        delFilePath,
+        setDelFilePath,
+        previewDialogOpen,
+        setPreviewDialogOpen,
+    });
     return (
         <div className="relative h-full flex w-full flex-col overscroll-none"
              onClick={() => {
-                 if (dialogOpen) {
-                     setDialogOpen(false)
+                 if (previewDialogOpen) {
+                     setPreviewDialogOpen(false)
                  }
              }}>
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <Dialog open={previewDialogOpen} onOpenChange={(open) => setPreviewDialogOpen(open)}>
                 <DialogPortal>
                     <DialogOverlay className="fixed inset-0 preview z-20 bg-stone-800/90"/>
                     <DialogContent
@@ -117,26 +122,19 @@ const FilesContainer: React.FC = () => {
                                             <div
                                                 key={child.path}
                                                 ref={el => fileRefs.current[index] = el}
-                                                className="space-y-2 py-2 focus-visible:outline-none focus:ring-0"
+                                                className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0"
                                                 tabIndex={currentIndex === index ? 0 : -1}
                                                 onFocus={() => handleIndexChange(index)}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        setDialogOpen(true);
-                                                    }
-                                                }}
                                             >
-                                                <DialogTrigger asChild>
-                                                    <Thumbnail
-                                                        key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
-                                                        isChecked={checkedItems.includes(child.path)}
-                                                        fileTree={child}
-                                                        isFocused={!state.preview && currentIndex === index}
-                                                        onClick={() => {
-                                                            setDialogOpen(true)
-                                                        }}
-                                                    />
-                                                </DialogTrigger>
+                                                <Thumbnail
+                                                    key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
+                                                    isChecked={checkedItems.includes(child.path)}
+                                                    fileTree={child}
+                                                    isFocused={!state.preview && currentIndex === index}
+                                                    onClick={() => setPreviewDialogOpen(true)}
+                                                    setDelFilePath={setDelFilePath}
+                                                    delFilePath={delFilePath}
+                                                />
                                                 <div className="flex justify-center">
                                                     <Checkbox
                                                         aria-label={'Velg forside'}

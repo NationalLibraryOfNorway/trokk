@@ -16,11 +16,15 @@ export interface ThumbnailProps {
     onClick: () => void;
     isChecked: boolean;
     isFocused: boolean;
+    setDelFilePath: (path: string | null) => void;
+    delFilePath: string | null;
 }
 
  const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
   ({ fileTree, onClick, isChecked, isFocused }, ref) => {
+
     const {state} = useTrokkFiles();
+    const {columns} = useSelection();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
@@ -56,6 +60,13 @@ export interface ThumbnailProps {
     } else {
         content = <File size="96" color="gray"/>;
     }
+
+    const getPaddingSize = (columns: number) => {
+        if (columns <= 1) return 'pt-8';
+        if (columns <= 5) return 'pt-2';
+        if (columns <= 10) return 'pt-1';
+        return 'p-2';
+    };
 
     return (
         <button
