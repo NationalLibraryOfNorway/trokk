@@ -64,7 +64,7 @@ function createMockFileTree(name: string, path: string): FileTree {
     };
 }
 
-const renderWithContext = (fileTree: FileTree, baseProps: any) => {
+const componentWithContext = (fileTree: FileTree, baseProps: any) => {
     return (
         <SelectionProvider>
             <SecretProvider>
@@ -84,7 +84,7 @@ describe('Thumbnail', () => {
 
     it('renders an image if the file type is supported', async () => {
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
-        render(renderWithContext(fileTree, baseProps));
+        render(componentWithContext(fileTree, baseProps));
         expect(await screen.findByAltText('example.jpg')).toBeInTheDocument();
     });
 
@@ -92,7 +92,7 @@ describe('Thumbnail', () => {
         const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('webp');
         const fileTree = createMockFileTree('example.other', '/mock/path/example.other');
-        render(renderWithContext(fileTree, baseProps));
+        render(componentWithContext(fileTree, baseProps));
         expect(await screen.findByAltText('example.other')).toBeInTheDocument();
     });
 
@@ -100,7 +100,7 @@ describe('Thumbnail', () => {
         const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('unknown');
         const fileTree = createMockFileTree('.thumbnails', 'docs/.thumbnails');
-        render(renderWithContext(fileTree, baseProps));
+        render(componentWithContext(fileTree, baseProps));
         await expect(screen.findByAltText('.thumbnail')).rejects.toThrow();
         await expect(screen.findByAltText('docs/.thumbnails')).rejects.toThrow();
     });
