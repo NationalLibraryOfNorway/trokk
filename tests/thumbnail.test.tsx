@@ -1,4 +1,5 @@
-import {render} from '@testing-library/react';
+import { render, screen} from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import Thumbnail from '../src/features/thumbnail/thumbnail';
 import {FileTree} from '../src/model/file-tree.ts';
@@ -64,7 +65,7 @@ function createMockFileTree(name: string, path: string): FileTree {
 }
 
 const renderWithContext = (fileTree: FileTree, baseProps: any) => {
-    return render(
+    return (
         <SelectionProvider>
             <SecretProvider>
                 <Thumbnail fileTree={fileTree} {...baseProps} />
@@ -83,31 +84,24 @@ describe('Thumbnail', () => {
 
     it('renders an image if the file type is supported', async () => {
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
-
-        const {getByAltText} = renderWithContext(fileTree, baseProps);
-
-        expect(getByAltText('example.jpg')).toBeDefined();
+        render(renderWithContext(fileTree, baseProps));
+        expect(await screen.findByAltText('example.jpg')).toBeInTheDocument();
     });
 
     it('renders a thumbnail if extension is webp', async () => {
         const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('webp');
-
         const fileTree = createMockFileTree('example.other', '/mock/path/example.other');
-
-        const {getByAltText} = renderWithContext(fileTree, baseProps);
-
-        expect(getByAltText('example.other')).toBeDefined();
+        render(renderWithContext(fileTree, baseProps));
+        expect(await screen.findByAltText('example.other')).toBeInTheDocument();
     });
 
     it('does not render for system folders', async () => {
         const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('unknown');
-
         const fileTree = createMockFileTree('.thumbnails', 'docs/.thumbnails');
-
-        const {container} = renderWithContext(fileTree, baseProps);
-
-        expect(container.innerHTML).toBe('');
+        render(renderWithContext(fileTree, baseProps));
+        await expect(screen.findByAltText('.thumbnail')).rejects.toThrow();
+        await expect(screen.findByAltText('docs/.thumbnails')).rejects.toThrow();
     });
 });

@@ -67,6 +67,10 @@ vi.mock('../src/tauri-store/setting-store.ts', () => ({
     },
 }));
 
+vi.mock('@tauri-apps/plugin-fs', () => ({
+    remove: vi.fn(),
+}));
+
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <AuthProvider>
         <SecretProvider>
