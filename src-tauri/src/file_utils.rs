@@ -6,27 +6,6 @@ use std::path::PathBuf;
 
 use tauri_plugin_dialog::DialogExt;
 
-pub(crate) fn delete_dir(dir: &str) -> Result<(), String> {
-	let path = Path::new(dir);
-	match fs::remove_dir_all(path) {
-		Ok(_) => Ok(()),
-		Err(e) => Err(e.to_string()),
-	}
-}
-
-pub(crate) fn delete_image(file_name: &str) -> Result<String, String> {
-	let file_path = Path::new(file_name);
-
-	if file_path.exists() {
-		fs::remove_file(file_path).map_err(|e| e.to_string())?;
-		println!("Deleted {:?}", file_path);
-		Ok(format!("Deleted {:?}", file_path))
-	} else {
-		println!("File not found: {:?}", file_path);
-		Err(format!("File not found: {:?}", file_path))
-	}
-}
-
 pub(crate) fn directory_picker<R: tauri::Runtime, P: AsRef<Path>>(
 	start_path: P,
 	app_handle: tauri::AppHandle<R>,
