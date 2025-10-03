@@ -59,12 +59,15 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+
       - name: Run rustfmt
         if: always()
         run: cargo fmt --all -- --check
+
       - name: Run clippy
         if: always()
         run: cargo clippy --all -- -D warnings
+
       - name: Run tests
         if: always()
         run: cargo test --all
