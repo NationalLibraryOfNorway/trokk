@@ -89,9 +89,13 @@ jobs:
       - name: NPM; Install frontend dependencies
         run: npm ci
 
-      - name: Windows NPM; Install windows dependency
+      - name: Windows NPM; Install toolchain dependency
         if: ${{ matrix.windows }}
         run: npm install @tauri-apps/cli-win32-x64-msvc@2.8.4
+
+      - name: Windows NPM; Install windows dependency
+        if: ${{ matrix.windows }}
+        run: npm install @rollup/rollup-win32-x64-msvc
 
       - name: Windows; setup CMAke
         if: ${{ matrix.windows }}
