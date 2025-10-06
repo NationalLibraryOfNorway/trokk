@@ -11,6 +11,9 @@
     "store:default",
     "fs:default",
     "fs:read-all",
+    "fs:allow-read",
+    "fs:allow-write",
+    "fs:allow-remove",
     {
       "identifier": "fs:scope",
       "allow": [

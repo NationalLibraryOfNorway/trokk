@@ -36,6 +36,11 @@ jobs:
         run: |
           git config --global --add safe.directory C:/Users/lanman/actions-runner/_work/trokk/trokk
       - uses: actions/checkout@v4
+
+      - name: Windows; setup CMAke
+        if: ${{ matrix.windows }}
+        uses: ./.github/actions/setup-cmake
+
       - name: Install dependencies (ubuntu only)
         if: ${{ matrix.linux }}
         run: |
@@ -54,12 +59,15 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
+
       - name: Run rustfmt
         if: always()
         run: cargo fmt --all -- --check
+
       - name: Run clippy
         if: always()
         run: cargo clippy --all -- -D warnings
+
       - name: Run tests
         if: always()
         run: cargo test --all

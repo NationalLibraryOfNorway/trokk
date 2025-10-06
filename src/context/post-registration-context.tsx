@@ -111,7 +111,7 @@ export function usePostRegistration() {
         );
 
         await body.setVersion();
-
+          
         try {
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',

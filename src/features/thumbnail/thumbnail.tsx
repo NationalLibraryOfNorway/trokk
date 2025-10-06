@@ -9,16 +9,23 @@ import {FileTree} from '../../model/file-tree.ts';
 import {convertFileSrc} from '@tauri-apps/api/core';
 import {File} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import React, {forwardRef} from 'react';
+//import {useSelection} from '@/context/selection-context.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
     onClick: () => void;
     isChecked: boolean;
     isFocused: boolean;
+    setDelFilePath: (path: string | null) => void;
+    delFilePath: string | null;
 }
 
-export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: ThumbnailProps) {
+ const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
+  ({ fileTree, onClick, isChecked, isFocused }, ref) => {
+
     const {state} = useTrokkFiles();
+    //const {columns} = useSelection();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
@@ -32,7 +39,7 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
 
     if (isHiddenDir) return null;
 
-    let initialStyle = 'max-h-[calc(100vh-250px)] ';
+    const initialStyle = 'max-h-[calc(100vh-250px)] ';
     let imageClass = 'w-full object-contain';
     let containerClass = 'p-[8px]';
 
@@ -55,15 +62,31 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused}: Thu
         content = <File size="96" color="gray"/>;
     }
 
+    /*
+    const getPaddingSize = (columns: number) => {
+        if (columns <= 1) return 'pt-8';
+        if (columns <= 5) return 'pt-2';
+        if (columns <= 10) return 'pt-1';
+        return 'p-2';
+    };
+    */
+
     return (
-        <div
+        <button
+            type="button"
             key={fileTree.path}
             className="flex flex-col p-1 items-center"
-            onClick={onClick}>
+            onClick={onClick}
+            ref={ref}
+        >
             <div className={`${initialStyle} ${containerClass}`}>
                 {content}
             </div>
-            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>{fileName}</i>
-        </div>
+            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
+                {fileName}
+            </i>
+        </button>
     );
-}
+  });
+Thumbnail.displayName = 'Thumbnail';
+export default Thumbnail;

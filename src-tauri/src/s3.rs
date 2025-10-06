@@ -5,14 +5,16 @@ use crate::get_secret_variables;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
-use aws_sdk_s3::config::{Credentials, Region};
+use crate::HashMap;
 #[cfg(not(feature = "debug-mock"))]
-use aws_sdk_s3::operation::put_object::PutObjectOutput;
+use aws_sdk_s3::config::{Credentials, Region};
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::primitives::ByteStream;
 #[cfg(not(feature = "debug-mock"))]
+use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
+#[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::Client;
-use std::collections::HashMap;
+#[cfg(not(feature = "debug-mock"))]
 use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
 use std::path::PathBuf;
@@ -21,10 +23,10 @@ use tauri::{Emitter, Window};
 #[cfg(not(feature = "debug-mock"))]
 use tokio::sync::OnceCell;
 #[cfg(not(feature = "debug-mock"))]
-use tokio::{fs::File, io::{AsyncReadExt, BufReader}};
-#[cfg(not(feature = "debug-mock"))]
-use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
-
+use tokio::{
+	fs::File,
+	io::{AsyncReadExt, BufReader},
+};
 const MULTIPART_PART_SIZE: usize = 16 * 1024 * 1024; // 16 MiB (server limit)
 
 #[cfg(not(feature = "debug-mock"))]
@@ -90,8 +92,8 @@ pub(crate) async fn upload_batch_to_s3(
 			let page_nr = file_index + 1;
 			let file_path = PathBuf::from(file_path_str);
 			put_object(
-				&client,
-				&secret_variables,
+				client,
+				secret_variables,
 				&file_path,
 				batch_id,
 				page_nr,
@@ -103,7 +105,7 @@ pub(crate) async fn upload_batch_to_s3(
 			let directory = Path::new(file_path_str)
 				.parent()
 				.map(|p| p.to_string_lossy().to_string())
-				.unwrap_or_else(|| "".to_string());
+				.unwrap_or_default();
 
 			app_window
 				.emit(
@@ -129,131 +131,133 @@ async fn put_object(
 	page_nr: usize,
 	material_type: &str,
 ) -> Result<(), String> {
+	let key = format!(
+		"{}/{}/{}_{:0>5}.{}", // The "{:0>5}" is used to pad the page number with zeros.
+		material_type,
+		object_id,
+		object_id,
+		page_nr,
+		path.extension().unwrap().to_str().unwrap()
+	);
 
-    let key = format!(
-        "{}/{}/{}_{:0>5}.{}", // The "{:0>5}" is used to pad the page number with zeros.
-        material_type,
-        object_id,
-        object_id,
-        page_nr,
-        path.extension().unwrap().to_str().unwrap()
-    );
+	let meta = tokio::fs::metadata(path)
+		.await
+		.map_err(|e| format!("stat failed for {}: {e}", path.display()))?;
+	let file_size = meta.len() as usize;
 
-    let meta = tokio::fs::metadata(path)
-        .await
-        .map_err(|e| format!("stat failed for {}: {e}", path.display()))?;
-    let file_size = meta.len() as usize;
+	if file_size <= MULTIPART_PART_SIZE {
+		// Small file, upload in a single PUT request
+		let body = ByteStream::read_from()
+			.path(path)
+			.build()
+			.await
+			.map_err(|e| format!("Failed to read file: {e}"))?;
 
-    if file_size <= MULTIPART_PART_SIZE {
-        // Small file, upload in a single PUT request
-        let body = ByteStream::read_from()
-            .path(path)
-            .build()
-            .await
-            .map_err(|e| format!("Failed to read file: {e}"))?;
+		client
+			.put_object()
+			.bucket(&secret_variables.s3_bucket_name)
+			.key(&key)
+			.content_length(file_size as i64)
+			.body(body)
+			.send()
+			.await
+			.inspect_err(|e| eprintln!("Error: {e:?}"))
+			.map_err(|e| format!("Failed to upload directory: {e:?}"))?;
 
-        let result = client
-            .put_object()
-            .bucket(&secret_variables.s3_bucket_name)
-            .key(&key)
-            .content_length(file_size as i64)
-            .body(body)
-            .send()
-            .await
-            .inspect_err(|e| eprintln!("Error: {e:?}"))
-            .map_err(|e| format!("Failed to upload directory: {e:?}"))?;
+		Ok(())
+	} else {
+		// Large file, use multipart upload
+		let init = client
+			.create_multipart_upload()
+			.bucket(&secret_variables.s3_bucket_name)
+			.key(&key)
+			.send()
+			.await
+			.map_err(|e| format!("init multipart failed: {e:?}"))?;
+		let upload_id = init.upload_id().ok_or("missing upload_id")?.to_string();
+		let file = File::open(path)
+			.await
+			.map_err(|e| format!("open failed for {}: {e}", path.display()))?;
+		let mut reader = BufReader::new(file);
+		let mut buf = vec![0u8; MULTIPART_PART_SIZE];
+		let mut part_number: i32 = 1;
+		let mut completed: Vec<CompletedPart> = Vec::new();
+		loop {
+			// Fill up to MULTIPART_PART_SIZE
+			let mut filled = 0usize;
+			while filled < MULTIPART_PART_SIZE {
+				let n = reader
+					.read(&mut buf[filled..])
+					.await
+					.map_err(|e| format!("read failed: {e}"))?;
+				if n == 0 {
+					break;
+				}
+				filled += n;
+			}
+			if filled == 0 {
+				break;
+			}
 
-        Ok(())
+			// Build a ByteStream for this part (exactly the bytes we read)
+			let part_stream = ByteStream::from(buf[..filled].to_vec());
 
-    } else {
-        // Large file, use multipart upload
-        let init = client
-            .create_multipart_upload()
-            .bucket(&secret_variables.s3_bucket_name)
-            .key(&key)
-            .send()
-            .await
-            .map_err(|e| format!("init multipart failed: {e:?}"))?;
-        let upload_id = init.upload_id().ok_or("missing upload_id")?.to_string();
-        let file = File::open(path)
-            .await
-            .map_err(|e| format!("open failed for {}: {e}", path.display()))?;
-        let mut reader = BufReader::new(file);
-        let mut buf = vec![0u8; MULTIPART_PART_SIZE];
-        let mut part_number: i32 = 1;
-        let mut completed: Vec<CompletedPart> = Vec::new();
-        loop {
-            // Fill up to MULTIPART_PART_SIZE
-            let mut filled = 0usize;
-            while filled < MULTIPART_PART_SIZE {
-                let n = reader
-                    .read(&mut buf[filled..])
-                    .await
-                    .map_err(|e| format!("read failed: {e}"))?;
-                if n == 0 { break; }
-                filled += n;
-            }
-            if filled == 0 { break; }
+			// Upload part
+			let bucket = secret_variables.s3_bucket_name.clone();
+			let resp = client
+				.upload_part()
+				.bucket(&secret_variables.s3_bucket_name)
+				.key(&key)
+				.upload_id(&upload_id)
+				.part_number(part_number)
+				.body(part_stream)
+				.send()
+				.await
+				.map_err(|e| {
+					// Try to abort on failure to avoid leaked multiparts
+					let _task = tokio::spawn({
+						let client = client.clone();
+						let bucket = bucket;
+						let key = key.to_owned();
+						let upload_id = upload_id.clone();
+						async move {
+							let _ = client
+								.abort_multipart_upload()
+								.bucket(bucket)
+								.key(key)
+								.upload_id(upload_id)
+								.send()
+								.await;
+						}
+					});
+					format!("upload_part #{part_number} failed: {e:?}")
+				})?;
 
-            // Build a ByteStream for this part (exactly the bytes we read)
-            let part_stream = ByteStream::from(buf[..filled].to_vec());
+			completed.push(
+				CompletedPart::builder()
+					.part_number(part_number)
+					.e_tag(resp.e_tag().unwrap_or_default())
+					.build(),
+			);
+			part_number += 1;
+		}
 
-            // Upload part
-            let bucket = secret_variables.s3_bucket_name.clone();
-            let resp = client
-                .upload_part()
-                .bucket(&secret_variables.s3_bucket_name)
-                .key(&key)
-                .upload_id(&upload_id)
-                .part_number(part_number)
-                .body(part_stream)
-                .send()
-                .await
-                .map_err(|e| {
-                    // Try to abort on failure to avoid leaked multiparts
-                    let _ = tokio::spawn({
-                        let client = client.clone();
-                        let bucket = bucket;
-                        let key = key.to_owned();
-                        let upload_id = upload_id.clone();
-                        async move {
-                            let _ = client
-                                .abort_multipart_upload()
-                                .bucket(bucket)
-                                .key(key)
-                                .upload_id(upload_id)
-                                .send()
-                                .await;
-                        }
-                    });
-                    format!("upload_part #{part_number} failed: {e:?}")
-                })?;
+		client
+			.complete_multipart_upload()
+			.bucket(&secret_variables.s3_bucket_name)
+			.key(key)
+			.upload_id(upload_id)
+			.multipart_upload(
+				CompletedMultipartUpload::builder()
+					.set_parts(Some(completed))
+					.build(),
+			)
+			.send()
+			.await
+			.map_err(|e| format!("complete multipart failed: {e:?}"))?;
 
-            completed.push(
-                CompletedPart::builder()
-                    .part_number(part_number)
-                    .e_tag(resp.e_tag().unwrap_or_default())
-                    .build()
-            );
-            part_number += 1;
-        }
-
-        let result = client
-            .complete_multipart_upload()
-            .bucket(&secret_variables.s3_bucket_name)
-            .key(key)
-            .upload_id(upload_id)
-            .multipart_upload(
-                CompletedMultipartUpload::builder()
-                    .set_parts(Some(completed))
-                    .build()
-            )
-            .send()
-            .await
-            .map_err(|e| format!("complete multipart failed: {e:?}"))?;
-
-        Ok(())
-    }
+		Ok(())
+	}
 }
 
 // Use Tokio's OnceCell to create the S3 client only once
