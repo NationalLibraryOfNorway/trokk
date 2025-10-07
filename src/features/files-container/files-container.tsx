@@ -122,7 +122,7 @@ const FilesContainer: React.FC = () => {
                                             <div
                                                 key={child.path}
                                                 ref={el => fileRefs.current[index] = el}
-                                                className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0"
+                                                className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0 flex flex-col items-center justify-center"
                                                 tabIndex={currentIndex === index ? 0 : -1}
                                                 onFocus={() => handleIndexChange(index)}
                                             >
@@ -135,7 +135,6 @@ const FilesContainer: React.FC = () => {
                                                     setDelFilePath={setDelFilePath}
                                                     delFilePath={delFilePath}
                                                 />
-                                                <div className="flex justify-center">
                                                     <Checkbox
                                                         aria-label={'Velg forside'}
                                                         aria-checked={'Forside valgt'}
@@ -144,7 +143,6 @@ const FilesContainer: React.FC = () => {
                                                         onChange={() => handleCheck()}
                                                         isFocused={!state.preview && currentIndex === index}
                                                     />
-                                                </div>
                                             </div>
                                         )
                                     )
