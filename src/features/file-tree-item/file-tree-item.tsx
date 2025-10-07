@@ -4,6 +4,7 @@ import {FileTree} from '../../model/file-tree';
 import {formatFileNames} from '../../util/file-utils';
 import {calculateProgress} from '../../model/transfer-progress';
 import {useUploadProgress} from '../../context/upload-progress-context.tsx';
+import {useMessage} from '../../context/message-context.tsx';
 
 interface FileTreeItemProps {
     file: FileTree;
@@ -19,6 +20,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                                                        currentPath
                                                    }) => {
     const {allUploadProgress} = useUploadProgress();
+    const {removeMessages} = useMessage();
 
     const getSelectedDirectoryHighlight = (dirName: string): string => {
         return dirName === currentPath ? 'bg-blue-500 text-white' : 'hover:bg-stone-700';
@@ -41,10 +43,12 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                             onClick={(e) => {
                                 e.preventDefault();
                                 changeViewDirectory(file);
+                                removeMessages();
                             }}
                             onKeyDown={(e) => {
                                 e.preventDefault();
                                 changeViewDirectory(file);
+                                removeMessages();
                             }}
                         >
                             {file.opened ? (

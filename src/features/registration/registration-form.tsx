@@ -14,7 +14,6 @@ import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {useSecrets} from '../../context/secret-context.tsx';
 import {useSelection} from '../../context/selection-context.tsx';
 
-
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
     const {allUploadProgress, setAllUploadProgress} = useUploadProgress();
@@ -41,7 +40,6 @@ const RegistrationForm: React.FC = () => {
             workingTitle: ''
         }
     });
-
 
     useEffect(() => {
         if (checkedItems.length > 0) {
@@ -89,7 +87,6 @@ const RegistrationForm: React.FC = () => {
             resetField('font');
             resetField('language');
             setValue('workingTitle', state.current ? state.current.name : '');
-            removeMessages();
             setBarWidth(0);
         } else {
             const currentUploadProgress = state.current?.path && allUploadProgress?.dir?.[state.current.path];
@@ -113,10 +110,6 @@ const RegistrationForm: React.FC = () => {
     useEffect(() => {
         setBarWidthFromProgress(allUploadProgress);
     }, [allUploadProgress]);
-
-    useEffect(() => {
-        removeMessages();
-    }, [state.current?.path]);
 
     const setBarWidthFromProgress = (progress: AllTransferProgress) => {
         if (!state.current?.path || !progress.dir[state.current?.path]) {

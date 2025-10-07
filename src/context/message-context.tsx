@@ -36,9 +36,10 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const displaySuccessMessage = (item: TextItemResponse) => {
-        handleSuccessMessage(`Item "${item.scanInformation.tempName}" sendt til produksjonsløypen med id ${item.id}`);
+        handleSuccessMessage(`"${item.scanInformation.tempName}" har blitt sendt til produksjonsløypen med batch ID: ${item.batchId}`);
         const parsedItem = new TextItemResponse(
             item.id,
+            item.batchId,
             item.materialType,
             item.publicationType,
             item.scanInformation,

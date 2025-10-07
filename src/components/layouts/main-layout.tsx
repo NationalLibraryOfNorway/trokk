@@ -4,7 +4,6 @@ import Split from 'react-split';
 import './main-layout.css';
 import RegistrationForm from '../../features/registration/registration-form.tsx';
 import FilesContainer from '../../features/files-container/files-container.tsx';
-import {TransferLogProvider} from '../../context/transfer-log-context.tsx';
 import TransferLog from '../../features/transfer-log/transfer-log.tsx';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {
@@ -61,10 +60,10 @@ const MainLayout: React.FC = () => {
                     </button>
                     <div className="flex flex-col h-full">
                         {sizes[2] !== HIDDEN_SIZE && (
-                            <TransferLogProvider>
+                            <>
                                 <RegistrationForm/>
                                 <TransferLog/>
-                            </TransferLogProvider>
+                            </>
                         )}
                     </div>
                 </div>

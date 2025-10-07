@@ -14,6 +14,7 @@ import {FileTree} from '@/model/file-tree.ts';
 import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
 import {TextItemResponse} from '../model/text-input-response.ts';
+import {remove} from '@tauri-apps/plugin-fs';
 
 function groupFilesByCheckedItems(
     allFilesInFolder: FileTree[],
@@ -45,12 +46,12 @@ async function handleApiResponse(
     pushedDir: string,
     deleteDirFromProgress: () => void,
 ) {
-
     if (response.status >= 200 && response.status < 300) {
         clearError();
-        await invoke('delete_dir', {dir: pushedDir});
+        void remove(pushedDir, {recursive: true});
         deleteDirFromProgress();
-        return response.json().then(displaySuccessMessage);
+        const items: TextItemResponse[] = await response.json();
+        items.forEach(displaySuccessMessage);
     } else {
         const messages: Record<number, string> = {
             401: 'Not logged in or token expired',
@@ -93,15 +94,14 @@ export function usePostRegistration() {
         });
 
         await uploadToS3(registration, batchMap);
-
         const itemIdToCountOfItems = new Map<string, number>();
         for (const [batchId, pages] of batchMap.entries()) {
-             itemIdToCountOfItems.set(batchId, pages.length);
+            itemIdToCountOfItems.set(batchId, pages.length);
         }
 
         const body = new BatchTextInputDto(
             uuidv7().toString(),
-            itemIdToCountOfItems,
+            Object.fromEntries(itemIdToCountOfItems),
             registration.materialType,
             authResp.userInfo.name,
             registration.font,
@@ -111,7 +111,7 @@ export function usePostRegistration() {
         );
 
         await body.setVersion();
-          
+
         try {
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
