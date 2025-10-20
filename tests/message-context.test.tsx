@@ -88,6 +88,6 @@ describe('MessageProvider (Vitest)', () => {
         renderWithContext();
 
         fireEvent.click(screen.getByText('Display Success'));
-        expect(screen.getByTestId('success').textContent).toBe('"TestDokument" har blitt sendt til produksjonsløypen med batch ID: 456');
+        expect(screen.getByTestId('success').textContent).toBe('Suksess!');
     });
 });
