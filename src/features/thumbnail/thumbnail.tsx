@@ -10,7 +10,6 @@ import {convertFileSrc} from '@tauri-apps/api/core';
 import {File} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
 import React, {forwardRef} from 'react';
-//import {useSelection} from '@/context/selection-context.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -25,7 +24,6 @@ export interface ThumbnailProps {
   ({ fileTree, onClick, isChecked, isFocused }, ref) => {
 
     const {state} = useTrokkFiles();
-    //const {columns} = useSelection();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
@@ -61,15 +59,6 @@ export interface ThumbnailProps {
     } else {
         content = <File size="96" color="gray"/>;
     }
-
-    /*
-    const getPaddingSize = (columns: number) => {
-        if (columns <= 1) return 'pt-8';
-        if (columns <= 5) return 'pt-2';
-        if (columns <= 10) return 'pt-1';
-        return 'p-2';
-    };
-    */
 
     return (
         <button

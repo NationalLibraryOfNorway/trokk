@@ -2,7 +2,7 @@ import {getMaterialTypeAsKeyString, MaterialType, PublicationType} from './regis
 import {getVersion} from '@tauri-apps/api/app';
 
 export class BatchTextInputDto {
-    batchId: string;
+    batchId: string | null;
     itemIdToNumberOfPages: Record<string, number>;
     materialType: string;
     publicationType: PublicationType;
@@ -15,7 +15,7 @@ export class BatchTextInputDto {
     workName: string;
 
     constructor(
-        batchId: string,
+        batchId: string | null,
         itemIdToNumberOfPages: Record<string, number>,
         materialType: MaterialType,
         username: string,

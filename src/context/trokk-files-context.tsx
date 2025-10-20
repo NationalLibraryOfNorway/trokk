@@ -245,8 +245,10 @@ function splitWatchEvents(events: WatchEvent[]): PathsSorted {
             t.paths[0] === event.paths[0] && t.type === event.type
         ));
     });
-    console.log('Deduplicated events:');
-    console.log(deduplicatedEvents)
+
+    console.debug('Deduplicated events:');
+    console.debug(deduplicatedEvents)
+
     const paths = deduplicatedEvents.reduce(
         (acc, event) => {
             if (isCreate(event.type)) {
@@ -535,7 +537,6 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
         };
 
         const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
-                console.log(event);
                 eventQueue.current.push(event);
             },
             {

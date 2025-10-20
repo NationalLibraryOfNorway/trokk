@@ -223,7 +223,7 @@ const RegistrationForm: React.FC = () => {
                 </div>
             </div>
 
-            {successMessage && <p className="text-green-500 mt-4">{successMessage}</p>}
+            {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
             {errorMessage && (
                 <div className="mt-4">
                     {errorMessage.split('\n').map((line, idx) => (

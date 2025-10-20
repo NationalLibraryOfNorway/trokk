@@ -100,7 +100,7 @@ export function usePostRegistration() {
         }
 
         const body = new BatchTextInputDto(
-            uuidv7().toString(),
+            checkedItems.length > 1 ? uuidv7().toString() : null, //Adding batchId only for multiple objects
             Object.fromEntries(itemIdToCountOfItems),
             registration.materialType,
             authResp.userInfo.name,
