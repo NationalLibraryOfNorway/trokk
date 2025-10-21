@@ -12,7 +12,7 @@ export const TransferLogProvider: React.FC<{ children: ReactNode }> = ({ childre
     const [logs, setLogs] = useState<TransferLogItem[]>([]);
 
     const addLog = (log: TransferLogItem) => {
-        setLogs((prevLogs) => [...prevLogs, log]);
+        setLogs((prevLogs) => [log, ...prevLogs]);
     };
 
     return (

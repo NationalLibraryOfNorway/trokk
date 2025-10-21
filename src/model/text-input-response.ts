@@ -3,6 +3,7 @@ import { TransferLogItem } from './transfer-log-item.ts';
 
 export class TextItemResponse {
     id: string;
+    batchId: string;
     materialType: MaterialType;
     publicationType: PublicationType;
     scanInformation: ScanInformation;
@@ -10,12 +11,14 @@ export class TextItemResponse {
 
     constructor(
         id: string,
+        batchId: string,
         materialType: MaterialType,
         publicationType: PublicationType,
         scanInformation: ScanInformation,
         statistics: Statistics
     ) {
         this.id = id;
+        this.batchId = batchId;
         this.materialType = materialType;
         this.publicationType = publicationType;
         this.scanInformation = scanInformation;

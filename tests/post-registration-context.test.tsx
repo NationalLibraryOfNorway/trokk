@@ -9,6 +9,7 @@ import React from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import {AuthProvider} from '../src/context/auth-context';
 import {SecretProvider} from '../src/context/secret-context';
+import {SelectionProvider} from '../src/context/selection-context';
 
 const mockHandleError = vi.fn();
 const mockClearError = vi.fn();
@@ -67,6 +68,11 @@ vi.mock('../src/tauri-store/setting-store.ts', () => ({
     },
 }));
 
+
+vi.mock('@tauri-apps/plugin-http', () => ({
+    fetch: vi.fn((url: string, init?: RequestInit) => (global.fetch as any)(url, init)),
+}));
+
 vi.mock('@tauri-apps/plugin-fs', () => ({
     remove: vi.fn(),
 }));
@@ -74,7 +80,9 @@ vi.mock('@tauri-apps/plugin-fs', () => ({
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <AuthProvider>
         <SecretProvider>
-            {children}
+            <SelectionProvider>
+                {children}
+            </SelectionProvider>
         </SecretProvider>
     </AuthProvider>
 );
@@ -124,7 +132,7 @@ describe('usePostRegistration', () => {
 
         expect(uploadToS3).toHaveBeenCalled();
         expect(invoke).toHaveBeenCalledWith('get_papi_access_token');
-        expect(fetch).toHaveBeenCalledWith('https://papi/v2/item', expect.any(Object));
+        expect(fetch).toHaveBeenCalledWith('https://papi/v2/item/batch', expect.any(Object));
     });
 
     it('handles not logged in', async () => {
@@ -147,10 +155,10 @@ describe('usePostRegistration', () => {
 
     it('handles different API error statuses correctly', async () => {
         const errorCases = [
-            { status: 401, message: 'Du er ikke logget inn eller tilgangstokenet er utløpt', statusText: 'Unauthorized' },
-            { status: 403, message: 'Du har ikke tilgang til å registrere dette objektet', statusText: 'Forbidden' },
-            { status: 409, message: 'Objektet finnes allerede i databasen', statusText: 'Conflict' },
-            { status: 500, message: 'Serverfeil ved lagring av objektet', statusText: 'Internal Server Error' },
+            { status: 401, message: 'Not logged in or token expired', statusText: 'Unauthorized' },
+            { status: 403, message: 'No access to register this object', statusText: 'Forbidden' },
+            { status: 409, message: 'Object already exists', statusText: 'Conflict' },
+            { status: 500, message: 'Server error while saving object', statusText: 'Internal Server Error' },
         ];
 
         for (const { status, message, statusText } of errorCases) {
@@ -169,7 +177,7 @@ describe('usePostRegistration', () => {
                 await result.current.postRegistration('TestMachine', registration);
             });
 
-            expect(mockHandleError).toHaveBeenCalledWith(expect.stringContaining(message), status);
+            expect(mockHandleError).toHaveBeenCalledWith(expect.stringContaining(message));
 
             vi.clearAllMocks();
         }

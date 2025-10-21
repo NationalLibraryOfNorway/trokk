@@ -9,9 +9,7 @@ import {FileTree} from '../../model/file-tree.ts';
 import {convertFileSrc} from '@tauri-apps/api/core';
 import {File} from 'lucide-react';
 import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
-import DeleteFile from '../delete-file/delete-file.tsx';
-import React from 'react';
-import {useSelection} from '../../context/selection-context.tsx';
+import React, {forwardRef} from 'react';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -22,9 +20,10 @@ export interface ThumbnailProps {
     delFilePath: string | null;
 }
 
-export default function Thumbnail({fileTree, onClick, isChecked, isFocused, setDelFilePath, delFilePath}: ThumbnailProps) {
+ const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
+  ({ fileTree, onClick, isChecked, isFocused }, ref) => {
+
     const {state} = useTrokkFiles();
-    const {columns} = useSelection();
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
@@ -61,37 +60,22 @@ export default function Thumbnail({fileTree, onClick, isChecked, isFocused, setD
         content = <File size="96" color="gray"/>;
     }
 
-    const getPaddingSize = (columns: number) => {
-        if (columns <= 1) return 'pt-8';
-        if (columns <= 5) return 'pt-2';
-        if (columns <= 10) return 'pt-1';
-        return 'p-2';
-    };
-
     return (
-        <div
+        <button
+            type="button"
             key={fileTree.path}
-            className="flex flex-col p-1 items-center relative group"
+            className="flex flex-col p-1 items-center"
+            onClick={onClick}
+            ref={ref}
         >
-            <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <DeleteFile childPath={fileTree.path} setDelFilePath={setDelFilePath} delFilePath={delFilePath}/>
-            </div>
-
-            <div
-                className={`${initialStyle} ${containerClass}`}
-                onClick={onClick}
-            >
+            <div className={`${initialStyle} ${containerClass}`}>
                 {content}
             </div>
-
-            <i
-                className={`flex content-center justify-center ${getPaddingSize(columns)} w-full text-md ${
-                    isChecked ? 'text-amber-400' : ''
-                }`}
-            >
+            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
                 {fileName}
             </i>
-
-        </div>
+        </button>
     );
-}
+  });
+Thumbnail.displayName = 'Thumbnail';
+export default Thumbnail;

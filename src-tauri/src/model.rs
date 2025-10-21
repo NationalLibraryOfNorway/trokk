@@ -98,6 +98,7 @@ pub(crate) struct TokenResponseWithoutRefresh {
 #[serde(rename_all = "camelCase")]
 pub struct RequiredEnvironmentVariables {
 	pub(crate) vault_base_url: &'static str,
+	pub(crate) vault_environment: &'static str,
 	pub(crate) vault_role_id: &'static str,
 	pub(crate) vault_secret_id: &'static str,
 	pub(crate) sentry_dsn: &'static str,

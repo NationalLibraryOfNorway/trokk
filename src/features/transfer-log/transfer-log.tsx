@@ -16,6 +16,10 @@ const TransferLog: React.FC = () => {
         });
     };
 
+    const latestTimestamp = logs.length > 0
+        ? Math.max(...logs.map(log => log.timestamp.getTime()))
+        : null;
+
     return (
         <div className="p-4 w-full">
             <h2 className="text-xl font-bold mb-4 text-stone-100">Overføringslogg</h2>
@@ -31,7 +35,8 @@ const TransferLog: React.FC = () => {
                     </thead>
                     <tbody>
                     {logs.map((log: TransferLogItem, index: number) => (
-                        <tr key={index} className="hover:bg-stone-700 border-b">
+                        <tr key={index} className={`hover:bg-stone-700 border-b ${
+        log.timestamp.getTime() === latestTimestamp ? 'bg-green-800/50 font-bold' : ''}`}>
                             <td className="px-4 py-2 text-stone-100">{log.timestamp.toTimeString().slice(0, 8)}</td>
                             <td
                                 className="px-4 py-2 text-stone-100 cursor-pointer relative flex justify-center"

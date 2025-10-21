@@ -3,7 +3,6 @@ import FilesContainer from '../src/features/files-container/files-container';
 import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-context';
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
 import {beforeAll, beforeEach, describe, expect, it, Mock, vi} from 'vitest';
-import {useState} from 'react';
 
 vi.mock('../src/context/trokk-files-context', () => {
     return {

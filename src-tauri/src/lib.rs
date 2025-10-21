@@ -1,5 +1,6 @@
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+use std::collections::HashMap;
 use std::ffi::OsString;
 use std::string::ToString;
 use std::sync::Mutex;
@@ -27,6 +28,7 @@ mod tests;
 #[cfg(not(feature = "debug-mock"))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
 	vault_base_url: env!("VAULT_BASE_URL"),
+	vault_environment: env!("VAULT_ENVIRONMENT"),
 	vault_role_id: env!("VAULT_ROLE_ID"),
 	vault_secret_id: env!("VAULT_SECRET_ID"),
 	sentry_environment: env!("RUST_SENTRY_ENVIRONMENT"),
@@ -220,6 +222,15 @@ async fn upload_directory_to_s3(
 	s3::upload_directory(directory_path, object_id, material_type, app_window).await
 }
 
+#[tauri::command]
+async fn upload_batch_to_s3(
+	batch_map: HashMap<String, Vec<String>>,
+	material_type: &str,
+	app_window: tauri::Window,
+) -> Result<usize, String> {
+	s3::upload_batch_to_s3(batch_map, material_type, app_window).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
@@ -259,6 +270,8 @@ pub fn run() {
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]
 			upload_directory_to_s3,
+			#[cfg(not(feature = "debug-mock"))]
+			upload_batch_to_s3,
 		])
 		.on_window_event(|window, event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = event {

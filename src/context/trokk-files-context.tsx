@@ -238,10 +238,17 @@ function isFile(path: string): boolean {
 
 function splitWatchEvents(events: WatchEvent[]): PathsSorted {
     const deduplicatedEvents = events.filter((event, index, self) => {
+        if (event.paths.some((path) => path.endsWith('TeraCopyTestFile-1234567890'))) {
+            return false; // Ignore TeraCopy test files
+        }
         return index === self.findIndex((t) => (
             t.paths[0] === event.paths[0] && t.type === event.type
         ));
     });
+
+    console.debug('Deduplicated events:');
+    console.debug(deduplicatedEvents)
+
     const paths = deduplicatedEvents.reduce(
         (acc, event) => {
             if (isCreate(event.type)) {

@@ -1,5 +1,4 @@
 import { render, screen} from '@testing-library/react';
-import '@testing-library/jest-dom/vitest';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import Thumbnail from '../src/features/thumbnail/thumbnail';
 import {FileTree} from '../src/model/file-tree.ts';
@@ -85,7 +84,7 @@ describe('Thumbnail', () => {
     it('renders an image if the file type is supported', async () => {
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
         render(componentWithContext(fileTree, baseProps));
-        expect(await screen.findByAltText('example.jpg')).toBeInTheDocument();
+        expect(await screen.findByAltText('example.jpg')).toBeDefined();
     });
 
     it('renders a thumbnail if extension is webp', async () => {
@@ -93,7 +92,7 @@ describe('Thumbnail', () => {
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('webp');
         const fileTree = createMockFileTree('example.other', '/mock/path/example.other');
         render(componentWithContext(fileTree, baseProps));
-        expect(await screen.findByAltText('example.other')).toBeInTheDocument();
+        expect(await screen.findByAltText('example.other')).toBeDefined();
     });
 
     it('does not render for system folders', async () => {

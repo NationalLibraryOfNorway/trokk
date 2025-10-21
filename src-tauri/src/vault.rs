@@ -25,13 +25,18 @@ pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, Client
 	// Login using AppRole method
 	let role_id = String::from(ENVIRONMENT_VARIABLES.vault_role_id);
 	let secret_id = String::from(ENVIRONMENT_VARIABLES.vault_secret_id);
+	let vault_environment = String::from(ENVIRONMENT_VARIABLES.vault_environment);
 	let login = AppRoleLogin { role_id, secret_id };
 
 	client.login("approle", &login).await?; // Token is automatically set to client
 
 	// Use the client to interact with the Vault API
-	let secrets: SecretVariables =
-		kv2::read(&client, "secret/v1/application/k8s/tekst/", "trokk-stage").await?; // TODO set dynamically for prod/stage
+	let secrets: SecretVariables = kv2::read(
+		&client,
+		"secret/v1/application/k8s/tekst/",
+		&vault_environment,
+	)
+	.await?;
 
 	Ok(secrets)
 }

@@ -33,6 +33,7 @@ jobs:
       VAULT_BASE_URL: ${{ secrets.VAULT_BASE_URL }}
       VAULT_ROLE_ID: ${{ secrets.VAULT_ROLE_ID }}
       VAULT_SECRET_ID: ${{ secrets.VAULT_SECRET_ID }}
+      VAULT_ENVIRONMENT: trokk-stage
       RUST_BACKTRACE: full
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
@@ -47,7 +48,7 @@ jobs:
           secretId: ${{ secrets.VAULT_SECRET_ID }}
           secrets: |
             secret/v1/application/k8s/tekst/data/artifactory * | ART_ ;
-            secret/v1/application/k8s/tekst/data/trokk-stage * | TROKK_ ;
+            secret/v1/application/k8s/tekst/data/${{ env.VAULT_ENVIRONMENT }} * | TROKK_ ;
 
       # Git fix for Windows, workaround for permission issues regarding self-hosted runners
       - name: Windows; Git fix
@@ -67,7 +68,7 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           cache: false
-          toolchain: stable
+          toolchain: stable-x86_64-pc-windows-msvc
           components: rustfmt, clippy
 
       # Cache target directory, ignore the bundle directory. See reasons for this globbing https://github.com/actions/toolkit/issues/713
@@ -88,13 +89,20 @@ jobs:
       - name: NPM; Install frontend dependencies
         run: npm ci
 
+      - name: Windows NPM; Install toolchain dependency
+        if: ${{ matrix.windows }}
+        run: npm install @tauri-apps/cli-win32-x64-msvc@2.8.4
+
       - name: Windows NPM; Install windows dependency
         if: ${{ matrix.windows }}
-        run: npm install @tauri-apps/cli-win32-x64-msvc@2.0.0-alpha.21
+        run: npm install @rollup/rollup-win32-x64-msvc
 
-      # TODO when tests are set up again
-      #- name: NPM; Run frontend tests
-      #  run: npm run test
+      - name: Windows; setup CMAke
+        if: ${{ matrix.windows }}
+        uses: ./.github/actions/setup-cmake
+
+      - name: NPM; Run frontend tests
+        run: npm run test
 
       # Regex match to simple semver without v, and can have an extra dash or plus with numbers behind.
       # Examples: 1.2.3, 0.1.2, 0.0.0-123, 1.2.5+123123

@@ -28,4 +28,4 @@ src-tauri/gen
 /target
 /src-tauri/target/
 
-out
+/out

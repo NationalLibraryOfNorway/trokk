@@ -45,6 +45,7 @@ const TestComponent = () => {
                     displaySuccessMessage(
                         new TextItemResponse(
                             '123',
+                            '456',
                             MaterialType.MONOGRAPH,
                             PublicationType.MONOGRAPHIC,
                             { id: '123', tempName: 'TestDokument' },
@@ -87,6 +88,6 @@ describe('MessageProvider (Vitest)', () => {
         renderWithContext();
 
         fireEvent.click(screen.getByText('Display Success'));
-        expect(screen.getByTestId('success').textContent).toBe('Item "TestDokument" sendt til produksjonsløypen med id 123');
+        expect(screen.getByTestId('success').textContent).toBe('Suksess!');
     });
 });
