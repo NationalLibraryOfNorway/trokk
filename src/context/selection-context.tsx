@@ -36,9 +36,15 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     useEffect(() => {
         const folderPath = state.current?.path;
+
+        // Reset only on folder change
         if (folderPath !== currentFolderPath) {
             setCurrentFolderPath(folderPath);
-            setCheckedItems([]);  // Reset only on folder change
+            if(files.length > 0 ) {
+                setCheckedItems([files.at(0)!.path]);
+            } else {
+                setCheckedItems([]);
+            }
             handleIndexChange(0); // Reset index to 0 when folder changes
         }
     }, [state.current?.path]);
