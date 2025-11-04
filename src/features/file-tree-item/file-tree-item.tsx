@@ -45,6 +45,10 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                                 changeViewDirectory(file);
                                 removeMessages();
                             }}
+                            onDoubleClick={(e) => {
+                                e.preventDefault();
+                                toggleFolderExpand(file);
+                            }}
                             onKeyDown={(e) => {
                                 e.preventDefault();
                                 changeViewDirectory(file);
