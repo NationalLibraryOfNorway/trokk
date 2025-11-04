@@ -1,10 +1,10 @@
 import React, {useState} from 'react';
-import FileTree from '../../features/file-tree/file-tree.tsx';
+import FileTree from '@/features/file-tree/file-tree.tsx';
 import Split from 'react-split';
 import './main-layout.css';
-import RegistrationForm from '../../features/registration/registration-form.tsx';
-import FilesContainer from '../../features/files-container/files-container.tsx';
-import TransferLog from '../../features/transfer-log/transfer-log.tsx';
+import RegistrationForm from '@/features/registration/registration-form.tsx';
+import FilesContainer from '@/features/files-container/files-container.tsx';
+import TransferLog from '@/features/transfer-log/transfer-log.tsx';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {
     toggleLeftPanel,
@@ -12,7 +12,7 @@ import {
     HIDDEN_SIZE,
     LEFT_PANEL_DEFAULT,
     RIGHT_PANEL_DEFAULT
-} from '../../util/panelToggle.ts';
+} from '@/util/panelToggle.ts';
 
 const MainLayout: React.FC = () => {
     const iconSize = 15;

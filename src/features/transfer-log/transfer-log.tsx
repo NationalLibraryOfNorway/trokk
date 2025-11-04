@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
-import {TransferLogItem} from '../../model/transfer-log-item.ts';
-import {useTransferLog} from '../../context/transfer-log-context.tsx';
+import {TransferLogItem} from '@/model/transfer-log-item.ts';
+import {useTransferLog} from '@/context/transfer-log-context.tsx';
 import {Check, ClipboardCopy} from 'lucide-react';
 
 const TransferLog: React.FC = () => {

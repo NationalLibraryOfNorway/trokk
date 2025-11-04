@@ -1,4 +1,4 @@
-import { MaterialType } from '../../model/registration-enums.ts';
+import { MaterialType } from '@/model/registration-enums.ts';
 
 export type RegistrationFormProps = {
     materialType: MaterialType,

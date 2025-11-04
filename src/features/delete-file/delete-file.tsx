@@ -6,11 +6,11 @@ import {
     DialogDescription,
     DialogTitle,
     DialogTrigger
-} from '../../components/ui/dialog.tsx';
-import {useSelection} from '../../context/selection-context.tsx';
+} from '@/components/ui/dialog.tsx';
+import {useSelection} from '@/context/selection-context.tsx';
 import {remove} from '@tauri-apps/plugin-fs';
-import {FileTree} from '../../model/file-tree.ts';
-import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {FileTree} from '@/model/file-tree.ts';
+import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 
 export interface DeleteFile {
     childPath: string;

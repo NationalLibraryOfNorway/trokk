@@ -1,18 +1,18 @@
 import React, {useEffect, useState} from 'react';
-import {MaterialType} from '../../model/registration-enums';
+import {MaterialType} from '@/model/registration-enums';
 import {invoke} from '@tauri-apps/api/core';
-import {AllTransferProgress, TransferProgress} from '../../model/transfer-progress';
-import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {AllTransferProgress, TransferProgress} from '@/model/transfer-progress';
+import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import {SubmitHandler, useForm} from 'react-hook-form';
 import {RegistrationFormProps} from './registration-form-props.tsx';
-import {usePostRegistration} from '../../context/post-registration-context.tsx';
-import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
-import {useMessage} from '../../context/message-context.tsx';
-import {useUploadProgress} from '../../context/upload-progress-context.tsx';
+import {usePostRegistration} from '@/context/post-registration-context.tsx';
+import LoadingSpinner from '@/components/ui/loading-spinner.tsx';
+import {useMessage} from '@/context/message-context.tsx';
+import {useUploadProgress} from '@/context/upload-progress-context.tsx';
 import type {Event} from '@tauri-apps/api/event';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
-import {useSecrets} from '../../context/secret-context.tsx';
-import {useSelection} from '../../context/selection-context.tsx';
+import {useSecrets} from '@/context/secret-context.tsx';
+import {useSelection} from '@/context/selection-context.tsx';
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();

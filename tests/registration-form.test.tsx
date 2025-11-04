@@ -32,7 +32,7 @@ vi.mock('uuidv7', () => ({
     uuidv7: () => 'mocked-uuid'
 }));
 
-vi.mock('../../tauri-store/setting-store.ts', () => ({
+vi.mock('@/tauri-store/setting-store.ts', () => ({
     settings: {
         getAuthResponse: vi.fn(() => Promise.resolve({userInfo: {name: 'Test User'}})),
         getScannerPath: vi.fn(() => Promise.resolve('/scanner'))
@@ -48,12 +48,12 @@ vi.mock('@tauri-apps/api/path', async (importOriginal) => {
     };
 });
 
-vi.mock('../../context/auth-context.tsx', () => ({
+vi.mock('@/context/auth-context.tsx', () => ({
     useAuth: () => ({loggedOut: false}),
     AuthProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
-vi.mock('../../context/selection-context.tsx', () => ({
+vi.mock('@/context/selection-context.tsx', () => ({
     useSelection: () => ({
         checkedItems: [],
         setCheckedItems: vi.fn()
@@ -61,12 +61,12 @@ vi.mock('../../context/selection-context.tsx', () => ({
     SelectionProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
-vi.mock('../../context/secret-context.tsx', () => ({
+vi.mock('@/context/secret-context.tsx', () => ({
     useSecrets: () => ({secrets: {papiPath: 'http://mock-papi'}}),
     SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
-vi.mock('../../context/transfer-log-context.tsx', () => ({
+vi.mock('@/context/transfer-log-context.tsx', () => ({
     useTransferLog: () => ({addLog: vi.fn()}),
     TransferLogProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
@@ -147,7 +147,7 @@ describe('RegistrationForm', () => {
     });
 
     it('disables submit button when state.current.path is undefined', async () => {
-        vi.doMock('../../context/trokk-files-context.tsx', () => ({
+        vi.doMock('@/context/trokk-files-context.tsx', () => ({
             useTrokkFiles: () => ({
                 state: {
                     current: {

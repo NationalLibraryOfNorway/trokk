@@ -1,10 +1,10 @@
 import React from 'react';
 import {ChevronDown, ChevronRight, FileImage, Folder, FolderOpen, Upload} from 'lucide-react';
-import {FileTree} from '../../model/file-tree';
-import {formatFileNames} from '../../util/file-utils';
-import {calculateProgress} from '../../model/transfer-progress';
-import {useUploadProgress} from '../../context/upload-progress-context.tsx';
-import {useMessage} from '../../context/message-context.tsx';
+import {FileTree} from '@/model/file-tree';
+import {formatFileNames} from '@/util/file-utils';
+import {calculateProgress} from '@/model/transfer-progress';
+import {useUploadProgress} from '@/context/upload-progress-context.tsx';
+import {useMessage} from '@/context/message-context.tsx';
 
 interface FileTreeItemProps {
     file: FileTree;
