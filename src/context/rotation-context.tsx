@@ -9,6 +9,7 @@ interface RotationContextType {
     rotateImage: (path: string, direction: 'clockwise' | 'counterclockwise') => void;
     isRotating: (path: string) => boolean;
     getImageStatus: (path: string) => ImageStatus;
+    hasAnyRotating: () => boolean;
     cacheBuster: number;
 }
 
@@ -33,6 +34,10 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
 
     const getImageStatus = useCallback((path: string): ImageStatus => {
         return imageStatuses.get(path) || null;
+    }, [imageStatuses]);
+
+    const hasAnyRotating = useCallback((): boolean => {
+        return Array.from(imageStatuses.values()).some(status => status === 'rotating' || status === 'reloading');
     }, [imageStatuses]);
 
     const saveRotation = useCallback(async (path: string, rotation: number) => {
@@ -123,7 +128,7 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
     }, [rotations, saveRotation]);
 
     return (
-        <RotationContext.Provider value={{rotations, getRotation, rotateImage, isRotating, getImageStatus, cacheBuster}}>
+        <RotationContext.Provider value={{rotations, getRotation, rotateImage, isRotating, getImageStatus, hasAnyRotating, cacheBuster}}>
             {children}
         </RotationContext.Provider>
     );
