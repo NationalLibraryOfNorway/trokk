@@ -13,6 +13,7 @@ import {SettingProvider, useSettings} from './context/setting-context.tsx';
 import {MessageProvider} from './context/message-context.tsx';
 import {TransferLogProvider} from './context/transfer-log-context.tsx';
 import {SelectionProvider} from './context/selection-context.tsx';
+import {RotationProvider} from './context/rotation-context.tsx';
 
 
 function App() {
@@ -98,29 +99,33 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     return (
         <div className="relative h-full flex-col">
-            <div className="grid grid-cols-3 py-2 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800">
-                <h2 className="text-xl flex items-center pl-4">
-                    <FolderOpen size="32" className="-ml-3 mr-1 mb-2 flex-shrink-0"/>{scannerPath}
+            <div className="grid grid-cols-3 py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center">
+                <h2 className="text-xl flex items-center">
+                    <FolderOpen size="32" className="mb-1 mr-1 flex-shrink-0"/>{scannerPath}
                 </h2>
-                <h1 className="text-4xl content-end text-center">Trøkk</h1>
-                <div className="flex justify-end gap-2">
-                    <div className="flex pr-2 pt-3">
-                        <User/>
-                        <p className="pt-0.5">{authResponse.userInfo.givenName}</p>
+                <h1 className="text-4xl text-center">Trøkk</h1>
+                <div className="flex justify-end items-center gap-2">
+                    <div className="flex items-center pr-2 gap-1">
+                        <div className="bg-stone-600 rounded-full p-1.5 mb-1 mr-1 flex items-center justify-center">
+                            <User size={20} />
+                        </div>
+                        <p>{authResponse.userInfo.givenName}</p>
                     </div>
                     <Button onClick={() => setOpenSettings(!openSettings)}>Innstillinger</Button>
-                    <Button onClick={logout}>Logg ut</Button>
+                    <Button onClick={logout}>Logg&nbsp;ut</Button>
                 </div>
             </div>
             <TrokkFilesProvider scannerPath={scannerPath}>
                 <SelectionProvider>
-                    <UploadProgressProvider>
-                        <TransferLogProvider>
-                            <MessageProvider>
-                                <MainLayout/>
-                            </MessageProvider>
-                        </TransferLogProvider>
-                    </UploadProgressProvider>
+                    <RotationProvider>
+                        <UploadProgressProvider>
+                            <TransferLogProvider>
+                                <MessageProvider>
+                                    <MainLayout/>
+                                </MessageProvider>
+                            </TransferLogProvider>
+                        </UploadProgressProvider>
+                    </RotationProvider>
                 </SelectionProvider>
             </TrokkFilesProvider>
         </div>

@@ -231,6 +231,16 @@ async fn upload_batch_to_s3(
 	s3::upload_batch_to_s3(batch_map, material_type, app_window).await
 }
 
+#[tauri::command]
+async fn rotate_image(file_path: String, rotation: u16) -> Result<(), String> {
+	tokio::task::spawn_blocking(move || {
+		image_converter::rotate_image(file_path, rotation)
+	})
+	.await
+	.expect("Failed to run blocking task")
+	.map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
@@ -266,6 +276,7 @@ pub fn run() {
 			create_preview_webp,
 			convert_directory_to_webp,
 			pick_directory,
+			rotate_image,
 			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]

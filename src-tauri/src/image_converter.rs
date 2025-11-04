@@ -159,3 +159,66 @@ fn get_file_name(path_reference: &Path) -> Result<&OsStr, ImageConversionError> 
 		ImageConversionError::FailedToGetFileNameError(format!("{:?}", path_reference.to_str()))
 	})
 }
+
+/// Rotates an image by the specified angle (0, 90, 180, 270 degrees)
+/// and regenerates its thumbnails and previews
+pub fn rotate_image<P: AsRef<Path>>(
+	image_path: P,
+	rotation: u16,
+) -> Result<(), ImageConversionError> {
+	let path_reference = image_path.as_ref();
+
+	// Load the original image
+	let mut image: image::DynamicImage = ImageReader::open(path_reference)?
+		.with_guessed_format()?
+		.decode()?;
+
+	// Apply rotation
+	image = match rotation {
+		90 => image.rotate90(),
+		180 => image.rotate180(),
+		270 => image.rotate270(),
+		_ => image, // 0 degrees or invalid, no rotation
+	};
+
+	// Save the rotated image back to the original file
+	image.save(path_reference)?;
+
+	// Delete old thumbnails and previews so they get regenerated
+	delete_thumbnail_and_preview(path_reference)?;
+
+	// Regenerate thumbnails and previews with the rotated image
+	convert_to_webp(path_reference, false)?; // thumbnail
+	convert_to_webp(path_reference, true)?; // preview
+
+	Ok(())
+}
+
+fn delete_thumbnail_and_preview<P: AsRef<Path>>(
+	image_path: P,
+) -> Result<(), ImageConversionError> {
+	let path_reference = image_path.as_ref();
+	let parent_directory = get_parent_directory(path_reference)?;
+	let filename_original_image = get_file_name(path_reference)?;
+
+	// Delete thumbnail
+	let mut thumbnail_path = parent_directory.to_owned();
+	thumbnail_path.push(THUMBNAIL_FOLDER_NAME);
+	thumbnail_path.push(filename_original_image);
+	thumbnail_path.set_extension(WEBP_EXTENSION);
+	if thumbnail_path.exists() {
+		fs::remove_file(&thumbnail_path)?;
+	}
+
+	// Delete preview
+	let mut preview_path = parent_directory.to_owned();
+	preview_path.push(PREVIEW_FOLDER_NAME);
+	preview_path.push(filename_original_image);
+	preview_path.set_extension(WEBP_EXTENSION);
+	if preview_path.exists() {
+		fs::remove_file(&preview_path)?;
+	}
+
+	Ok(())
+}
+
