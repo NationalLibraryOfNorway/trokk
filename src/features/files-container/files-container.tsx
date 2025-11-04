@@ -114,6 +114,7 @@ const FilesContainer: React.FC = () => {
                                                         payload: child,
                                                     })
                                                 }
+                                                className="flex flex-col items-center justify-center"
                                             >
                                                 <Folder size="96"/>
                                                 <i>{child.name}</i>
