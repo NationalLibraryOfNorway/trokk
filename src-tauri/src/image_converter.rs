@@ -168,6 +168,19 @@ pub fn rotate_image<P: AsRef<Path>>(
 ) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
 
+	// Validate rotation angle
+	if rotation != 0 && rotation != 90 && rotation != 180 && rotation != 270 {
+		return Err(ImageConversionError::StrError(format!(
+			"Invalid rotation angle: {}. Must be 0, 90, 180, or 270",
+			rotation
+		)));
+	}
+
+	// Skip if no rotation needed
+	if rotation == 0 {
+		return Ok(());
+	}
+
 	// Load the original image
 	let mut image: image::DynamicImage = ImageReader::open(path_reference)?
 		.with_guessed_format()?
@@ -178,18 +191,27 @@ pub fn rotate_image<P: AsRef<Path>>(
 		90 => image.rotate90(),
 		180 => image.rotate180(),
 		270 => image.rotate270(),
-		_ => image, // 0 degrees or invalid, no rotation
+		_ => image, // Should never happen due to validation above
 	};
 
 	// Save the rotated image back to the original file
 	image.save(path_reference)?;
 
+	// Ensure file is flushed to disk
+	thread::sleep(Duration::from_millis(50));
+
 	// Delete old thumbnails and previews so they get regenerated
 	delete_thumbnail_and_preview(path_reference)?;
+
+	// Wait a bit to ensure deletion is complete
+	thread::sleep(Duration::from_millis(50));
 
 	// Regenerate thumbnails and previews with the rotated image
 	convert_to_webp(path_reference, false)?; // thumbnail
 	convert_to_webp(path_reference, true)?; // preview
+
+	// Final sync to ensure all writes are complete
+	thread::sleep(Duration::from_millis(100));
 
 	Ok(())
 }
