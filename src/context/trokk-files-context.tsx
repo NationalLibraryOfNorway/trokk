@@ -5,7 +5,8 @@ import {
     WatchEventKindCreate,
     WatchEventKindModify,
     WatchEventKindRemove,
-    watchImmediate
+    watchImmediate,
+    exists
 } from '@tauri-apps/plugin-fs';
 import {FileTree} from '../model/file-tree';
 import {invoke} from '@tauri-apps/api/core';
@@ -40,6 +41,7 @@ type TrokkFilesAction =
 }
     | { type: 'SET_CURRENT'; payload: FileTree | undefined }
     | { type: 'SET_CURRENT_AND_EXPAND_PARENTS'; payload: FileTree }
+    | { type: 'REMOVE_PATH'; payload: string }
     | { type: 'RESET' }
     | { type: 'UPDATE_STORE' }
     | { type: 'UPDATE_PREVIEW'; payload: FileTree | undefined }
@@ -183,10 +185,18 @@ function isCreate(event: WatchEventKind): event is { create: WatchEventKindCreat
     }
 }
 
-function isDeleteFolder(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
+function isDelete(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
     try {
-        const removeEvent = (event as { remove: WatchEventKindRemove }).remove;
-        return removeEvent.kind == 'folder' || removeEvent.kind == 'any';
+        // Check if event is an object and has remove property
+        if (typeof event !== 'object' || event === null) {
+            return false;
+        }
+        const eventObj = event as { remove?: WatchEventKindRemove };
+        if (!eventObj.remove || !eventObj.remove.kind) {
+            return false;
+        }
+        const removeEvent = eventObj.remove;
+        return removeEvent.kind == 'folder' || removeEvent.kind == 'file' || removeEvent.kind == 'any';
     } catch {
         return false;
     }
@@ -210,15 +220,6 @@ function isModifyRenameTo(event: WatchEventKind): event is { modify: WatchEventK
     }
 }
 
-function isDeleteFile(event: WatchEventKind): event is { remove: WatchEventKindRemove } {
-    try {
-        const removeEvent = (event as { remove: WatchEventKindRemove }).remove;
-        return removeEvent.kind == 'any';
-    } catch {
-        return false;
-    }
-}
-
 
 interface PathsSorted {
     create: EventPathAndKind[];
@@ -236,41 +237,76 @@ function isFile(path: string): boolean {
     return isImage(path);
 }
 
-function splitWatchEvents(events: WatchEvent[]): PathsSorted {
+function splitWatchEvents(events: WatchEvent[], treeIndex: Map<string, FileTree>, processedEvents: Set<string>): PathsSorted {
     const deduplicatedEvents = events.filter((event, index, self) => {
         if (event.paths.some((path) => path.endsWith('TeraCopyTestFile-1234567890'))) {
             return false; // Ignore TeraCopy test files
         }
-        return index === self.findIndex((t) => (
-            t.paths[0] === event.paths[0] && t.type === event.type
-        ));
+
+        // Create a unique key for this event
+        const eventTypeStr = JSON.stringify(event.type);
+        const eventKey = `${event.paths.join('|')}::${eventTypeStr}`;
+
+        // Check if we've already processed this exact event
+        if (processedEvents.has(eventKey)) {
+            console.debug('Skipping already processed event:', eventKey);
+            return false;
+        }
+
+        // Check for duplicates in current batch
+        const isDuplicate = self.findIndex((t) => {
+            const tEventTypeStr = JSON.stringify(t.type);
+            return t.paths[0] === event.paths[0] && tEventTypeStr === eventTypeStr;
+        }) !== index;
+
+        if (!isDuplicate) {
+            // Mark this event as processed
+            processedEvents.add(eventKey);
+        }
+
+        return !isDuplicate;
     });
 
-    console.debug('Deduplicated events:');
-    console.debug(deduplicatedEvents)
+    if (events.length !== deduplicatedEvents.length) {
+        console.debug(`Deduplication: ${events.length} events → ${deduplicatedEvents.length} unique events`);
+    }
 
     const paths = deduplicatedEvents.reduce(
         (acc, event) => {
             if (isCreate(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.create.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
+                    const kind = isFile(path) ? 'file' : 'folder';
+                    acc.create.push({path: path, kind});
                 });
             } else if (isModifyRenameFrom(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.renameFrom.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
+                    const kind = isFile(path) ? 'file' : 'folder';
+                    acc.renameFrom.push({path: path, kind});
                 });
             } else if (isModifyRenameTo(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.renameTo.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
+                    const kind = isFile(path) ? 'file' : 'folder';
+                    acc.renameTo.push({path: path, kind});
                 });
-            } else if (isDeleteFolder(event.type)) {
+            } else if (isDelete(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.remove.push({path, kind: 'folder'});
+                    // Determine if it's a file or folder
+                    // First check if it's an image file by extension
+                    let kind: 'file' | 'folder' = 'folder';
+                    const treeNode = treeIndex.get(path);
+                    if (isFile(path)) {
+                        kind = 'file';
+                    } else {
+                        // Check if it exists in the tree index
+                        if (treeNode) {
+                            kind = treeNode.isDirectory ? 'folder' : 'file';
+                        }
+                    }
+                    console.log('🗑️ Categorizing delete:', path, 'as', kind, 'inIndex:', !!treeNode);
+                    acc.remove.push({path, kind});
                 });
-            } else if (isDeleteFile(event.type)) {
-                event.paths.forEach((path) => {
-                    acc.remove.push({path, kind: 'file'});
-                });
+            } else {
+                console.log('❓ Unknown event type:', JSON.stringify(event.type), 'for paths:', event.paths);
             }
             return acc;
         },
@@ -312,12 +348,24 @@ async function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSo
     const insertFileTree = (fileTrees: FileTree[], newFileTree: FileTree): FileTree[] => {
         const parentPath = newFileTree.path.split(sep()).slice(0, -1).join(sep());
 
+        // Check if this path already exists at root level
         if (parentPath === state.basePath) {
+            const exists = fileTrees.some(tree => tree.path === newFileTree.path);
+            if (exists) {
+                console.debug(`Skipping duplicate insertion: ${newFileTree.path} already exists at root`);
+                return fileTrees;
+            }
             return [...fileTrees, newFileTree];
         }
 
         return fileTrees.map((fileTree) => {
             if (fileTree.path === parentPath) {
+                // Check if this child already exists
+                const childExists = fileTree.children?.some(child => child.path === newFileTree.path);
+                if (childExists) {
+                    console.debug(`Skipping duplicate insertion: ${newFileTree.path} already exists as child`);
+                    return fileTree;
+                }
                 return new FileTree(
                     fileTree.name,
                     fileTree.isDirectory,
@@ -383,14 +431,24 @@ async function updateFileTreesWithNewObject(state: TrokkFilesState, eventPathsSo
 }
 
 function removeFileTree(state: TrokkFilesState, eventPathsSorted: EventPathAndKind[]): TrokkFilesState {
-    const deleteFileTree = (fileTrees: FileTree[], targetPath: string): FileTree[] => {
+    const pathSeparator = sep();
+
+    const deleteFileTree = (fileTrees: FileTree[], targetPath: string, isFolder: boolean): FileTree[] => {
         return fileTrees
             .map((fileTree) => {
+                // Exact match: remove this node
                 if (fileTree.path === targetPath) {
+                    console.log(`🗑️ Found and removing ${isFolder ? 'folder' : 'file'}: ${targetPath}`);
                     return null;
                 }
+                // If deleting a folder, also remove all children whose paths start with the folder path
+                if (isFolder && fileTree.path.startsWith(targetPath + pathSeparator)) {
+                    console.log(`🗑️ Removing child of deleted folder: ${fileTree.path}`);
+                    return null;
+                }
+                // Recursively process children
                 if (fileTree.children) {
-                    fileTree.children = deleteFileTree(fileTree.children, targetPath);
+                    fileTree.children = deleteFileTree(fileTree.children, targetPath, isFolder);
                 }
                 return fileTree;
             })
@@ -400,7 +458,9 @@ function removeFileTree(state: TrokkFilesState, eventPathsSorted: EventPathAndKi
     let updatedFileTrees = [...state.fileTrees];
 
     eventPathsSorted.forEach((eventPath) => {
-        updatedFileTrees = deleteFileTree(updatedFileTrees, eventPath.path);
+        console.log(`🗑️ Attempting to remove: ${eventPath.path} (${eventPath.kind})`);
+        updatedFileTrees = deleteFileTree(updatedFileTrees, eventPath.path, eventPath.kind === 'folder');
+        console.log(`🗑️ After removal, have ${updatedFileTrees.length} root nodes`);
     });
 
     return {...state, fileTrees: updatedFileTrees};
@@ -440,6 +500,35 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
             void createThumbnailsFromDirectory(action.payload.path);
             return setCurrentAndExpandParents(state, action.payload);
         }
+        case 'REMOVE_PATH': {
+            const pathToRemove = action.payload;
+            console.log('🗑️ REMOVE_PATH action received for:', pathToRemove);
+            console.log('🗑️ Current tree has', state.fileTrees.length, 'root nodes');
+            console.log('🗑️ Root node paths:', state.fileTrees.map(t => t.path));
+            console.log('🗑️ Current folder:', state.current?.path);
+            console.log('🗑️ Path exists in index?', state.treeIndex.has(pathToRemove));
+
+            const newState = removeFileTree(state, [{ path: pathToRemove, kind: 'folder' }]);
+            console.log('🗑️ After removeFileTree, tree has', newState.fileTrees.length, 'root nodes');
+            console.log('🗑️ New root node paths:', newState.fileTrees.map(t => t.path));
+
+            const newTreeIndex = populateIndex(newState.fileTrees);
+            console.log('🗑️ Rebuilt tree index with', newTreeIndex.size, 'entries');
+
+            const wasViewingDeletedFolder = state.current?.path === pathToRemove;
+            const newCurrent = wasViewingDeletedFolder
+                ? undefined
+                : (state.current?.path ? newTreeIndex.get(state.current.path) : undefined);
+
+            console.log('🗑️ Was viewing deleted folder?', wasViewingDeletedFolder);
+            console.log('🗑️ New current:', newCurrent?.path || 'undefined');
+
+            return {
+                ...newState,
+                treeIndex: newTreeIndex,
+                current: newCurrent
+            };
+        }
         case 'RESET':
             return initialState;
         case 'UPDATE_STORE':
@@ -461,6 +550,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
     const [state, dispatch] = useReducer(trokkFilesReducer, initialState);
     const stateRef = useRef(state);
     const eventQueue = useRef<WatchEvent[]>([]);
+    const processedEvents = useRef<Set<string>>(new Set());
 
     useEffect(() => {
         stateRef.current = state;
@@ -497,7 +587,50 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             const events = eventQueue.current;
             eventQueue.current = [];
 
-            const {create, remove, renameFrom, renameTo} = splitWatchEvents(events);
+            // Check if any paths that received events still exist
+            // If they don't exist, they were deleted (even if we didn't get a remove event)
+            const pathsToCheck = new Set<string>();
+            events.forEach(event => {
+                event.paths.forEach(path => {
+                    // Only check directories
+                    if (!isImage(path)) {
+                        pathsToCheck.add(path);
+                    }
+                });
+            });
+
+            const deletedPaths: string[] = [];
+            for (const path of pathsToCheck) {
+                try {
+                    const stillExists = await exists(path);
+                    if (!stillExists) {
+                        console.log('🗑️ Path received event but no longer exists (was deleted):', path);
+                        deletedPaths.push(path);
+                    }
+                } catch {
+                    // Path doesn't exist
+                    console.log('🗑️ Path check failed, marking as deleted:', path);
+                    deletedPaths.push(path);
+                }
+            }
+
+            const {create, remove, renameFrom, renameTo} = splitWatchEvents(events, stateRef.current.treeIndex, processedEvents.current);
+
+            // Add detected deletions to the remove list
+            deletedPaths.forEach(path => {
+                const treeNode = stateRef.current.treeIndex.get(path);
+                const kind = treeNode?.isDirectory ? 'folder' : 'folder'; // Assume folder for non-image paths
+                if (!remove.some(r => r.path === path)) {
+                    console.log('🗑️ Adding detected deletion to remove list:', path);
+                    remove.push({ path, kind });
+                }
+            });
+
+            // Clean up old processed events (keep only last 100 to prevent memory leak)
+            if (processedEvents.current.size > 100) {
+                const entries = Array.from(processedEvents.current);
+                processedEvents.current = new Set(entries.slice(-100));
+            }
 
             if (stateRef.current?.current) {
                 createNewThumbnailFromEvents(stateRef.current.current.path, create);
@@ -506,7 +639,15 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             let newState: TrokkFilesState | null = stateRef.current;
 
             newState = await updateFileTreesWithNewObject(newState, create);
+
+            if (remove.length > 0) {
+                console.log('🗑️ Processing removals:', remove.map(r => `${r.path} (${r.kind})`));
+            }
             newState = removeFileTree(newState, remove);
+
+            if (remove.length > 0) {
+                console.log('🗑️ After removal, tree has', newState.fileTrees.length, 'root nodes');
+            }
 
             if (renameTo.length > 0 && renameFrom.length > 0) {
                 for (let i = 0; i < renameFrom.length; i++) {
@@ -537,13 +678,20 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
         };
 
         const unwatch = await watchImmediate(scannerPath, async (event: WatchEvent) => {
+                // Log all events to understand what's happening
+                const eventTypeStr = JSON.stringify(event.type);
+                console.log('📁 Event received:', {
+                    paths: event.paths,
+                    type: eventTypeStr,
+                    isDelete: isDelete(event.type),
+                    isCreate: isCreate(event.type)
+                });
                 eventQueue.current.push(event);
             },
             {
                 recursive: true
             }
         );
-
         const intervalId = setInterval(processQueue, 1000);
 
         return () => {

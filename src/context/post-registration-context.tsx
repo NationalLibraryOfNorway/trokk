@@ -45,10 +45,15 @@ async function handleApiResponse(
     handleError: (message: string) => void,
     pushedDir: string,
     deleteDirFromProgress: () => void,
+    removePath: (path: string) => void,
 ) {
     if (response.status >= 200 && response.status < 300) {
         clearError();
-        void remove(pushedDir, {recursive: true});
+        console.log('🗑️ About to delete directory:', pushedDir);
+        await remove(pushedDir, {recursive: true});
+        console.log('🗑️ Directory deleted, updating UI...');
+        removePath(pushedDir); // Manually update the file tree
+        console.log('🗑️ UI update dispatched');
         deleteDirFromProgress();
         const items: TextItemResponse[] = await response.json();
         items.forEach(displaySuccessMessage);
@@ -64,7 +69,7 @@ async function handleApiResponse(
 }
 
 export function usePostRegistration() {
-    const {state} = useTrokkFiles();
+    const {state, dispatch} = useTrokkFiles();
     const {secrets} = useSecrets();
     const auth = useAuth();
     const {handleError, clearError, displaySuccessMessage} = useMessage();
@@ -75,11 +80,16 @@ export function usePostRegistration() {
         machineName: string,
         registration: RegistrationFormProps
     ) {
+        console.log('📝 postRegistration called');
         const papiPath = secrets?.papiPath;
         const loggedOut = auth?.loggedOut;
 
-        if (!state.current?.path) return;
+        if (!state.current?.path) {
+            console.log('❌ No current path, aborting');
+            return;
+        }
         const pushedDir = state.current.path;
+        console.log('📁 Will process folder:', pushedDir);
         const authResp = await settings.getAuthResponse();
         if (!authResp || loggedOut) return Promise.reject('Not logged in');
 
@@ -109,10 +119,10 @@ export function usePostRegistration() {
             machineName,
             registration.workingTitle
         );
-
         await body.setVersion();
 
         try {
+            console.log('🌐 Sending API request to:', `${papiPath}/v2/item/batch`);
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
                 headers: {
@@ -122,12 +132,19 @@ export function usePostRegistration() {
                 body: JSON.stringify(body)
             });
 
+            console.log('📡 API response status:', response.status);
+
             const deleteDirFromProgress = () => setAllUploadProgress(progress => {
                 delete progress.dir[pushedDir];
                 return progress;
             });
 
-            await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress);
+            const removePath = (path: string) => {
+                console.log('🎯 removePath callback called with:', path);
+                dispatch({ type: 'REMOVE_PATH', payload: path });
+            };
+
+            await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress, removePath);
 
         } catch (error) {
             handleError('Nettverksfeil ved lagring av objektet');
