@@ -48,10 +48,9 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
     const isChecked = checkedItems.includes(image.path);
     const imageUrl = getImageSrc();
 
-    // Swap dimensions when rotated 90° or 270° to prevent stretching
+    // For rotated images, we need to constrain to the smaller dimension to prevent oversizing
     const isRotated90or270 = rotation === 90 || rotation === 270;
-    const containerMaxWidth = isRotated90or270 ? 'calc(100vh - 200px)' : 'calc(100vw - 300px)';
-    const containerMaxHeight = isRotated90or270 ? 'calc(100vw - 300px)' : 'calc(100vh - 200px)';
+
 
     useEffect(() => {
         dispatch({type: 'UPDATE_PREVIEW', payload: image});
@@ -98,15 +97,28 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                 <p className="text-center text-lg text-stone-200">Viser
                                     bilde {currentIndex + 1} av {totalImagesInFolder}</p>
                             </div>
-                            <div className={`relative group mt-4 mb-10 border-2 overflow-hidden mx-auto ${isChecked ? 'ring-4 ring-amber-400' : 'border-gray-300'}`} style={{ maxWidth: containerMaxWidth, maxHeight: containerMaxHeight }}>
-                                <div className="flex items-center justify-center w-full h-full">
-                                    <img
-                                        src={imageUrl}
-                                        alt="Forhåndsvisning av bilde"
-                                        className={`max-h-full max-w-full object-contain ${shouldAnimate ? 'transition-transform duration-300' : ''}`}
-                                        style={{ transform: `rotate(${rotation}deg)` }}
-                                    />
-                                </div>
+                            <div
+                                className={`relative group mt-4 mb-10 border-2 mx-auto flex items-center justify-center ${isChecked ? 'ring-4 ring-amber-400' : 'border-gray-300'}`}
+                                style={{
+                                    maxWidth: 'calc(100vw - 400px)',
+                                    maxHeight: 'calc(100vh - 250px)',
+                                    width: 'fit-content',
+                                    height: 'fit-content',
+                                    overflow: 'hidden'
+                                }}
+                            >
+                                <img
+                                    src={imageUrl}
+                                    alt="Forhåndsvisning av bilde"
+                                    className={`${shouldAnimate ? 'transition-transform duration-300' : ''}`}
+                                    style={{
+                                        transform: `rotate(${rotation}deg)`,
+                                        maxWidth: isRotated90or270 ? 'min(calc(100vh - 250px), calc(100vw - 400px))' : 'calc(100vw - 400px)',
+                                        maxHeight: isRotated90or270 ? 'min(calc(100vh - 250px), calc(100vw - 400px))' : 'calc(100vh - 250px)',
+                                        objectFit: 'contain',
+                                        display: 'block'
+                                    }}
+                                />
                                 <StatusOverlay status={imageStatus} size="large" />
                                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-row gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button
