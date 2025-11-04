@@ -233,12 +233,10 @@ async fn upload_batch_to_s3(
 
 #[tauri::command]
 async fn rotate_image(file_path: String, rotation: u16) -> Result<(), String> {
-	tokio::task::spawn_blocking(move || {
-		image_converter::rotate_image(file_path, rotation)
-	})
-	.await
-	.expect("Failed to run blocking task")
-	.map_err(|e| e.to_string())
+	tokio::task::spawn_blocking(move || image_converter::rotate_image(file_path, rotation))
+		.await
+		.expect("Failed to run blocking task")
+		.map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

@@ -216,9 +216,7 @@ pub fn rotate_image<P: AsRef<Path>>(
 	Ok(())
 }
 
-fn delete_thumbnail_and_preview<P: AsRef<Path>>(
-	image_path: P,
-) -> Result<(), ImageConversionError> {
+fn delete_thumbnail_and_preview<P: AsRef<Path>>(image_path: P) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
 	let parent_directory = get_parent_directory(path_reference)?;
 	let filename_original_image = get_file_name(path_reference)?;
@@ -243,4 +241,3 @@ fn delete_thumbnail_and_preview<P: AsRef<Path>>(
 
 	Ok(())
 }
-
