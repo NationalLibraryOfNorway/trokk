@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
-import {renderHook, waitFor, act} from '@testing-library/react';
+import {renderHook, act} from '@testing-library/react';
 import {RotationProvider, useRotation} from '@/context/rotation-context.tsx';
 import {ReactNode} from 'react';
 
@@ -42,9 +42,20 @@ describe('RotationContext', () => {
     it('should debounce multiple rotations', async () => {
         const {result} = renderHook(() => useRotation(), {wrapper});
 
+        // First rotation
         act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
+        });
+        expect(result.current.getRotation('/test/image.jpg')).toBe(90);
+
+        // Second rotation (resets debounce timer)
+        act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
+        });
+        expect(result.current.getRotation('/test/image.jpg')).toBe(180);
+
+        // Third rotation (resets debounce timer again)
+        act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
         });
 
@@ -65,7 +76,7 @@ describe('RotationContext', () => {
     });
 
     it('should prevent rotation while one is in progress', async () => {
-        (invoke as ReturnType<typeof vi.fn>).mockImplementation(() => 
+        (invoke as ReturnType<typeof vi.fn>).mockImplementation(() =>
             new Promise(resolve => setTimeout(resolve, 1000))
         );
 
@@ -99,15 +110,17 @@ describe('RotationContext', () => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
         });
 
-        // Fast forward debounce and rotation
+        // Fast forward debounce
         await act(async () => {
             vi.advanceTimersByTime(500);
         });
 
-        await waitFor(() => {
-            expect(consoleErrorSpy).toHaveBeenCalled();
+        // Wait a bit for the promise to reject
+        await act(async () => {
+            await vi.runAllTimersAsync();
         });
 
+        expect(consoleErrorSpy).toHaveBeenCalled();
         consoleErrorSpy.mockRestore();
     });
 
@@ -122,20 +135,16 @@ describe('RotationContext', () => {
 
         expect(result.current.getRotation('/test/image.jpg')).toBe(90);
 
-        // Fast forward debounce
+        // Fast forward debounce (500ms) and all subsequent delays
         await act(async () => {
             vi.advanceTimersByTime(500);
+            await Promise.resolve(); // Let invoke complete
+            vi.advanceTimersByTime(1100); // File system write (300ms) + reload (700ms)
+            await vi.runAllTimersAsync(); // Run any remaining timers
         });
 
-        // Fast forward file system write and reload delays
-        await act(async () => {
-            vi.advanceTimersByTime(1000);
-        });
-
-        await waitFor(() => {
-            // After successful rotation, UI rotation should reset to 0 since file is now rotated
-            expect(result.current.getRotation('/test/image.jpg')).toBe(0);
-        });
+        // After successful rotation, UI rotation should reset to 0 since file is now rotated
+        expect(result.current.getRotation('/test/image.jpg')).toBe(0);
     });
 
     it('should handle counterclockwise rotation', () => {
@@ -153,8 +162,14 @@ describe('RotationContext', () => {
 
         act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
+        });
+        act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
+        });
+        act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
+        });
+        act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
         });
 
@@ -163,9 +178,7 @@ describe('RotationContext', () => {
     });
 
     it('should track image status correctly', async () => {
-        (invoke as ReturnType<typeof vi.fn>).mockImplementation(() => 
-            new Promise(resolve => setTimeout(resolve, 100))
-        );
+        (invoke as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
         const {result} = renderHook(() => useRotation(), {wrapper});
 
@@ -175,23 +188,24 @@ describe('RotationContext', () => {
 
         expect(result.current.getImageStatus('/test/image.jpg')).toBe(null);
 
-        // Fast forward debounce
+        // Fast forward debounce (500ms)
         await act(async () => {
             vi.advanceTimersByTime(500);
+            await Promise.resolve(); // Let invoke start
         });
 
-        await waitFor(() => {
-            expect(result.current.getImageStatus('/test/image.jpg')).toBe('rotating');
-        });
+        // Should be rotating or reloading (invoke completes immediately in test)
+        const statusAfterInvoke = result.current.getImageStatus('/test/image.jpg');
+        expect(['rotating', 'reloading'].includes(statusAfterInvoke as string)).toBe(true);
 
-        // Complete the rotation
+        // Fast forward all remaining delays
         await act(async () => {
-            vi.advanceTimersByTime(100);
+            vi.advanceTimersByTime(1100); // 300ms + 700ms delays
+            await vi.runAllTimersAsync(); // Run any remaining timers
         });
 
-        await waitFor(() => {
-            expect(result.current.getImageStatus('/test/image.jpg')).toBe('reloading');
-        });
+        // Status should be cleared after all delays
+        expect(result.current.getImageStatus('/test/image.jpg')).toBe(null);
     });
 });
 

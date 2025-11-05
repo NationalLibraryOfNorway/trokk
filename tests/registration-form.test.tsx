@@ -5,6 +5,7 @@ import {UploadProgressProvider} from '../src/context/upload-progress-context';
 import {TransferLogProvider} from '../src/context/transfer-log-context';
 import {SecretProvider} from '../src/context/secret-context';
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
+import {RotationProvider} from '../src/context/rotation-context';
 import {AuthProvider} from '../src/context/auth-context';
 import {useEffect} from 'react';
 import {MessageProvider} from '../src/context/message-context';
@@ -53,13 +54,7 @@ vi.mock('@/context/auth-context.tsx', () => ({
     AuthProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
-vi.mock('@/context/selection-context.tsx', () => ({
-    useSelection: () => ({
-        checkedItems: [],
-        setCheckedItems: vi.fn()
-    }),
-    SelectionProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
-}));
+// Don't mock SelectionProvider - use the real one to allow state updates
 
 vi.mock('@/context/secret-context.tsx', () => ({
     useSecrets: () => ({secrets: {papiPath: 'http://mock-papi'}}),
@@ -108,10 +103,12 @@ function RegistrationFormWrapper({ checkedItems }: { checkedItems: string[] }) {
                 <TransferLogProvider>
                     <UploadProgressProvider>
                         <MessageProvider>
-                            <SelectionProvider>
-                                <SetSelection checkedItems={checkedItems} />
-                                <RegistrationForm />
-                            </SelectionProvider>
+                            <RotationProvider>
+                                <SelectionProvider>
+                                    <SetSelection checkedItems={checkedItems} />
+                                    <RegistrationForm />
+                                </SelectionProvider>
+                            </RotationProvider>
                         </MessageProvider>
                     </UploadProgressProvider>
                 </TransferLogProvider>

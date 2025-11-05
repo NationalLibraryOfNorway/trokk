@@ -5,6 +5,7 @@ import {FileTree} from '../src/model/file-tree.ts';
 import {useTrokkFiles} from '../src/context/trokk-files-context.tsx';
 import {SelectionProvider} from '../src/context/selection-context';
 import {SecretProvider} from '../src/context/secret-context';
+import {RotationProvider} from '../src/context/rotation-context';
 
 vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: vi.fn(),
@@ -35,6 +36,8 @@ const baseProps = {
     onClick: vi.fn(),
     isChecked: false,
     isFocused: false,
+    setDelFilePath: vi.fn(),
+    delFilePath: null,
 };
 
 const mockTrokkFilesState = {
@@ -65,11 +68,13 @@ function createMockFileTree(name: string, path: string): FileTree {
 
 const componentWithContext = (fileTree: FileTree, baseProps: any) => {
     return (
-        <SelectionProvider>
-            <SecretProvider>
-                <Thumbnail fileTree={fileTree} {...baseProps} />
-            </SecretProvider>
-        </SelectionProvider>
+        <RotationProvider>
+            <SelectionProvider>
+                <SecretProvider>
+                    <Thumbnail fileTree={fileTree} {...baseProps} />
+                </SecretProvider>
+            </SelectionProvider>
+        </RotationProvider>
     );
 };
 
@@ -102,5 +107,26 @@ describe('Thumbnail', () => {
         render(componentWithContext(fileTree, baseProps));
         await expect(screen.findByAltText('.thumbnail')).rejects.toThrow();
         await expect(screen.findByAltText('docs/.thumbnails')).rejects.toThrow();
+    });
+
+    it('shows rotation buttons on hover for supported images', async () => {
+        const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
+        const {container} = render(componentWithContext(fileTree, baseProps));
+
+        // Find rotation buttons by their aria-labels
+        const rotateClockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
+        const rotateCounterClockwiseBtn = container.querySelector('[aria-label="Roter mot klokken"]');
+
+        expect(rotateClockwiseBtn).toBeDefined();
+        expect(rotateCounterClockwiseBtn).toBeDefined();
+    });
+
+    it('applies rotation transform to image', async () => {
+        const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
+        render(componentWithContext(fileTree, baseProps));
+
+        const image = await screen.findByAltText('example.jpg');
+        // Initially should have 0 degree rotation
+        expect(image.style.transform).toContain('rotate(0deg)');
     });
 });

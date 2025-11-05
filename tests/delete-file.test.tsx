@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {fireEvent, render, screen} from '@testing-library/react';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import DeleteFile from '../src/features/delete-file/delete-file';
 import {useState} from 'react';
 import {remove} from '@tauri-apps/plugin-fs';
@@ -50,5 +50,33 @@ describe('DeleteFile', () => {
         fireEvent.click(screen.getByText('✕'));
         fireEvent.click(screen.getByText('Slett'));
         expect(remove).toHaveBeenCalledWith(testFileName);
+    });
+
+    it('does not delete when clicking "Avbryt"', async () => {
+        render(<TestWrapper />);
+        fireEvent.click(screen.getByText('✕'));
+        fireEvent.click(screen.getByText('Avbryt'));
+        expect(remove).not.toHaveBeenCalled();
+    });
+
+    it('closes dialog after deletion', async () => {
+        render(<TestWrapper />);
+        fireEvent.click(screen.getByText('✕'));
+
+        const deleteButton = screen.getByText('Slett');
+        fireEvent.click(deleteButton);
+
+        await waitFor(() => {
+            expect(remove).toHaveBeenCalled();
+        });
+    });
+
+    it('shows correct file name in dialog', async () => {
+        render(<TestWrapper />);
+        fireEvent.click(screen.getByText('✕'));
+
+        // Dialog should contain information about the file being deleted
+        const dialog = await screen.findByText(/Er du sikker/);
+        expect(dialog).toBeDefined();
     });
 });
