@@ -129,7 +129,7 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
     const rotateImage = useCallback((path: string, direction: 'clockwise' | 'counterclockwise') => {
         // Prevent rotation if one is already in progress
         if (activeRotations.current.has(path)) {
-            console.log('Rotation already in progress for:', path);
+            console.debug('Rotation already in progress for:', path);
             return;
         }
 

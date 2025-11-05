@@ -49,11 +49,9 @@ async function handleApiResponse(
 ) {
     if (response.status >= 200 && response.status < 300) {
         clearError();
-        console.log('🗑️ About to delete directory:', pushedDir);
+        console.debug('Deleting directory:', pushedDir);
         await remove(pushedDir, {recursive: true});
-        console.log('🗑️ Directory deleted, updating UI...');
-        removePath(pushedDir); // Manually update the file tree
-        console.log('🗑️ UI update dispatched');
+        removePath(pushedDir);
         deleteDirFromProgress();
         const items: TextItemResponse[] = await response.json();
         items.forEach(displaySuccessMessage);
@@ -80,16 +78,13 @@ export function usePostRegistration() {
         machineName: string,
         registration: RegistrationFormProps
     ) {
-        console.log('📝 postRegistration called');
         const papiPath = secrets?.papiPath;
         const loggedOut = auth?.loggedOut;
 
         if (!state.current?.path) {
-            console.log('❌ No current path, aborting');
             return;
         }
         const pushedDir = state.current.path;
-        console.log('📁 Will process folder:', pushedDir);
         const authResp = await settings.getAuthResponse();
         if (!authResp || loggedOut) return Promise.reject('Not logged in');
 
@@ -122,7 +117,6 @@ export function usePostRegistration() {
         await body.setVersion();
 
         try {
-            console.log('🌐 Sending API request to:', `${papiPath}/v2/item/batch`);
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
                 headers: {
@@ -132,15 +126,12 @@ export function usePostRegistration() {
                 body: JSON.stringify(body)
             });
 
-            console.log('📡 API response status:', response.status);
-
             const deleteDirFromProgress = () => setAllUploadProgress(progress => {
                 delete progress.dir[pushedDir];
                 return progress;
             });
 
             const removePath = (path: string) => {
-                console.log('🎯 removePath callback called with:', path);
                 dispatch({ type: 'REMOVE_PATH', payload: path });
             };
 
