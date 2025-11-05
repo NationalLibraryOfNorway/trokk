@@ -1,12 +1,12 @@
 use image::ImageReader;
 use serde::{Deserialize, Serialize};
-use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use std::{fs, thread};
-use webp::{Encoder, WebPMemory};
+use webp::Encoder;
 
 use crate::error::ImageConversionError;
+use crate::file_utils;
 
 const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 const PREVIEW_FOLDER_NAME: &str = ".previews";
@@ -20,10 +20,52 @@ pub struct ConversionCount {
 	pub(crate) already_converted: u32,
 }
 
+/// Reads EXIF orientation from an image file and applies the transformation to the image
+/// This ensures thumbnails and previews match the intended orientation
+fn apply_exif_orientation<P: AsRef<Path>>(
+	image_path: P,
+	image: image::DynamicImage,
+) -> Result<image::DynamicImage, ImageConversionError> {
+	let path_reference = image_path.as_ref();
+
+	// Try to read EXIF orientation using exiftool
+	let orientation_output = std::process::Command::new("exiftool")
+		.arg("-n")
+		.arg("-Orientation")
+		.arg("-s3")
+		.arg(path_reference.as_os_str())
+		.output();
+
+	// If exiftool fails or orientation is not found, return image as-is
+	let orientation: u16 = match orientation_output {
+		Ok(output) if output.status.success() => {
+			let output_str = String::from_utf8_lossy(&output.stdout);
+			output_str.trim().parse().unwrap_or(1)
+		}
+		_ => return Ok(image), // No orientation or exiftool not available
+	};
+
+	// Apply transformation based on EXIF orientation value
+	// See: https://magnushoff.com/articles/jpeg-orientation/
+	let transformed = match orientation {
+		1 => image, // Normal - no transformation needed
+		2 => image.fliph(), // Flipped horizontally
+		3 => image.rotate180(), // Rotated 180°
+		4 => image.flipv(), // Flipped vertically
+		5 => image.rotate90().fliph(), // Rotated 90° CW and flipped horizontally
+		6 => image.rotate90(), // Rotated 90° CW
+		7 => image.rotate270().fliph(), // Rotated 90° CCW and flipped horizontally
+		8 => image.rotate270(), // Rotated 90° CCW (270° CW)
+		_ => image, // Unknown orientation - return as-is
+	};
+
+	Ok(transformed)
+}
+
 pub fn convert_directory_to_webp<P: AsRef<Path>>(
 	directory_path: P,
 ) -> Result<ConversionCount, ImageConversionError> {
-	let files = list_tif_files_in_directory(directory_path)?;
+	let files = file_utils::list_image_files_in_directory(directory_path)?;
 	let mut count = ConversionCount {
 		converted: 0,
 		already_converted: 0,
@@ -37,27 +79,6 @@ pub fn convert_directory_to_webp<P: AsRef<Path>>(
 		}
 	}
 	Ok(count)
-}
-
-fn list_tif_files_in_directory<P: AsRef<Path>>(
-	directory_path: P,
-) -> Result<Vec<PathBuf>, ImageConversionError> {
-	let mut files = Vec::new();
-	for entry in fs::read_dir(directory_path)? {
-		let entry = entry?;
-		let path = entry.path();
-		if path.is_file() && path.extension().is_some_and(|ext| ext == "tif") {
-			files.push(path);
-		}
-	}
-	files.sort();
-	Ok(files)
-}
-
-fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
-	fs::metadata(path)
-		.map(|metadata| metadata.is_dir())
-		.unwrap_or(false)
 }
 
 pub fn convert_to_webp<P: AsRef<Path>>(
@@ -74,9 +95,18 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		return Ok(path_reference.to_path_buf());
 	}
 
-	let image: image::DynamicImage = ImageReader::open(path_reference)?
-		.with_guessed_format()?
-		.decode()?;
+	// Load image and decode with EXIF orientation applied
+	let mut reader = ImageReader::open(path_reference)?;
+	reader = reader.with_guessed_format()?;
+
+	// Decode the image
+	let mut image: image::DynamicImage = reader.decode()?;
+
+	// Apply EXIF orientation if present
+	// Note: The image crate's ImageReader doesn't automatically apply EXIF orientation
+	// We need to read it manually and apply the transformation
+	image = apply_exif_orientation(path_reference, image)?;
+
 	let image = if high_res {
 		image.resize(
 			image.width() / 4,
@@ -93,10 +123,12 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 
 	let encoder: Encoder =
 		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
-	let encoded_webp: WebPMemory = encoder.encode_simple(false, WEBP_QUALITY)?;
+	let encoded_webp = encoder.encode_simple(false, WEBP_QUALITY)?;
 
-	let parent_directory = get_parent_directory(path_reference)?;
-	let filename_original_image = get_file_name(path_reference)?;
+	let parent_directory = file_utils::get_parent_directory(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
+	let filename_original_image = file_utils::get_file_name(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
 
 	let mut path = parent_directory.to_owned();
 	path.push(if high_res {
@@ -105,7 +137,7 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		THUMBNAIL_FOLDER_NAME
 	});
 
-	if !directory_exists(&path) {
+	if !file_utils::directory_exists(&path) {
 		fs::create_dir_all(&path)?;
 		thread::sleep(Duration::from_millis(500)); // Sleep here a bit so the file watcher can catch up
 	}
@@ -121,8 +153,10 @@ pub fn check_if_thumbnail_exists<P: AsRef<Path>>(
 	image_path: P,
 ) -> Result<bool, ImageConversionError> {
 	let path_reference = image_path.as_ref();
-	let parent_directory = get_parent_directory(path_reference)?;
-	let filename_original_image = get_file_name(path_reference)?;
+	let parent_directory = file_utils::get_parent_directory(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
+	let filename_original_image = file_utils::get_file_name(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
 
 	let mut path = parent_directory.to_owned();
 	path.push(THUMBNAIL_FOLDER_NAME);
@@ -135,8 +169,10 @@ pub fn check_if_preview_exists<P: AsRef<Path>>(
 	image_path: P,
 ) -> Result<bool, ImageConversionError> {
 	let path_reference = image_path.as_ref();
-	let parent_directory = get_parent_directory(path_reference)?;
-	let filename_original_image = get_file_name(path_reference)?;
+	let parent_directory = file_utils::get_parent_directory(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
+	let filename_original_image = file_utils::get_file_name(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
 
 	let mut path = parent_directory.to_owned();
 	path.push(PREVIEW_FOLDER_NAME);
@@ -145,23 +181,11 @@ pub fn check_if_preview_exists<P: AsRef<Path>>(
 	Ok(path.exists())
 }
 
-fn get_parent_directory(path_reference: &Path) -> Result<&Path, ImageConversionError> {
-	path_reference.parent().ok_or_else(|| {
-		ImageConversionError::FailedToGetParentDirectoryError(format!(
-			"{:?}",
-			path_reference.to_str()
-		))
-	})
-}
-
-fn get_file_name(path_reference: &Path) -> Result<&OsStr, ImageConversionError> {
-	path_reference.file_name().ok_or_else(|| {
-		ImageConversionError::FailedToGetFileNameError(format!("{:?}", path_reference.to_str()))
-	})
-}
-
 /// Rotates an image by the specified angle (0, 90, 180, 270 degrees)
-/// and regenerates its thumbnails and previews
+/// Uses exiftool to modify EXIF orientation metadata for instant rotation
+/// without re-encoding. This is extremely fast (milliseconds vs seconds).
+///
+/// Supports TIFF, JPEG, and WebP formats.
 pub fn rotate_image<P: AsRef<Path>>(
 	image_path: P,
 	rotation: u16,
@@ -181,63 +205,137 @@ pub fn rotate_image<P: AsRef<Path>>(
 		return Ok(());
 	}
 
-	// Load the original image
-	let mut image: image::DynamicImage = ImageReader::open(path_reference)?
-		.with_guessed_format()?
-		.decode()?;
+	// Rotate the original file using exiftool (instant)
+	rotate_with_exiftool(path_reference, rotation)?;
 
-	// Apply rotation
-	image = match rotation {
-		90 => image.rotate90(),
-		180 => image.rotate180(),
-		270 => image.rotate270(),
-		_ => image, // Should never happen due to validation above
-	};
-
-	// Save the rotated image back to the original file
-	image.save(path_reference)?;
-
-	// Ensure file is flushed to disk
-	thread::sleep(Duration::from_millis(50));
-
-	// Delete old thumbnails and previews so they get regenerated
-	delete_thumbnail_and_preview(path_reference)?;
-
-	// Wait a bit to ensure deletion is complete
-	thread::sleep(Duration::from_millis(50));
-
-	// Regenerate thumbnails and previews with the rotated image
-	convert_to_webp(path_reference, false)?; // thumbnail
-	convert_to_webp(path_reference, true)?; // preview
-
-	// Final sync to ensure all writes are complete
-	thread::sleep(Duration::from_millis(100));
+	// Rotate WebP files (thumbnail and preview)
+	rotate_webp_files(path_reference, rotation)?;
 
 	Ok(())
 }
 
-fn delete_thumbnail_and_preview<P: AsRef<Path>>(image_path: P) -> Result<(), ImageConversionError> {
+/// Rotates an image using exiftool by updating the EXIF Orientation tag
+/// This is extremely fast as it only modifies metadata, not pixel data
+/// Properly accumulates rotations by reading current orientation first
+fn rotate_with_exiftool<P: AsRef<Path>>(
+	image_path: P,
+	rotation: u16,
+) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
-	let parent_directory = get_parent_directory(path_reference)?;
-	let filename_original_image = get_file_name(path_reference)?;
 
-	// Delete thumbnail
+	// Read the current orientation directly (no separate version check)
+	let current_output = std::process::Command::new("exiftool")
+		.arg("-n")
+		.arg("-Orientation")
+		.arg("-s3")  // Short output, values only
+		.arg(path_reference.as_os_str())
+		.output()
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to read orientation: {}", e)))?;
+
+	let current_orientation: u16 = if current_output.status.success() {
+		let output_str = String::from_utf8_lossy(&current_output.stdout);
+		output_str.trim().parse().unwrap_or(1)
+	} else {
+		1  // Default to normal orientation if not found
+	};
+
+	// Calculate new orientation based on current orientation and rotation delta
+	// EXIF Orientation values:
+	// 1 = Normal (0°)
+	// 6 = Rotate 90° CW
+	// 3 = Rotate 180°
+	// 8 = Rotate 270° CW (90° CCW)
+
+	// Map current orientation to degrees
+	let current_degrees = match current_orientation {
+		1 => 0,
+		6 => 90,
+		3 => 180,
+		8 => 270,
+		_ => 0,  // Treat unknown orientations as normal
+	};
+
+	// Add the rotation
+	let new_degrees = (current_degrees + rotation) % 360;
+
+	// Map back to orientation value
+	let new_orientation = match new_degrees {
+		0 => 1,
+		90 => 6,
+		180 => 3,
+		270 => 8,
+		_ => 1,
+	};
+
+
+	// Only update if orientation changed
+	if new_orientation == current_orientation {
+		return Ok(());
+	}
+
+	// Execute exiftool to set new orientation
+	// -n flag uses numeric values
+	// -overwrite_original avoids creating backup files
+	// -Orientation# sets the orientation value
+	let output = std::process::Command::new("exiftool")
+		.arg("-n")
+		.arg("-overwrite_original")
+		.arg(format!("-Orientation#={}", new_orientation))
+		.arg(path_reference.as_os_str())
+		.output()
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to execute exiftool: {}", e)))?;
+
+	if !output.status.success() {
+		let stderr = String::from_utf8_lossy(&output.stderr);
+		return Err(ImageConversionError::StrError(format!(
+			"exiftool failed: {}",
+			stderr
+		)));
+	}
+	Ok(())
+}
+
+/// Regenerates WebP thumbnail and preview files from the rotated original
+/// This ensures they perfectly match the EXIF-rotated original file
+/// We delete and regenerate instead of rotating pixels to avoid any sync issues
+fn rotate_webp_files<P: AsRef<Path>>(
+	image_path: P,
+	_rotation: u16,
+) -> Result<(), ImageConversionError> {
+	let path_reference = image_path.as_ref();
+	let parent_directory = file_utils::get_parent_directory(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
+	let filename_original_image = file_utils::get_file_name(path_reference)
+		.map_err(|e| ImageConversionError::StrError(e))?;
+
+	// Build paths
 	let mut thumbnail_path = parent_directory.to_owned();
 	thumbnail_path.push(THUMBNAIL_FOLDER_NAME);
 	thumbnail_path.push(filename_original_image);
 	thumbnail_path.set_extension(WEBP_EXTENSION);
-	if thumbnail_path.exists() {
-		fs::remove_file(&thumbnail_path)?;
-	}
 
-	// Delete preview
 	let mut preview_path = parent_directory.to_owned();
 	preview_path.push(PREVIEW_FOLDER_NAME);
 	preview_path.push(filename_original_image);
 	preview_path.set_extension(WEBP_EXTENSION);
+
+	// Delete existing WebP files so they get regenerated from the rotated original
+	// This ensures perfect sync between original and WebP files
+	if thumbnail_path.exists() {
+		fs::remove_file(&thumbnail_path)?;
+	}
+
 	if preview_path.exists() {
 		fs::remove_file(&preview_path)?;
 	}
 
+	// Regenerate thumbnail and preview from the rotated original
+	// The apply_exif_orientation function will ensure correct orientation
+	convert_to_webp(path_reference, false)?; // Thumbnail
+	convert_to_webp(path_reference, true)?;  // Preview
+
 	Ok(())
 }
+
+
+

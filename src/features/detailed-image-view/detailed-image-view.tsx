@@ -17,44 +17,38 @@ export interface DetailedImageViewProps {
 export default function DetailedImageView({ image, totalImagesInFolder}: DetailedImageViewProps) {
     const {state, dispatch} = useTrokkFiles();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [shouldAnimate, setShouldAnimate] = useState<boolean>(false);
     const {currentIndex, handleNext, handlePrevious, handleClose, handleCheck, checkedItems} = useSelection();
-    const {getRotation, rotateImage, getImageStatus, cacheBuster} = useRotation();
+    const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
 
-    const rotation = getRotation(image.path);
     const imageStatus = getImageStatus(image.path);
     const imageIsRotating = imageStatus === 'rotating';
 
+    // Get preview file for cache busting
+    const previewFile = getPreviewFromTree(image, state);
+    const previewPath = previewFile?.path || image.path;
+    const previewCacheBuster = getFileCacheBuster(previewPath);
+
     const getImageSrc = () => {
         const baseUrl = getPreviewURIFromTree(image, state);
-        // Add cache buster to force reload after rotation
-        return baseUrl ? `${baseUrl}?v=${cacheBuster}` : undefined;
+        if (!baseUrl) return undefined;
+
+        // Add per-file cache buster to force reload after rotation
+        return `${baseUrl}?v=${previewCacheBuster}`;
     };
 
     const rotateClockwise = () => {
-        setShouldAnimate(true);
         rotateImage(image.path, 'clockwise');
-        // Reset animation after rotation completes
-        setTimeout(() => setShouldAnimate(false), 300);
     };
 
     const rotateCounterClockwise = () => {
-        setShouldAnimate(true);
         rotateImage(image.path, 'counterclockwise');
-        // Reset animation after rotation completes
-        setTimeout(() => setShouldAnimate(false), 300);
     };
 
     const isChecked = checkedItems.includes(image.path);
     const imageUrl = getImageSrc();
 
-    // For rotated images, we need to constrain to the smaller dimension to prevent oversizing
-    const isRotated90or270 = rotation === 90 || rotation === 270;
-
-
     useEffect(() => {
         dispatch({type: 'UPDATE_PREVIEW', payload: image});
-        setShouldAnimate(false); // Disable animation when navigating to a new image
     }, [image]);
 
     useEffect(() => {
@@ -108,13 +102,12 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                 }}
                             >
                                 <img
+                                    key={`${previewPath}-${previewCacheBuster}`}
                                     src={imageUrl}
                                     alt="Forhåndsvisning av bilde"
-                                    className={`${shouldAnimate ? 'transition-transform duration-300' : ''}`}
                                     style={{
-                                        transform: `rotate(${rotation}deg)`,
-                                        maxWidth: isRotated90or270 ? 'min(calc(100vh - 250px), calc(100vw - 400px))' : 'calc(100vw - 400px)',
-                                        maxHeight: isRotated90or270 ? 'min(calc(100vh - 250px), calc(100vw - 400px))' : 'calc(100vh - 250px)',
+                                        maxWidth: 'calc(100vw - 400px)',
+                                        maxHeight: 'calc(100vh - 250px)',
                                         objectFit: 'contain',
                                         display: 'block'
                                     }}
@@ -173,3 +166,4 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
         </div>
     )
 }
+

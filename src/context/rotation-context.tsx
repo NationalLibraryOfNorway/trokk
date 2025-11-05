@@ -1,33 +1,24 @@
-import {createContext, useContext, useState, useCallback, ReactNode, useRef, useEffect} from 'react';
+import {createContext, useContext, useState, useCallback, ReactNode, useRef} from 'react';
 import {invoke} from '@tauri-apps/api/core';
 
 export type ImageStatus = 'rotating' | 'reloading' | null;
 
 interface RotationContextType {
-    rotations: Map<string, number>;
-    getRotation: (path: string) => number;
     rotateImage: (path: string, direction: 'clockwise' | 'counterclockwise') => void;
     isRotating: (path: string) => boolean;
     getImageStatus: (path: string) => ImageStatus;
     hasAnyRotating: () => boolean;
     cacheBuster: number;
+    getFileCacheBuster: (path: string) => number;
 }
 
 const RotationContext = createContext<RotationContextType | undefined>(undefined);
 
-const ROTATION_DEBOUNCE_MS = 500; // Wait 500ms after last rotation before saving
-
 export const RotationProvider = ({children}: {children: ReactNode}) => {
-    const [rotations, setRotations] = useState<Map<string, number>>(new Map());
     const [imageStatuses, setImageStatuses] = useState<Map<string, ImageStatus>>(new Map());
     const [cacheBuster, setCacheBuster] = useState<number>(Date.now());
-    const debounceTimers = useRef<Map<string, NodeJS.Timeout>>(new Map());
-    const pendingSaves = useRef<Map<string, number>>(new Map());
+    const [fileCacheBusters, setFileCacheBusters] = useState<Map<string, number>>(new Map());
     const activeRotations = useRef<Map<string, Promise<void>>>(new Map());
-
-    const getRotation = useCallback((path: string): number => {
-        return rotations.get(path) || 0;
-    }, [rotations]);
 
     const isRotating = useCallback((path: string): boolean => {
         return imageStatuses.get(path) === 'rotating';
@@ -40,6 +31,10 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
     const hasAnyRotating = useCallback((): boolean => {
         return Array.from(imageStatuses.values()).some(status => status === 'rotating' || status === 'reloading');
     }, [imageStatuses]);
+
+    const getFileCacheBuster = useCallback((path: string): number => {
+        return fileCacheBusters.get(path) || cacheBuster;
+    }, [fileCacheBusters, cacheBuster]);
 
     const saveRotation = useCallback(async (path: string, rotation: number) => {
         // Wait for any active rotation to complete first
@@ -67,6 +62,37 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
                     rotation: rotation
                 });
 
+                // Wait for file operations to complete and files to be written
+                await new Promise(resolve => setTimeout(resolve, 300));
+
+                // Update cache busters with unique timestamp to force reload
+                const newCacheBuster = Date.now();
+                setCacheBuster(newCacheBuster);
+
+                // Update cache busters for original, thumbnail, and preview paths
+                setFileCacheBusters(prev => {
+                    const updated = new Map(prev);
+                    updated.set(path, newCacheBuster);
+
+                    // Construct thumbnail and preview paths
+                    const lastSlash = path.lastIndexOf('/');
+                    const lastBackslash = path.lastIndexOf('\\');
+                    const separator = Math.max(lastSlash, lastBackslash);
+                    if (separator !== -1) {
+                        const directory = path.substring(0, separator);
+                        const filename = path.substring(separator + 1);
+                        const nameWithoutExt = filename.split('.')[0];
+
+                        const thumbnailPath = `${directory}/.thumbnails/${nameWithoutExt}.webp`;
+                        const previewPath = `${directory}/.previews/${nameWithoutExt}.webp`;
+
+                        updated.set(thumbnailPath, newCacheBuster);
+                        updated.set(previewPath, newCacheBuster);
+                    }
+
+                    return updated;
+                });
+
                 // Set reloading status
                 setImageStatuses(prev => {
                     const updated = new Map(prev);
@@ -74,42 +100,16 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
                     return updated;
                 });
 
-                // Wait a bit to ensure file system writes complete
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // Force image reload by updating cache buster
-                setCacheBuster(Date.now());
-
-                // Wait for images to reload, then clear status
-                await new Promise(resolve => setTimeout(resolve, 700));
+                // Wait for images to reload
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 setImageStatuses(prev => {
                     const updated = new Map(prev);
                     updated.delete(path);
                     return updated;
                 });
-
-                // Reset rotation to 0 since the backend physically rotated the file
-                setRotations(prev => {
-                    const updated = new Map(prev);
-                    updated.set(path, 0);
-                    return updated;
-                });
-
-                // Clean up pending saves
-                pendingSaves.current.delete(path);
             } catch (error) {
                 console.error('Failed to rotate image:', error);
-                // Revert rotation on error
-                setRotations(prev => {
-                    const updated = new Map(prev);
-                    const currentRotation = updated.get(path) || 0;
-                    // Revert by rotating back
-                    const revertedRotation = (currentRotation - rotation + 360) % 360;
-                    updated.set(path, revertedRotation);
-                    return updated;
-                });
-                pendingSaves.current.delete(path);
                 // Clear status on error
                 setImageStatuses(prev => {
                     const updated = new Map(prev);
@@ -133,46 +133,18 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
             return;
         }
 
-        const currentRotation = rotations.get(path) || 0;
         const rotationDelta = direction === 'clockwise' ? 90 : -90;
-        const newRotation = (currentRotation + rotationDelta + 360) % 360;
+        // Convert to positive rotation value
+        const newRotation = ((rotationDelta % 360) + 360) % 360;
 
-        // Update UI immediately
-        setRotations(prev => {
-            const updated = new Map(prev);
-            updated.set(path, newRotation);
-            return updated;
-        });
+        // No immediate UI update - just start rotating the file
+        // The EXIF orientation will be applied when the image reloads
+        saveRotation(path, newRotation);
+    }, [saveRotation]);
 
-        // Store the pending save rotation
-        pendingSaves.current.set(path, newRotation);
-
-        // Clear existing debounce timer for this path
-        const existingTimer = debounceTimers.current.get(path);
-        if (existingTimer) {
-            clearTimeout(existingTimer);
-        }
-
-        // Set new debounce timer
-        const timer = setTimeout(() => {
-            saveRotation(path, newRotation);
-            debounceTimers.current.delete(path);
-        }, ROTATION_DEBOUNCE_MS);
-
-        debounceTimers.current.set(path, timer);
-    }, [rotations, saveRotation]);
-
-    // Cleanup effect
-    useEffect(() => {
-        return () => {
-            // Clear all debounce timers on unmount
-            debounceTimers.current.forEach(timer => clearTimeout(timer));
-            debounceTimers.current.clear();
-        };
-    }, []);
 
     return (
-        <RotationContext.Provider value={{rotations, getRotation, rotateImage, isRotating, getImageStatus, hasAnyRotating, cacheBuster}}>
+        <RotationContext.Provider value={{ rotateImage, isRotating, getImageStatus, hasAnyRotating, cacheBuster, getFileCacheBuster}}>
             {children}
         </RotationContext.Provider>
     );

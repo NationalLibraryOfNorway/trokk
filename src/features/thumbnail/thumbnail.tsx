@@ -1,7 +1,7 @@
 import {
     formatFileNames,
     getFileExtension,
-    getThumbnailExtensionFromTree,
+    getThumbnailFromTree,
     getThumbnailURIFromTree,
     supportedFileTypes
 } from '@/util/file-utils.ts';
@@ -26,11 +26,15 @@ export interface ThumbnailProps {
   ({ fileTree, onClick, isChecked, isFocused }, ref) => {
 
     const {state} = useTrokkFiles();
-    const {cacheBuster, getRotation, rotateImage, getImageStatus} = useRotation();
+    const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
 
-    const rotation = getRotation(fileTree.path);
     const imageStatus = getImageStatus(fileTree.path);
     const imageIsRotating = imageStatus === 'rotating';
+
+    // Get thumbnail file for cache busting
+    const thumbnailFile = getThumbnailFromTree(fileTree, state);
+    const thumbnailPath = thumbnailFile?.path || fileTree.path;
+    const thumbnailCacheBuster = getFileCacheBuster(thumbnailPath);
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
@@ -49,7 +53,8 @@ export interface ThumbnailProps {
 
     const fileName = truncateMiddle(formatFileNames(fileTree.name), 7, 10);
     const isSupported = supportedFileTypes.includes(getFileExtension(fileTree?.path));
-    const isWebp = getThumbnailExtensionFromTree(fileTree, state) === 'webp';
+    const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
+    const hasWebpThumbnail = !!thumbnailUrl;
     const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
 
     if (isHiddenDir) return null;
@@ -66,23 +71,29 @@ export interface ThumbnailProps {
     }
 
     let content: React.ReactNode;
-    if (isSupported) {
-        const srcUrl = `${convertFileSrc(fileTree.path)}?v=${cacheBuster}`;
+    // No CSS transforms needed - EXIF orientation is applied automatically by the browser
+    if (hasWebpThumbnail) {
+        const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
         content = (
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
-                <img className={`${imageClass}`} src={srcUrl}
-                     alt={fileTree.name}
-                     style={{ transform: `rotate(${rotation}deg)` }}/>
+                <img
+                    key={`${thumbnailPath}-${thumbnailCacheBuster}`}
+                    className={`${imageClass}`}
+                    src={srcUrl}
+                    alt={fileTree.name} />
             </div>
         );
-    } else if (isWebp) {
-        const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
-        const srcUrl = thumbnailUrl ? `${thumbnailUrl}?v=${cacheBuster}` : undefined;
+    } else if (isSupported) {
+        // Fallback to original file if no WebP thumbnail exists
+        const fileCacheBuster = getFileCacheBuster(fileTree.path);
+        const srcUrl = `${convertFileSrc(fileTree.path)}?v=${fileCacheBuster}`;
         content = (
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
-                <img className={`${imageClass}`} src={srcUrl}
-                     alt={fileTree.name}
-                     style={{ transform: `rotate(${rotation}deg)` }}/>
+                <img
+                    key={`${fileTree.path}-${fileCacheBuster}`}
+                    className={`${imageClass}`}
+                    src={srcUrl}
+                    alt={fileTree.name} />
             </div>
         );
     } else {
@@ -100,7 +111,7 @@ export interface ThumbnailProps {
             <div className={`${initialStyle} ${containerClass} relative group`}>
                 {content}
                 <StatusOverlay status={imageStatus} size="small" />
-                {(isSupported || isWebp) && (
+                {(isSupported || hasWebpThumbnail) && (
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={handleRotateCounterClockwise}
