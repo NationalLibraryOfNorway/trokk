@@ -56,47 +56,28 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
                     return updated;
                 });
 
-                // Rotate the actual image file in the background
+                // Rotate the image file
+                // Backend handles: EXIF update + WebP thumbnail/preview regeneration
                 await invoke('rotate_image', {
                     filePath: path,
                     rotation: rotation
                 });
 
-                // Wait for file operations to complete and files to be written
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // Update cache busters with unique timestamp to force reload
+                // Update cache buster to force browser to reload the new images
+                // This is necessary because browsers cache images by URL
                 const newCacheBuster = Date.now();
                 setCacheBuster(newCacheBuster);
 
-                // Update cache busters for original, thumbnail, and preview paths
+                // Mark this file (and its derived WebP files) as needing reload
                 setFileCacheBusters(prev => {
                     const updated = new Map(prev);
+                    // Single cache buster for the file - components will use this
+                    // for both the original and its WebP derivatives
                     updated.set(path, newCacheBuster);
-
-                    // Construct thumbnail and preview paths
-                    const lastSlash = path.lastIndexOf('/');
-                    const lastBackslash = path.lastIndexOf('\\');
-                    const separator = Math.max(lastSlash, lastBackslash);
-                    if (separator !== -1) {
-                        const directory = path.substring(0, separator);
-                        const filename = path.substring(separator + 1);
-                        const nameWithoutExt = filename.split('.')[0];
-
-                        const thumbnailPath = `${directory}/.thumbnails/${nameWithoutExt}.webp`;
-                        const previewPath = `${directory}/.previews/${nameWithoutExt}.webp`;
-
-                        updated.set(thumbnailPath, newCacheBuster);
-                        updated.set(previewPath, newCacheBuster);
-                    }
-
                     return updated;
                 });
 
-                // Small delay to allow React to re-render and images to start reloading
-                await new Promise(resolve => setTimeout(resolve, 100));
-
-                // Clear rotating status - images are now updated
+                // Clear rotating status
                 setImageStatuses(prev => {
                     const updated = new Map(prev);
                     updated.delete(path);
