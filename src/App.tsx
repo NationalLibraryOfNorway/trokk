@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {FolderOpen, User} from 'lucide-react';
+import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings} from 'lucide-react';
 import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
 import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
@@ -14,6 +14,8 @@ import {MessageProvider} from './context/message-context.tsx';
 import {TransferLogProvider} from './context/transfer-log-context.tsx';
 import {SelectionProvider} from './context/selection-context.tsx';
 import {RotationProvider} from './context/rotation-context.tsx';
+import {getCurrentWindow} from '@tauri-apps/api/window';
+import WindowControlButton from './components/ui/window-control-button.tsx';
 
 
 function App() {
@@ -53,6 +55,62 @@ interface ContentProps {
 const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
     const {scannerPath} = useSettings();
+    const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
+    const [isMaximized, setIsMaximized] = useState(false);
+
+    const copyPathToClipboard = async () => {
+        try {
+            await navigator.clipboard.writeText(scannerPath);
+            setShowCopiedTooltip(true);
+            setTimeout(() => setShowCopiedTooltip(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy path to clipboard:', err);
+        }
+    };
+
+    const handleMinimize = async () => {
+        const appWindow = getCurrentWindow();
+        await appWindow.minimize();
+    };
+
+    const handleMaximize = async () => {
+        const appWindow = getCurrentWindow();
+        await appWindow.toggleMaximize();
+        setIsMaximized(!isMaximized);
+    };
+
+    const handleExit = async () => {
+        const appWindow = getCurrentWindow();
+        await appWindow.close();
+    };
+
+    // Listen for window maximize/unmaximize events
+    React.useEffect(() => {
+        const appWindow = getCurrentWindow();
+
+        const setupListeners = async () => {
+            // Check initial state
+            const maximized = await appWindow.isMaximized();
+            setIsMaximized(maximized);
+
+            // Listen for resize events
+            const unlistenResize = await appWindow.onResized(async () => {
+                const maximized = await appWindow.isMaximized();
+                setIsMaximized(maximized);
+            });
+
+            return unlistenResize;
+        };
+
+        let unlisten: (() => void) | undefined;
+        setupListeners().then(fn => {
+            unlisten = fn;
+        });
+
+        return () => {
+            if (unlisten) unlisten();
+        };
+    }, []);
 
     if (fetchSecretsError) {
         return (
@@ -74,16 +132,18 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn</Button>
+                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
             </div>
         );
     }
 
     if (isLoggingIn && !authResponse) {
         return (
-            <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <h2 className={'h-[75px]'}>Nytt innloggingsvindu åpnet, vennligst logg inn der...</h2>
+            <div data-tauri-drag-region
+                 className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+                <img data-tauri-drag-region alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
+                <h2 data-tauri-drag-region className={'h-[75px]'}>Nytt innloggingsvindu åpnet, vennligst logg inn
+                    der...</h2>
             </div>
         );
     }
@@ -92,27 +152,65 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn</Button>
+                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
             </div>
         );
     }
 
     return (
         <div className="relative h-full flex-col">
-            <div className="grid grid-cols-3 py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center">
-                <h2 className="text-xl flex items-center">
-                    <FolderOpen size="32" className="mb-1 mr-1 flex-shrink-0"/>{scannerPath}
-                </h2>
-                <h1 className="text-4xl text-center">Trøkk</h1>
+            <div data-tauri-drag-region
+                 className="grid grid-cols-3 py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center">
+                <div>
+                    <button onClick={copyPathToClipboard}
+                            className="px-2 py-1 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
+                            title="Klikk for å kopiere">
+                        <FolderOpen size="32" className=""/>
+                        <span className="mt-1 relative group hidden md:inline text-xl">
+                            {scannerPath}
+                        </span>
+                    </button>
+                </div>
+                {showCopiedTooltip && (
+                    <span
+                        className="absolute left-0 top-full mt-1 ml-4 px-2 py-2 bg-stone-800 text-white text-sm rounded whitespace-nowrap z-50 shadow-lg">
+                                Mappesti kopiert til utklippstavle
+                            </span>
+                )}
+                <h1 data-tauri-drag-region className="flex text-4xl cursor-default">Trøkk</h1>
                 <div className="flex justify-end items-center gap-2">
-                    <div className="flex items-center pr-2 gap-1">
-                        <div className="bg-stone-600 rounded-full p-1.5 mb-1 mr-1 flex items-center justify-center">
-                            <User size={20} />
+                    <div data-tauri-drag-region className="flex items-center pr-2 gap-1">
+                        <div data-tauri-drag-region
+                             className="bg-stone-600 rounded-full cursor-default p-1.5 mb-1 mr-1 flex items-center justify-center">
+                            <User data-tauri-drag-region size={20}/>
                         </div>
-                        <p>{authResponse.userInfo.givenName}</p>
+                        <p data-tauri-drag-region
+                           className="cursor-default hidden md:inline">{authResponse.userInfo.givenName}</p>
                     </div>
-                    <Button onClick={() => setOpenSettings(!openSettings)}>Innstillinger</Button>
-                    <Button onClick={logout}>Logg&nbsp;ut</Button>
+                    <Button onClick={() => setOpenSettings(!openSettings)} className="flex">
+                        <span className="hidden lg:inline">Innstillinger</span>
+                        <Settings className="lg:ms-2"/>
+                    </Button>
+                    <Button onClick={logout} className="flex">
+                        <span className="hidden lg:inline">Logg&nbsp;ut</span>
+                        <LogOut className="lg:ms-2"/>
+                    </Button>
+
+                    <WindowControlButton
+                        onClick={handleMinimize}
+                        icon={Minus}
+                        title="Minimer"
+                    />
+                    <WindowControlButton
+                        onClick={handleMaximize}
+                        icon={isMaximized ? Minimize : Expand}
+                        title={isMaximized ? 'Gjenopprett' : 'Maksimer'}
+                    />
+                    <WindowControlButton
+                        onClick={handleExit}
+                        icon={X}
+                        title="Avslutt"
+                    />
                 </div>
             </div>
             <TrokkFilesProvider scannerPath={scannerPath}>
