@@ -31,7 +31,6 @@ fn test_image_conversion_error_webp_encoding_error_should_display_correct_error_
 	assert_eq!(actual_error_message, expected_error_message);
 }
 
-
 #[test]
 fn test_image_conversion_error_str_error_should_display_correct_error_message() {
 	let actual_error_message = ImageConversionError::StrError("Some error".to_string()).to_string();
