@@ -27,12 +27,30 @@ mod tests;
 
 #[cfg(not(feature = "debug-mock"))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
-	vault_base_url: match option_env!("VAULT_BASE_URL") { Some(v) => v, None => "" },
-	vault_environment: match option_env!("VAULT_ENVIRONMENT") { Some(v) => v, None => "" },
-	vault_role_id: match option_env!("VAULT_ROLE_ID") { Some(v) => v, None => "" },
-	vault_secret_id: match option_env!("VAULT_SECRET_ID") { Some(v) => v, None => "" },
-	sentry_environment: match option_env!("RUST_SENTRY_ENVIRONMENT") { Some(v) => v, None => "" },
-	sentry_dsn: match option_env!("RUST_SENTRY_DSN") { Some(v) => v, None => "" },
+	vault_base_url: match option_env!("VAULT_BASE_URL") {
+		Some(v) => v,
+		None => "",
+	},
+	vault_environment: match option_env!("VAULT_ENVIRONMENT") {
+		Some(v) => v,
+		None => "",
+	},
+	vault_role_id: match option_env!("VAULT_ROLE_ID") {
+		Some(v) => v,
+		None => "",
+	},
+	vault_secret_id: match option_env!("VAULT_SECRET_ID") {
+		Some(v) => v,
+		None => "",
+	},
+	sentry_environment: match option_env!("RUST_SENTRY_ENVIRONMENT") {
+		Some(v) => v,
+		None => "",
+	},
+	sentry_dsn: match option_env!("RUST_SENTRY_DSN") {
+		Some(v) => v,
+		None => "",
+	},
 };
 
 #[cfg(not(feature = "debug-mock"))]
@@ -66,8 +84,12 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 				oidc_client_id: option_env!("OIDC_CLIENT_ID").unwrap_or("").to_string(),
 				oidc_client_secret: option_env!("OIDC_CLIENT_SECRET").unwrap_or("").to_string(),
 				oidc_base_url: option_env!("OIDC_BASE_URL").unwrap_or("").to_string(),
-				oidc_tekst_client_id: option_env!("OIDC_TEKST_CLIENT_ID").unwrap_or("").to_string(),
-				oidc_tekst_client_secret: option_env!("OIDC_TEKST_CLIENT_SECRET").unwrap_or("").to_string(),
+				oidc_tekst_client_id: option_env!("OIDC_TEKST_CLIENT_ID")
+					.unwrap_or("")
+					.to_string(),
+				oidc_tekst_client_secret: option_env!("OIDC_TEKST_CLIENT_SECRET")
+					.unwrap_or("")
+					.to_string(),
 				oidc_tekst_base_url: option_env!("OIDC_TEKST_BASE_URL").unwrap_or("").to_string(),
 			})
 		})

@@ -71,7 +71,10 @@ pub fn list_image_files_in_directory<P: AsRef<Path>>(
 		let path = entry.path();
 		if path.is_file() {
 			if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-				if IMAGE_EXTENSIONS.iter().any(|&x| x.eq_ignore_ascii_case(ext)) {
+				if IMAGE_EXTENSIONS
+					.iter()
+					.any(|&x| x.eq_ignore_ascii_case(ext))
+				{
 					files.push(path);
 				}
 			}
@@ -91,22 +94,23 @@ pub fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
 /// Gets the parent directory of a path
 pub fn get_parent_directory(path_reference: &Path) -> Result<&Path, String> {
 	path_reference.parent().ok_or_else(|| {
-		format!("Failed to get parent directory for: {:?}", path_reference.to_str())
+		format!(
+			"Failed to get parent directory for: {:?}",
+			path_reference.to_str()
+		)
 	})
 }
 
 /// Gets the file name from a path
 pub fn get_file_name(path_reference: &Path) -> Result<&OsStr, String> {
-	path_reference.file_name().ok_or_else(|| {
-		format!("Failed to get file name for: {:?}", path_reference.to_str())
-	})
+	path_reference
+		.file_name()
+		.ok_or_else(|| format!("Failed to get file name for: {:?}", path_reference.to_str()))
 }
 
 /// Deletes all .previews folders recursively in a directory
 /// Returns the number of preview folders deleted
-pub fn delete_all_previews<P: AsRef<Path>>(
-	directory_path: P,
-) -> Result<u32, std::io::Error> {
+pub fn delete_all_previews<P: AsRef<Path>>(directory_path: P) -> Result<u32, std::io::Error> {
 	const PREVIEW_FOLDER_NAME: &str = ".previews";
 	const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 
@@ -115,7 +119,6 @@ pub fn delete_all_previews<P: AsRef<Path>>(
 
 	// Recursively walk through all directories
 	fn walk_and_delete(dir: &Path, count: &mut u32) -> Result<(), std::io::Error> {
-
 		for entry in fs::read_dir(dir)? {
 			let entry = entry?;
 			let path = entry.path();
@@ -124,10 +127,13 @@ pub fn delete_all_previews<P: AsRef<Path>>(
 				let dir_name = path.file_name().and_then(|n| n.to_str());
 
 				// If this is a .previews folder, delete it
-				if dir_name == Some(PREVIEW_FOLDER_NAME) || dir_name == Some(THUMBNAIL_FOLDER_NAME) {
+				if dir_name == Some(PREVIEW_FOLDER_NAME) || dir_name == Some(THUMBNAIL_FOLDER_NAME)
+				{
 					fs::remove_dir_all(&path)?;
 					*count += 1;
-				} else if dir_name != Some(THUMBNAIL_FOLDER_NAME) || dir_name != Some(PREVIEW_FOLDER_NAME) {
+				} else if dir_name != Some(THUMBNAIL_FOLDER_NAME)
+					|| dir_name != Some(PREVIEW_FOLDER_NAME)
+				{
 					// Don't recurse into .thumbnails or .previews folders, but do recurse into other directories
 					walk_and_delete(&path, count)?;
 				}
@@ -139,4 +145,3 @@ pub fn delete_all_previews<P: AsRef<Path>>(
 	walk_and_delete(path_reference, &mut deleted_count)?;
 	Ok(deleted_count)
 }
-

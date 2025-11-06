@@ -8,9 +8,10 @@ use std::path::{Path, PathBuf};
 use std::time::Duration;
 use std::{
 	fs,
-	io::{BufReader, Cursor},
+	io::{BufReader, Cursor, Read, Seek, SeekFrom, Write},
 	thread,
 };
+use byteorder::{LittleEndian, BigEndian, ReadBytesExt, WriteBytesExt};
 use webp::Encoder;
 
 use crate::error::ImageConversionError;
@@ -278,20 +279,17 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 		.map(|s| s.to_lowercase())
 		.unwrap_or_default();
 
-	// Both JPEG and TIFF support EXIF orientation
+	// Handle JPEG and TIFF differently due to different file formats
 	match extension.as_str() {
-		"jpg" | "jpeg" | "tif" | "tiff" => {
-			// Read the JPEG file
+		"jpg" | "jpeg" => {
+			// For JPEG, use img-parts to manipulate EXIF segments
 			let jpeg_data = fs::read(path_reference).map_err(|e| {
-				ImageConversionError::StrError(format!("Failed to read image: {}", e))
+				ImageConversionError::StrError(format!("Failed to read JPEG: {}", e))
 			})?;
 
 			let mut jpeg = Jpeg::from_bytes(jpeg_data.into()).map_err(|e| {
 				ImageConversionError::StrError(format!("Failed to parse JPEG: {}", e))
 			})?;
-
-			// Get existing EXIF data (we'll create a fresh one with just orientation)
-			let _exif_data = jpeg.exif().map(|e| e.to_vec()).unwrap_or_else(Vec::new);
 
 			// Create new EXIF with updated orientation
 			let new_exif_buf = {
@@ -318,8 +316,16 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 
 			// Write back to file
 			fs::write(path_reference, jpeg.encoder().bytes()).map_err(|e| {
-				ImageConversionError::StrError(format!("Failed to write image: {}", e))
+				ImageConversionError::StrError(format!("Failed to write JPEG: {}", e))
 			})?;
+
+			Ok(())
+		}
+		"tif" | "tiff" => {
+			// For TIFF files, we update the Orientation tag directly in the IFD
+			// without re-encoding the image data to keep it fast
+			update_tiff_orientation(path_reference, new_orientation)
+				.map_err(|e| ImageConversionError::StrError(format!("Failed to update TIFF orientation: {}", e)))?;
 
 			Ok(())
 		}
@@ -328,6 +334,100 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 			extension
 		))),
 	}
+}
+
+/// Updates the orientation tag in a TIFF file's IFD without re-encoding the image
+fn update_tiff_orientation<P: AsRef<Path>>(path: P, orientation: u16) -> Result<(), String> {
+	let path = path.as_ref();
+
+	// Open file for reading and writing
+	let mut file = fs::OpenOptions::new()
+		.read(true)
+		.write(true)
+		.open(path)
+		.map_err(|e| format!("Failed to open TIFF file: {}", e))?;
+
+	// Read TIFF header to determine endianness
+	let mut header = [0u8; 8];
+	file.read_exact(&mut header)
+		.map_err(|e| format!("Failed to read TIFF header: {}", e))?;
+
+	// Check byte order (II = little-endian, MM = big-endian)
+	let is_little_endian = match &header[0..2] {
+		b"II" => true,
+		b"MM" => false,
+		_ => return Err("Invalid TIFF file: unrecognized byte order marker".to_string()),
+	};
+
+	// Verify TIFF magic number (42)
+	let magic = if is_little_endian {
+		u16::from_le_bytes([header[2], header[3]])
+	} else {
+		u16::from_be_bytes([header[2], header[3]])
+	};
+
+	if magic != 42 {
+		return Err(format!("Invalid TIFF file: magic number is {} instead of 42", magic));
+	}
+
+	// Read offset to first IFD
+	let ifd_offset = if is_little_endian {
+		u32::from_le_bytes([header[4], header[5], header[6], header[7]])
+	} else {
+		u32::from_be_bytes([header[4], header[5], header[6], header[7]])
+	};
+
+	// Seek to IFD
+	file.seek(SeekFrom::Start(ifd_offset as u64))
+		.map_err(|e| format!("Failed to seek to IFD: {}", e))?;
+
+	// Read number of directory entries
+	let num_entries = if is_little_endian {
+		file.read_u16::<LittleEndian>()
+	} else {
+		file.read_u16::<BigEndian>()
+	}.map_err(|e| format!("Failed to read IFD entry count: {}", e))?;
+
+	// TIFF IFD entry is 12 bytes: tag(2) + type(2) + count(4) + value/offset(4)
+	const ORIENTATION_TAG: u16 = 274; // 0x0112
+
+	// Search for Orientation tag
+	for i in 0..num_entries {
+		let entry_offset = ifd_offset as u64 + 2 + (i as u64 * 12);
+		file.seek(SeekFrom::Start(entry_offset))
+			.map_err(|e| format!("Failed to seek to IFD entry: {}", e))?;
+
+		let tag = if is_little_endian {
+			file.read_u16::<LittleEndian>()
+		} else {
+			file.read_u16::<BigEndian>()
+		}.map_err(|e| format!("Failed to read tag: {}", e))?;
+
+		if tag == ORIENTATION_TAG {
+			// Found the Orientation tag!
+			// Skip type(2) and count(4) to get to value
+			file.seek(SeekFrom::Current(6))
+				.map_err(|e| format!("Failed to seek to orientation value: {}", e))?;
+
+			// Write the new orientation value (it's stored directly in the value field for SHORT type)
+			if is_little_endian {
+				file.write_u16::<LittleEndian>(orientation)
+			} else {
+				file.write_u16::<BigEndian>(orientation)
+			}.map_err(|e| format!("Failed to write orientation value: {}", e))?;
+
+			// Flush to ensure data is written
+			file.flush()
+				.map_err(|e| format!("Failed to flush file: {}", e))?;
+
+			return Ok(());
+		}
+	}
+
+	// Orientation tag not found - this is actually okay, some TIFFs don't have it
+	// We would need to add a new IFD entry, which is more complex
+	Err("Orientation tag not found in TIFF IFD. The file may not have EXIF data. \
+		 Adding new IFD entries is not yet supported.".to_string())
 }
 
 /// Regenerates WebP thumbnail and preview files from the rotated original
