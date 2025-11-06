@@ -24,58 +24,13 @@ describe('RotationContext', () => {
         vi.useRealTimers();
     });
 
-    it('should initialize with no rotations', () => {
+    it('should initialize with no rotating images', () => {
         const {result} = renderHook(() => useRotation(), {wrapper});
-        expect(result.current.getRotation('/test/image.jpg')).toBe(0);
+        expect(result.current.isRotating('/test/image.jpg')).toBe(false);
+        expect(result.current.getImageStatus('/test/image.jpg')).toBe(null);
     });
 
-    it('should update rotation immediately in UI', () => {
-        const {result} = renderHook(() => useRotation(), {wrapper});
-
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-
-        expect(result.current.getRotation('/test/image.jpg')).toBe(90);
-    });
-
-    it('should debounce multiple rotations', async () => {
-        const {result} = renderHook(() => useRotation(), {wrapper});
-
-        // First rotation
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-        expect(result.current.getRotation('/test/image.jpg')).toBe(90);
-
-        // Second rotation (resets debounce timer)
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-        expect(result.current.getRotation('/test/image.jpg')).toBe(180);
-
-        // Third rotation (resets debounce timer again)
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-
-        expect(result.current.getRotation('/test/image.jpg')).toBe(270);
-        expect(invoke).not.toHaveBeenCalled();
-
-        // Fast forward the debounce timer
-        await act(async () => {
-            vi.advanceTimersByTime(500);
-        });
-
-        // Should only invoke once with the final rotation
-        expect(invoke).toHaveBeenCalledTimes(1);
-        expect(invoke).toHaveBeenCalledWith('rotate_image', {
-            filePath: '/test/image.jpg',
-            rotation: 270,
-        });
-    });
-
-    it('should prevent rotation while one is in progress', async () => {
+    it('should set rotating status when rotation starts', () => {
         (invoke as ReturnType<typeof vi.fn>).mockImplementation(() =>
             new Promise(resolve => setTimeout(resolve, 1000))
         );
@@ -86,18 +41,85 @@ describe('RotationContext', () => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
         });
 
-        // Fast forward debounce
+        // Should immediately set rotating status
+        expect(result.current.isRotating('/test/image.jpg')).toBe(true);
+        expect(result.current.getImageStatus('/test/image.jpg')).toBe('rotating');
+    });
+
+    it('should invoke rotate_image with correct parameters for clockwise rotation', async () => {
+        (invoke as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+
+        const {result} = renderHook(() => useRotation(), {wrapper});
+
         await act(async () => {
-            vi.advanceTimersByTime(500);
+            result.current.rotateImage('/test/image.jpg', 'clockwise');
+            await vi.runAllTimersAsync();
         });
 
-        // Try to rotate again while first rotation is still in progress
+        expect(invoke).toHaveBeenCalledWith('rotate_image', {
+            filePath: '/test/image.jpg',
+            rotation: 90,
+        });
+    });
+
+    it('should invoke rotate_image with correct parameters for counterclockwise rotation', async () => {
+        (invoke as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+
+        const {result} = renderHook(() => useRotation(), {wrapper});
+
+        await act(async () => {
+            result.current.rotateImage('/test/image.jpg', 'counterclockwise');
+            await vi.runAllTimersAsync();
+        });
+
+        expect(invoke).toHaveBeenCalledWith('rotate_image', {
+            filePath: '/test/image.jpg',
+            rotation: 270,
+        });
+    });
+
+    it('should prevent concurrent rotations on the same image', async () => {
+        const consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+        let resolveRotation: (() => void) | null = null;
+        (invoke as ReturnType<typeof vi.fn>).mockImplementation(() =>
+            new Promise(resolve => {
+                resolveRotation = resolve as () => void;
+            })
+        );
+
+        const {result} = renderHook(() => useRotation(), {wrapper});
+
+        // Start first rotation
         act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
         });
 
-        // Should still be at 90 degrees since second rotation was prevented
-        expect(result.current.getRotation('/test/image.jpg')).toBe(90);
+        expect(result.current.isRotating('/test/image.jpg')).toBe(true);
+        expect(invoke).toHaveBeenCalledTimes(1);
+
+        // Try to start second rotation while first is in progress
+        act(() => {
+            result.current.rotateImage('/test/image.jpg', 'clockwise');
+        });
+
+        // Second rotation should be prevented, not queued
+        expect(invoke).toHaveBeenCalledTimes(1);
+        expect(consoleDebugSpy).toHaveBeenCalledWith('Rotation already in progress for:', '/test/image.jpg');
+
+        // Resolve first rotation
+        await act(async () => {
+            resolveRotation?.();
+            await vi.runAllTimersAsync();
+        });
+
+        // After first completes, we can start a new rotation
+        act(() => {
+            result.current.rotateImage('/test/image.jpg', 'clockwise');
+        });
+
+        expect(invoke).toHaveBeenCalledTimes(2);
+
+        consoleDebugSpy.mockRestore();
     });
 
     it('should handle rotation errors gracefully', async () => {
@@ -106,106 +128,117 @@ describe('RotationContext', () => {
 
         const {result} = renderHook(() => useRotation(), {wrapper});
 
-        act(() => {
+        await act(async () => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-
-        // Fast forward debounce
-        await act(async () => {
-            vi.advanceTimersByTime(500);
-        });
-
-        // Wait a bit for the promise to reject
-        await act(async () => {
             await vi.runAllTimersAsync();
         });
 
+        // Error should be logged
         expect(consoleErrorSpy).toHaveBeenCalled();
+
+        // Status should be cleared after error
+        expect(result.current.isRotating('/test/image.jpg')).toBe(false);
+        expect(result.current.getImageStatus('/test/image.jpg')).toBe(null);
+
         consoleErrorSpy.mockRestore();
     });
 
-    it('should reset rotation to 0 after successful save', async () => {
+    it('should update cache buster after successful rotation', async () => {
         (invoke as ReturnType<typeof vi.fn>).mockResolvedValueOnce(undefined);
 
         const {result} = renderHook(() => useRotation(), {wrapper});
 
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
+        const initialCacheBuster = result.current.getFileCacheBuster('/test/image.jpg');
 
-        expect(result.current.getRotation('/test/image.jpg')).toBe(90);
-
-        // Fast forward debounce (500ms) and all subsequent delays
         await act(async () => {
-            vi.advanceTimersByTime(500);
-            await Promise.resolve(); // Let invoke complete
-            vi.advanceTimersByTime(1100); // File system write (300ms) + reload (700ms)
-            await vi.runAllTimersAsync(); // Run any remaining timers
+            result.current.rotateImage('/test/image.jpg', 'clockwise');
+            vi.advanceTimersByTime(500); // Wait for file operations
+            await vi.runAllTimersAsync();
         });
 
-        // After successful rotation, UI rotation should reset to 0 since file is now rotated
-        expect(result.current.getRotation('/test/image.jpg')).toBe(0);
+        // Cache buster should be updated to force image reload
+        const newCacheBuster = result.current.getFileCacheBuster('/test/image.jpg');
+        expect(newCacheBuster).toBeGreaterThan(initialCacheBuster);
+
+        // Status should be cleared
+        expect(result.current.isRotating('/test/image.jpg')).toBe(false);
     });
 
-    it('should handle counterclockwise rotation', () => {
+    it('should track multiple rotating images with hasAnyRotating', () => {
+        (invoke as ReturnType<typeof vi.fn>).mockImplementation(() =>
+            new Promise(resolve => setTimeout(resolve, 1000))
+        );
+
         const {result} = renderHook(() => useRotation(), {wrapper});
 
+        expect(result.current.hasAnyRotating()).toBe(false);
+
         act(() => {
-            result.current.rotateImage('/test/image.jpg', 'counterclockwise');
+            result.current.rotateImage('/test/image1.jpg', 'clockwise');
         });
 
-        expect(result.current.getRotation('/test/image.jpg')).toBe(270);
+        expect(result.current.hasAnyRotating()).toBe(true);
+
+        act(() => {
+            result.current.rotateImage('/test/image2.jpg', 'clockwise');
+        });
+
+        expect(result.current.hasAnyRotating()).toBe(true);
+        expect(result.current.isRotating('/test/image1.jpg')).toBe(true);
+        expect(result.current.isRotating('/test/image2.jpg')).toBe(true);
     });
 
-    it('should wrap rotation around 360 degrees', () => {
-        const {result} = renderHook(() => useRotation(), {wrapper});
-
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-        act(() => {
-            result.current.rotateImage('/test/image.jpg', 'clockwise');
-        });
-
-        // 4 * 90 = 360, should wrap to 0
-        expect(result.current.getRotation('/test/image.jpg')).toBe(0);
-    });
-
-    it('should track image status correctly', async () => {
+    it('should invoke rotation for each click separately', async () => {
         (invoke as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
 
         const {result} = renderHook(() => useRotation(), {wrapper});
 
+        // First rotation
+        await act(async () => {
+            result.current.rotateImage('/test/image.jpg', 'clockwise');
+            await vi.runAllTimersAsync();
+        });
+
+        expect(invoke).toHaveBeenCalledTimes(1);
+        expect(invoke).toHaveBeenCalledWith('rotate_image', {
+            filePath: '/test/image.jpg',
+            rotation: 90,
+        });
+
+        // Second rotation - backend handles accumulation via EXIF
+        await act(async () => {
+            result.current.rotateImage('/test/image.jpg', 'clockwise');
+            await vi.runAllTimersAsync();
+        });
+
+        expect(invoke).toHaveBeenCalledTimes(2);
+        // Frontend always sends the delta (90°), backend accumulates via EXIF
+    });
+
+    it('should track image status correctly throughout rotation lifecycle', async () => {
+        (invoke as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+
+        const {result} = renderHook(() => useRotation(), {wrapper});
+
+        // Initially no status
+        expect(result.current.getImageStatus('/test/image.jpg')).toBe(null);
+
+        // Start rotation
         act(() => {
             result.current.rotateImage('/test/image.jpg', 'clockwise');
         });
 
-        expect(result.current.getImageStatus('/test/image.jpg')).toBe(null);
+        // Immediately shows rotating status
+        expect(result.current.getImageStatus('/test/image.jpg')).toBe('rotating');
 
-        // Fast forward debounce (500ms)
+        // Complete rotation
         await act(async () => {
-            vi.advanceTimersByTime(500);
-            await Promise.resolve(); // Let invoke start
+            await vi.runAllTimersAsync();
         });
 
-        // Should be rotating or reloading (invoke completes immediately in test)
-        const statusAfterInvoke = result.current.getImageStatus('/test/image.jpg');
-        expect(['rotating', 'reloading'].includes(statusAfterInvoke as string)).toBe(true);
-
-        // Fast forward all remaining delays
-        await act(async () => {
-            vi.advanceTimersByTime(1100); // 300ms + 700ms delays
-            await vi.runAllTimersAsync(); // Run any remaining timers
-        });
-
-        // Status should be cleared after all delays
+        // Status should be cleared after rotation completes
         expect(result.current.getImageStatus('/test/image.jpg')).toBe(null);
+        expect(result.current.isRotating('/test/image.jpg')).toBe(false);
     });
 });
 
