@@ -12,10 +12,10 @@ fn main() {
 	// Initialize Sentry
 	#[cfg(not(feature = "debug-mock"))]
 	let _guard = sentry::init((
-		env!("RUST_SENTRY_DSN"),
+		option_env!("RUST_SENTRY_DSN").unwrap_or(""),
 		sentry::ClientOptions {
 			release: sentry::release_name!(),
-			environment: Some(Cow::from(env!("RUST_SENTRY_ENVIRONMENT"))),
+			environment: option_env!("RUST_SENTRY_ENVIRONMENT").map(Cow::from),
 			debug: true,
 			..Default::default()
 		},
