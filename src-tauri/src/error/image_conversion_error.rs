@@ -9,10 +9,6 @@ pub enum ImageConversionError {
 	IoError(#[from] std::io::Error),
 	#[error("Failed to encode WebP: {0}")]
 	WebPEncodingError(#[from] WebPEncodingErrorWrapper),
-	#[error("Failed to get parent directory: {0}")]
-	FailedToGetParentDirectoryError(String),
-	#[error("Failed to get file name: {0}")]
-	FailedToGetFileNameError(String),
 	#[error("{0}")]
 	StrError(String),
 }

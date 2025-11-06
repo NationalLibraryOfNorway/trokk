@@ -160,13 +160,13 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     return (
         <div className="relative h-full flex-col">
             <div data-tauri-drag-region
-                 className="grid grid-cols-3 py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center">
-                <div>
+                 className="flex flex-row py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center justify-between">
+                <div className="flex-shrink-0">
                     <button onClick={copyPathToClipboard}
-                            className="px-2 py-1 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
+                            className="px-2 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
                             title="Klikk for å kopiere">
                         <FolderOpen size="32" className=""/>
-                        <span className="mt-1 relative group hidden md:inline text-xl">
+                        <span className="mt-1 ms-1 relative group hidden md:inline">
                             {scannerPath}
                         </span>
                     </button>
@@ -177,8 +177,11 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                                 Mappesti kopiert til utklippstavle
                             </span>
                 )}
-                <h1 data-tauri-drag-region className="flex text-4xl cursor-default">Trøkk</h1>
-                <div className="flex justify-end items-center gap-2">
+                <div data-tauri-drag-region className="text-4xl cursor-default overflow-hidden">
+                <img data-tauri-drag-region src={'/banner.png'} alt="Trøkk Logo"
+                     className="h-10 inline-block ms-2 sm:w-auto w-10 object-cover object-left"/>
+                </div>
+                <div className="flex-shrink-0 flex items-center gap-2">
                     <div data-tauri-drag-region className="flex items-center pr-2 gap-1">
                         <div data-tauri-drag-region
                              className="bg-stone-600 rounded-full cursor-default p-1.5 mb-1 mr-1 flex items-center justify-center">
