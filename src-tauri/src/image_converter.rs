@@ -103,8 +103,6 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 	let mut image: image::DynamicImage = reader.decode()?;
 
 	// Apply EXIF orientation if present
-	// Note: The image crate's ImageReader doesn't automatically apply EXIF orientation
-	// We need to read it manually and apply the transformation
 	image = apply_exif_orientation(path_reference, image)?;
 
 	let image = if high_res {
@@ -182,10 +180,6 @@ pub fn check_if_preview_exists<P: AsRef<Path>>(
 }
 
 /// Rotates an image by the specified angle (0, 90, 180, 270 degrees)
-/// Uses exiftool to modify EXIF orientation metadata for instant rotation
-/// without re-encoding. This is extremely fast (milliseconds vs seconds).
-///
-/// Supports TIFF, JPEG, and WebP formats.
 pub fn rotate_image<P: AsRef<Path>>(
 	image_path: P,
 	rotation: u16,
@@ -215,8 +209,6 @@ pub fn rotate_image<P: AsRef<Path>>(
 }
 
 /// Rotates an image using exiftool by updating the EXIF Orientation tag
-/// This is extremely fast as it only modifies metadata, not pixel data
-/// Properly accumulates rotations by reading current orientation first
 fn rotate_with_exiftool<P: AsRef<Path>>(
 	image_path: P,
 	rotation: u16,
@@ -239,13 +231,6 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 		1  // Default to normal orientation if not found
 	};
 
-	// Calculate new orientation based on current orientation and rotation delta
-	// EXIF Orientation values:
-	// 1 = Normal (0°)
-	// 6 = Rotate 90° CW
-	// 3 = Rotate 180°
-	// 8 = Rotate 270° CW (90° CCW)
-
 	// Map current orientation to degrees
 	let current_degrees = match current_orientation {
 		1 => 0,
@@ -266,7 +251,6 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 		270 => 8,
 		_ => 1,
 	};
-
 
 	// Only update if orientation changed
 	if new_orientation == current_orientation {
@@ -296,8 +280,6 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 }
 
 /// Regenerates WebP thumbnail and preview files from the rotated original
-/// This ensures they perfectly match the EXIF-rotated original file
-/// We delete and regenerate instead of rotating pixels to avoid any sync issues
 fn rotate_webp_files<P: AsRef<Path>>(
 	image_path: P,
 	_rotation: u16,
@@ -319,20 +301,16 @@ fn rotate_webp_files<P: AsRef<Path>>(
 	preview_path.push(filename_original_image);
 	preview_path.set_extension(WEBP_EXTENSION);
 
-	// Delete existing WebP files so they get regenerated from the rotated original
-	// This ensures perfect sync between original and WebP files
-	if thumbnail_path.exists() {
-		fs::remove_file(&thumbnail_path)?;
-	}
+	// Always regenerate thumbnail (needed for grid view)
+	convert_to_webp(path_reference, false)?; // Thumbnail
 
+	// If preview exists, user is viewing in detail view - regenerate it too
+	// If it doesn't exist, skip for performance (will be generated on-demand later)
 	if preview_path.exists() {
 		fs::remove_file(&preview_path)?;
+		convert_to_webp(path_reference, true)?; // Preview
 	}
 
-	// Regenerate thumbnail and preview from the rotated original
-	// The apply_exif_orientation function will ensure correct orientation
-	convert_to_webp(path_reference, false)?; // Thumbnail
-	convert_to_webp(path_reference, true)?;  // Preview
 
 	Ok(())
 }

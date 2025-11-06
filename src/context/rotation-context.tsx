@@ -93,16 +93,10 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
                     return updated;
                 });
 
-                // Set reloading status
-                setImageStatuses(prev => {
-                    const updated = new Map(prev);
-                    updated.set(path, 'reloading');
-                    return updated;
-                });
+                // Small delay to allow React to re-render and images to start reloading
+                await new Promise(resolve => setTimeout(resolve, 100));
 
-                // Wait for images to reload
-                await new Promise(resolve => setTimeout(resolve, 500));
-
+                // Clear rotating status - images are now updated
                 setImageStatuses(prev => {
                     const updated = new Map(prev);
                     updated.delete(path);
