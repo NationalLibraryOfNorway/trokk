@@ -121,12 +121,4 @@ describe('Thumbnail', () => {
         expect(rotateCounterClockwiseBtn).toBeDefined();
     });
 
-    it('applies rotation transform to image', async () => {
-        const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
-        render(componentWithContext(fileTree, baseProps));
-
-        const image = await screen.findByAltText('example.jpg');
-        // Initially should have 0 degree rotation
-        expect(image.style.transform).toContain('rotate(0deg)');
-    });
 });

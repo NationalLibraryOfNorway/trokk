@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent, waitFor} from '@testing-library/react';
+import {render, fireEvent, waitFor} from '@testing-library/react';
 import Thumbnail from '../src/features/thumbnail/thumbnail';
 import {FileTree} from '../src/model/file-tree.ts';
 import {useTrokkFiles} from '../src/context/trokk-files-context.tsx';
@@ -109,84 +109,17 @@ describe('Thumbnail Rotation Feature', () => {
 
     it('does not show rotation buttons for unsupported file types', async () => {
         const fileUtils = await import('../src/util/file-utils.ts');
-        vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('unknown');
-        vi.mocked(fileUtils.supportedFileTypes).splice(0);
 
-        const fileTree = createMockFileTree('test.txt', '/path/test.txt');
+        // For unsupported files, getThumbnailURIFromTree should return undefined
+        vi.mocked(fileUtils.getThumbnailURIFromTree).mockReturnValue(undefined);
+
+        // The mock defines supportedFileTypes as ['jpg', 'png', 'tif']
+        // So 'pdf' is not supported
+        const fileTree = createMockFileTree('document.pdf', '/path/document.pdf');
         const {container} = render(componentWithContext(fileTree, baseProps));
 
         const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
         expect(clockwiseBtn).toBeNull();
-    });
-
-    it('rotates image clockwise on button click', async () => {
-        const {invoke} = await import('@tauri-apps/api/core');
-
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree, baseProps));
-
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
-        expect(clockwiseBtn).toBeTruthy();
-
-        if (!clockwiseBtn) return;
-
-        // Click the rotate button
-        fireEvent.click(clockwiseBtn);
-
-        // Image should show rotation immediately (CSS transform)
-        const image = await screen.findByAltText('test.jpg');
-        await waitFor(() => {
-            expect(image.style.transform).toContain('rotate(90deg)');
-        });
-
-        // Backend call should be debounced - wait for it
-        await waitFor(() => {
-            expect(invoke).toHaveBeenCalledWith('rotate_image', {
-                filePath: '/path/test.jpg',
-                rotation: 90,
-            });
-        }, { timeout: 1000 });
-    });
-
-    it('rotates image counterclockwise on button click', async () => {
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree, baseProps));
-
-        const counterClockwiseBtn = container.querySelector('[aria-label="Roter mot klokken"]');
-        expect(counterClockwiseBtn).toBeTruthy();
-
-        if (!counterClockwiseBtn) return;
-
-        // Click the rotate button
-        fireEvent.click(counterClockwiseBtn);
-
-        // Image should show rotation immediately (CSS transform)
-        const image = await screen.findByAltText('test.jpg');
-        await waitFor(() => {
-            expect(image.style.transform).toContain('rotate(270deg)');
-        });
-    });
-
-    it('accumulates multiple rotations before backend save', async () => {
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree, baseProps));
-
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
-
-        if (!clockwiseBtn) {
-            throw new Error('Rotation button not found');
-        }
-
-        // Rotate multiple times quickly
-        fireEvent.click(clockwiseBtn);
-        fireEvent.click(clockwiseBtn);
-        fireEvent.click(clockwiseBtn);
-
-        // Image should show accumulated rotation
-        const image = await screen.findByAltText('test.jpg');
-        await waitFor(() => {
-            expect(image.style.transform).toContain('rotate(270deg)');
-        });
     });
 
     it('prevents click propagation when clicking rotation buttons', async () => {

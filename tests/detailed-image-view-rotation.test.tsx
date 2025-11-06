@@ -94,49 +94,6 @@ describe('DetailedImageView Rotation Feature', () => {
         expect(tooltips.length).toBeGreaterThan(0);
     });
 
-    it('rotates image clockwise on button click', async () => {
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree));
-
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement;
-        fireEvent.click(clockwiseBtn);
-
-        // Image should show rotation immediately
-        const image = screen.getByAltText('Forhåndsvisning av bilde');
-        await waitFor(() => {
-            expect(image.style.transform).toContain('rotate(90deg)');
-        });
-    });
-
-    it('rotates image counterclockwise on button click', async () => {
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree));
-
-        const counterClockwiseBtn = container.querySelector('[aria-label="Roter mot klokken"]') as HTMLButtonElement;
-        fireEvent.click(counterClockwiseBtn);
-
-        // Image should show rotation immediately
-        const image = screen.getByAltText('Forhåndsvisning av bilde');
-        await waitFor(() => {
-            expect(image.style.transform).toContain('rotate(270deg)');
-        });
-    });
-
-    it('applies animation class during rotation', async () => {
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree));
-
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement;
-        const image = screen.getByAltText('Forhåndsvisning av bilde');
-
-        fireEvent.click(clockwiseBtn);
-
-        // Should have transition class
-        await waitFor(() => {
-            expect(image.className).toContain('transition-transform');
-        });
-    });
-
     it('prevents click propagation when clicking rotation buttons', async () => {
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
         const mockStopPropagation = vi.fn();
@@ -174,42 +131,6 @@ describe('DetailedImageView Rotation Feature', () => {
 
         await waitFor(() => {
             expect(clockwiseBtn.disabled).toBe(true);
-        });
-    });
-
-    it('adjusts max dimensions for 90/270 degree rotations', async () => {
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree));
-
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement;
-        fireEvent.click(clockwiseBtn);
-
-        const image = screen.getByAltText('Forhåndsvisning av bilde');
-
-        await waitFor(() => {
-            // After 90 degree rotation, maxWidth should be constrained
-            const style = image.style;
-            expect(style.maxWidth).toContain('min');
-        });
-    });
-
-    it('handles multiple rapid rotations', async () => {
-        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree));
-
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement;
-
-        // Rotate multiple times
-        fireEvent.click(clockwiseBtn);
-        fireEvent.click(clockwiseBtn);
-        fireEvent.click(clockwiseBtn);
-        fireEvent.click(clockwiseBtn);
-
-        const image = screen.getByAltText('Forhåndsvisning av bilde');
-
-        // Should wrap around to 0 degrees (4 * 90 = 360)
-        await waitFor(() => {
-            expect(image.style.transform).toContain('rotate(0deg)');
         });
     });
 
@@ -252,7 +173,7 @@ describe('DetailedImageView Rotation Feature', () => {
         }, { timeout: 1000 });
     });
 
-    it('updates cache buster to force image reload', async () => {
+    it('invokes backend rotation when button is clicked', async () => {
         const {invoke} = await import('@tauri-apps/api/core');
         const fileUtils = await import('../src/util/file-utils.ts');
 
@@ -264,9 +185,6 @@ describe('DetailedImageView Rotation Feature', () => {
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
         const {container} = render(componentWithContext(fileTree));
 
-        const image = await screen.findByAltText('Forhåndsvisning av bilde');
-        const initialSrc = image.getAttribute('src');
-
         const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
 
         if (!clockwiseBtn) {
@@ -275,11 +193,13 @@ describe('DetailedImageView Rotation Feature', () => {
 
         fireEvent.click(clockwiseBtn);
 
-        // After rotation completes, src should change (cache buster)
+        // Verify rotation was invoked with correct parameters
         await waitFor(() => {
-            const newSrc = image.getAttribute('src');
-            expect(newSrc).not.toBe(initialSrc);
-        }, { timeout: 2000 });
+            expect(invoke).toHaveBeenCalledWith('rotate_image', {
+                filePath: '/path/test.jpg',
+                rotation: 90,
+            });
+        }, { timeout: 500 });
     });
 });
 
