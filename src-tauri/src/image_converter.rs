@@ -228,23 +228,23 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 ) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
 
-	// Read the current orientation
-	let file = fs::File::open(path_reference)
-		.map_err(|e| ImageConversionError::StrError(format!("Failed to read image file: {}", e)))?;
-	let mut bufreader = BufReader::new(&file);
+	// Read current orientation to accumulate rotations
+	let current_orientation: u16 = {
+		let file = fs::File::open(path_reference)
+			.map_err(|e| ImageConversionError::StrError(format!("Failed to read image file: {}", e)))?;
+		let mut bufreader = BufReader::new(&file);
 
-	let current_orientation: u16 = match Reader::new().read_from_container(&mut bufreader) {
-		Ok(exif_data) => match exif_data.get_field(Tag::Orientation, In::PRIMARY) {
-			Some(field) => match field.value {
-				Value::Short(ref v) if !v.is_empty() => v[0],
-				_ => 1,
+		match Reader::new().read_from_container(&mut bufreader) {
+			Ok(exif_data) => match exif_data.get_field(Tag::Orientation, In::PRIMARY) {
+				Some(field) => match field.value {
+					Value::Short(ref v) if !v.is_empty() => v[0],
+					_ => 1,
+				},
+				None => 1,
 			},
-			None => 1,
-		},
-		Err(_) => 1, // No EXIF data, default to normal orientation
-	};
-	drop(bufreader);
-	drop(file);
+			Err(_) => 1, // No EXIF data, default to normal orientation
+		}
+	}; // File and buffer are dropped here automatically
 
 	// Map current orientation to degrees
 	let current_degrees = match current_orientation {
@@ -291,12 +291,27 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 				ImageConversionError::StrError(format!("Failed to parse JPEG: {}", e))
 			})?;
 
-			// Create new EXIF with updated orientation
+			// Read existing EXIF to preserve other metadata
+			let existing_exif = jpeg.exif().and_then(|exif_bytes| {
+				let bytes_vec = exif_bytes.to_vec();
+				let mut cursor = Cursor::new(&bytes_vec);
+				Reader::new().read_from_container(&mut cursor).ok()
+			});
+
+			// Create new EXIF with updated orientation, preserving other fields
 			let new_exif_buf = {
 				let mut exif_writer = exif::experimental::Writer::new();
-				let mut buf = Cursor::new(Vec::new());
 
-				// Set the orientation field
+				// Copy existing EXIF fields except Orientation
+				if let Some(ref exif) = existing_exif {
+					for field in exif.fields() {
+						if field.tag != Tag::Orientation {
+							exif_writer.push_field(field);
+						}
+					}
+				}
+
+				// Add/update the orientation field
 				let orientation_field = exif::Field {
 					tag: Tag::Orientation,
 					ifd_num: In::PRIMARY,
@@ -305,6 +320,7 @@ fn rotate_with_exiftool<P: AsRef<Path>>(
 				exif_writer.push_field(&orientation_field);
 
 				// Write EXIF data
+				let mut buf = Cursor::new(Vec::new());
 				exif_writer.write(&mut buf, false).map_err(|e| {
 					ImageConversionError::StrError(format!("Failed to write EXIF: {}", e))
 				})?;
