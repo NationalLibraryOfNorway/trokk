@@ -69,19 +69,31 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     };
 
     const handleMinimize = async () => {
-        const appWindow = getCurrentWindow();
-        await appWindow.minimize();
+        try {
+            const appWindow = getCurrentWindow();
+            await appWindow.minimize();
+        } catch (error) {
+            console.error('Failed to minimize window:', error);
+        }
     };
 
     const handleMaximize = async () => {
-        const appWindow = getCurrentWindow();
-        await appWindow.toggleMaximize();
-        setIsMaximized(!isMaximized);
+        try {
+            const appWindow = getCurrentWindow();
+            await appWindow.toggleMaximize();
+            setIsMaximized(!isMaximized);
+        } catch (error) {
+            console.error('Failed to toggle maximize window:', error);
+        }
     };
 
     const handleExit = async () => {
-        const appWindow = getCurrentWindow();
-        await appWindow.close();
+        try {
+            const appWindow = getCurrentWindow();
+            await appWindow.close();
+        } catch (error) {
+            console.error('Failed to close window:', error);
+        }
     };
 
     // Listen for window maximize/unmaximize events
