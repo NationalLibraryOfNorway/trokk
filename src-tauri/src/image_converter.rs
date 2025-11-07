@@ -213,7 +213,7 @@ pub fn rotate_image<P: AsRef<Path>>(
 	}
 
 	// Rotate the original file by updating EXIF orientation (instant)
-	rotate_with_exiftool(path_reference, rotation)?;
+	rotate_with_exif(path_reference, rotation)?;
 
 	// Rotate WebP files (thumbnail and preview)
 	rotate_webp_files(path_reference, rotation)?;
@@ -222,7 +222,7 @@ pub fn rotate_image<P: AsRef<Path>>(
 }
 
 /// Rotates an image by updating the EXIF Orientation tag
-fn rotate_with_exiftool<P: AsRef<Path>>(
+fn rotate_with_exif<P: AsRef<Path>>(
 	image_path: P,
 	rotation: u16,
 ) -> Result<(), ImageConversionError> {
