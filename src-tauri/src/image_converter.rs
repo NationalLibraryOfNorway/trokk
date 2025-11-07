@@ -78,7 +78,7 @@ fn apply_exif_orientation<P: AsRef<Path>>(
 pub fn convert_directory_to_webp<P: AsRef<Path>>(
 	directory_path: P,
 ) -> Result<ConversionCount, ImageConversionError> {
-	let files = file_utils::list_image_files_in_directory(directory_path)?;
+	let files = file_utils::list_image_files(directory_path, false)?;
 	let mut count = ConversionCount {
 		converted: 0,
 		already_converted: 0,

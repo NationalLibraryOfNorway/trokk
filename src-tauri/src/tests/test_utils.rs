@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 #[cfg(test)]
 mod tests {
-	use crate::file_utils::find_all_images;
+	use crate::file_utils::list_image_files;
 	use std::fs::File;
 	use std::path::PathBuf;
 	use tempfile::tempdir;
@@ -12,7 +12,7 @@ mod tests {
 	}
 
 	#[test]
-	fn test_find_all_images() {
+	fn test_list_image_files_recursive() {
 		let temp = tempdir().expect("Could not create temp dir");
 		let test_dir = temp.path().to_path_buf();
 
@@ -21,16 +21,10 @@ mod tests {
 		create_file(&image1);
 		create_file(&image2);
 
-		let result = find_all_images(test_dir.to_str().unwrap()).unwrap();
+		let result = list_image_files(&test_dir, true).unwrap();
 		let files: Vec<String> = result
 			.iter()
-			.map(|p| {
-				PathBuf::from(p)
-					.file_name()
-					.unwrap()
-					.to_string_lossy()
-					.to_string()
-			})
+			.map(|p| p.file_name().unwrap().to_string_lossy().to_string())
 			.collect();
 
 		assert!(files.contains(&"image1.jpg".to_string()));

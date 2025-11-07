@@ -114,13 +114,15 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 
 #[tauri::command]
 async fn ensure_all_previews_and_thumbnails(directory_path: String) -> Result<(), String> {
-	let image_files = file_utils::find_all_images(&directory_path)?;
+	let image_files =
+		file_utils::list_image_files(&directory_path, true).map_err(|e| e.to_string())?;
 	for file_path in image_files {
-		if !image_converter::check_if_preview_exists(&file_path).unwrap_or(false) {
-			image_converter::convert_to_webp(file_path.clone(), true).ok();
+		let file_path_str = file_path.to_string_lossy().to_string();
+		if !image_converter::check_if_preview_exists(&file_path_str).unwrap_or(false) {
+			image_converter::convert_to_webp(file_path_str.clone(), true).ok();
 		}
-		if !image_converter::check_if_thumbnail_exists(&file_path).unwrap_or(false) {
-			image_converter::convert_to_webp(file_path, false).ok();
+		if !image_converter::check_if_thumbnail_exists(&file_path_str).unwrap_or(false) {
+			image_converter::convert_to_webp(file_path_str, false).ok();
 		}
 	}
 	Ok(())

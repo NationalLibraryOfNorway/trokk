@@ -35,51 +35,47 @@ pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<Pa
 	Ok(file_paths)
 }
 
-pub fn find_all_images(directory: &str) -> Result<Vec<String>, String> {
-	let mut images = Vec::new();
-	let endings = ["tif", "tiff", "jpg", "jpeg", "png"];
+/// Lists image files in a directory
+/// Supports: tif, tiff, jpg, jpeg, png, webp
+///
+/// # Arguments
+/// * `directory_path` - The directory to search
+/// * `recursive` - If true, searches subdirectories recursively
+pub fn list_image_files<P: AsRef<Path>>(
+	directory_path: P,
+	recursive: bool,
+) -> Result<Vec<PathBuf>, std::io::Error> {
+	const IMAGE_EXTENSIONS: &[&str] = &["tif", "tiff", "jpg", "jpeg", "png", "webp"];
 
-	fn visit_dirs(dir: &Path, endings: &[&str], images: &mut Vec<String>) -> Result<(), String> {
-		for entry in fs::read_dir(dir).map_err(|e| e.to_string())? {
-			let entry = entry.map_err(|e| e.to_string())?;
+	let mut files = Vec::new();
+
+	fn visit_dirs(
+		dir: &Path,
+		recursive: bool,
+		files: &mut Vec<PathBuf>,
+	) -> Result<(), std::io::Error> {
+		for entry in fs::read_dir(dir)? {
+			let entry = entry?;
 			let path = entry.path();
 			if path.is_dir() {
-				visit_dirs(&path, endings, images)?;
-			} else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-				if endings.iter().any(|&x| x.eq_ignore_ascii_case(ext)) {
-					images.push(path.to_string_lossy().to_string());
+				if recursive {
+					visit_dirs(&path, recursive, files)?;
+				}
+			} else if path.is_file() {
+				if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
+					if IMAGE_EXTENSIONS
+						.iter()
+						.any(|&x| x.eq_ignore_ascii_case(ext))
+					{
+						files.push(path);
+					}
 				}
 			}
 		}
 		Ok(())
 	}
 
-	visit_dirs(Path::new(directory), &endings, &mut images)?;
-	Ok(images)
-}
-
-/// Lists all image files in a directory (non-recursive)
-/// Supports: tif, tiff, jpg, jpeg, png, webp
-pub fn list_image_files_in_directory<P: AsRef<Path>>(
-	directory_path: P,
-) -> Result<Vec<PathBuf>, std::io::Error> {
-	const IMAGE_EXTENSIONS: &[&str] = &["tif", "tiff", "jpg", "jpeg", "png", "webp"];
-
-	let mut files = Vec::new();
-	for entry in fs::read_dir(directory_path)? {
-		let entry = entry?;
-		let path = entry.path();
-		if path.is_file() {
-			if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-				if IMAGE_EXTENSIONS
-					.iter()
-					.any(|&x| x.eq_ignore_ascii_case(ext))
-				{
-					files.push(path);
-				}
-			}
-		}
-	}
+	visit_dirs(directory_path.as_ref(), recursive, &mut files)?;
 	files.sort();
 	Ok(files)
 }
