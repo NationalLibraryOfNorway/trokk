@@ -7,7 +7,7 @@ interface ButtonProps {
     className?: string;
 }
 
-const Button: React.FC<ButtonProps> = ({onClick, children, className}) => {
+const TrokkButton: React.FC<ButtonProps> = ({onClick, children, className}) => {
     return (
         <button
             className={`
@@ -33,4 +33,4 @@ const Button: React.FC<ButtonProps> = ({onClick, children, className}) => {
     );
 };
 
-export default Button;
+export default TrokkButton;
