@@ -9,7 +9,7 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar.tsx';
 
-const SIDEBAR_WIDTH = 256; // 16rem in pixels
+const SIDEBAR_WIDTH = 300;
 
 const LeftSidebarToggle: React.FC = () => {
     const { open, toggleSidebar } = useSidebar();
@@ -45,13 +45,14 @@ const MainLayout: React.FC = () => {
         <div className="relative h-full flex w-full overflow-hidden">
             {/* Left Sidebar Provider */}
             <SidebarProvider open={leftOpen} onOpenChange={setLeftOpen} defaultOpen={true}>
-                <div className="h-full flex justify-end pr-1">
+                <div className="h-full flex">
                     <div
-                        className="h-full flex flex-col pr-4 bg-stone-800 overflow-auto transition-all duration-200 ease-linear"
+                        className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear"
                         style={{
                             width: leftOpen ? `${SIDEBAR_WIDTH}px` : '0px',
                             opacity: leftOpen ? 1 : 0,
-                            visibility: leftOpen ? 'visible' : 'hidden'
+                            visibility: leftOpen ? 'visible' : 'hidden',
+                            paddingRight: leftOpen ? '1rem' : '0'
                         }}
                     >
                         <FileTree />
@@ -72,7 +73,7 @@ const MainLayout: React.FC = () => {
                         <div className="h-full flex justify-start">
                             <RightSidebarToggle />
                             <div
-                                className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-200 ease-linear"
+                                className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear"
                                 style={{
                                     width: rightOpen ? `${SIDEBAR_WIDTH}px` : '0px',
                                     opacity: rightOpen ? 1 : 0,
