@@ -29,7 +29,6 @@ const TransferLog: React.FC = () => {
                     <tr className="border-b">
                         <th className="px-4 py-2 text-stone-100 text-left">Tid</th>
                         <th className="px-4 py-2 text-stone-100">ID</th>
-                        <th className="px-4 py-2 text-stone-100 text-left">Arb.tittel</th>
                         <th className="px-4 py-2 text-stone-100 text-right">Sider</th>
                     </tr>
                     </thead>
@@ -49,7 +48,6 @@ const TransferLog: React.FC = () => {
                                     <ClipboardCopy/>
                                 )}
                             </td>
-                            <td className="px-4 py-2 text-stone-100 text-left truncate max-w-xs">{log.workName}</td>
                             <td className="px-4 py-2 text-stone-100 text-right whitespace-nowrap">{log.pages}</td>
                         </tr>
                     ))}
