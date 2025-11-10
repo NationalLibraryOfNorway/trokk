@@ -131,7 +131,7 @@ const RegistrationForm: React.FC = () => {
     };
 
     return (
-        <form className="flex flex-col w-80 m-4" onSubmit={handleSubmit(onSubmit)}>
+        <form className="flex flex-col w-full max-w-full px-4 py-4" onSubmit={handleSubmit(onSubmit)}>
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
                 <label className="text-stone-100">Materialtype</label>
                 <select
@@ -151,46 +151,52 @@ const RegistrationForm: React.FC = () => {
                 </select>
             </div>
 
-            <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('font')}
-                        className="accent-amber-400"
-                        value={'ANTIQUA'}
-                    />{' '}
-                    Antiqua
-                </label>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('font')}
-                        className="accent-amber-400"
-                        value={'FRAKTUR'}
-                    />{' '}
-                    Fraktur
-                </label>
+            <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
+                <label className="text-stone-100 mb-2">Skrifttype</label>
+                <div className="flex flex-row flex-wrap gap-4">
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('font')}
+                            className="accent-amber-400"
+                            value={'ANTIQUA'}
+                        />
+                        Antiqua
+                    </label>
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('font')}
+                            className="accent-amber-400"
+                            value={'FRAKTUR'}
+                        />
+                        Fraktur
+                    </label>
+                </div>
             </div>
 
-            <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('language')}
-                        className="accent-amber-400"
-                        value={'NOB'}
-                    />{' '}
-                    Norsk
-                </label>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('language')}
-                        className="accent-amber-400"
-                        value={'SME'}
-                    />{' '}
-                    Samisk
-                </label>
+            <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
+                <label className="text-stone-100 mb-2">Språk</label>
+                <div className="flex flex-row flex-wrap gap-4">
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('language')}
+                            className="accent-amber-400"
+                            value={'NOB'}
+                        />
+                        Norsk
+                    </label>
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('language')}
+                            className="accent-amber-400"
+                            value={'SME'}
+                        />
+                        Samisk
+                    </label>
+                </div>
             </div>
             {/*<div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
                 <label htmlFor="workingTitle">Arbeidstittel (Blir ikke brukt i produksjon)</label>
