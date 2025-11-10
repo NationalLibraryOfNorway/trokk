@@ -21,10 +21,10 @@ const TransferLog: React.FC = () => {
         : null;
 
     return (
-        <div className="p-4 w-full">
+        <div className="p-4 w-full max-w-full">
             <h2 className="text-xl font-bold mb-4 text-stone-100">Overføringslogg</h2>
-            <div className="w-full">
-                <table className="min-w-full bg-stone-800 border border-stone-700">
+            <div className="w-full overflow-x-auto">
+                <table className="w-full bg-stone-800 border border-stone-700">
                     <thead>
                     <tr className="border-b">
                         <th className="px-4 py-2 text-stone-100 text-left">Tid</th>
@@ -37,7 +37,7 @@ const TransferLog: React.FC = () => {
                     {logs.map((log: TransferLogItem, index: number) => (
                         <tr key={index} className={`hover:bg-stone-700 border-b ${
         log.timestamp.getTime() === latestTimestamp ? 'bg-green-800/50 font-bold' : ''}`}>
-                            <td className="px-4 py-2 text-stone-100">{log.timestamp.toTimeString().slice(0, 8)}</td>
+                            <td className="px-4 py-2 text-stone-100 whitespace-nowrap">{log.timestamp.toTimeString().slice(0, 8)}</td>
                             <td
                                 className="px-4 py-2 text-stone-100 cursor-pointer relative flex justify-center"
                                 onClick={() => copyToClipboard(log.uuid, index)}
@@ -49,8 +49,8 @@ const TransferLog: React.FC = () => {
                                     <ClipboardCopy/>
                                 )}
                             </td>
-                            <td className="px-4 py-2 text-stone-100 overflow-hidden overflow-ellipsis text-left">{log.workName}</td>
-                            <td className="px-4 py-2 text-stone-100 text-right">{log.pages}</td>
+                            <td className="px-4 py-2 text-stone-100 text-left truncate max-w-xs">{log.workName}</td>
+                            <td className="px-4 py-2 text-stone-100 text-right whitespace-nowrap">{log.pages}</td>
                         </tr>
                     ))}
                     </tbody>
