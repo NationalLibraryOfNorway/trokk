@@ -45,9 +45,9 @@ const MainLayout: React.FC = () => {
         <div className="relative h-full flex w-full overflow-hidden">
             {/* Left Sidebar Provider */}
             <SidebarProvider open={leftOpen} onOpenChange={setLeftOpen} defaultOpen={true}>
-                <div className="h-full flex">
+                <div className="h-full flex shrink-0">
                     <div
-                        className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear"
+                        className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear shrink-0"
                         style={{
                             width: leftOpen ? `${SIDEBAR_WIDTH}px` : '0px',
                             opacity: leftOpen ? 1 : 0,
@@ -61,19 +61,19 @@ const MainLayout: React.FC = () => {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 flex relative min-w-0 h-full">
+                <div className="flex-1 flex relative min-w-0 h-full overflow-hidden">
                     {/* Right Sidebar Provider */}
                     <SidebarProvider open={rightOpen} onOpenChange={setRightOpen} defaultOpen={true}>
                         {/* Center Content */}
-                        <div className="flex-1 overflow-auto h-full">
+                        <div className="flex-1 h-full overflow-hidden">
                             <FilesContainer />
                         </div>
 
                         {/* Right Sidebar */}
-                        <div className="h-full flex justify-start">
+                        <div className="h-full flex shrink-0">
                             <RightSidebarToggle />
                             <div
-                                className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear"
+                                className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear shrink-0"
                                 style={{
                                     width: rightOpen ? `${SIDEBAR_WIDTH}px` : '0px',
                                     opacity: rightOpen ? 1 : 0,
