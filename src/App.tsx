@@ -7,7 +7,7 @@ import MainLayout from './components/layouts/main-layout.tsx';
 import Modal from './components/ui/modal.tsx';
 import SettingsForm from './features/settings/settings.tsx';
 import {UploadProgressProvider} from './context/upload-progress-context.tsx';
-import Button from './components/ui/button.tsx';
+import TrokkButton from './components/ui/trokk-button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
 import {MessageProvider} from './context/message-context.tsx';
@@ -148,7 +148,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
+                <TrokkButton className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></TrokkButton>
             </div>
         );
     }
@@ -168,7 +168,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
+                <TrokkButton className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></TrokkButton>
             </div>
         );
     }
@@ -207,14 +207,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                         <p data-tauri-drag-region
                            className="cursor-default hidden md:inline">{authResponse.userInfo.givenName}</p>
                     </div>
-                    <Button onClick={() => setOpenSettings(!openSettings)} className="flex items-center">
+                    <TrokkButton onClick={() => setOpenSettings(!openSettings)} className="flex items-center">
                         <span className="hidden lg:inline">Innstillinger</span>
                         <Settings className="lg:ms-2"/>
-                    </Button>
-                    <Button onClick={logout} className="flex items-center">
+                    </TrokkButton>
+                    <TrokkButton onClick={logout} className="flex items-center">
                         <span className="hidden lg:inline">Logg&nbsp;ut</span>
                         <LogOut className="lg:ms-2"/>
-                    </Button>
+                    </TrokkButton>
 
                     <WindowControlButton
                         onClick={handleMinimize}
