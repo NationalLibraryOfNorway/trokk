@@ -45,7 +45,7 @@ const FilesContainer: React.FC = () => {
         setPreviewDialogOpen,
     });
     return (
-        <div className="relative h-full flex w-full flex-col overscroll-none"
+        <div className="relative h-full flex w-full flex-col overscroll-none min-h-0"
              onClick={() => {
                  if (previewDialogOpen) {
                      setPreviewDialogOpen(false)
@@ -92,7 +92,8 @@ const FilesContainer: React.FC = () => {
                 )}
                 <div
                     ref={containerRef}
-                    className={`grid grid-cols-${columns} gap-4 overflow-y-auto grow w-full p-4 justify-start self-center focus-visible:outline-none focus:ring-0`}
+                    className={`grid grid-cols-${columns} gap-4 overflow-y-auto w-full p-4 justify-start self-center focus-visible:outline-none focus:ring-0`}
+                    style={{ flex: '1 1 0', minHeight: 0 }}
                     tabIndex={0}
                     aria-activedescendant={`file-${currentIndex}`}
                 >
