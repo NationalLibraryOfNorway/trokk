@@ -100,6 +100,29 @@ class SettingStore {
             console.error('Error setting auth response:', error);
         }
     }
+
+    async getTextSize(): Promise<number> {
+        await this.ensureStore();
+        const size = await this.store!.get<number>('textSize')
+            .catch(error => {
+                console.error('Error getting text size:', error);
+                return 100;
+            });
+        return size ?? 100; // Default to 100%
+    }
+
+    async setTextSize(size: number): Promise<void> {
+        await this.ensureStore();
+        try {
+            await this.store!.set('textSize', size).then(async () => {
+                await this.store!.save();
+            }).catch(error => {
+                console.error('Error setting text size:', error);
+            });
+        } catch (error) {
+            console.error('Error setting text size:', error);
+        }
+    }
 }
 
 export const settings = SettingStore.getInstance();

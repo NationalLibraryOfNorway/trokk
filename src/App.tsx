@@ -16,6 +16,7 @@ import {SelectionProvider} from './context/selection-context.tsx';
 import {RotationProvider} from './context/rotation-context.tsx';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
+import {useTextSizeShortcuts} from './hooks/use-text-size-shortcuts.tsx';
 
 
 function App() {
@@ -57,6 +58,9 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {scannerPath} = useSettings();
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
+
+    // Enable keyboard shortcuts for text size control
+    useTextSizeShortcuts();
 
     const copyPathToClipboard = async () => {
         try {
@@ -175,7 +179,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                  className="flex flex-row py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center justify-between">
                 <div className="flex-shrink-0">
                     <button onClick={copyPathToClipboard}
-                            className="px-2 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
+                            className="items-center px-2 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
                             title="Klikk for å kopiere">
                         <FolderOpen size="32" className=""/>
                         <span className="mt-1 ms-1 relative group hidden md:inline">
@@ -202,11 +206,11 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                         <p data-tauri-drag-region
                            className="cursor-default hidden md:inline">{authResponse.userInfo.givenName}</p>
                     </div>
-                    <Button onClick={() => setOpenSettings(!openSettings)} className="flex">
+                    <Button onClick={() => setOpenSettings(!openSettings)} className="flex items-center">
                         <span className="hidden lg:inline">Innstillinger</span>
                         <Settings className="lg:ms-2"/>
                     </Button>
-                    <Button onClick={logout} className="flex">
+                    <Button onClick={logout} className="flex items-center">
                         <span className="hidden lg:inline">Logg&nbsp;ut</span>
                         <LogOut className="lg:ms-2"/>
                     </Button>

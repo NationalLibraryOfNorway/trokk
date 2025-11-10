@@ -4,7 +4,7 @@ import { readDir } from '@tauri-apps/plugin-fs';
 import { useSettings } from '@/context/setting-context.tsx';
 
 const SettingsForm: React.FC = () => {
-    const { scannerPath, setScannerPathSetting, version } = useSettings();
+    const { scannerPath, setScannerPathSetting, version, textSize, setTextSize } = useSettings();
     const [scanPathError, setScanPathError] = useState<string | undefined>(undefined);
     const [scanPathSuccess, setScanPathSuccess] = useState<string | undefined>(undefined);
     const [deletePreviewsStatus, setDeletePreviewsStatus] = useState<string | undefined>(undefined);
@@ -73,6 +73,54 @@ const SettingsForm: React.FC = () => {
         <form className="flex flex-col" onSubmit={handleSubmit}>
             <div className="flex mb-2">
                 <div className="flex-grow-0 ml-4 text-xs">versjon {version.current}</div>
+            </div>
+
+            <div className="flex mb-2 items-center">
+                <label htmlFor="textSize" className="w-32">Tekststørrelse</label>
+                <div className="ml-2 flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={() => setTextSize(75)}
+                        className={`px-3 py-1 ${textSize === 75 ? 'bg-blue-600' : ''}`}
+                    >
+                        Liten
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setTextSize(100)}
+                        className={`px-3 py-1 ${textSize === 100 ? 'bg-blue-600' : ''}`}
+                    >
+                        Normal
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setTextSize(125)}
+                        className={`px-3 py-1 ${textSize === 125 ? 'bg-blue-600' : ''}`}
+                    >
+                        Stor
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setTextSize(150)}
+                        className={`px-3 py-1 ${textSize === 150 ? 'bg-blue-600' : ''}`}
+                    >
+                        Ekstra stor
+                    </button>
+                </div>
+                <input
+                    type="range"
+                    id="textSize"
+                    min="50"
+                    max="200"
+                    step="5"
+                    value={textSize}
+                    onChange={(e) => setTextSize(Number(e.target.value))}
+                    className="ml-4 w-40"
+                />
+                <span className="ml-2 w-12 text-center">{textSize}%</span>
+                <span className="ml-2 text-xs text-muted-foreground">
+                    (Ctrl +/- eller Ctrl + musehjul)
+                </span>
             </div>
 
             <div className="flex mb-2">
