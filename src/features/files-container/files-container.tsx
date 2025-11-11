@@ -46,12 +46,7 @@ const FilesContainer: React.FC = () => {
         setPreviewDialogOpen,
     });
     return (
-        <div className="relative h-full flex w-full flex-col overscroll-none min-h-0"
-             onClick={() => {
-                 if (previewDialogOpen) {
-                     setPreviewDialogOpen(false)
-                 }
-             }}>
+        <>
             <Dialog open={previewDialogOpen} onOpenChange={(open) => setPreviewDialogOpen(open)}>
                 <DialogPortal>
                     <DialogOverlay className="fixed inset-0 preview z-20 bg-stone-800/90"/>
@@ -71,8 +66,16 @@ const FilesContainer: React.FC = () => {
                         />
                     </DialogContent>
                 </DialogPortal>
+            </Dialog>
+
+            <div className="flex flex-col flex-1 min-h-0"
+                 onClick={() => {
+                     if (previewDialogOpen) {
+                         setPreviewDialogOpen(false)
+                     }
+                 }}>
                 {state.current && state.current.children?.length !== 0 && (
-                    <div className="p-4 border-b border-stone-600 flex items-center gap-4">
+                    <div className="p-4 border-b border-stone-600 flex items-center gap-4 flex-shrink-0">
                         <p className="font-semibold">
                             {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
                         </p>
@@ -88,22 +91,23 @@ const FilesContainer: React.FC = () => {
                             onChange={(e) => setColumns(Number(e.target.value))}
                             className="w-full max-w-[150px] h-2 bg-stone-500 rounded-lg appearance-none cursor-pointer px-0"
                         />
-
                     </div>
                 )}
                 {state.current?.children && !isEven && (
-                    <div className="p-4 border-b border-stone-600 bg-red-900 flex items-center gap-4">
+                    <div className="p-4 border-b border-stone-600 bg-red-900 flex items-center gap-4 flex-shrink-0">
                         <p className="font-semibold">OBS! Det er et oddetall av filer i denne mappen</p>
                     </div>
                 )}
-                <div
-                    ref={containerRef}
-                    className={`grid grid-cols-${columns} gap-4 overflow-y-auto w-full p-4 justify-start focus-visible:outline-none focus:ring-0`}
-                    style={{ flex: '1 1 0', minHeight: 0, maxHeight: '100%' }}
-                    tabIndex={0}
-                    aria-activedescendant={`file-${currentIndex}`}
-                >
-                    {state.current && state.current.children ? (
+                {/* Scroll area */}
+                <div className="flex-1 min-h-0 overflow-auto">
+                    <div
+                        ref={containerRef}
+                        className="grid gap-4 p-4"
+                        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))` }}
+                        tabIndex={0}
+                        aria-activedescendant={`file-${currentIndex}`}
+                    >
+                        {state.current && state.current.children ? (
                         <>
                             {state.current.children.length !== 0 ? (
 
@@ -131,7 +135,7 @@ const FilesContainer: React.FC = () => {
                                             <div
                                                 key={child.path}
                                                 ref={el => fileRefs.current[index] = el}
-                                                className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0 flex flex-col items-center justify-start"
+                                                className="relative space-y-2 py-2 flex flex-col items-center justify-start"
                                                 tabIndex={currentIndex === index ? 0 : -1}
                                                 onFocus={() => handleIndexChange(index)}
                                             >
@@ -164,10 +168,11 @@ const FilesContainer: React.FC = () => {
                             Velg en mappe i listen til venstre. <br/>
                             Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
                         </p>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </Dialog>
-        </div>
+            </div>
+        </>
     );
 };
 

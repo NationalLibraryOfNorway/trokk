@@ -4,91 +4,55 @@ import RegistrationForm from '@/features/registration/registration-form.tsx';
 import FilesContainer from '@/features/files-container/files-container.tsx';
 import TransferLog from '@/features/transfer-log/transfer-log.tsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import {
-    SidebarProvider,
-    useSidebar,
-} from '@/components/ui/sidebar.tsx';
 
-const SIDEBAR_WIDTH = 300;
-
-const LeftSidebarToggle: React.FC = () => {
-    const { open, toggleSidebar } = useSidebar();
-    return (
-        <button
-            onClick={toggleSidebar}
-            className="self-start px-0 h-full border-x-stone-600 border-r-1 rounded-none bg-stone-800/50 shadow-none hover:bg-stone-700 transition-colors"
-            aria-label="Toggle File Tree"
-        >
-            {open ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
-        </button>
-    );
-};
-
-const RightSidebarToggle: React.FC = () => {
-    const { open, toggleSidebar } = useSidebar();
-    return (
-        <button
-            onClick={toggleSidebar}
-            className="self-start px-0 border-x-stone-600 border-l-1 h-full rounded-none bg-stone-800/50 shadow-none hover:bg-stone-700 transition-colors"
-            aria-label="Toggle Transfer Log"
-        >
-            {open ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
-        </button>
-    );
-};
+const SIDEBAR_WIDTH = 280; // narrower for usability
 
 const MainLayout: React.FC = () => {
-    const [leftOpen, setLeftOpen] = React.useState(true);
-    const [rightOpen, setRightOpen] = React.useState(true);
+  const [leftOpen, setLeftOpen] = React.useState(true);
+  const [rightOpen, setRightOpen] = React.useState(true);
 
-    return (
-        <div className="relative h-full flex w-full overflow-hidden">
-            {/* Left Sidebar Provider */}
-            <SidebarProvider open={leftOpen} onOpenChange={setLeftOpen} defaultOpen={true}>
-                <div className="h-full flex shrink-0">
-                    <div
-                        className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear shrink-0"
-                        style={{
-                            width: leftOpen ? `${SIDEBAR_WIDTH}px` : '0px',
-                            opacity: leftOpen ? 1 : 0,
-                            visibility: leftOpen ? 'visible' : 'hidden',
-                            paddingRight: leftOpen ? '1rem' : '0'
-                        }}
-                    >
-                        <FileTree />
-                    </div>
-                    <LeftSidebarToggle />
-                </div>
-
-                {/* Main Content Area */}
-                <div className="flex-1 flex relative min-w-0 h-full overflow-hidden">
-                    {/* Right Sidebar Provider */}
-                    <SidebarProvider open={rightOpen} onOpenChange={setRightOpen} defaultOpen={true}>
-                        {/* Center Content */}
-                        <div className="flex-1 h-full overflow-hidden">
-                            <FilesContainer />
-                        </div>
-
-                        {/* Right Sidebar */}
-                        <div className="h-full flex shrink-0">
-                            <RightSidebarToggle />
-                            <div
-                                className="h-full flex flex-col bg-stone-800 overflow-auto transition-all duration-100 ease-linear shrink-0"
-                                style={{
-                                    width: rightOpen ? `${SIDEBAR_WIDTH}px` : '0px',
-                                    opacity: rightOpen ? 1 : 0,
-                                    visibility: rightOpen ? 'visible' : 'hidden'
-                                }}
-                            >
-                                <RegistrationForm />
-                                <TransferLog />
-                            </div>
-                        </div>
-                    </SidebarProvider>
-                </div>
-            </SidebarProvider>
+  return (
+    <div className="flex flex-1 min-h-0 w-full">
+      <div className="flex items-stretch min-h-0">
+        <div
+          className="bg-stone-800 overflow-auto transition-[width,opacity] duration-200 ease-linear flex flex-col"
+          style={{ width: leftOpen ? SIDEBAR_WIDTH : 0, opacity: leftOpen ? 1 : 0, visibility: leftOpen ? 'visible' : 'hidden' }}
+        >
+          <FileTree />
         </div>
-    );
+        {/* Restored left toggle look */}
+        <button
+          onClick={() => setLeftOpen(o => !o)}
+          aria-label="Toggle venstre panel"
+          className="h-full w-6 flex items-center justify-center px-0 bg-stone-800/40 hover:bg-stone-700 transition-colors border-r border-stone-700 rounded-none shadow-none"
+        >
+          {leftOpen ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
+        </button>
+      </div>
+      <div className="flex flex-1 min-h-0">
+        <div className="flex flex-1 min-h-0">
+          <FilesContainer />
+        </div>
+        <div className="flex items-stretch min-h-0">
+          {/* Restored right toggle look */}
+          <button
+            onClick={() => setRightOpen(o => !o)}
+            aria-label="Toggle høyre panel"
+            className="h-full w-6 flex items-center justify-center px-0 bg-stone-800/40 hover:bg-stone-700 transition-colors border-l border-stone-700 rounded-none shadow-none"
+          >
+            {rightOpen ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+          </button>
+          <div
+            className="bg-stone-800 overflow-auto transition-[width,opacity] duration-200 ease-linear flex flex-col"
+            style={{ width: rightOpen ? SIDEBAR_WIDTH : 0, opacity: rightOpen ? 1 : 0, visibility: rightOpen ? 'visible' : 'hidden' }}
+          >
+            <RegistrationForm />
+            <TransferLog />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default MainLayout;
