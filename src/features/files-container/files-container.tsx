@@ -49,16 +49,15 @@ const FilesContainer: React.FC = () => {
         <>
             <Dialog open={previewDialogOpen} onOpenChange={(open) => setPreviewDialogOpen(open)}>
                 <DialogPortal>
-                    <DialogOverlay className="fixed inset-0 preview z-20 bg-stone-800/90"/>
+                    <DialogOverlay className="fixed inset-0 preview z-5 bg-stone-800/90"/>
                     <DialogContent
-                        onOpenAutoFocus={e => {
-                            e.preventDefault()
-                        }}
+                        onOpenAutoFocus={e => { e.preventDefault(); }}
                         aria-describedby="Forstørret visning av valgt bilde"
-                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-50">
+                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex tems-center justify-center z-1000"
+                    >
                         <VisuallyHidden>
                             <DialogTitle>Velg Forside</DialogTitle>
-                            <DialogDescription>hei</DialogDescription>
+                            <DialogDescription>Velg Forside (forstørret visning)</DialogDescription>
                         </VisuallyHidden>
                         <DetailedImageView
                             image={files[currentIndex]}

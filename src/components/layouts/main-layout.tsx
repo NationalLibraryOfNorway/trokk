@@ -24,7 +24,7 @@ const MainLayout: React.FC = () => {
         <button
           onClick={() => setLeftOpen(o => !o)}
           aria-label="Toggle venstre panel"
-          className="h-full w-6 flex items-center justify-center px-0 bg-stone-800/40 hover:bg-stone-700 transition-colors border-r border-stone-700 rounded-none shadow-none"
+          className="h-full w-5 flex items-center justify-center px-0 bg-stone-800/40 hover:bg-stone-700 transition-colors  border-stone-700 rounded-none shadow-none"
         >
           {leftOpen ? <ChevronLeft size={15} /> : <ChevronRight size={15} />}
         </button>
@@ -38,7 +38,7 @@ const MainLayout: React.FC = () => {
           <button
             onClick={() => setRightOpen(o => !o)}
             aria-label="Toggle høyre panel"
-            className="h-full w-6 flex items-center justify-center px-0 bg-stone-800/40 hover:bg-stone-700 transition-colors border-l border-stone-700 rounded-none shadow-none"
+            className="h-full w-5 flex items-center justify-center px-0 bg-stone-800/40 hover:bg-stone-700 transition-colors border-stone-700 rounded-none shadow-none"
           >
             {rightOpen ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
           </button>
