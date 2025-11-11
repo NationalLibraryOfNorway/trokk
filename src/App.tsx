@@ -7,7 +7,6 @@ import MainLayout from './components/layouts/main-layout.tsx';
 import Modal from './components/ui/modal.tsx';
 import SettingsForm from './features/settings/settings.tsx';
 import {UploadProgressProvider} from './context/upload-progress-context.tsx';
-import TrokkButton from './components/ui/trokk-button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
 import {MessageProvider} from './context/message-context.tsx';
@@ -17,6 +16,7 @@ import {RotationProvider} from './context/rotation-context.tsx';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
 import {useTextSizeShortcuts} from './hooks/use-text-size-shortcuts.tsx';
+import {Button} from '@/components/ui/button.tsx';
 
 
 function App() {
@@ -136,7 +136,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     <h1 className={'text-center'}>Trøkk</h1>
                     <p></p>
                 </div>
-                <div className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 errorColor">
+                <div className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 bg-destructive text-destructive-foreground">
                     <h1>Feil ved innhenting av hemmeligheter</h1>
                     <p>{fetchSecretsError}</p>
                 </div>
@@ -148,7 +148,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <TrokkButton className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></TrokkButton>
+                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
             </div>
         );
     }
@@ -168,7 +168,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <TrokkButton className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></TrokkButton>
+                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
             </div>
         );
     }
@@ -178,14 +178,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             <div data-tauri-drag-region
                  className="flex flex-row py-2 px-3 w-full z-10 bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
-                    <button onClick={copyPathToClipboard}
-                            className="items-center px-2 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
+                    <Button onClick={copyPathToClipboard}
+                            className="hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none flex"
                             title="Klikk for å kopiere">
-                        <FolderOpen size="32" className=""/>
-                        <span className="mt-1 ms-1 relative group hidden md:inline">
+                        <FolderOpen size="32" className="ms-2"/>
+                        <span className="mt-1 me-2 relative group hidden md:inline">
                             {scannerPath}
                         </span>
-                    </button>
+                    </Button>
                 </div>
                 {showCopiedTooltip && (
                     <span
@@ -207,14 +207,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                         <p data-tauri-drag-region
                            className="cursor-default hidden md:inline">{authResponse.userInfo.givenName}</p>
                     </div>
-                    <TrokkButton onClick={() => setOpenSettings(!openSettings)} className="flex items-center">
+                    <Button onClick={() => setOpenSettings(!openSettings)}>
                         <span className="hidden lg:inline">Innstillinger</span>
                         <Settings className="lg:ms-2"/>
-                    </TrokkButton>
-                    <TrokkButton onClick={logout} className="flex items-center">
+                    </Button>
+                    <Button onClick={logout}>
                         <span className="hidden lg:inline">Logg&nbsp;ut</span>
                         <LogOut className="lg:ms-2"/>
-                    </TrokkButton>
+                    </Button>
 
                     <WindowControlButton
                         onClick={handleMinimize}
