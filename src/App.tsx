@@ -4,7 +4,6 @@ import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
 import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
 import MainLayout from './components/layouts/main-layout.tsx';
-import Modal from './components/ui/modal.tsx';
 import SettingsForm from './features/settings/settings.tsx';
 import {UploadProgressProvider} from './context/upload-progress-context.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
@@ -17,6 +16,7 @@ import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
 import {useTextSizeShortcuts} from './hooks/use-text-size-shortcuts.tsx';
 import {Button} from '@/components/ui/button.tsx';
+import {Dialog, DialogContent, DialogTrigger} from '@/components/ui/dialog.tsx';
 
 
 function App() {
@@ -26,7 +26,6 @@ function App() {
         console.error(event);
         throw event;
     });
-
     const [openSettings, setOpenSettings] = useState<boolean>(false);
 
     return (
@@ -39,9 +38,7 @@ function App() {
                             setOpenSettings={setOpenSettings}
                         />
                     </main>
-                    <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                        <SettingsForm/>
-                    </Modal>
+
                 </SettingProvider>
             </AuthProvider>
         </SecretProvider>
@@ -136,7 +133,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     <h1 className={'text-center'}>Trøkk</h1>
                     <p></p>
                 </div>
-                <div className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 bg-destructive text-destructive-foreground">
+                <div
+                    className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 bg-destructive text-destructive-foreground">
                     <h1>Feil ved innhenting av hemmeligheter</h1>
                     <p>{fetchSecretsError}</p>
                 </div>
@@ -176,7 +174,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     return (
         <div className="relative flex-1 w-full flex flex-col overflow-hidden min-h-0">
             <div data-tauri-drag-region
-                 className="flex flex-row py-2 px-3 w-full z-10 bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
+                 className="flex flex-row py-2 px-3 w-full z-1000 bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
                     <Button onClick={copyPathToClipboard}
                             className="hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none flex"
@@ -194,8 +192,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                             </span>
                 )}
                 <div data-tauri-drag-region className="text-4xl cursor-default overflow-hidden">
-                <img data-tauri-drag-region src={'/banner.png'} alt="Trøkk Logo"
-                     className="h-10 inline-block ms-2 sm:w-auto w-10 object-cover object-left"/>
+                    <img data-tauri-drag-region src={'/banner.png'} alt="Trøkk Logo"
+                         className="h-10 inline-block ms-2 sm:w-auto w-10 object-cover object-left"/>
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-2">
                     <div data-tauri-drag-region className="flex items-center pr-2 gap-1">
@@ -206,10 +204,18 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                         <p data-tauri-drag-region
                            className="cursor-default hidden md:inline">{authResponse.userInfo.givenName}</p>
                     </div>
-                    <Button onClick={() => setOpenSettings(!openSettings)}>
-                        <span className="hidden lg:inline">Innstillinger</span>
-                        <Settings className="lg:ms-2"/>
-                    </Button>
+
+                    <Dialog open={openSettings} onOpenChange={setOpenSettings} >
+                        <DialogTrigger asChild>
+                            <Button onClick={() => setOpenSettings(!openSettings)}>
+                                <span className="hidden lg:inline">Innstillinger</span>
+                                <Settings className="lg:ms-2"/>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className='bg-stone-900 flex flex-col w-3/4 max-w-3xl'>
+                            <SettingsForm setOpen={setOpenSettings}/>
+                        </DialogContent>
+                    </Dialog>
                     <Button onClick={logout}>
                         <span className="hidden lg:inline">Logg&nbsp;ut</span>
                         <LogOut className="lg:ms-2"/>
