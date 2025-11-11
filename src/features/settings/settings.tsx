@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { readDir } from '@tauri-apps/plugin-fs';
-import { useSettings } from '@/context/setting-context.tsx';
+import React, {useState} from 'react';
+import {invoke} from '@tauri-apps/api/core';
+import {readDir} from '@tauri-apps/plugin-fs';
+import {useSettings} from '@/context/setting-context.tsx';
+import WindowControlButton from "@/components/ui/window-control-button.tsx";
+import {X} from "lucide-react";
+import {Separator} from "@/components/ui/separator.tsx";
 
-const SettingsForm: React.FC = () => {
-    const { scannerPath, setScannerPathSetting, version, textSize, setTextSize } = useSettings();
+interface SettingsFormProps {
+    setOpen: (open: boolean) => void;
+}
+
+const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
+    const {scannerPath, setScannerPathSetting, version, textSize, setTextSize} = useSettings();
     const [scanPathError, setScanPathError] = useState<string | undefined>(undefined);
     const [scanPathSuccess, setScanPathSuccess] = useState<string | undefined>(undefined);
     const [deletePreviewsStatus, setDeletePreviewsStatus] = useState<string | undefined>(undefined);
@@ -14,7 +21,7 @@ const SettingsForm: React.FC = () => {
 
     const pickScannerPath = async () => {
         try {
-            const path = await invoke<string>('pick_directory', { startPath: scannerPath });
+            const path = await invoke<string>('pick_directory', {startPath: scannerPath});
             setScannerPathEdit(path);
             saveScannerPath(path);
         } catch (error) {
@@ -70,12 +77,21 @@ const SettingsForm: React.FC = () => {
     };
 
     return (
-        <form className="flex flex-col" onSubmit={handleSubmit}>
-            <div className="flex mb-2">
-                <div className="flex-grow-0 ml-4 text-xs">versjon {version.current}</div>
-            </div>
+        <form className="flex flex-col w-full" onSubmit={handleSubmit}>
 
-            <div className="flex mb-2 items-center">
+
+            <div className="flex flex-row w-full items-center">
+                <div className="flex text-xl">Trøkk versjon {version.current}</div>
+                <WindowControlButton
+                    title='Lukk innstillinger'
+                    onClick={() => setOpen(false)}
+                    icon={X}
+                    className="flex ml-auto mb-3"
+                />
+            </div>
+            <Separator />
+
+            <div className="flex mb-2 mt-4 items-center">
                 <label htmlFor="textSize" className="w-32">Tekststørrelse</label>
                 <div className="ml-2 flex items-center gap-2">
                     <button
@@ -118,12 +134,14 @@ const SettingsForm: React.FC = () => {
                     className="ml-4 w-40"
                 />
                 <span className="ml-2 w-12 text-center">{textSize}%</span>
+            </div>
+            <div className="flex mb-7">
                 <span className="ml-2 text-xs text-muted-foreground">
                     (Ctrl +/- eller Ctrl + musehjul)
                 </span>
             </div>
 
-            <div className="flex mb-2">
+            <div className="flex mb-7">
                 <label htmlFor="scannerPath" className="w-32 mt-3">Skanner kilde</label>
                 <button type="button" onClick={pickScannerPath} className="ml-2">Velg mappe</button>
                 <input
