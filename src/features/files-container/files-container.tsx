@@ -33,6 +33,7 @@ const FilesContainer: React.FC = () => {
     } = useSelection();
 
     const files = state.current?.children?.filter(child => !child.isDirectory) || [];
+    const isEven = state.isEven;
 
     const containerRef = useRef<HTMLDivElement>(null);
     const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -90,16 +91,22 @@ const FilesContainer: React.FC = () => {
 
                     </div>
                 )}
+                {state.current?.children && !isEven && (
+                    <div className="p-4 border-b border-stone-600 bg-red-900 flex items-center gap-4">
+                        <p className="font-semibold">OBS! Det er et oddetall av filer i denne mappen</p>
+                    </div>
+                )}
                 <div
                     ref={containerRef}
-                    className={`grid grid-cols-${columns} gap-4 overflow-y-auto w-full p-4 justify-start self-center focus-visible:outline-none focus:ring-0`}
-                    style={{ flex: '1 1 0', minHeight: 0 }}
+                    className={`grid grid-cols-${columns} gap-4 overflow-y-auto w-full p-4 justify-start focus-visible:outline-none focus:ring-0`}
+                    style={{ flex: '1 1 0', minHeight: 0, maxHeight: '100%' }}
                     tabIndex={0}
                     aria-activedescendant={`file-${currentIndex}`}
                 >
                     {state.current && state.current.children ? (
                         <>
                             {state.current.children.length !== 0 ? (
+
                                 state.current.children
                                     .filter(child =>
                                         !child.name.startsWith('.thumbnails') &&
@@ -124,7 +131,7 @@ const FilesContainer: React.FC = () => {
                                             <div
                                                 key={child.path}
                                                 ref={el => fileRefs.current[index] = el}
-                                                className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0 flex flex-col items-center justify-center"
+                                                className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0 flex flex-col items-center justify-start"
                                                 tabIndex={currentIndex === index ? 0 : -1}
                                                 onFocus={() => handleIndexChange(index)}
                                             >
