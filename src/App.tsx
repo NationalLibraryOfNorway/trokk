@@ -33,7 +33,7 @@ function App() {
         <SecretProvider>
             <AuthProvider>
                 <SettingProvider>
-                    <main className="flex flex-col">
+                    <main className="h-screen w-screen flex flex-col overflow-hidden">
                         <Content
                             openSettings={openSettings}
                             setOpenSettings={setOpenSettings}
@@ -174,9 +174,9 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     }
 
     return (
-        <div className="relative h-full flex-col">
+        <div className="relative flex-1 w-full flex flex-col overflow-hidden min-h-0">
             <div data-tauri-drag-region
-                 className="flex flex-row py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center justify-between">
+                 className="flex flex-row py-2 px-3 w-full z-10 bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
                     <button onClick={copyPathToClipboard}
                             className="items-center px-2 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
@@ -233,19 +233,21 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     />
                 </div>
             </div>
-            <TrokkFilesProvider scannerPath={scannerPath}>
-                <SelectionProvider>
-                    <RotationProvider>
-                        <UploadProgressProvider>
-                            <TransferLogProvider>
-                                <MessageProvider>
-                                    <MainLayout/>
-                                </MessageProvider>
-                            </TransferLogProvider>
-                        </UploadProgressProvider>
-                    </RotationProvider>
-                </SelectionProvider>
-            </TrokkFilesProvider>
+            <div className="flex-1 min-h-0 flex flex-col">
+                <TrokkFilesProvider scannerPath={scannerPath}>
+                    <SelectionProvider>
+                        <RotationProvider>
+                            <UploadProgressProvider>
+                                <TransferLogProvider>
+                                    <MessageProvider>
+                                        <MainLayout/>
+                                    </MessageProvider>
+                                </TransferLogProvider>
+                            </UploadProgressProvider>
+                        </RotationProvider>
+                    </SelectionProvider>
+                </TrokkFilesProvider>
+            </div>
         </div>
     );
 };
