@@ -14,6 +14,7 @@ import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {useSecrets} from '@/context/secret-context.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
+import {Button} from "@/components/ui/button.tsx";
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
@@ -202,7 +203,7 @@ const RegistrationForm: React.FC = () => {
                 {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
             </p>
             <div className={`flex ${disabled || isAnyImageRotating  ? 'opacity-30' : ''}`}>
-                <button
+                <Button
                     disabled={disabled || isSubmitting || isAnyImageRotating }
                     type='submit'
                     className="w-full flex items-center justify-center"
@@ -212,7 +213,7 @@ const RegistrationForm: React.FC = () => {
                     ) : (
                         'TRØKK!'
                     )}
-                </button>
+                </Button>
             </div>
             {isAnyImageRotating && (
                 <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
