@@ -15,6 +15,7 @@ const WindowControlButton: React.FC<WindowControlButtonProps> = ({onClick, icon:
             className={`
                 border-0
                 w-[30px] 
+                h-[30px]
                 rounded-full 
                 bg-stone-600 
                 hover:bg-stone-500 

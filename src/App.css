@@ -17,11 +17,6 @@ html, body {
     -webkit-text-size-adjust: 100%;
 }
 
-button:active {
-    border-color: #396cd8;
-    background-color: #0f0f0f69;
-}
-
 a:hover {
     color: #24c8db;
 }

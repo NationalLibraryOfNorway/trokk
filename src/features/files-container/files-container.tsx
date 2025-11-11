@@ -125,7 +125,7 @@ const FilesContainer: React.FC = () => {
                                                         payload: child,
                                                     })
                                                 }
-                                                className="flex flex-col items-center justify-center"
+                                                className="flex flex-col items-center justify-center bg-stone-900 hover:bg-stone-800 rounded-lg p-4"
                                             >
                                                 <Folder size="96"/>
                                                 <i>{child.name}</i>
@@ -134,7 +134,7 @@ const FilesContainer: React.FC = () => {
                                             <div
                                                 key={child.path}
                                                 ref={el => fileRefs.current[index] = el}
-                                                className="relative space-y-2 py-2 flex flex-col items-center justify-start"
+                                                className="relative space-y-2 py-2 flex flex-col items-center justify-start bg-"
                                                 tabIndex={currentIndex === index ? 0 : -1}
                                                 onFocus={() => handleIndexChange(index)}
                                             >

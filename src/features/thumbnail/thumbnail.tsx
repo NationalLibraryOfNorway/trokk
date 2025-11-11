@@ -71,7 +71,6 @@ export interface ThumbnailProps {
     }
 
     let content: React.ReactNode;
-    // No CSS transforms needed - EXIF orientation is applied automatically by the browser
     if (hasWebpThumbnail) {
         const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
         content = (
@@ -104,7 +103,7 @@ export interface ThumbnailProps {
         <button
             type="button"
             key={fileTree.path}
-            className="flex flex-col p-1 items-center"
+            className="flex flex-col p-1 items-center bg-stone-900 hover:bg-stone-800 rounded-lg"
             onClick={onClick}
             ref={ref}
         >
