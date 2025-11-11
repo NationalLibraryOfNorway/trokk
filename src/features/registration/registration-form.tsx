@@ -198,20 +198,15 @@ const RegistrationForm: React.FC = () => {
                     </label>
                 </div>
             </div>
-            {/*<div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label htmlFor="workingTitle">Arbeidstittel (Blir ikke brukt i produksjon)</label>
-                <input
-                    type='text'
-                    id='workingTitle'
-                    {...register('workingTitle')}
-                />
-            </div>*/}
             <p className="mb-4 font-semibold">
                 {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
             </p>
-            <div className={`flex ${disabled || isAnyImageRotating ? 'opacity-30' : ''}`}>
-                <button disabled={disabled || isSubmitting || isAnyImageRotating} type='submit'
-                        className="w-full flex items-center justify-center">
+            <div className={`flex ${disabled || isAnyImageRotating  ? 'opacity-30' : ''}`}>
+                <button
+                    disabled={disabled || isSubmitting || isAnyImageRotating }
+                    type='submit'
+                    className="w-full flex items-center justify-center"
+                >
                     {isSubmitting ? (
                         <LoadingSpinner size={24}/>
                     ) : (
