@@ -12,30 +12,49 @@ import React, {useLayoutEffect} from 'react';
  */
 export function useToolbarOffset(ref: React.RefObject<HTMLElement>) {
     useLayoutEffect(() => {
-        const el = ref.current;
-        if (!el) return;
-
         const root = document.documentElement;
+        let ro: ResizeObserver | null = null;
+        let raf = 0;
+        let resizeHandler: (() => void) | null = null;
+        let cancelled = false;
 
-        const set = () => {
-            const h = el.getBoundingClientRect().height;
-            if (Number.isFinite(h) && h > 0) {
-                root.style.setProperty('--toolbar-h', `${h}px`);
+        const init = () => {
+            if (cancelled) return;
+            const el = ref.current;
+            if (!el) {
+                // Wait for the element to mount
+                raf = requestAnimationFrame(init);
+                return;
             }
+
+            const set = () => {
+                // Use both getBoundingClientRect and offsetHeight as fallbacks
+                const rectH = el.getBoundingClientRect().height;
+                const h = rectH || (el as HTMLElement).offsetHeight || 0;
+                if (h > 0) root.style.setProperty('--toolbar-h', `${Math.round(h)}px`);
+            };
+
+            set();
+
+            if (typeof ResizeObserver !== 'undefined') {
+                ro = new ResizeObserver(set);
+                ro.observe(el);
+            }
+
+            resizeHandler = set;
+            window.addEventListener('resize', resizeHandler);
+
+            // Fonts/layout may settle after first paint; measure once more
+            raf = requestAnimationFrame(set);
         };
 
-        set();
-
-        const ro = new ResizeObserver(() => set());
-        ro.observe(el);
-
-        // Update on viewport changes
-        const onResize = () => set();
-        window.addEventListener('resize', onResize);
+        raf = requestAnimationFrame(init);
 
         return () => {
-            ro.disconnect();
-            window.removeEventListener('resize', onResize);
+            cancelled = true;
+            if (ro) ro.disconnect();
+            if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+            if (raf) cancelAnimationFrame(raf);
         };
-    }, [ref]);
+    }, []); // run once on mount
 }
