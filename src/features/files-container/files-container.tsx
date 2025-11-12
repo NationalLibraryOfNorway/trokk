@@ -15,7 +15,7 @@ import {
 import '../detailed-image-view/detailed-image-view.css';
 import {useKeyboardNavigation} from '@/hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
-import {cn} from "@/lib/utils.ts";
+import {cn} from '@/lib/utils.ts';
 
 const FilesContainer: React.FC = () => {
     const [delFilePath, setDelFilePath] = useState<string | null>(null);
