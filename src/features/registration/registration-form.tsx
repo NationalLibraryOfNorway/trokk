@@ -14,7 +14,8 @@ import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {useSecrets} from '@/context/secret-context.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
-import {Button} from "@/components/ui/button.tsx";
+import {Button} from '@/components/ui/button.tsx';
+import {Progress} from '@/components/ui/progress.tsx';
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
@@ -202,9 +203,9 @@ const RegistrationForm: React.FC = () => {
             <p className="mb-4 font-semibold">
                 {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
             </p>
-            <div className={`flex ${disabled || isAnyImageRotating  ? 'opacity-30' : ''}`}>
+            <div className={`flex ${disabled || isAnyImageRotating ? 'opacity-30' : ''}`}>
                 <Button
-                    disabled={disabled || isSubmitting || isAnyImageRotating }
+                    disabled={disabled || isSubmitting || isAnyImageRotating}
                     type='submit'
                     className="w-full flex items-center justify-center"
                 >
@@ -219,15 +220,10 @@ const RegistrationForm: React.FC = () => {
                 <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
             )}
 
-            <div className="mt-2 w-full h-full flex flex-col relative mb-4">
-                <span className="absolute z-10 flex justify-center items-center w-full h-6">
-                  {barWidth.toFixed(0)}%
-                </span>
-                <div className="absolute z-0 w-full rounded-full bg-stone-800 h-6 overflow-hidden">
-                    <div
-                        className="bg-amber-600 h-6 transition-width duration-500"
-                        style={{width: `${barWidth}%`}}
-                    ></div>
+            <div className="mt-2 w-full h-full flex flex-col relative">
+                <div className="flex items-center gap-2">
+                    <Progress value={barWidth} className="[&>div]:bg-amber-600 bg-stone-900"/>
+                    <div className='text-sm'>{barWidth.toFixed(0)}%</div>
                 </div>
             </div>
 
