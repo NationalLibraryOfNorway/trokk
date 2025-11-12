@@ -2,7 +2,6 @@ import {useEffect, useState, useMemo} from 'react';
 import {ChevronLeft, ChevronRight, RotateCw, RotateCcw} from 'lucide-react';
 import {FileTree} from '@/model/file-tree.ts';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
-import LoadingSpinner from '@/components/ui/loading-spinner.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import Checkbox from '@/components/ui/checkbox.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';

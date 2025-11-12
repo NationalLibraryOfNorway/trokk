@@ -1,11 +1,11 @@
 import React, {useRef, useState} from 'react';
 import {Folder} from 'lucide-react';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
-import Thumbnail from '../thumbnail/thumbnail.tsx';
+import Thumbnail from '@/features/thumbnail/thumbnail.tsx';
 import Checkbox from '@/components/ui/checkbox.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useAutoFocusOnThumbnail} from '@/hooks/use-auto-focus-on-thumbnail.tsx';
-import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
+import DetailedImageView from '@/features/detailed-image-view/detailed-image-view.tsx';
 import {
     Dialog,
     DialogContent,
@@ -92,7 +92,7 @@ const FilesContainer: React.FC = () => {
                             max={10}
                             value={columns}
                             onChange={(e) => setColumns(Number(e.target.value))}
-                            className="w-full max-w-[150px] h-2 bg-stone-500 rounded-lg appearance-none cursor-pointer px-0"
+                            className="w-full max-w-[150px] mb-1 h-2 bg-stone-500 rounded-lg appearance-none cursor-pointer px-0"
                         />
                     </div>
                 )}
