@@ -194,3 +194,4 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
         </div>
     )
 }
+

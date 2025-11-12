@@ -55,7 +55,7 @@ const FilesContainer: React.FC = () => {
                         console.log('clicking dialog content')
                     }}
                     aria-describedby="Forstørret visning av valgt bilde"
-                    className={'w-full bg-stone-900 z-500'}
+                    className={'bg-stone-900'}
                 >
                     <VisuallyHidden>
                         <DialogTitle>Velg Forside</DialogTitle>
@@ -103,7 +103,7 @@ const FilesContainer: React.FC = () => {
                 <div className="flex-1 min-h-0 overflow-auto">
                     <div
                         ref={containerRef}
-                        className="grid gap-4 p-4"
+                        className="grid gap-4 p-4 focus-visible:outline-none focus:ring-0"
                         style={{gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`}}
                         tabIndex={0}
                         aria-activedescendant={`file-${currentIndex}`}
@@ -136,7 +136,7 @@ const FilesContainer: React.FC = () => {
                                                 <div
                                                     key={child.path}
                                                     ref={el => fileRefs.current[index] = el}
-                                                    className="relative space-y-2 py-2 flex flex-col items-center justify-start bg-"
+                                                    className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0 flex flex-col items-center justify-start"
                                                     tabIndex={currentIndex === index ? 0 : -1}
                                                     onFocus={() => handleIndexChange(index)}
                                                 >
