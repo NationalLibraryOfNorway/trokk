@@ -2,9 +2,11 @@ import React, {useState} from 'react';
 import {invoke} from '@tauri-apps/api/core';
 import {readDir} from '@tauri-apps/plugin-fs';
 import {useSettings} from '@/context/setting-context.tsx';
-import WindowControlButton from "@/components/ui/window-control-button.tsx";
-import {X} from "lucide-react";
-import {Separator} from "@/components/ui/separator.tsx";
+import WindowControlButton from '@/components/ui/window-control-button.tsx';
+import {ALargeSmall, X} from 'lucide-react';
+import {Separator} from '@/components/ui/separator.tsx';
+import {Button} from '@/components/ui/button.tsx';
+import {Input} from '@/components/ui/input.tsx';
 
 interface SettingsFormProps {
     setOpen: (open: boolean) => void;
@@ -94,78 +96,55 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             <div className="flex mb-2 mt-4 items-center">
                 <label htmlFor="textSize" className="w-32">Tekststørrelse</label>
                 <div className="ml-2 flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => setTextSize(75)}
-                        className={`px-3 py-1 ${textSize === 75 ? 'bg-blue-600' : ''}`}
-                    >
-                        Liten
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setTextSize(100)}
-                        className={`px-3 py-1 ${textSize === 100 ? 'bg-blue-600' : ''}`}
-                    >
-                        Normal
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setTextSize(125)}
-                        className={`px-3 py-1 ${textSize === 125 ? 'bg-blue-600' : ''}`}
-                    >
-                        Stor
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setTextSize(150)}
-                        className={`px-3 py-1 ${textSize === 150 ? 'bg-blue-600' : ''}`}
-                    >
-                        Ekstra stor
-                    </button>
+                    <Button variant="outline" className='w-[24px] h-[24px] p-0' onClick={() => setTextSize(75)} >
+                        <ALargeSmall className="!w-[24px] !h-[24px]"/>
+                    </Button>
+
+                    <Button variant="outline" className='w-[32px] h-[32px] p-0' onClick={() => setTextSize(100)} >
+                        <ALargeSmall className="!w-[32px] !h-[32px]"/>
+                    </Button>
+
+                    <Button variant="outline" className='w-[40px] h-[40px] p-0' onClick={() => setTextSize(125)} >
+                        <ALargeSmall className="!w-[40px] !h-[40px]"/>
+                    </Button>
+
+                    <Button variant="outline" className='w-[48px] h-[48px] p-0' onClick={() => setTextSize(150)} >
+                        <ALargeSmall  className="!w-[48px] !h-[48px]"/>
+                    </Button>
                 </div>
-                <input
-                    type="range"
-                    id="textSize"
-                    min="50"
-                    max="200"
-                    step="5"
-                    value={textSize}
-                    onChange={(e) => setTextSize(Number(e.target.value))}
-                    className="ml-4 w-40"
-                />
-                <span className="ml-2 w-12 text-center">{textSize}%</span>
+                <span className="ml-6 flex flex-row">Størrelse: {textSize}%</span>
             </div>
-            <div className="flex mb-7">
+            <div className="flex mb-7 ml-32">
                 <span className="ml-2 text-xs text-muted-foreground">
-                    (Ctrl +/- eller Ctrl + musehjul)
+                    Eller juster med Ctrl +/- eller Ctrl + musehjul
                 </span>
             </div>
 
-            <div className="flex mb-7">
-                <label htmlFor="scannerPath" className="w-32 mt-3">Skanner kilde</label>
+            <div className="flex mb-7 items-center">
+                <label htmlFor="scannerPath" className="w-32">Skanner kilde</label>
                 <button type="button" onClick={pickScannerPath} className="ml-2">Velg mappe</button>
-                <input
+                <Input
                     type="text"
                     id="scannerPath"
                     value={scannerPathEdit}
                     onChange={(e) => setScannerPathEdit(e.target.value)}
                     className="ml-2 w-80"
                 />
-                <button type="button" onClick={() => saveScannerPath(scannerPathEdit)} className="ml-2">Lagre</button>
+                <Button variant='secondary' type="button" onClick={() => saveScannerPath(scannerPathEdit)} className="ml-2">Lagre</Button>
                 {scanPathError && <p className="text-red-500 ml-2">{scanPathError}</p>}
                 {scanPathSuccess && <p className="text-green-500 ml-2">{scanPathSuccess}</p>}
             </div>
 
             <div className="flex mb-2 items-center">
-                <label className="w-32 mt-3">Forhåndsvisninger</label>
-                <button
+                <label className="w-32">Forhåndsvisninger</label>
+                <Button
                     type="button"
                     onClick={handleDeleteAllPreviews}
                     disabled={isDeleting || !scannerPath}
-                    className="ml-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded"
+                    className="ml-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white "
                 >
                     {isDeleting ? 'Sletter...' : 'Slett alle forhåndsvisninger'}
-                </button>
+                </Button>
                 {deletePreviewsStatus && (
                     <p className={`ml-2 ${deletePreviewsStatus.startsWith('Feil') ? 'text-red-500' : deletePreviewsStatus.startsWith('Slettet') ? 'text-green-500' : 'text-yellow-500'}`}>
                         {deletePreviewsStatus}
