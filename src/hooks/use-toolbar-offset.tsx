@@ -28,7 +28,6 @@ export function useToolbarOffset(ref: React.RefObject<HTMLElement>) {
 
         const ro = new ResizeObserver(() => set());
         ro.observe(el);
-
         // Update on viewport changes
         const onResize = () => set();
         window.addEventListener('resize', onResize);
