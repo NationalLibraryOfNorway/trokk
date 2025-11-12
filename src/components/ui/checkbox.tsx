@@ -1,4 +1,5 @@
 import React from 'react';
+import {cn} from '@/lib/utils.ts';
 
 export interface CheckboxProps {
     isChecked: boolean;
@@ -15,10 +16,13 @@ const Checkbox: React.FC<CheckboxProps> = ({ isChecked, onChange, isFocused }) =
                 onChange={(e) => onChange(e.target.checked)}
                 className="peer sr-only"
             />
-            <div className={`w-8 h-8 border-2 rounded flex items-center justify-center
-                border-stone-400 peer-checked:bg-amber-400 peer-checked:border-amber-400 hover:bg-stone-400/30 hover:peer-checked:bg-amber-300 hover:peer-checked:border-amber-300
-                ${isFocused ? 'ring-2 ring-blue-500' : ''}
-            `}>
+            <div className={cn(
+                'w-8 h-8 border-2 rounded flex items-center justify-center',
+                    'peer-checked:bg-amber-400',
+                    'hover:bg-stone-400/30 hover:peer-checked:bg-amber-300',
+                    isFocused ? 'border-blue-500' : isChecked ? 'border-amber-400' : 'border-stone-400',
+                )}
+            >
                 {isChecked && (
                     <svg className="w-6 h-6 text-white" viewBox="0 0 20 20" fill="currentColor">
                         <path

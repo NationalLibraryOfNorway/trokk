@@ -8,7 +8,7 @@ import {useSelection} from '@/context/selection-context.tsx';
 import Checkbox from '@/components/ui/checkbox.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
 import StatusOverlay from '@/components/ui/rotation-status-overlay.tsx';
-import {cn} from "@/lib/utils.ts";
+import {cn} from '@/lib/utils.ts';
 
 export interface DetailedImageViewProps {
     image: FileTree;
