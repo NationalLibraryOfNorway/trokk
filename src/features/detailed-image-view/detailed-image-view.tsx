@@ -1,9 +1,8 @@
 import {useEffect, useState} from 'react';
-import {ChevronLeft, ChevronRight, RotateCw, RotateCcw} from 'lucide-react';
+import {ChevronLeft, ChevronRight, RotateCw, RotateCcw, LoaderCircle} from 'lucide-react';
 import {FileTree} from '@/model/file-tree.ts';
 import {getPreviewFromTree, getPreviewURIFromTree} from '@/util/file-utils.ts';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
-import LoadingSpinner from '@/components/ui/loading-spinner.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import Checkbox from '@/components/ui/checkbox.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
@@ -60,8 +59,9 @@ export default function DetailedImageView({image, totalImagesInFolder}: Detailed
     return (
         <div className='relative' onClick={handleClose}>
             {isLoading ? (
-                <div className="flex justify-center">
-                    <LoadingSpinner size={48}/>
+                <div className="flex flex-col justify-center items-center">
+                    <h1 className='text-3xl mb-3'>Laster inn forhåndsvisning</h1>
+                    <LoaderCircle size={50} className='animate-spin mb-40' />
                 </div>
 
             ) : (

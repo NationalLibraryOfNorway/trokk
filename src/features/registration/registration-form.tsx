@@ -6,7 +6,6 @@ import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import {SubmitHandler, useForm} from 'react-hook-form';
 import {RegistrationFormProps} from './registration-form-props.tsx';
 import {usePostRegistration} from '@/context/post-registration-context.tsx';
-import LoadingSpinner from '@/components/ui/loading-spinner.tsx';
 import {useMessage} from '@/context/message-context.tsx';
 import {useUploadProgress} from '@/context/upload-progress-context.tsx';
 import type {Event} from '@tauri-apps/api/event';
@@ -16,6 +15,7 @@ import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
+import {LoaderCircle} from 'lucide-react';
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
@@ -210,7 +210,7 @@ const RegistrationForm: React.FC = () => {
                     className="w-full flex items-center justify-center"
                 >
                     {isSubmitting ? (
-                        <LoadingSpinner size={24}/>
+                        <LoaderCircle size={24} className='animate-spin' />
                     ) : (
                         'TRØKK!'
                     )}
