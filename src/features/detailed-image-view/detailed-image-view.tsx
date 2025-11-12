@@ -57,14 +57,14 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
     }, [state.preview, state.treeIndex, image]);
 
     return (
-        <div className='relative z-10' onClick={handleClose}>
+        <div className='relative' onClick={handleClose}>
             {isLoading ? (
-                <div className="flex justify-center my-8 ">
+                <div className="flex justify-center">
                     <LoadingSpinner size={48}/>
                 </div>
 
             ) : (
-                    <div className="flex justify-center items-start pt-2">
+                    <div className="flex justify-center">
                         <button
                             className={`h-20 px-6 ml-4 rounded self-center ${
                                 currentIndex > 0
