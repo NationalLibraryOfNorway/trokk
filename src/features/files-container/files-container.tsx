@@ -55,9 +55,9 @@ const FilesContainer: React.FC = () => {
                     className={cn(
                         'bg-stone-900',
                         'fixed left-1/2 -translate-x-1/2',
-                        'top-[calc(var(--toolbar-h)+(100dvh)/2)]',
                         '-translate-y-1/2',
-                        'py-2', 'h-full items-center justify-center'
+                        'top-[calc(var(--toolbar-h)+(100dvh-var(--toolbar-h))/2)]',
+                        'h-full items-center justify-center mt-7',
                     )}
                 >
                     <VisuallyHidden>
