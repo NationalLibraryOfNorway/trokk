@@ -48,20 +48,16 @@ const FilesContainer: React.FC = () => {
         <>
             <Dialog open={previewDialogOpen} onOpenChange={(open) => setPreviewDialogOpen(open)}>
                 <DialogContent
-                    onOpenAutoFocus={e => {
-                        e.preventDefault();
-                    }}
-                    onClick={e => {
-                        e.stopPropagation()
-                        console.log('clicking dialog content')
-                    }}
+                    onOpenAutoFocus={e => e.preventDefault()}
+                    onClick={() => setPreviewDialogOpen(false)} // Trykk utenfor for å lukke
+
                     aria-describedby="Forstørret visning av valgt bilde"
                     className={cn(
-                'bg-stone-900',
+                        'bg-stone-900',
                         'fixed left-1/2 -translate-x-1/2',
-                        'top-[calc(var(--toolbar-h)+(100dvh-var(--toolbar-h))/2)]',
+                        'top-[calc(var(--toolbar-h)+(100dvh)/2)]',
                         '-translate-y-1/2',
-                        'py-2'
+                        'py-2', 'h-full items-center justify-center'
                     )}
                 >
                     <VisuallyHidden>

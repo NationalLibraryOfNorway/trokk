@@ -79,7 +79,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                             <ChevronLeft/>
                         </button>
                         <div className="px-6" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex flex-col justify-center pt-4">
+                            <div className="flex flex-col justify-center">
                                 <div className="flex flex-row items-start space-x-2 justify-center">
                                     <p className="text-stone-100 font-bold text-3xl ml-10 ">{isChecked ? 'Forside valgt' : 'Velg forside'}</p>
                                     <Checkbox
