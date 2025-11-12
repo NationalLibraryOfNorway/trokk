@@ -11,7 +11,6 @@ const SIDEBAR_WIDTH = 280;
 const MainLayout: React.FC = () => {
     const [leftOpen, setLeftOpen] = React.useState(true);
     const [rightOpen, setRightOpen] = React.useState(true);
-
     return (
         <div className="flex flex-1 min-h-0 w-full">
             <div className="flex items-stretch min-h-0">
