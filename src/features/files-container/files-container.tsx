@@ -8,8 +8,6 @@ import {useAutoFocusOnThumbnail} from '@/hooks/use-auto-focus-on-thumbnail.tsx';
 import DetailedImageView from '../detailed-image-view/detailed-image-view.tsx';
 import {
     Dialog,
-    DialogPortal,
-    DialogOverlay,
     DialogContent,
     DialogTitle,
     DialogDescription
@@ -48,23 +46,26 @@ const FilesContainer: React.FC = () => {
     return (
         <>
             <Dialog open={previewDialogOpen} onOpenChange={(open) => setPreviewDialogOpen(open)}>
-                <DialogPortal>
-                    <DialogOverlay className="fixed inset-0 preview z-5 bg-stone-800/90"/>
-                    <DialogContent
-                        onOpenAutoFocus={e => { e.preventDefault(); }}
-                        aria-describedby="Forstørret visning av valgt bilde"
-                        className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex tems-center justify-center z-1000"
-                    >
-                        <VisuallyHidden>
-                            <DialogTitle>Velg Forside</DialogTitle>
-                            <DialogDescription>Velg Forside (forstørret visning)</DialogDescription>
-                        </VisuallyHidden>
-                        <DetailedImageView
-                            image={files[currentIndex]}
-                            totalImagesInFolder={files.length}
-                        />
-                    </DialogContent>
-                </DialogPortal>
+                <DialogContent
+                    onOpenAutoFocus={e => {
+                        e.preventDefault();
+                    }}
+                    onClick={e => {
+                        e.stopPropagation()
+                        console.log('clicking dialog content')
+                    }}
+                    aria-describedby="Forstørret visning av valgt bilde"
+                    className={'w-full bg-stone-900 z-500'}
+                >
+                    <VisuallyHidden>
+                        <DialogTitle>Velg Forside</DialogTitle>
+                        <DialogDescription>Velg Forside (forstørret visning)</DialogDescription>
+                    </VisuallyHidden>
+                    <DetailedImageView
+                        image={files[currentIndex]}
+                        totalImagesInFolder={files.length}
+                    />
+                </DialogContent>
             </Dialog>
 
             <div className="flex flex-col flex-1 min-h-0"
@@ -93,8 +94,9 @@ const FilesContainer: React.FC = () => {
                     </div>
                 )}
                 {state.current?.children && !isEven && (
-                    <div className="p-4 border-b border-stone-600 bg-red-900 flex items-center gap-4 flex-shrink-0">
-                        <p className="font-semibold">OBS! Det er et oddetall av filer i denne mappen</p>
+                    <div
+                        className="p-4 border-b border-stone-600 bg-red-900 flex items-center gap-4 flex-shrink-0 w-full">
+                        <p className="font-semibold mx-auto">OBS! Det er et oddetall av filer i denne mappen</p>
                     </div>
                 )}
                 {/* Scroll area */}
@@ -102,51 +104,51 @@ const FilesContainer: React.FC = () => {
                     <div
                         ref={containerRef}
                         className="grid gap-4 p-4"
-                        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))` }}
+                        style={{gridTemplateColumns: `repeat(${columns}, minmax(0,1fr))`}}
                         tabIndex={0}
                         aria-activedescendant={`file-${currentIndex}`}
                     >
                         {state.current && state.current.children ? (
-                        <>
-                            {state.current.children.length !== 0 ? (
+                            <>
+                                {state.current.children.length !== 0 ? (
 
-                                state.current.children
-                                    .filter(child =>
-                                        !child.name.startsWith('.thumbnails') &&
-                                        !child.name.startsWith('.previews')
-                                    )
-                                    .map((child, index) =>
-                                        child.isDirectory ? (
-                                            <button
-                                                key={child.path}
-                                                onClick={() =>
-                                                    dispatch({
-                                                        type: 'SET_CURRENT_AND_EXPAND_PARENTS',
-                                                        payload: child,
-                                                    })
-                                                }
-                                                className="flex flex-col items-center justify-center bg-stone-900 hover:bg-stone-800 rounded-lg p-4"
-                                            >
-                                                <Folder size="96"/>
-                                                <i>{child.name}</i>
-                                            </button>
-                                        ) : (
-                                            <div
-                                                key={child.path}
-                                                ref={el => fileRefs.current[index] = el}
-                                                className="relative space-y-2 py-2 flex flex-col items-center justify-start bg-"
-                                                tabIndex={currentIndex === index ? 0 : -1}
-                                                onFocus={() => handleIndexChange(index)}
-                                            >
-                                                <Thumbnail
-                                                    key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
-                                                    isChecked={checkedItems.includes(child.path)}
-                                                    fileTree={child}
-                                                    isFocused={!state.preview && currentIndex === index}
-                                                    onClick={() => setPreviewDialogOpen(true)}
-                                                    setDelFilePath={setDelFilePath}
-                                                    delFilePath={delFilePath}
-                                                />
+                                    state.current.children
+                                        .filter(child =>
+                                            !child.name.startsWith('.thumbnails') &&
+                                            !child.name.startsWith('.previews')
+                                        )
+                                        .map((child, index) =>
+                                            child.isDirectory ? (
+                                                <button
+                                                    key={child.path}
+                                                    onClick={() =>
+                                                        dispatch({
+                                                            type: 'SET_CURRENT_AND_EXPAND_PARENTS',
+                                                            payload: child,
+                                                        })
+                                                    }
+                                                    className="flex flex-col items-center justify-center bg-stone-900 hover:bg-stone-800 rounded-lg p-4"
+                                                >
+                                                    <Folder size="96"/>
+                                                    <i>{child.name}</i>
+                                                </button>
+                                            ) : (
+                                                <div
+                                                    key={child.path}
+                                                    ref={el => fileRefs.current[index] = el}
+                                                    className="relative space-y-2 py-2 flex flex-col items-center justify-start bg-"
+                                                    tabIndex={currentIndex === index ? 0 : -1}
+                                                    onFocus={() => handleIndexChange(index)}
+                                                >
+                                                    <Thumbnail
+                                                        key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
+                                                        isChecked={checkedItems.includes(child.path)}
+                                                        fileTree={child}
+                                                        isFocused={!state.preview && currentIndex === index}
+                                                        onClick={() => setPreviewDialogOpen(true)}
+                                                        setDelFilePath={setDelFilePath}
+                                                        delFilePath={delFilePath}
+                                                    />
                                                     <Checkbox
                                                         aria-label={'Velg forside'}
                                                         aria-checked={'Forside valgt'}
@@ -155,18 +157,18 @@ const FilesContainer: React.FC = () => {
                                                         onChange={() => handleCheck()}
                                                         isFocused={!state.preview && currentIndex === index}
                                                     />
-                                            </div>
+                                                </div>
+                                            )
                                         )
-                                    )
-                            ) : (
-                                <p className="m-8 font-bold break-words">Ingen filer i mappen.</p>
-                            )}
-                        </>
-                    ) : (
-                        <p className="m-8 font-bold break-words">
-                            Velg en mappe i listen til venstre. <br/>
-                            Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
-                        </p>
+                                ) : (
+                                    <p className="m-8 font-bold break-words">Ingen filer i mappen.</p>
+                                )}
+                            </>
+                        ) : (
+                            <p className="m-8 font-bold break-words">
+                                Velg en mappe i listen til venstre. <br/>
+                                Er det ingen mapper, sjekk at det fins filer i den valgte scanner kilden.
+                            </p>
                         )}
                     </div>
                 </div>
