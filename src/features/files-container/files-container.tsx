@@ -15,6 +15,7 @@ import {
 import '../detailed-image-view/detailed-image-view.css';
 import {useKeyboardNavigation} from '@/hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
+import {cn} from "@/lib/utils.ts";
 
 const FilesContainer: React.FC = () => {
     const [delFilePath, setDelFilePath] = useState<string | null>(null);
@@ -55,7 +56,13 @@ const FilesContainer: React.FC = () => {
                         console.log('clicking dialog content')
                     }}
                     aria-describedby="Forstørret visning av valgt bilde"
-                    className={'bg-stone-900'}
+                    className={cn(
+                'bg-stone-900',
+                        'fixed left-1/2 -translate-x-1/2',
+                        'top-[calc(var(--toolbar-h)+(100dvh-var(--toolbar-h))/2)]',
+                        '-translate-y-1/2',
+                        'py-2'
+                    )}
                 >
                     <VisuallyHidden>
                         <DialogTitle>Velg Forside</DialogTitle>

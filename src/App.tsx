@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings} from 'lucide-react';
 import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
@@ -17,6 +17,7 @@ import WindowControlButton from './components/ui/window-control-button.tsx';
 import {useTextSizeShortcuts} from './hooks/use-text-size-shortcuts.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Dialog, DialogContent, DialogTrigger} from '@/components/ui/dialog.tsx';
+import {useToolbarOffset} from '@/hooks/use-toolbar-offset';
 
 
 function App() {
@@ -55,6 +56,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {scannerPath} = useSettings();
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
+    const toolbarRef = useRef<HTMLDivElement>(null);
+    useToolbarOffset(toolbarRef);
 
     // Enable keyboard shortcuts for text size control
     useTextSizeShortcuts();
@@ -173,8 +176,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     return (
         <div className="relative flex-1 w-full flex flex-col overflow-hidden min-h-0">
-            <div data-tauri-drag-region
-                 className="flex flex-row py-2 px-3 w-full z-1000 bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
+            <div data-tauri-drag-region ref={toolbarRef}
+                className="flex flex-row py-2 px-3 w-full bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
                     <Button onClick={copyPathToClipboard}
                             className="hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none flex"
