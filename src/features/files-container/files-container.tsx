@@ -12,7 +12,6 @@ import {
     DialogTitle,
     DialogDescription
 } from '@/components/ui/dialog.tsx';
-import '../detailed-image-view/detailed-image-view.css';
 import {useKeyboardNavigation} from '@/hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 import {cn} from '@/lib/utils.ts';
@@ -53,7 +52,7 @@ const FilesContainer: React.FC = () => {
 
                     aria-describedby="Forstørret visning av valgt bilde"
                     className={cn(
-                        'bg-stone-900',
+                        'bg-stone-900/80 backdrop-blur-lg',
                         'fixed left-1/2 -translate-x-1/2',
                         '-translate-y-1/2',
                         'top-[calc(var(--toolbar-h)+(100dvh-var(--toolbar-h))/2)]',
