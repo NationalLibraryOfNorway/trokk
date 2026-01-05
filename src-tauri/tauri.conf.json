@@ -26,6 +26,10 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "resources": [
+      "installer/windows/vips/libvips-42.dll",
+      "installer/windows/vips/libvips.lib"
     ]
   },
   "productName": "Trøkk",

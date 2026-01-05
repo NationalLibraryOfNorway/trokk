@@ -31,22 +31,20 @@ fn staged_vips_dir() -> PathBuf {
 
 #[cfg(target_os = "windows")]
 fn bundle_vips_dlls() {
+	// Bundling happens via `bundle.resources` in tauri.conf.json.
+	// We keep this function as a best-effort helper for any legacy bundling flow,
+	// but it must never fail the build if TAURI_BUNDLE_OUT_DIR is missing.
 	let staged = staged_vips_dir();
-
-	// Only run if the folder exists. This avoids breaking non-Windows builds
-	// or Windows builds where the DLLs are provisioned by CI in a different way.
 	if !staged.is_dir() {
 		println!("cargo:warning=No staged libvips folder found at {:?}. Skipping bundling.", staged);
 		return;
 	}
 
-	// Tauri sets TAURI_BUNDLE_OUT_DIR to the directory containing bundle artifacts.
-	// We copy to this directory so that the final installer picks it up.
 	let out_dir = match env::var_os("TAURI_BUNDLE_OUT_DIR") {
 		Some(v) => PathBuf::from(v),
 		None => {
 			println!(
-				"cargo:warning=TAURI_BUNDLE_OUT_DIR not set; cannot bundle libvips DLLs automatically."
+				"cargo:warning=TAURI_BUNDLE_OUT_DIR not set; skipping legacy libvips copy (bundle.resources will handle packaging)."
 			);
 			return;
 		}

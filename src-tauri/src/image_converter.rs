@@ -13,7 +13,6 @@ use std::{
 use crate::error::ImageConversionError;
 use crate::file_utils;
 
-// New backend
 use fs2::FileExt;
 use once_cell::sync::OnceCell;
 use rs_vips::{Vips, VipsImage};
@@ -23,9 +22,6 @@ const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 const PREVIEW_FOLDER_NAME: &str = ".previews";
 const WEBP_EXTENSION: &str = "webp";
 
-// Keep roughly the same sizing behavior as before.
-// NOTE: libvips prefers target dimensions rather than "divide by N".
-// We'll compute target dims from metadata.
 const THUMB_DIVISOR: i32 = 8;
 const PREVIEW_DIVISOR: i32 = 4;
 
