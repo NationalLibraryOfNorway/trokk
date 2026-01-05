@@ -11,14 +11,49 @@ Rust og diverse system-avhengigheter må være installert på maskinen.
 Se [Tauri prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites/)
 eller [rust-lang.org](https://www.rust-lang.org/tools/install) .
 
+### libvips (påkrevd)
+
+Appen bruker `libvips` (via Rust-crate `libvips`) for generering av thumbnails/previews og rask bildebehandling.
+Det betyr at **native libvips** må være tilgjengelig på maskinen når Rust-koden bygges/kjøres.
+
+**Linux (anbefalt via Nix):** `shell.nix` inkluderer `vips`. Bruk `nix-shell` før du kjører `npm run tauri dev`.
+
+**Linux (uten Nix):** installer `libvips` fra systemets pakkebehandler.
+
+**Windows (utvikling + distribusjon):** du må ha en libvips-distribusjon (DLL-er). Ved distribusjon må disse DLL-ene bundles sammen med appen.
+
+#### Windows: hva må kopieres fra vips-dev?
+
+Hvis du bruker en prebygget zip som `vips-dev-w64-all-8.xx`, er den enkleste og mest robuste regelen:
+
+- Kopier **alle `*.dll`** fra `bin/`
+- Kopier hele mappen `bin/vips-modules-<versjon>/`
+- (Valgfritt, men anbefalt) kopier `etc/` og `share/` for ImageMagick/poppler osv.
+
+> I praksis betyr det at du kan ta omtrent alt som trengs fra `bin/` i den distribusjonen.
+
+I repoet har vi en staging-løsning for dette:
+
+```bash
+./scripts/stage-windows-libvips.sh /path/to/vips-dev-8.xx
+```
+
+Dette legger filene i:
+
+- `src-tauri/installer/windows/vips/`
+
+Appen er satt opp til å laste DLL-er fra en `vips/`-mappe ved siden av `.exe` på Windows.
+
+### Kjøring
+
 For installasjon av nødvendige pakker og oppstart:
 
 ```bash
-    npm ci
-    npm run tauri dev
+npm ci
+npm run tauri dev
 ```
 
-Appen er nå hardkodet til å hente filer fra ```$DOCUMENT/trokk/files```, så lag en mappe der med noen filer.
+Appen er nå hardkodet til å hente filer fra `$DOCUMENT/trokk/files`, så lag en mappe der med noen filer.
 
 ### Telemetri
 
@@ -79,3 +114,62 @@ Samt, legg til environmental variabler nedenfor.
 Tekst-teamet på Nasjonalbibliotekets IT-avdeling vedlikeholder **Trøkk**.
 
 Alle kan lage issues, men vi kan ikke garantere at alle blir tatt tak i. Interne behov går foran eksterne forespørsler.
+
+### Bygge Windows-binaries (MSI)
+
+Det finnes to måter:
+
+1) **Lokalt på Windows** (anbefalt hvis du bare vil lage en MSI raskt)
+2) **Via GitHub Actions** (brukes for release/tag builds)
+
+#### 1) Lokalt på Windows
+
+**Krav**
+- Node.js (LTS)
+- Rust (MSVC toolchain)
+- Visual Studio Build Tools (C++ build tools)
+- WiX Toolset (MSI)
+
+**libvips på Windows**
+
+Denne appen bruker `libvips` via FFI, så du må bundle DLL-er sammen med appen.
+
+- Last ned en prebygget zip som `vips-dev-w64-all-8.xx`
+- Kjør staging-scriptet (på Linux/mac eller Git Bash/WSL):
+
+```bash
+./scripts/stage-windows-libvips.sh /path/to/vips-dev-8.xx
+```
+
+Dette fyller `src-tauri/installer/windows/vips/`.
+
+**Bygg**
+
+```bash
+npm ci
+npm run test
+npm run tauri build
+```
+
+Resultatet havner typisk under:
+- `src-tauri/target/release/bundle/msi/*.msi`
+
+> Viktig: `src-tauri/build.rs` kopierer `installer/windows/vips/` inn i bundle output ved Windows-build.
+> Appen forventer at `vips/` ligger ved siden av `.exe` i installasjonen.
+
+#### 2) Via GitHub Actions
+
+Repoet har workflowen `.github/workflows/build.yml` som bygger Windows på en self-hosted runner.
+Den trigger på tags som starter med `v` (f.eks `v1.2.3`).
+
+For å bygge:
+- push en tag:
+
+```bash
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+Deretter vil workflowen kjøre `tauri-action` og legge artifacts i `src-tauri/target/release/bundle/` på runneren.
+
+**Merk:** Windows-runneren må ha libvips DLL-ene tilgjengelig i repoet (i `src-tauri/installer/windows/vips/`) eller som en CI-step som laster dem ned før `tauri build`.

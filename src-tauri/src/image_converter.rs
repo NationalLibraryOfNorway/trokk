@@ -1,78 +1,54 @@
 use byteorder::{BigEndian, LittleEndian, ReadBytesExt, WriteBytesExt};
 use exif::{In, Reader, Tag, Value};
-use image::ImageReader;
 use img_parts::jpeg::Jpeg;
 use img_parts::{Bytes, ImageEXIF};
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 use std::{
 	fs,
 	io::{BufReader, Cursor, Read, Seek, SeekFrom, Write},
-	thread,
 };
-use webp::Encoder;
 
 use crate::error::ImageConversionError;
 use crate::file_utils;
 
+// New backend
+use fs2::FileExt;
+use libvips::{ops, VipsApp, VipsImage};
+use once_cell::sync::OnceCell;
+use std::fs::OpenOptions;
+
 const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 const PREVIEW_FOLDER_NAME: &str = ".previews";
 const WEBP_EXTENSION: &str = "webp";
-const WEBP_QUALITY: f32 = 25.0;
+
+// Keep roughly the same sizing behavior as before.
+// NOTE: libvips prefers target dimensions rather than "divide by N".
+// We'll compute target dims from metadata.
+const THUMB_DIVISOR: i32 = 8;
+const PREVIEW_DIVISOR: i32 = 4;
+
+// Keep a single VipsApp alive for the entire process.
+// IMPORTANT: Dropping VipsApp calls vips_shutdown(), which is not safe to do repeatedly
+// during the lifetime of a process that continues to use libvips (eg. unit tests).
+static VIPS_APP: OnceCell<VipsApp> = OnceCell::new();
+
+fn ensure_vips() -> Result<(), ImageConversionError> {
+	VIPS_APP
+		.get_or_try_init(|| {
+			VipsApp::new("trokk", false).map_err(|e| {
+				ImageConversionError::StrError(format!("Failed to init libvips: {e}"))
+			})
+		})
+		.map(|_| ())
+}
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all(serialize = "camelCase"))]
 pub struct ConversionCount {
 	pub(crate) converted: u32,
 	pub(crate) already_converted: u32,
-}
-
-/// Reads EXIF orientation from an image file and applies the transformation to the image
-/// This ensures thumbnails and previews match the intended orientation
-fn apply_exif_orientation<P: AsRef<Path>>(
-	image_path: P,
-	image: image::DynamicImage,
-) -> Result<image::DynamicImage, ImageConversionError> {
-	let path_reference = image_path.as_ref();
-
-	// Try to read EXIF orientation using exif crate
-	let orientation: u16 = match fs::File::open(path_reference) {
-		Ok(file) => {
-			let mut bufreader = BufReader::new(&file);
-			match Reader::new().read_from_container(&mut bufreader) {
-				Ok(exif_data) => {
-					// Try to get the orientation field
-					match exif_data.get_field(Tag::Orientation, In::PRIMARY) {
-						Some(field) => match field.value {
-							Value::Short(ref v) if !v.is_empty() => v[0],
-							_ => 1,
-						},
-						None => 1,
-					}
-				}
-				Err(_) => 1, // No EXIF data
-			}
-		}
-		Err(_) => 1, // Can't read file, default to normal orientation
-	};
-
-	// Apply transformation based on EXIF orientation value
-	// See: https://magnushoff.com/articles/jpeg-orientation/
-	let transformed = match orientation {
-		1 => image,                     // Normal - no transformation needed
-		2 => image.fliph(),             // Flipped horizontally
-		3 => image.rotate180(),         // Rotated 180°
-		4 => image.flipv(),             // Flipped vertically
-		5 => image.rotate90().fliph(),  // Rotated 90° CW and flipped horizontally
-		6 => image.rotate90(),          // Rotated 90° CW
-		7 => image.rotate270().fliph(), // Rotated 90° CCW and flipped horizontally
-		8 => image.rotate270(),         // Rotated 90° CCW (270° CW)
-		_ => image,                     // Unknown orientation - return as-is
-	};
-
-	Ok(transformed)
 }
 
 pub fn convert_directory_to_webp<P: AsRef<Path>>(
@@ -94,6 +70,76 @@ pub fn convert_directory_to_webp<P: AsRef<Path>>(
 	Ok(count)
 }
 
+fn output_paths_for<P: AsRef<Path>>(
+	image_path: P,
+	high_res: bool,
+) -> Result<PathBuf, ImageConversionError> {
+	let path_reference = image_path.as_ref();
+	let parent_directory =
+		file_utils::get_parent_directory(path_reference).map_err(ImageConversionError::StrError)?;
+	let filename_original_image =
+		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
+
+	let mut path = parent_directory.to_owned();
+	path.push(if high_res {
+		PREVIEW_FOLDER_NAME
+	} else {
+		THUMBNAIL_FOLDER_NAME
+	});
+	path.push(filename_original_image);
+	path.set_extension(WEBP_EXTENSION);
+	Ok(path)
+}
+
+/// Create or open a lock file next to the output to prevent concurrent writers.
+fn lock_for_output(output_path: &Path) -> Result<std::fs::File, ImageConversionError> {
+	// Ensure the output directory exists before creating a lock file within it.
+	if let Some(parent) = output_path.parent() {
+		fs::create_dir_all(parent)?;
+	}
+
+	let mut lock_path = output_path.to_path_buf();
+	lock_path.set_extension(format!("{}{}", WEBP_EXTENSION, ".lock"));
+	let file = OpenOptions::new()
+		.create(true)
+		.read(true)
+		.write(true)
+		.open(&lock_path)
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to open lock file: {e}")))?;
+	file.lock_exclusive()
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to acquire lock: {e}")))?;
+	Ok(file)
+}
+
+fn write_atomic(output_path: &Path, bytes: &[u8]) -> Result<(), ImageConversionError> {
+	let mut tmp_path = output_path.to_path_buf();
+	// e.g. foo.webp.tmp
+	tmp_path.set_extension(format!("{}{}", WEBP_EXTENSION, ".tmp"));
+
+	if let Some(parent) = output_path.parent() {
+		fs::create_dir_all(parent)?;
+	}
+
+	fs::write(&tmp_path, bytes)?;
+	// atomic replace on same filesystem
+	fs::rename(&tmp_path, output_path)?;
+	Ok(())
+}
+
+pub fn check_if_thumbnail_exists<P: AsRef<Path>>(
+	image_path: P,
+) -> Result<bool, ImageConversionError> {
+	let out = output_paths_for(image_path, false)?;
+	Ok(out.exists())
+}
+
+pub fn check_if_preview_exists<P: AsRef<Path>>(
+	image_path: P,
+) -> Result<bool, ImageConversionError> {
+	let out = output_paths_for(image_path, true)?;
+	Ok(out.exists())
+}
+
 pub fn convert_to_webp<P: AsRef<Path>>(
 	image_path: P,
 	high_res: bool,
@@ -108,88 +154,58 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		return Ok(path_reference.to_path_buf());
 	}
 
-	// Load image and decode with EXIF orientation applied
-	let mut reader = ImageReader::open(path_reference)?;
-	reader = reader.with_guessed_format()?;
+	ensure_vips()?;
 
-	// Decode the image
-	let mut image: image::DynamicImage = reader.decode()?;
+	let output_path = output_paths_for(path_reference, high_res)?;
+	let _lock_guard = lock_for_output(&output_path)?;
 
-	// Apply EXIF orientation if present
-	image = apply_exif_orientation(path_reference, image)?;
-
-	let image = if high_res {
-		image.resize(
-			image.width() / 4,
-			image.height() / 4,
-			image::imageops::FilterType::Nearest,
-		)
-	} else {
-		image.resize(
-			image.width() / 8,
-			image.height() / 8,
-			image::imageops::FilterType::Nearest,
-		)
-	};
-
-	let encoder: Encoder =
-		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
-	let encoded_webp = encoder.encode_simple(false, WEBP_QUALITY)?;
-
-	let parent_directory =
-		file_utils::get_parent_directory(path_reference).map_err(ImageConversionError::StrError)?;
-	let filename_original_image =
-		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
-
-	let mut path = parent_directory.to_owned();
-	path.push(if high_res {
-		PREVIEW_FOLDER_NAME
-	} else {
-		THUMBNAIL_FOLDER_NAME
-	});
-
-	if !file_utils::directory_exists(&path) {
-		fs::create_dir_all(&path)?;
-		thread::sleep(Duration::from_millis(500)); // Sleep here a bit so the file watcher can catch up
+	if output_path.exists() {
+		return Ok(output_path);
 	}
 
-	path.push(filename_original_image);
-	path.set_extension(WEBP_EXTENSION);
-	fs::write(&path, &*encoded_webp)?;
+	let divisor = if high_res { PREVIEW_DIVISOR } else { THUMB_DIVISOR };
+	let src = path_reference
+		.to_str()
+		.ok_or_else(|| ImageConversionError::StrError("Invalid UTF-8 path".to_string()))?;
 
-	Ok(path)
-}
+	// Read header/dimensions via libvips.
+	let img = VipsImage::new_from_file(src)
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to open image: {e}")))?;
+	let w = img.get_width();
+	let h = img.get_height();
+	if w <= 0 || h <= 0 {
+		return Err(ImageConversionError::StrError("Image has invalid dimensions".to_string()));
+	}
 
-pub fn check_if_thumbnail_exists<P: AsRef<Path>>(
-	image_path: P,
-) -> Result<bool, ImageConversionError> {
-	let path_reference = image_path.as_ref();
-	let parent_directory =
-		file_utils::get_parent_directory(path_reference).map_err(ImageConversionError::StrError)?;
-	let filename_original_image =
-		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
+	let target_w = std::cmp::max(1, w / divisor);
+	let _target_h = std::cmp::max(1, h / divisor);
 
-	let mut path = parent_directory.to_owned();
-	path.push(THUMBNAIL_FOLDER_NAME);
-	path.push(filename_original_image);
-	path.set_extension(WEBP_EXTENSION);
-	Ok(path.exists())
-}
+	let resized = ops::thumbnail(src, target_w)
+		.and_then(|img| ops::autorot(&img))
+		.map_err(|e| {
+			let vips_details = VIPS_APP
+				.get()
+				.and_then(|app| app.error_buffer().ok())
+				.unwrap_or("");
+			if let Some(app) = VIPS_APP.get() {
+				app.error_clear();
+			}
+			ImageConversionError::StrError(format!(
+				"Failed to create thumbnail: {e}{}{}",
+				if vips_details.is_empty() { "" } else { "\nlibvips: " },
+				vips_details
+			))
+		})?;
 
-pub fn check_if_preview_exists<P: AsRef<Path>>(
-	image_path: P,
-) -> Result<bool, ImageConversionError> {
-	let path_reference = image_path.as_ref();
-	let parent_directory =
-		file_utils::get_parent_directory(path_reference).map_err(ImageConversionError::StrError)?;
-	let filename_original_image =
-		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
+	// Encode to webp. (The libvips crate exposes image_write_to_buffer without extra args;
+	// it uses libvips defaults for that suffix.)
+	// TODO: If you want exact quality/strip control, we can wire `webpsave_buffer_with_opts`.
+	let webp_bytes = resized
+		.image_write_to_buffer(".webp")
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to encode webp: {e}")))?;
 
-	let mut path = parent_directory.to_owned();
-	path.push(PREVIEW_FOLDER_NAME);
-	path.push(filename_original_image);
-	path.set_extension(WEBP_EXTENSION);
-	Ok(path.exists())
+	write_atomic(&output_path, &webp_bytes)?;
+	Ok(output_path)
 }
 
 /// Rotates an image by the specified angle (0, 90, 180, 270 degrees)
@@ -206,8 +222,6 @@ pub fn rotate_image<P: AsRef<Path>>(
 			rotation
 		)));
 	}
-
-	// Skip if no rotation needed
 	if rotation == 0 {
 		return Ok(());
 	}
@@ -215,8 +229,23 @@ pub fn rotate_image<P: AsRef<Path>>(
 	// Rotate the original file by updating EXIF orientation (instant)
 	rotate_with_exif(path_reference, rotation)?;
 
-	// Rotate WebP files (thumbnail and preview)
-	rotate_webp_files(path_reference, rotation)?;
+	// Regenerate both cached webps synchronously to keep UI consistent.
+	// The async background refresh caused thumbnail/preview desync.
+	let thumb_out = output_paths_for(path_reference, false)?;
+	let prev_out = output_paths_for(path_reference, true)?;
+	let _thumb_lock = lock_for_output(&thumb_out)?;
+	let _prev_lock = lock_for_output(&prev_out)?;
+
+	if thumb_out.exists() {
+		let _ = fs::remove_file(&thumb_out);
+	}
+	if prev_out.exists() {
+		let _ = fs::remove_file(&prev_out);
+	}
+
+	// Recreate (these are now fast with libvips)
+	let _ = convert_to_webp(path_reference, false)?;
+	let _ = convert_to_webp(path_reference, true)?;
 
 	Ok(())
 }
@@ -457,46 +486,3 @@ fn update_tiff_orientation<P: AsRef<Path>>(path: P, orientation: u16) -> Result<
 	)
 }
 
-/// Regenerates WebP thumbnail and preview files from the rotated original
-fn rotate_webp_files<P: AsRef<Path>>(
-	image_path: P,
-	_rotation: u16,
-) -> Result<(), ImageConversionError> {
-	let path_reference = image_path.as_ref();
-	let parent_directory =
-		file_utils::get_parent_directory(path_reference).map_err(ImageConversionError::StrError)?;
-	let filename_original_image =
-		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
-
-	// Build paths
-	let mut thumbnail_path = parent_directory.to_owned();
-	thumbnail_path.push(THUMBNAIL_FOLDER_NAME);
-	thumbnail_path.push(filename_original_image);
-	thumbnail_path.set_extension(WEBP_EXTENSION);
-
-	let mut preview_path = parent_directory.to_owned();
-	preview_path.push(PREVIEW_FOLDER_NAME);
-	preview_path.push(filename_original_image);
-	preview_path.set_extension(WEBP_EXTENSION);
-
-	// Always regenerate thumbnail (needed for grid view)
-	convert_to_webp(path_reference, false)?; // Thumbnail
-
-	// Always regenerate preview in the background for faster subsequent views
-	// Delete the old preview if it exists
-	if preview_path.exists() {
-		let _ = fs::remove_file(&preview_path); // Ignore errors, preview will be regenerated anyway
-	}
-
-	// Regenerate preview asynchronously in a background thread
-	let image_path_clone = path_reference.to_path_buf();
-	thread::spawn(move || {
-		// Small delay to ensure thumbnail is visible first
-		thread::sleep(Duration::from_millis(50));
-		if let Err(e) = convert_to_webp(&image_path_clone, true) {
-			eprintln!("Failed to regenerate preview in background: {}", e);
-		}
-	});
-
-	Ok(())
-}

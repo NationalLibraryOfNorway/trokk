@@ -80,13 +80,6 @@ pub fn list_image_files<P: AsRef<Path>>(
 	Ok(files)
 }
 
-/// Checks if a directory exists
-pub fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
-	fs::metadata(path)
-		.map(|metadata| metadata.is_dir())
-		.unwrap_or(false)
-}
-
 /// Gets the parent directory of a path
 pub fn get_parent_directory(path_reference: &Path) -> Result<&Path, String> {
 	path_reference.parent().ok_or_else(|| {

@@ -14,10 +14,12 @@ let
     pkgs.pango
     pkgs.webkitgtk_4_1
     pkgs.openssl
+    pkgs.vips
   ];
 
   linkedLibraries = [
     pkgs.libappindicator
+    pkgs.vips
   ];
 in
 pkgs.mkShell {

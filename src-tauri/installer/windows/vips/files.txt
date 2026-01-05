@@ -1,0 +1,751 @@
+.
+├── bin
+│   ├── libaom.dll
+│   ├── libarchive-13.dll
+│   ├── libbrotlicommon.dll
+│   ├── libbrotlidec.dll
+│   ├── libbrotlienc.dll
+│   ├── libcairo-2.dll
+│   ├── libc++.dll
+│   ├── libcfitsio.dll
+│   ├── libcgif-0.dll
+│   ├── libdicom-1.dll
+│   ├── libexif-12.dll
+│   ├── libexpat-1.dll
+│   ├── libffi-8.dll
+│   ├── libfftw3-3.dll
+│   ├── libfontconfig-1.dll
+│   ├── libfreetype-6.dll
+│   ├── libfribidi-0.dll
+│   ├── libgdk_pixbuf-2.0-0.dll
+│   ├── libgio-2.0-0.dll
+│   ├── libglib-2.0-0.dll
+│   ├── libgmodule-2.0-0.dll
+│   ├── libgobject-2.0-0.dll
+│   ├── libharfbuzz-0.dll
+│   ├── libheif.dll
+│   ├── libhwy.dll
+│   ├── libIex-3_1.dll
+│   ├── libIlmThread-3_1.dll
+│   ├── libimagequant.dll
+│   ├── libjpeg-62.dll
+│   ├── libjxl_cms.dll
+│   ├── libjxl.dll
+│   ├── libjxl_threads.dll
+│   ├── liblcms2-2.dll
+│   ├── libMagickCore-6.Q16-7.dll
+│   ├── libmatio-13.dll
+│   ├── libniftiio.dll
+│   ├── libOpenEXR-3_1.dll
+│   ├── libopenjp2.dll
+│   ├── libopenslide-1.dll
+│   ├── libpango-1.0-0.dll
+│   ├── libpangocairo-1.0-0.dll
+│   ├── libpangoft2-1.0-0.dll
+│   ├── libpixman-1-0.dll
+│   ├── libpng16-16.dll
+│   ├── libpoppler-155.dll
+│   ├── libpoppler-glib-8.dll
+│   ├── libraw_r-23.dll
+│   ├── librsvg-2-2.dll
+│   ├── libsharpyuv-0.dll
+│   ├── libsqlite3-0.dll
+│   ├── libtiff-6.dll
+│   ├── libuhdr.dll
+│   ├── libunwind.dll
+│   ├── libvips-42.dll
+│   ├── libvips-cpp-42.dll
+│   ├── libwebp-7.dll
+│   ├── libwebpdemux-2.dll
+│   ├── libwebpmux-3.dll
+│   ├── libxml2-16.dll
+│   ├── libz1.dll
+│   ├── libznz.dll
+│   ├── libzstd.dll
+│   ├── vipsedit.exe
+│   ├── vips.exe
+│   ├── vipsheader.exe
+│   ├── vips-modules-8.18
+│   │   ├── vips-jxl.dll
+│   │   ├── vips-magick.dll
+│   │   ├── vips-openslide.dll
+│   │   └── vips-poppler.dll
+│   └── vipsthumbnail.exe
+├── ChangeLog
+├── etc
+│   ├── fonts
+│   │   ├── conf.d
+│   │   │   ├── 10-hinting-slight.conf
+│   │   │   ├── 10-scale-bitmap-fonts.conf
+│   │   │   ├── 10-sub-pixel-none.conf
+│   │   │   ├── 10-yes-antialias.conf
+│   │   │   ├── 11-lcdfilter-default.conf
+│   │   │   ├── 20-unhint-small-vera.conf
+│   │   │   ├── 30-metric-aliases.conf
+│   │   │   ├── 40-nonlatin.conf
+│   │   │   ├── 45-generic.conf
+│   │   │   ├── 45-latin.conf
+│   │   │   ├── 48-spacing.conf
+│   │   │   ├── 49-sansserif.conf
+│   │   │   ├── 50-user.conf
+│   │   │   ├── 51-local.conf
+│   │   │   ├── 60-generic.conf
+│   │   │   ├── 60-latin.conf
+│   │   │   ├── 65-fonts-persian.conf
+│   │   │   ├── 65-nonlatin.conf
+│   │   │   ├── 69-unifont.conf
+│   │   │   ├── 70-no-bitmaps-except-emoji.conf
+│   │   │   ├── 80-delicious.conf
+│   │   │   ├── 90-synthetic.conf
+│   │   │   └── README
+│   │   └── fonts.conf
+│   └── ImageMagick-6
+│       ├── coder.xml
+│       ├── colors.xml
+│       ├── delegates.xml
+│       ├── log.xml
+│       ├── magic.xml
+│       ├── mime.xml
+│       ├── policy.xml
+│       ├── quantization-table.xml
+│       ├── thresholds.xml
+│       ├── type-apple.xml
+│       ├── type-dejavu.xml
+│       ├── type-ghostscript.xml
+│       ├── type-urw-base35-type1.xml
+│       ├── type-urw-base35.xml
+│       ├── type-windows.xml
+│       └── type.xml
+├── files.txt
+├── include
+│   ├── glib-2.0
+│   │   ├── gio
+│   │   │   ├── gactiongroupexporter.h
+│   │   │   ├── gactiongroup.h
+│   │   │   ├── gaction.h
+│   │   │   ├── gactionmap.h
+│   │   │   ├── gappinfo.h
+│   │   │   ├── gapplicationcommandline.h
+│   │   │   ├── gapplication.h
+│   │   │   ├── gasyncinitable.h
+│   │   │   ├── gasyncresult.h
+│   │   │   ├── gbufferedinputstream.h
+│   │   │   ├── gbufferedoutputstream.h
+│   │   │   ├── gbytesicon.h
+│   │   │   ├── gcancellable.h
+│   │   │   ├── gcharsetconverter.h
+│   │   │   ├── gcontenttype.h
+│   │   │   ├── gconverter.h
+│   │   │   ├── gconverterinputstream.h
+│   │   │   ├── gconverteroutputstream.h
+│   │   │   ├── gcredentials.h
+│   │   │   ├── gdatagrambased.h
+│   │   │   ├── gdatainputstream.h
+│   │   │   ├── gdataoutputstream.h
+│   │   │   ├── gdbusactiongroup.h
+│   │   │   ├── gdbusaddress.h
+│   │   │   ├── gdbusauthobserver.h
+│   │   │   ├── gdbusconnection.h
+│   │   │   ├── gdbuserror.h
+│   │   │   ├── gdbusinterface.h
+│   │   │   ├── gdbusinterfaceskeleton.h
+│   │   │   ├── gdbusintrospection.h
+│   │   │   ├── gdbusmenumodel.h
+│   │   │   ├── gdbusmessage.h
+│   │   │   ├── gdbusmethodinvocation.h
+│   │   │   ├── gdbusnameowning.h
+│   │   │   ├── gdbusnamewatching.h
+│   │   │   ├── gdbusobject.h
+│   │   │   ├── gdbusobjectmanagerclient.h
+│   │   │   ├── gdbusobjectmanager.h
+│   │   │   ├── gdbusobjectmanagerserver.h
+│   │   │   ├── gdbusobjectproxy.h
+│   │   │   ├── gdbusobjectskeleton.h
+│   │   │   ├── gdbusproxy.h
+│   │   │   ├── gdbusserver.h
+│   │   │   ├── gdbusutils.h
+│   │   │   ├── gdebugcontrollerdbus.h
+│   │   │   ├── gdebugcontroller.h
+│   │   │   ├── gdrive.h
+│   │   │   ├── gdtlsclientconnection.h
+│   │   │   ├── gdtlsconnection.h
+│   │   │   ├── gdtlsserverconnection.h
+│   │   │   ├── gemblemedicon.h
+│   │   │   ├── gemblem.h
+│   │   │   ├── gfileattribute.h
+│   │   │   ├── gfileenumerator.h
+│   │   │   ├── gfile.h
+│   │   │   ├── gfileicon.h
+│   │   │   ├── gfileinfo.h
+│   │   │   ├── gfileinputstream.h
+│   │   │   ├── gfileiostream.h
+│   │   │   ├── gfilemonitor.h
+│   │   │   ├── gfilenamecompleter.h
+│   │   │   ├── gfileoutputstream.h
+│   │   │   ├── gfilterinputstream.h
+│   │   │   ├── gfilteroutputstream.h
+│   │   │   ├── gicon.h
+│   │   │   ├── ginetaddress.h
+│   │   │   ├── ginetaddressmask.h
+│   │   │   ├── ginetsocketaddress.h
+│   │   │   ├── ginitable.h
+│   │   │   ├── ginputstream.h
+│   │   │   ├── gio-autocleanups.h
+│   │   │   ├── gioenums.h
+│   │   │   ├── gioenumtypes.h
+│   │   │   ├── gioerror.h
+│   │   │   ├── gio.h
+│   │   │   ├── giomodule.h
+│   │   │   ├── gioscheduler.h
+│   │   │   ├── giostream.h
+│   │   │   ├── giotypes.h
+│   │   │   ├── gio-visibility.h
+│   │   │   ├── glistmodel.h
+│   │   │   ├── gliststore.h
+│   │   │   ├── gloadableicon.h
+│   │   │   ├── gmemoryinputstream.h
+│   │   │   ├── gmemorymonitor.h
+│   │   │   ├── gmemoryoutputstream.h
+│   │   │   ├── gmenuexporter.h
+│   │   │   ├── gmenu.h
+│   │   │   ├── gmenumodel.h
+│   │   │   ├── gmount.h
+│   │   │   ├── gmountoperation.h
+│   │   │   ├── gnativesocketaddress.h
+│   │   │   ├── gnativevolumemonitor.h
+│   │   │   ├── gnetworkaddress.h
+│   │   │   ├── gnetworking.h
+│   │   │   ├── gnetworkmonitor.h
+│   │   │   ├── gnetworkservice.h
+│   │   │   ├── gnotification.h
+│   │   │   ├── goutputstream.h
+│   │   │   ├── gpermission.h
+│   │   │   ├── gpollableinputstream.h
+│   │   │   ├── gpollableoutputstream.h
+│   │   │   ├── gpollableutils.h
+│   │   │   ├── gpowerprofilemonitor.h
+│   │   │   ├── gpropertyaction.h
+│   │   │   ├── gproxyaddressenumerator.h
+│   │   │   ├── gproxyaddress.h
+│   │   │   ├── gproxy.h
+│   │   │   ├── gproxyresolver.h
+│   │   │   ├── gremoteactiongroup.h
+│   │   │   ├── gresolver.h
+│   │   │   ├── gresource.h
+│   │   │   ├── gseekable.h
+│   │   │   ├── gsettingsbackend.h
+│   │   │   ├── gsettings.h
+│   │   │   ├── gsettingsschema.h
+│   │   │   ├── gsimpleactiongroup.h
+│   │   │   ├── gsimpleaction.h
+│   │   │   ├── gsimpleasyncresult.h
+│   │   │   ├── gsimpleiostream.h
+│   │   │   ├── gsimplepermission.h
+│   │   │   ├── gsimpleproxyresolver.h
+│   │   │   ├── gsocketaddressenumerator.h
+│   │   │   ├── gsocketaddress.h
+│   │   │   ├── gsocketclient.h
+│   │   │   ├── gsocketconnectable.h
+│   │   │   ├── gsocketconnection.h
+│   │   │   ├── gsocketcontrolmessage.h
+│   │   │   ├── gsocket.h
+│   │   │   ├── gsocketlistener.h
+│   │   │   ├── gsocketservice.h
+│   │   │   ├── gsrvtarget.h
+│   │   │   ├── gsubprocess.h
+│   │   │   ├── gsubprocesslauncher.h
+│   │   │   ├── gtask.h
+│   │   │   ├── gtcpconnection.h
+│   │   │   ├── gtcpwrapperconnection.h
+│   │   │   ├── gtestdbus.h
+│   │   │   ├── gthemedicon.h
+│   │   │   ├── gthreadedsocketservice.h
+│   │   │   ├── gtlsbackend.h
+│   │   │   ├── gtlscertificate.h
+│   │   │   ├── gtlsclientconnection.h
+│   │   │   ├── gtlsconnection.h
+│   │   │   ├── gtlsdatabase.h
+│   │   │   ├── gtlsfiledatabase.h
+│   │   │   ├── gtlsinteraction.h
+│   │   │   ├── gtlspassword.h
+│   │   │   ├── gtlsserverconnection.h
+│   │   │   ├── gunixconnection.h
+│   │   │   ├── gunixcredentialsmessage.h
+│   │   │   ├── gunixfdlist.h
+│   │   │   ├── gunixsocketaddress.h
+│   │   │   ├── gvfs.h
+│   │   │   ├── gvolume.h
+│   │   │   ├── gvolumemonitor.h
+│   │   │   ├── gzlibcompressor.h
+│   │   │   └── gzlibdecompressor.h
+│   │   ├── girepository
+│   │   │   ├── giarginfo.h
+│   │   │   ├── gibaseinfo.h
+│   │   │   ├── gicallableinfo.h
+│   │   │   ├── gicallbackinfo.h
+│   │   │   ├── giconstantinfo.h
+│   │   │   ├── gienuminfo.h
+│   │   │   ├── gifieldinfo.h
+│   │   │   ├── giflagsinfo.h
+│   │   │   ├── gifunctioninfo.h
+│   │   │   ├── giinterfaceinfo.h
+│   │   │   ├── giobjectinfo.h
+│   │   │   ├── gipropertyinfo.h
+│   │   │   ├── giregisteredtypeinfo.h
+│   │   │   ├── girepository-autocleanups.h
+│   │   │   ├── girepository.h
+│   │   │   ├── girffi.h
+│   │   │   ├── gisignalinfo.h
+│   │   │   ├── gistructinfo.h
+│   │   │   ├── gitypeinfo.h
+│   │   │   ├── gitypelib.h
+│   │   │   ├── gitypes.h
+│   │   │   ├── giunioninfo.h
+│   │   │   ├── giunresolvedinfo.h
+│   │   │   ├── givalueinfo.h
+│   │   │   ├── givfuncinfo.h
+│   │   │   └── gi-visibility.h
+│   │   ├── glib
+│   │   │   ├── deprecated
+│   │   │   │   ├── gallocator.h
+│   │   │   │   ├── gcache.h
+│   │   │   │   ├── gcompletion.h
+│   │   │   │   ├── gmain.h
+│   │   │   │   ├── grel.h
+│   │   │   │   └── gthread.h
+│   │   │   ├── galloca.h
+│   │   │   ├── garray.h
+│   │   │   ├── gasyncqueue.h
+│   │   │   ├── gatomic.h
+│   │   │   ├── gbacktrace.h
+│   │   │   ├── gbase64.h
+│   │   │   ├── gbitlock.h
+│   │   │   ├── gbookmarkfile.h
+│   │   │   ├── gbytes.h
+│   │   │   ├── gcharset.h
+│   │   │   ├── gchecksum.h
+│   │   │   ├── gconvert.h
+│   │   │   ├── gdataset.h
+│   │   │   ├── gdate.h
+│   │   │   ├── gdatetime.h
+│   │   │   ├── gdir.h
+│   │   │   ├── genviron.h
+│   │   │   ├── gerror.h
+│   │   │   ├── gfileutils.h
+│   │   │   ├── ggettext.h
+│   │   │   ├── ghash.h
+│   │   │   ├── ghmac.h
+│   │   │   ├── ghook.h
+│   │   │   ├── ghostutils.h
+│   │   │   ├── gi18n.h
+│   │   │   ├── gi18n-lib.h
+│   │   │   ├── giochannel.h
+│   │   │   ├── gkeyfile.h
+│   │   │   ├── glib-autocleanups.h
+│   │   │   ├── glib-typeof.h
+│   │   │   ├── glib-visibility.h
+│   │   │   ├── glist.h
+│   │   │   ├── gmacros.h
+│   │   │   ├── gmain.h
+│   │   │   ├── gmappedfile.h
+│   │   │   ├── gmarkup.h
+│   │   │   ├── gmem.h
+│   │   │   ├── gmessages.h
+│   │   │   ├── gnode.h
+│   │   │   ├── goption.h
+│   │   │   ├── gpathbuf.h
+│   │   │   ├── gpattern.h
+│   │   │   ├── gpoll.h
+│   │   │   ├── gprimes.h
+│   │   │   ├── gprintf.h
+│   │   │   ├── gqsort.h
+│   │   │   ├── gquark.h
+│   │   │   ├── gqueue.h
+│   │   │   ├── grand.h
+│   │   │   ├── grcbox.h
+│   │   │   ├── grefcount.h
+│   │   │   ├── grefstring.h
+│   │   │   ├── gscanner.h
+│   │   │   ├── gsequence.h
+│   │   │   ├── gshell.h
+│   │   │   ├── gslice.h
+│   │   │   ├── gslist.h
+│   │   │   ├── gspawn.h
+│   │   │   ├── gstdio.h
+│   │   │   ├── gstrfuncs.h
+│   │   │   ├── gstringchunk.h
+│   │   │   ├── gstring.h
+│   │   │   ├── gstrvbuilder.h
+│   │   │   ├── gtestutils.h
+│   │   │   ├── gthread.h
+│   │   │   ├── gthreadpool.h
+│   │   │   ├── gtimer.h
+│   │   │   ├── gtimezone.h
+│   │   │   ├── gtrashstack.h
+│   │   │   ├── gtree.h
+│   │   │   ├── gtypes.h
+│   │   │   ├── gunicode.h
+│   │   │   ├── guri.h
+│   │   │   ├── gutils.h
+│   │   │   ├── guuid.h
+│   │   │   ├── gvariant.h
+│   │   │   ├── gvarianttype.h
+│   │   │   ├── gversion.h
+│   │   │   ├── gversionmacros.h
+│   │   │   └── gwin32.h
+│   │   ├── glib.h
+│   │   ├── glib-object.h
+│   │   ├── gmodule
+│   │   │   └── gmodule-visibility.h
+│   │   ├── gmodule.h
+│   │   ├── gobject
+│   │   │   ├── gbindinggroup.h
+│   │   │   ├── gbinding.h
+│   │   │   ├── gboxed.h
+│   │   │   ├── gclosure.h
+│   │   │   ├── genums.h
+│   │   │   ├── glib-enumtypes.h
+│   │   │   ├── glib-types.h
+│   │   │   ├── gmarshal.h
+│   │   │   ├── gobject-autocleanups.h
+│   │   │   ├── gobject.h
+│   │   │   ├── gobjectnotifyqueue.c
+│   │   │   ├── gobject-visibility.h
+│   │   │   ├── gparam.h
+│   │   │   ├── gparamspecs.h
+│   │   │   ├── gsignalgroup.h
+│   │   │   ├── gsignal.h
+│   │   │   ├── gsourceclosure.h
+│   │   │   ├── gtype.h
+│   │   │   ├── gtypemodule.h
+│   │   │   ├── gtypeplugin.h
+│   │   │   ├── gvaluearray.h
+│   │   │   ├── gvaluecollector.h
+│   │   │   ├── gvalue.h
+│   │   │   └── gvaluetypes.h
+│   │   └── msvc_recommended_pragmas.h
+│   └── vips
+│       ├── arithmetic.h
+│       ├── basic.h
+│       ├── buf.h
+│       ├── colour.h
+│       ├── connection.h
+│       ├── conversion.h
+│       ├── convolution.h
+│       ├── create.h
+│       ├── dbuf.h
+│       ├── debug.h
+│       ├── draw.h
+│       ├── enumtypes.h
+│       ├── error.h
+│       ├── foreign.h
+│       ├── format.h
+│       ├── freqfilt.h
+│       ├── gate.h
+│       ├── generate.h
+│       ├── header.h
+│       ├── histogram.h
+│       ├── image.h
+│       ├── interpolate.h
+│       ├── memory.h
+│       ├── morphology.h
+│       ├── mosaicing.h
+│       ├── object.h
+│       ├── operation.h
+│       ├── private.h
+│       ├── rect.h
+│       ├── region.h
+│       ├── resample.h
+│       ├── sbuf.h
+│       ├── semaphore.h
+│       ├── thread.h
+│       ├── threadpool.h
+│       ├── transform.h
+│       ├── type.h
+│       ├── util.h
+│       ├── VConnection8.h
+│       ├── vector.h
+│       ├── VError8.h
+│       ├── version.h
+│       ├── VImage8.h
+│       ├── VInterpolate8.h
+│       ├── vips8
+│       ├── vips.h
+│       └── VRegion8.h
+├── lib
+│   ├── glib-2.0
+│   │   └── include
+│   │       └── glibconfig.h
+│   ├── libaom.def
+│   ├── libaom.lib
+│   ├── libarchive.def
+│   ├── libarchive.lib
+│   ├── libbrotlicommon.def
+│   ├── libbrotlicommon.lib
+│   ├── libbrotlidec.def
+│   ├── libbrotlidec.lib
+│   ├── libbrotlienc.def
+│   ├── libbrotlienc.lib
+│   ├── libcairo.def
+│   ├── libcairo.lib
+│   ├── libc++.def
+│   ├── libcfitsio.def
+│   ├── libcfitsio.lib
+│   ├── libcgif.def
+│   ├── libcgif.lib
+│   ├── libc++.lib
+│   ├── libdicom.def
+│   ├── libdicom.lib
+│   ├── libexif.def
+│   ├── libexif.lib
+│   ├── libexpat.def
+│   ├── libexpat.lib
+│   ├── libffi.def
+│   ├── libffi.lib
+│   ├── libfftw3.def
+│   ├── libfftw3.lib
+│   ├── libfontconfig.def
+│   ├── libfontconfig.lib
+│   ├── libfreetype.def
+│   ├── libfreetype.lib
+│   ├── libfribidi.def
+│   ├── libfribidi.lib
+│   ├── libgdk_pixbuf-2.0.def
+│   ├── libgdk_pixbuf-2.0.lib
+│   ├── libgio-2.0.def
+│   ├── libgio-2.0.lib
+│   ├── libglib-2.0.def
+│   ├── libglib-2.0.lib
+│   ├── libgmodule-2.0.def
+│   ├── libgmodule-2.0.lib
+│   ├── libgobject-2.0.def
+│   ├── libgobject-2.0.lib
+│   ├── libharfbuzz.def
+│   ├── libharfbuzz.lib
+│   ├── libheif.def
+│   ├── libheif.lib
+│   ├── libhwy.def
+│   ├── libhwy.lib
+│   ├── libIex-3_1.def
+│   ├── libIex-3_1.lib
+│   ├── libIlmThread-3_1.def
+│   ├── libIlmThread-3_1.lib
+│   ├── libimagequant.def
+│   ├── libimagequant.lib
+│   ├── libjpeg.def
+│   ├── libjpeg.lib
+│   ├── libjxl_cms.def
+│   ├── libjxl_cms.lib
+│   ├── libjxl.def
+│   ├── libjxl.lib
+│   ├── libjxl_threads.def
+│   ├── libjxl_threads.lib
+│   ├── liblcms2.def
+│   ├── liblcms2.lib
+│   ├── libMagickCore-6.Q16.def
+│   ├── libMagickCore-6.Q16.lib
+│   ├── libmatio.def
+│   ├── libmatio.lib
+│   ├── libniftiio.def
+│   ├── libniftiio.lib
+│   ├── libOpenEXR-3_1.def
+│   ├── libOpenEXR-3_1.lib
+│   ├── libopenjp2.def
+│   ├── libopenjp2.lib
+│   ├── libopenslide.def
+│   ├── libopenslide.lib
+│   ├── libpango-1.0.def
+│   ├── libpango-1.0.lib
+│   ├── libpangocairo-1.0.def
+│   ├── libpangocairo-1.0.lib
+│   ├── libpangoft2-1.0.def
+│   ├── libpangoft2-1.0.lib
+│   ├── libpixman-1.def
+│   ├── libpixman-1.lib
+│   ├── libpng16.def
+│   ├── libpng16.lib
+│   ├── libpoppler.def
+│   ├── libpoppler-glib.def
+│   ├── libpoppler-glib.lib
+│   ├── libpoppler.lib
+│   ├── libraw_r.def
+│   ├── libraw_r.lib
+│   ├── librsvg-2.def
+│   ├── librsvg-2.lib
+│   ├── libsharpyuv.def
+│   ├── libsharpyuv.lib
+│   ├── libsqlite3.def
+│   ├── libsqlite3.lib
+│   ├── libtiff.def
+│   ├── libtiff.lib
+│   ├── libuhdr.def
+│   ├── libuhdr.lib
+│   ├── libunwind.def
+│   ├── libunwind.lib
+│   ├── libvips-cpp.def
+│   ├── libvips-cpp.lib
+│   ├── libvips.def
+│   ├── libvips.lib
+│   ├── libwebp.def
+│   ├── libwebpdemux.def
+│   ├── libwebpdemux.lib
+│   ├── libwebp.lib
+│   ├── libwebpmux.def
+│   ├── libwebpmux.lib
+│   ├── libxml2.def
+│   ├── libxml2.lib
+│   ├── libz1.def
+│   ├── libz1.lib
+│   ├── libznz.def
+│   ├── libznz.lib
+│   ├── libzstd.def
+│   ├── libzstd.lib
+│   └── pkgconfig
+│       ├── aom.pc
+│       ├── cairo-fc.pc
+│       ├── cairo-ft.pc
+│       ├── cairo-gobject.pc
+│       ├── cairo.pc
+│       ├── cairo-png.pc
+│       ├── cairo-svg.pc
+│       ├── cfitsio.pc
+│       ├── cgif.pc
+│       ├── expat.pc
+│       ├── fftw3f.pc
+│       ├── fftw3l.pc
+│       ├── fftw3.pc
+│       ├── fontconfig.pc
+│       ├── freetype2.pc
+│       ├── fribidi.pc
+│       ├── gdk-pixbuf-2.0.pc
+│       ├── gio-2.0.pc
+│       ├── gio-windows-2.0.pc
+│       ├── girepository-2.0.pc
+│       ├── glib-2.0.pc
+│       ├── gmodule-2.0.pc
+│       ├── gmodule-export-2.0.pc
+│       ├── gmodule-no-export-2.0.pc
+│       ├── gobject-2.0.pc
+│       ├── gthread-2.0.pc
+│       ├── harfbuzz-cairo.pc
+│       ├── harfbuzz-gobject.pc
+│       ├── harfbuzz.pc
+│       ├── harfbuzz-subset.pc
+│       ├── ImageMagick-6.Q16.pc
+│       ├── ImageMagick.pc
+│       ├── imagequant.pc
+│       ├── Imath.pc
+│       ├── lcms2.pc
+│       ├── libarchive.pc
+│       ├── libbrotlicommon.pc
+│       ├── libbrotlidec.pc
+│       ├── libbrotlienc.pc
+│       ├── libdicom.pc
+│       ├── libexif.pc
+│       ├── libffi.pc
+│       ├── libheif.pc
+│       ├── libhwy.pc
+│       ├── libjpeg.pc
+│       ├── libjxl_cms.pc
+│       ├── libjxl.pc
+│       ├── libjxl_threads.pc
+│       ├── libopenjp2.pc
+│       ├── libpng16.pc
+│       ├── libpng.pc
+│       ├── libraw.pc
+│       ├── libraw_r.pc
+│       ├── librsvg-2.0.pc
+│       ├── libsharpyuv.pc
+│       ├── libtiff-4.pc
+│       ├── libuhdr.pc
+│       ├── libwebpdemux.pc
+│       ├── libwebpmux.pc
+│       ├── libwebp.pc
+│       ├── libxml-2.0.pc
+│       ├── libzstd.pc
+│       ├── MagickCore-6.Q16.pc
+│       ├── MagickCore.pc
+│       ├── MagickWand-6.Q16.pc
+│       ├── MagickWand.pc
+│       ├── matio.pc
+│       ├── niftiio.pc
+│       ├── OpenEXR.pc
+│       ├── openslide.pc
+│       ├── pangocairo.pc
+│       ├── pangofc.pc
+│       ├── pangoft2.pc
+│       ├── pangoot.pc
+│       ├── pango.pc
+│       ├── pangowin32.pc
+│       ├── pixman-1.pc
+│       ├── poppler-glib.pc
+│       ├── poppler.pc
+│       ├── sqlite3.pc
+│       ├── vips-cpp.pc
+│       ├── vips.pc
+│       ├── Wand-6.Q16.pc
+│       ├── Wand.pc
+│       ├── zlib.pc
+│       └── znzlib.pc
+├── LICENSE
+├── README.md
+├── share
+│   ├── fontconfig
+│   │   └── conf.avail
+│   │       ├── 05-reset-dirs-sample.conf
+│   │       ├── 09-autohint-if-no-hinting.conf
+│   │       ├── 10-autohint.conf
+│   │       ├── 10-hinting-full.conf
+│   │       ├── 10-hinting-medium.conf
+│   │       ├── 10-hinting-none.conf
+│   │       ├── 10-hinting-slight.conf
+│   │       ├── 10-no-antialias.conf
+│   │       ├── 10-scale-bitmap-fonts.conf
+│   │       ├── 10-sub-pixel-bgr.conf
+│   │       ├── 10-sub-pixel-none.conf
+│   │       ├── 10-sub-pixel-rgb.conf
+│   │       ├── 10-sub-pixel-vbgr.conf
+│   │       ├── 10-sub-pixel-vrgb.conf
+│   │       ├── 10-unhinted.conf
+│   │       ├── 10-yes-antialias.conf
+│   │       ├── 11-lcdfilter-default.conf
+│   │       ├── 11-lcdfilter-legacy.conf
+│   │       ├── 11-lcdfilter-light.conf
+│   │       ├── 11-lcdfilter-none.conf
+│   │       ├── 20-unhint-small-vera.conf
+│   │       ├── 25-unhint-nonlatin.conf
+│   │       ├── 30-metric-aliases.conf
+│   │       ├── 35-lang-normalize.conf
+│   │       ├── 40-nonlatin.conf
+│   │       ├── 45-generic.conf
+│   │       ├── 45-latin.conf
+│   │       ├── 48-guessfamily.conf
+│   │       ├── 48-spacing.conf
+│   │       ├── 49-sansserif.conf
+│   │       ├── 50-user.conf
+│   │       ├── 51-local.conf
+│   │       ├── 60-generic.conf
+│   │       ├── 60-latin.conf
+│   │       ├── 65-fonts-persian.conf
+│   │       ├── 65-khmer.conf
+│   │       ├── 65-nonlatin.conf
+│   │       ├── 69-unifont.conf
+│   │       ├── 70-no-bitmaps-and-emoji.conf
+│   │       ├── 70-no-bitmaps.conf
+│   │       ├── 70-no-bitmaps-except-emoji.conf
+│   │       ├── 70-yes-bitmaps.conf
+│   │       ├── 80-delicious.conf
+│   │       └── 90-synthetic.conf
+│   ├── gettext
+│   │   └── its
+│   │       ├── fontconfig.its
+│   │       ├── fontconfig.loc
+│   │       ├── gschema.its
+│   │       └── gschema.loc
+│   └── ImageMagick-6
+│       ├── english.xml
+│       ├── francais.xml
+│       └── locale.xml
+└── versions.json
+
+26 directories, 723 files
