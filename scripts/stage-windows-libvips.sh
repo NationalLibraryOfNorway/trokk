@@ -38,26 +38,6 @@ rm -rf "$DEST"
 mkdir -p "$DEST"
 
 echo "Staging libvips from: $SRC_ROOT"
-if [[ -f "$SRC_ROOT/versions.json" ]]; then
-  VIPS_VERSION=$(SRC_ROOT="$SRC_ROOT" python3 - <<'PY'
-import json
-from pathlib import Path
-import os
-p=Path(os.environ["SRC_ROOT"])/"versions.json"
-try:
-  data=json.loads(p.read_text())
-  print(data.get("vips", ""))
-except Exception:
-  print("")
-PY
-)
-  if [[ -n "${VIPS_VERSION:-}" ]]; then
-    echo "Detected libvips:     $VIPS_VERSION"
-    if [[ ! "$VIPS_VERSION" =~ ^8\.17\..* ]]; then
-      echo "WARNING: rs-vips bindings are generated for libvips 8.17.x; prefer vips-dev-w64-*-8.17.x" >&2
-    fi
-  fi
-fi
 
 echo "Copying files (libvips DLLs + vips-modules) to $DEST"
 rsync -a \
