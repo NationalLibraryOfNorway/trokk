@@ -5,7 +5,7 @@ set -euo pipefail
 # Expects a vips-dev-w64-<version>-static folder as input.
 #
 # Usage:
-#   ./scripts/stage-windows-libvips.sh /path/to/vips-dev-<version> [--minimal]
+#   ./scripts/stage-windows-libvips.sh /path/to/vips-dev-<version>
 #
 # Destination:
 #   src-tauri/installer/windows/vips/
@@ -24,9 +24,19 @@ if [[ ! -d "$SRC_ROOT/bin" ]]; then
   exit 1
 fi
 
+if [[ ! -d "$SRC_ROOT/lib" ]]; then
+  echo "Expected '$SRC_ROOT/lib'" >&2
+  exit 1
+fi
+
 # Quick sanity checks so we fail fast with a helpful error.
-if ! ls "$SRC_ROOT"/bin/libvips-*.dll >/dev/null 2>&1; then
-  echo "Could not find '$SRC_ROOT/bin/libvips-*.dll'. Is this a vips-dev-w64 distribution?" >&2
+if [[ ! -f "$SRC_ROOT/bin/libvips-42.dll" ]]; then
+  echo "Could not find '$SRC_ROOT/bin/libvips-42.dll'. Is this a vips-dev-w64-web-*-static distribution?" >&2
+  exit 1
+fi
+
+if [[ ! -f "$SRC_ROOT/lib/libvips.lib" ]]; then
+  echo "Could not find '$SRC_ROOT/lib/libvips.lib'. Is this a vips-dev-w64-web-*-static distribution?" >&2
   exit 1
 fi
 
@@ -39,18 +49,11 @@ mkdir -p "$DEST"
 
 echo "Staging libvips from: $SRC_ROOT"
 
-echo "Copying files (libvips DLLs + vips-modules) to $DEST"
-rsync -a \
-  --include='libvips-42.dll' \
-  --exclude='*' \
-  "$SRC_ROOT/bin/" "$DEST/"
+echo "Copying files (libvips-42.dll + libvips.lib) to $DEST"
+cp -f "$SRC_ROOT/bin/libvips-42.dll" "$DEST/"
+cp -f "$SRC_ROOT/lib/libvips.lib" "$DEST/"
 
-rsync -a \
-  --include='libvips.lib' \
-  --exclude='*' \
-  "$SRC_ROOT/lib/" "$DEST/"
-
-FILE_COUNT=$(find "$DEST" -maxdepth 1 -name '*' -type f | wc -l | tr -d ' ')
+FILE_COUNT=$(find "$DEST" -maxdepth 1 -type f | wc -l | tr -d ' ')
 
 echo "Done."
 echo "- Files staged:       $FILE_COUNT"
