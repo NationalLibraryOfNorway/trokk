@@ -15,8 +15,8 @@ use crate::file_utils;
 
 // New backend
 use fs2::FileExt;
-use libvips::{ops, VipsApp, VipsImage};
 use once_cell::sync::OnceCell;
+use rs_vips::{Vips, VipsImage};
 use std::fs::OpenOptions;
 
 const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
@@ -29,15 +29,13 @@ const WEBP_EXTENSION: &str = "webp";
 const THUMB_DIVISOR: i32 = 8;
 const PREVIEW_DIVISOR: i32 = 4;
 
-// Keep a single VipsApp alive for the entire process.
-// IMPORTANT: Dropping VipsApp calls vips_shutdown(), which is not safe to do repeatedly
-// during the lifetime of a process that continues to use libvips (eg. unit tests).
-static VIPS_APP: OnceCell<VipsApp> = OnceCell::new();
+// Keep a single Vips init for the entire process.
+static VIPS_INIT: OnceCell<()> = OnceCell::new();
 
 fn ensure_vips() -> Result<(), ImageConversionError> {
-	VIPS_APP
+	VIPS_INIT
 		.get_or_try_init(|| {
-			VipsApp::new("trokk", false).map_err(|e| {
+			Vips::init("trokk").map_err(|e| {
 				ImageConversionError::StrError(format!("Failed to init libvips: {e}"))
 			})
 		})
@@ -173,35 +171,29 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		.map_err(|e| ImageConversionError::StrError(format!("Failed to open image: {e}")))?;
 	let w = img.get_width();
 	let h = img.get_height();
-	if w <= 0 || h <= 0 {
-		return Err(ImageConversionError::StrError("Image has invalid dimensions".to_string()));
-	}
 
 	let target_w = std::cmp::max(1, w / divisor);
 	let _target_h = std::cmp::max(1, h / divisor);
 
-	let resized = ops::thumbnail(src, target_w)
-		.and_then(|img| ops::autorot(&img))
+	let resized = img
+		.thumbnail_image(target_w)
+		.and_then(|img| img.autorot())
 		.map_err(|e| {
-			let vips_details = VIPS_APP
-				.get()
-				.and_then(|app| app.error_buffer().ok())
-				.unwrap_or("");
-			if let Some(app) = VIPS_APP.get() {
-				app.error_clear();
-			}
+			let vips_details = Vips::error_buffer().unwrap_or_default();
+			Vips::error_clear();
 			ImageConversionError::StrError(format!(
 				"Failed to create thumbnail: {e}{}{}",
-				if vips_details.is_empty() { "" } else { "\nlibvips: " },
-				vips_details
+				if vips_details.trim_matches('\0').trim().is_empty() {
+					""
+				} else {
+					"\nlibvips: "
+				},
+				vips_details.trim_matches('\0')
 			))
 		})?;
 
-	// Encode to webp. (The libvips crate exposes image_write_to_buffer without extra args;
-	// it uses libvips defaults for that suffix.)
-	// TODO: If you want exact quality/strip control, we can wire `webpsave_buffer_with_opts`.
 	let webp_bytes = resized
-		.image_write_to_buffer(".webp")
+		.write_to_buffer(".webp")
 		.map_err(|e| ImageConversionError::StrError(format!("Failed to encode webp: {e}")))?;
 
 	write_atomic(&output_path, &webp_bytes)?;

@@ -58,6 +58,32 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      - name: Windows; Download and stage libvips (static, pinned)
+        if: ${{ matrix.windows }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://github.com/libvips/build-win64-mxe/releases/download/v8.17.3/vips-dev-w64-web-8.17.3-static.zip"
+          tmpdir="${RUNNER_TEMP:-/tmp}/vips"
+          rm -rf "$tmpdir"
+          mkdir -p "$tmpdir"
+
+          echo "Downloading: $url"
+          curl -L --fail -o "$tmpdir/vips.zip" "$url"
+
+          unzip -q "$tmpdir/vips.zip" -d "$tmpdir/unpacked"
+
+          # The zip contains a single top-level folder (e.g. vips-dev-8.17)
+          vips_root=$(find "$tmpdir/unpacked" -maxdepth 1 -type d -name 'vips-dev-*' | head -n 1)
+          if [[ -z "${vips_root:-}" ]]; then
+            echo "Could not locate vips-dev-* folder after unzip" >&2
+            find "$tmpdir/unpacked" -maxdepth 2 -type d | cat >&2
+            exit 1
+          fi
+
+          # Stage into src-tauri/installer/windows/vips
+          ./scripts/stage-windows-libvips.sh "$vips_root"
+
       - name: Ubuntu; Install dependencies
         if: ${{ matrix.linux }}
         run: |

@@ -2,23 +2,18 @@
 set -euo pipefail
 
 # Stages a prebuilt libvips (Windows) distribution into the repo folder used for bundling.
+# Expects a vips-dev-w64-<version>-static folder as input.
 #
 # Usage:
-#   ./scripts/stage-windows-libvips.sh /path/to/vips-dev-<version>
-#
-# This script is designed for zips like `vips-dev-w64-all-8.xx`.
-#
-# It copies:
-# - all DLLs from `bin/`
-# - vips modules from `bin/vips-modules-*`
-# - (recommended) `etc/` and `share/` for optional loaders/config
+#   ./scripts/stage-windows-libvips.sh /path/to/vips-dev-<version> [--minimal]
 #
 # Destination:
 #   src-tauri/installer/windows/vips/
 #
-# The app will load DLLs from a `vips/` folder placed next to the installed .exe.
+# The app will load required DLLs from to a `vips/` folder
 
 SRC_ROOT=${1:-}
+
 if [[ -z "$SRC_ROOT" ]]; then
   echo "Usage: $0 /path/to/vips-dev-<version>" >&2
   exit 1
@@ -43,41 +38,42 @@ rm -rf "$DEST"
 mkdir -p "$DEST"
 
 echo "Staging libvips from: $SRC_ROOT"
-echo "Destination:        $DEST"
+if [[ -f "$SRC_ROOT/versions.json" ]]; then
+  VIPS_VERSION=$(SRC_ROOT="$SRC_ROOT" python3 - <<'PY'
+import json
+from pathlib import Path
+import os
+p=Path(os.environ["SRC_ROOT"])/"versions.json"
+try:
+  data=json.loads(p.read_text())
+  print(data.get("vips", ""))
+except Exception:
+  print("")
+PY
+)
+  if [[ -n "${VIPS_VERSION:-}" ]]; then
+    echo "Detected libvips:     $VIPS_VERSION"
+    if [[ ! "$VIPS_VERSION" =~ ^8\.17\..* ]]; then
+      echo "WARNING: rs-vips bindings are generated for libvips 8.17.x; prefer vips-dev-w64-*-8.17.x" >&2
+    fi
+  fi
+fi
 
-# 1) The critical part: all DLLs the vips runtime needs.
-#    (This vips-dev distribution already includes a consistent runtime DLL set.)
+echo "Copying files (libvips DLLs + vips-modules) to $DEST"
 rsync -a \
-  --include='*/' \
-  --include='*.dll' \
-  --include='vips-modules-*/**' \
+  --include='libvips-42.dll' \
   --exclude='*' \
   "$SRC_ROOT/bin/" "$DEST/"
 
-# 2) Some loaders rely on config/data. Copy them so optional modules don't crash if used.
-for d in etc share; do
-  if [[ -d "$SRC_ROOT/$d" ]]; then
-    rsync -a "$SRC_ROOT/$d" "$DEST/"
-  fi
-done
+rsync -a \
+  --include='libvips.lib' \
+  --exclude='*' \
+  "$SRC_ROOT/lib/" "$DEST/"
 
-# 3) Include metadata/license for traceability.
-for f in LICENSE README.md versions.json files.txt; do
-  if [[ -f "$SRC_ROOT/$f" ]]; then
-    cp -f "$SRC_ROOT/$f" "$DEST/"
-  fi
-done
-
-DLL_COUNT=$(find "$DEST" -maxdepth 1 -name '*.dll' -type f | wc -l | tr -d ' ')
-MOD_DIR=$(find "$DEST" -maxdepth 1 -type d -name 'vips-modules-*' | head -n 1 || true)
+FILE_COUNT=$(find "$DEST" -maxdepth 1 -name '*' -type f | wc -l | tr -d ' ')
 
 echo "Done."
-echo "- DLLs staged:       $DLL_COUNT"
-if [[ -n "$MOD_DIR" ]]; then
-  echo "- Modules folder:    $(basename "$MOD_DIR")"
-else
-  echo "- Modules folder:    (not found)"
-fi
+echo "- Files staged:       $FILE_COUNT"
 
 cat <<'EOF'
 

@@ -44,6 +44,17 @@ Dette legger filene i:
 
 Appen er satt opp til å laste DLL-er fra en `vips/`-mappe ved siden av `.exe` på Windows.
 
+#### Windows: hvilken libvips-versjon bør jeg bruke?
+
+Rust-bindingene vi bruker på Windows/Linux er fra `rs-vips`, som er generert mot **libvips 8.17.0** (se crate README).
+
+**Anbefaling for Windows (CI+release):** bruk en `vips-dev-w64-*` som er **8.17.x** (helst 8.17.0–8.17.3).
+
+- Du *kan* ofte slippe unna med en nyere minor (f.eks. 8.18.0), men da risikerer du ABI/struktur-endringer som gir rare krasj eller build-feil.
+- Når i tvil: match 8.17.x.
+
+I praksis: last ned en `vips-dev-w64-...-8.17.x` zip, og kjør staging-scriptet.
+
 ### Kjøring
 
 For installasjon av nødvendige pakker og oppstart:

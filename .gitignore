@@ -27,5 +27,6 @@ dist-ssr
 src-tauri/gen
 /target
 /src-tauri/target/
+/src-tauri/installer/windows/vips
 
 /out
