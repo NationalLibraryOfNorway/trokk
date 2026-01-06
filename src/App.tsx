@@ -16,6 +16,8 @@ import {SelectionProvider} from './context/selection-context.tsx';
 import {RotationProvider} from './context/rotation-context.tsx';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
+import {JobProvider} from '@/context/job-context';
+import JobQueue from '@/features/job-queue/job-queue';
 
 
 function App() {
@@ -32,15 +34,17 @@ function App() {
         <SecretProvider>
             <AuthProvider>
                 <SettingProvider>
-                    <main className="flex flex-col">
-                        <Content
-                            openSettings={openSettings}
-                            setOpenSettings={setOpenSettings}
-                        />
-                    </main>
-                    <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                        <SettingsForm/>
-                    </Modal>
+                    <JobProvider>
+                        <main className="flex flex-col">
+                            <Content
+                                openSettings={openSettings}
+                                setOpenSettings={setOpenSettings}
+                            />
+                        </main>
+                        <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
+                            <SettingsForm/>
+                        </Modal>
+                    </JobProvider>
                 </SettingProvider>
             </AuthProvider>
         </SecretProvider>
@@ -235,6 +239,9 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                             <TransferLogProvider>
                                 <MessageProvider>
                                     <MainLayout/>
+                                    <div className="hidden" aria-hidden="true">
+                                        <JobQueue />
+                                    </div>
                                 </MessageProvider>
                             </TransferLogProvider>
                         </UploadProgressProvider>

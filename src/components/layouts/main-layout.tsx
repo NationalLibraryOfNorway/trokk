@@ -5,6 +5,7 @@ import './main-layout.css';
 import RegistrationForm from '@/features/registration/registration-form.tsx';
 import FilesContainer from '@/features/files-container/files-container.tsx';
 import TransferLog from '@/features/transfer-log/transfer-log.tsx';
+import JobQueue from '@/features/job-queue/job-queue';
 import {ChevronLeft, ChevronRight} from 'lucide-react';
 import {
     toggleLeftPanel,
@@ -63,6 +64,7 @@ const MainLayout: React.FC = () => {
                             <>
                                 <RegistrationForm/>
                                 <TransferLog/>
+                                <JobQueue />
                             </>
                         )}
                     </div>

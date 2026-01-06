@@ -4,13 +4,14 @@ use std::collections::HashMap;
 use std::ffi::OsString;
 use std::string::ToString;
 use std::sync::Mutex;
-use tauri::Window;
+use tauri::{Window, Manager};
 use tokio::sync::OnceCell;
 
 use crate::image_converter::ConversionCount;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::RequiredEnvironmentVariables;
 use crate::model::{AuthenticationResponse, SecretVariables};
+use crate::job_tracker::{JobKind, JobState, JobTracker, JobStatus};
 
 mod auth;
 mod error;
@@ -21,6 +22,7 @@ mod s3;
 #[cfg(desktop)]
 mod tray;
 mod vault;
+mod job_tracker;
 
 #[cfg(test)]
 mod tests;
@@ -129,81 +131,113 @@ async fn ensure_all_previews_and_thumbnails(directory_path: String) -> Result<()
 }
 
 #[tauri::command]
-async fn create_thumbnail_webp(file_path: String) -> Result<(), String> {
-	match image_converter::check_if_thumbnail_exists(&file_path) {
-		Ok(exists) => {
-			if exists {
-				return Ok(());
-			}
-		}
-		Err(e) => {
-			e.to_string();
-		}
-	}
-
-	match image_converter::convert_to_webp(file_path, false) {
-		Ok(_) => Ok(()),
-		Err(e) => Err(e.to_string()),
-	}
+async fn list_jobs(state: tauri::State<'_, JobTracker>) -> Result<Vec<JobStatus>, String> {
+    Ok(state.list())
 }
 
 #[tauri::command]
-async fn create_preview_webp(file_path: String) -> Result<(), String> {
-	match image_converter::check_if_preview_exists(&file_path) {
-		Ok(exists) => {
-			if exists {
-				return Ok(());
-			}
-		}
-		Err(e) => {
-			e.to_string();
-		}
-	}
+async fn create_thumbnail_webp(file_path: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let tracker = app_handle.state::<JobTracker>();
+    let id = tracker.enqueue(&app_handle, file_path.clone(), JobKind::Thumbnail);
+    tracker.set_state(&app_handle, &id, JobState::Running, None);
 
-	match image_converter::convert_to_webp(file_path, true) {
-		Ok(_) => Ok(()),
-		Err(e) => Err(e.to_string()),
-	}
+    match image_converter::check_if_thumbnail_exists(&file_path) {
+        Ok(exists) => {
+            if exists {
+                tracker.set_state(&app_handle, &id, JobState::Done, None);
+                return Ok(());
+            }
+        }
+        Err(e) => {
+            tracker.set_state(&app_handle, &id, JobState::Failed, Some(e.to_string()));
+            return Err(e.to_string());
+        }
+    }
+
+    let file_path_clone = file_path.clone();
+    let app_handle_clone = app_handle.clone();
+    tokio::task::spawn_blocking(move || image_converter::convert_to_webp(file_path_clone, false))
+        .await
+        .expect("Failed to run blocking task")
+        .map_err(|e| {
+            tracker.set_state(&app_handle_clone, &id, JobState::Failed, Some(e.to_string()));
+            e.to_string()
+        })?;
+
+    tracker.set_state(&app_handle, &id, JobState::Done, None);
+    Ok(())
+}
+
+#[tauri::command]
+async fn create_preview_webp(file_path: String, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let tracker = app_handle.state::<JobTracker>();
+    let id = tracker.enqueue(&app_handle, file_path.clone(), JobKind::Preview);
+    tracker.set_state(&app_handle, &id, JobState::Running, None);
+
+    match image_converter::check_if_preview_exists(&file_path) {
+        Ok(exists) => {
+            if exists {
+                tracker.set_state(&app_handle, &id, JobState::Done, None);
+                return Ok(());
+            }
+        }
+        Err(e) => {
+            tracker.set_state(&app_handle, &id, JobState::Failed, Some(e.to_string()));
+            return Err(e.to_string());
+        }
+    }
+
+    let file_path_clone = file_path.clone();
+    tokio::task::spawn_blocking(move || image_converter::convert_to_webp(file_path_clone, true))
+        .await
+        .expect("Failed to run blocking task")
+        .map_err(|e| {
+            tracker.set_state(&app_handle, &id, JobState::Failed, Some(e.to_string()));
+            e.to_string()
+        })?;
+
+    tracker.set_state(&app_handle, &id, JobState::Done, None);
+    Ok(())
 }
 
 static CURRENT_DIRECTORIES_PROCESSING: Lazy<Mutex<Vec<String>>> =
 	Lazy::new(|| Mutex::new(Vec::new()));
 
 #[tauri::command]
-async fn convert_directory_to_webp(directory_path: String) -> Result<ConversionCount, String> {
-	{
-		// Lock the Mutex to safely access the shared state
-		let mut directories = CURRENT_DIRECTORIES_PROCESSING.lock().unwrap();
-		if directories.contains(&directory_path) {
-			return Ok(ConversionCount {
-				converted: 0,
-				already_converted: 0,
-			});
-		}
+async fn convert_directory_to_webp(directory_path: String, app_handle: tauri::AppHandle) -> Result<ConversionCount, String> {
+    {
+        let mut directories = CURRENT_DIRECTORIES_PROCESSING.lock().unwrap();
+        if directories.contains(&directory_path) {
+            return Ok(ConversionCount { converted: 0, already_converted: 0 });
+        }
+        directories.push(directory_path.clone());
+    }
 
-		directories.push(directory_path.clone());
-	} // The lock is automatically released here when the scope ends
+    let tracker = app_handle.state::<JobTracker>();
+    let id = tracker.enqueue(&app_handle, directory_path.clone(), JobKind::DirectoryWebp);
+    tracker.set_state(&app_handle, &id, JobState::Running, None);
 
-	let directory_path_clone = directory_path.clone();
+    let directory_path_clone = directory_path.clone();
 
-	// Convert the directory to webp asynchronously
-	let result = tokio::task::spawn_blocking(move || {
-		image_converter::convert_directory_to_webp(directory_path_clone)
-	})
-	.await
-	.expect("Failed to run blocking task");
+    let result = tokio::task::spawn_blocking(move || image_converter::convert_directory_to_webp(directory_path_clone))
+        .await
+        .expect("Failed to run blocking task");
 
-	// Lock the Mutex again to update the directories
-	let mut directories = CURRENT_DIRECTORIES_PROCESSING.lock().unwrap();
+    {
+        let mut directories = CURRENT_DIRECTORIES_PROCESSING.lock().unwrap();
+        directories.retain(|dir| dir != &directory_path);
+    }
 
-	directories.retain(|dir| dir != &directory_path); // Remove the directory from the list after processing
-
-	// Return the result
-	match result {
-		Ok(count) => Ok(count),
-		Err(e) => Err(e.to_string()),
-	}
-	// Directories mutex unlocked at end of scope.
+    match result {
+        Ok(count) => {
+            tracker.set_state(&app_handle, &id, JobState::Done, None);
+            Ok(count)
+        }
+        Err(e) => {
+            tracker.set_state(&app_handle, &id, JobState::Failed, Some(e.to_string()));
+            Err(e.to_string())
+        }
+    }
 }
 
 #[tauri::command]
@@ -256,11 +290,23 @@ async fn upload_batch_to_s3(
 }
 
 #[tauri::command]
-async fn rotate_image(file_path: String, rotation: u16) -> Result<(), String> {
-	tokio::task::spawn_blocking(move || image_converter::rotate_image(file_path, rotation))
-		.await
-		.expect("Failed to run blocking task")
-		.map_err(|e| e.to_string())
+async fn rotate_image(file_path: String, rotation: u16, app_handle: tauri::AppHandle) -> Result<(), String> {
+    let tracker = app_handle.state::<JobTracker>();
+    let id = tracker.enqueue(&app_handle, file_path.clone(), JobKind::Rotate);
+    tracker.set_state(&app_handle, &id, JobState::Running, None);
+
+    let file_path_clone = file_path.clone();
+    let app_handle_clone = app_handle.clone();
+    tokio::task::spawn_blocking(move || image_converter::rotate_image(file_path_clone, rotation))
+        .await
+        .expect("Failed to run blocking task")
+        .map_err(|e| {
+            tracker.set_state(&app_handle_clone, &id, JobState::Failed, Some(e.to_string()));
+            e.to_string()
+        })?;
+
+    tracker.set_state(&app_handle, &id, JobState::Done, None);
+    Ok(())
 }
 
 #[tauri::command]
@@ -288,6 +334,7 @@ pub fn run() {
 		.plugin(tauri_plugin_store::Builder::default().build())
 		.plugin(tauri_plugin_fs::init())
 		.plugin(tauri_plugin_oauth::init())
+		.manage(JobTracker::default())
 		.setup(|app| {
 			//app.get_webview_window("main").unwrap().open_devtools();
 			{
@@ -308,6 +355,7 @@ pub fn run() {
 			pick_directory,
 			rotate_image,
 			delete_all_previews,
+			list_jobs,
 			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]
