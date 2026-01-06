@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useMemo} from 'react';
 import {ChevronLeft, ChevronRight, RotateCw, RotateCcw} from 'lucide-react';
 import {FileTree} from '@/model/file-tree.ts';
 import {getPreviewFromTree, getPreviewURIFromTree} from '@/util/file-utils.ts';
@@ -45,7 +45,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
     };
 
     const isChecked = checkedItems.includes(image.path);
-    const imageUrl = getImageSrc();
+    const imageUrl = useMemo(() => getImageSrc(), [image, state, previewCacheBuster]);
 
     useEffect(() => {
         dispatch({type: 'UPDATE_PREVIEW', payload: image});
@@ -55,6 +55,10 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
         const previewExists = !!getPreviewFromTree(image, state);
         setIsLoading(!previewExists);
     }, [state.preview, state.treeIndex, image]);
+
+    useEffect(() => {
+        setIsLoading(true);
+    }, [previewCacheBuster]);
 
     return (
         <div className='relative z-10' onClick={handleClose}>
@@ -105,6 +109,8 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                     key={`${previewPath}-${previewCacheBuster}`}
                                     src={imageUrl}
                                     alt="Forhåndsvisning av bilde"
+                                    onLoad={() => setIsLoading(false)}
+                                    onError={() => setIsLoading(false)}
                                     style={{
                                         maxWidth: 'calc(100vw - 400px)',
                                         maxHeight: 'calc(100vh - 250px)',
@@ -166,4 +172,3 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
         </div>
     )
 }
-
