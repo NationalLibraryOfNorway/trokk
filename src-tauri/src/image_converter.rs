@@ -109,14 +109,13 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 	}
 
 	// Load image and decode with EXIF orientation applied
-	let mut reader = ImageReader::open(path_reference)?;
-	reader = reader.with_guessed_format()?;
+	let reader = ImageReader::open(path_reference)?.with_guessed_format()?;
 
 	// Decode the image
-	let mut image: image::DynamicImage = reader.decode()?;
+	let image: image::DynamicImage = reader.decode()?;
 
 	// Apply EXIF orientation if present
-	image = apply_exif_orientation(path_reference, image)?;
+	let image = apply_exif_orientation(path_reference, image)?;
 
 	let image = if high_res {
 		image.resize(

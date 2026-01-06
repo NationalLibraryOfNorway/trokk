@@ -264,11 +264,13 @@ async fn rotate_image(file_path: String, rotation: u16) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn delete_all_previews(directory_path: String) -> Result<u32, String> {
-	tokio::task::spawn_blocking(move || file_utils::delete_all_previews(directory_path))
-		.await
-		.expect("Failed to run blocking task")
-		.map_err(|e| e.to_string())
+async fn delete_all_previews_and_thumbnails(directory_path: String) -> Result<u32, String> {
+	tokio::task::spawn_blocking(move || {
+		file_utils::delete_all_previews_and_thumbnails(directory_path)
+	})
+	.await
+	.expect("Failed to run blocking task")
+	.map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -307,7 +309,7 @@ pub fn run() {
 			convert_directory_to_webp,
 			pick_directory,
 			rotate_image,
-			delete_all_previews,
+			delete_all_previews_and_thumbnails,
 			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]

@@ -106,7 +106,9 @@ pub fn get_file_name(path_reference: &Path) -> Result<&OsStr, String> {
 
 /// Deletes all .previews folders recursively in a directory
 /// Returns the number of preview folders deleted
-pub fn delete_all_previews<P: AsRef<Path>>(directory_path: P) -> Result<u32, std::io::Error> {
+pub fn delete_all_previews_and_thumbnails<P: AsRef<Path>>(
+	directory_path: P,
+) -> Result<u32, std::io::Error> {
 	const PREVIEW_FOLDER_NAME: &str = ".previews";
 	const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 

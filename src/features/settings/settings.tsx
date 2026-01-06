@@ -56,13 +56,13 @@ const SettingsForm: React.FC = () => {
         setDeletePreviewsStatus(undefined);
 
         try {
-            const deletedCount = await invoke<number>('delete_all_previews', {
+            const deletedCount = await invoke<number>('delete_all_previews_and_thumbnails', {
                 directoryPath: scannerPath
             });
-            setDeletePreviewsStatus(`Slettet ${deletedCount} forhåndsvisningsmapper`);
+            setDeletePreviewsStatus(`Slettet ${deletedCount} forhåndsvisninger og miniatyrbilder.`);
             setTimeout(() => setDeletePreviewsStatus(undefined), 5000);
         } catch (error) {
-            console.error('Failed to delete previews:', error);
+            console.error('Failed to delete previews and thumbnails:', error);
             setDeletePreviewsStatus(`Feil: ${error}`);
         } finally {
             setIsDeleting(false);
