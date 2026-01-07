@@ -217,6 +217,11 @@ pub fn rotate_image<P: AsRef<Path>>(
 	// Rotate WebP files (thumbnail and preview)
 	rotate_webp_files(path_reference, rotation)?;
 
+	// Windows Explorer is notorious for caching thumbnails and sometimes ignoring
+	// EXIF-only changes. A cheap way to force it to notice a change is an atomic
+	// rename to a temporary name and back.
+	invalidate_windows_explorer_thumbnail_cache(path_reference)?;
+
 	Ok(())
 }
 
@@ -489,5 +494,33 @@ fn rotate_webp_files<P: AsRef<Path>>(
 	}
 	convert_to_webp(path_reference, true)?; // Preview
 
+	Ok(())
+}
+
+#[cfg(target_os = "windows")]
+fn invalidate_windows_explorer_thumbnail_cache(path: &Path) -> Result<(), ImageConversionError> {
+	let parent = path.parent().ok_or_else(|| {
+		ImageConversionError::StrError(format!(
+			"Failed to get parent directory for: {:?}",
+			path.to_str()
+		))
+	})?;
+	let file_name = path.file_name().ok_or_else(|| {
+		ImageConversionError::StrError(format!("Failed to get file name for: {:?}", path.to_str()))
+	})?;
+
+	let mut tmp_name = file_name.to_os_string();
+	tmp_name.push(".trokk_tmp");
+	let tmp_path = parent.join(tmp_name);
+
+	fs::rename(path, &tmp_path)
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to rename file: {e}")))?;
+	fs::rename(&tmp_path, path)
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to rename file back: {e}")))?;
+	Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn invalidate_windows_explorer_thumbnail_cache(_path: &Path) -> Result<(), ImageConversionError> {
 	Ok(())
 }
