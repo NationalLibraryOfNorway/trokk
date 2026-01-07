@@ -1,4 +1,4 @@
-import {useEffect, useState, useMemo} from 'react';
+import {useEffect, useState, useMemo, useRef} from 'react';
 import {ChevronLeft, ChevronRight, RotateCw, RotateCcw} from 'lucide-react';
 import {FileTree} from '@/model/file-tree.ts';
 import {getPreviewFromTree, getPreviewURIFromTree} from '@/util/file-utils.ts';
@@ -17,6 +17,8 @@ export interface DetailedImageViewProps {
 export default function DetailedImageView({ image, totalImagesInFolder}: DetailedImageViewProps) {
     const {state, dispatch} = useTrokkFiles();
     const [isLoading, setIsLoading] = useState<boolean>(false);
+    const lastImageUrlRef = useRef<string | undefined>(undefined);
+    const loadingTimeoutRef = useRef<number | null>(null);
     const {currentIndex, handleNext, handlePrevious, handleClose, handleCheck, checkedItems} = useSelection();
     const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
 
@@ -60,10 +62,39 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
         // When the cache buster changes (rotation completed), show loading until the new
         // image finishes loading.
         const previewExists = !!getPreviewFromTree(image, state);
-        if (previewExists) {
+        if (previewExists && imageUrl && imageUrl !== lastImageUrlRef.current) {
             setIsLoading(true);
         }
-    }, [previewCacheBuster, image, state]);
+        lastImageUrlRef.current = imageUrl;
+    }, [previewCacheBuster, imageUrl, image, state]);
+
+    useEffect(() => {
+        // Safety net: if onLoad/onError never fires (some environments/drivers),
+        // don't leave the UI permanently blocked by a spinner.
+        if (!isLoading) {
+            if (loadingTimeoutRef.current) {
+                window.clearTimeout(loadingTimeoutRef.current);
+                loadingTimeoutRef.current = null;
+            }
+            return;
+        }
+
+        if (loadingTimeoutRef.current) {
+            window.clearTimeout(loadingTimeoutRef.current);
+        }
+
+        loadingTimeoutRef.current = window.setTimeout(() => {
+            setIsLoading(false);
+            loadingTimeoutRef.current = null;
+        }, 2500);
+
+        return () => {
+            if (loadingTimeoutRef.current) {
+                window.clearTimeout(loadingTimeoutRef.current);
+                loadingTimeoutRef.current = null;
+            }
+        };
+    }, [isLoading]);
 
     // Split: initial load (no preview yet) blocks the view, reloads overlay the image.
     const initialLoading = isLoading && !getPreviewFromTree(image, state);
