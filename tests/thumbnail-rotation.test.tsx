@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, fireEvent, waitFor} from '@testing-library/react';
+import {render, fireEvent, waitFor, act} from '@testing-library/react';
 import Thumbnail from '../src/features/thumbnail/thumbnail';
 import {FileTree} from '../src/model/file-tree.ts';
 import {useTrokkFiles} from '../src/context/trokk-files-context.tsx';
@@ -98,10 +98,14 @@ describe('Thumbnail Rotation Feature', () => {
 
     it('renders rotation buttons for supported image types', async () => {
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree, baseProps));
+        let container: HTMLElement;
 
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
-        const counterClockwiseBtn = container.querySelector('[aria-label="Roter mot klokken"]');
+        await act(async () => {
+            ({container} = render(componentWithContext(fileTree, baseProps)));
+        });
+
+        const clockwiseBtn = container!.querySelector('[aria-label="Roter med klokken"]');
+        const counterClockwiseBtn = container!.querySelector('[aria-label="Roter mot klokken"]');
 
         expect(clockwiseBtn).toBeTruthy();
         expect(counterClockwiseBtn).toBeTruthy();
@@ -109,62 +113,60 @@ describe('Thumbnail Rotation Feature', () => {
 
     it('does not show rotation buttons for unsupported file types', async () => {
         const fileUtils = await import('../src/util/file-utils.ts');
-
-        // For unsupported files, getThumbnailURIFromTree should return undefined
         vi.mocked(fileUtils.getThumbnailURIFromTree).mockReturnValue(undefined);
 
-        // The mock defines supportedFileTypes as ['jpg', 'png', 'tif']
-        // So 'pdf' is not supported
         const fileTree = createMockFileTree('document.pdf', '/path/document.pdf');
-        const {container} = render(componentWithContext(fileTree, baseProps));
+        let container: HTMLElement;
 
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
+        await act(async () => {
+            ({container} = render(componentWithContext(fileTree, baseProps)));
+        });
+
+        const clockwiseBtn = container!.querySelector('[aria-label="Roter med klokken"]');
         expect(clockwiseBtn).toBeNull();
     });
 
     it('prevents click propagation when clicking rotation buttons', async () => {
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
         const mockOnClick = vi.fn();
-        const {container} = render(componentWithContext(fileTree, {...baseProps, onClick: mockOnClick}));
+        let container: HTMLElement;
 
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
+        await act(async () => {
+            ({container} = render(componentWithContext(fileTree, {...baseProps, onClick: mockOnClick})));
+        });
 
-        if (!clockwiseBtn) {
-            throw new Error('Rotation button not found');
-        }
+        const clockwiseBtn = container!.querySelector('[aria-label="Roter med klokken"]');
+        if (!clockwiseBtn) throw new Error('Rotation button not found');
 
-        // Click the rotate button
-        fireEvent.click(clockwiseBtn);
+        await act(async () => {
+            fireEvent.click(clockwiseBtn);
+        });
 
-        // The parent onClick should not be called
         expect(mockOnClick).not.toHaveBeenCalled();
     });
 
     it('disables rotation buttons while rotation is in progress', async () => {
         const {invoke} = await import('@tauri-apps/api/core');
-        // Make the invoke call take longer
-        vi.mocked(invoke).mockImplementation(() =>
-            new Promise(resolve => setTimeout(resolve, 1000))
-        );
+        vi.mocked(invoke).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
 
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree, baseProps));
+        let container: HTMLElement;
 
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement;
+        await act(async () => {
+            ({container} = render(componentWithContext(fileTree, baseProps)));
+        });
 
-        if (!clockwiseBtn) {
-            throw new Error('Rotation button not found');
-        }
+        const clockwiseBtn = container!.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement;
+        if (!clockwiseBtn) throw new Error('Rotation button not found');
 
-        // Click to start rotation
-        fireEvent.click(clockwiseBtn);
+        await act(async () => {
+            fireEvent.click(clockwiseBtn);
+        });
 
-        // Wait for debounce to trigger the backend call
         await waitFor(() => {
             expect(invoke).toHaveBeenCalled();
         }, { timeout: 1000 });
 
-        // Buttons should be disabled during rotation
         await waitFor(() => {
             expect(clockwiseBtn.disabled).toBe(true);
         });
@@ -172,22 +174,22 @@ describe('Thumbnail Rotation Feature', () => {
 
     it('shows rotation status overlay', async () => {
         const {invoke} = await import('@tauri-apps/api/core');
-        vi.mocked(invoke).mockImplementation(() =>
-            new Promise(resolve => setTimeout(resolve, 500))
-        );
+        vi.mocked(invoke).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 500)));
 
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const {container} = render(componentWithContext(fileTree, baseProps));
+        let container: HTMLElement;
 
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
+        await act(async () => {
+            ({container} = render(componentWithContext(fileTree, baseProps)));
+        });
 
-        if (!clockwiseBtn) {
-            throw new Error('Rotation button not found');
-        }
+        const clockwiseBtn = container!.querySelector('[aria-label="Roter med klokken"]');
+        if (!clockwiseBtn) throw new Error('Rotation button not found');
 
-        fireEvent.click(clockwiseBtn);
+        await act(async () => {
+            fireEvent.click(clockwiseBtn);
+        });
 
-        // Should show status overlay during rotation
         await waitFor(() => {
             expect(invoke).toHaveBeenCalled();
         }, { timeout: 1000 });
@@ -198,9 +200,13 @@ describe('Thumbnail Rotation Feature', () => {
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('webp');
 
         const fileTree = createMockFileTree('test.tif', '/path/test.tif');
-        const {container} = render(componentWithContext(fileTree, baseProps));
+        let container: HTMLElement;
 
-        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]');
+        await act(async () => {
+            ({container} = render(componentWithContext(fileTree, baseProps)));
+        });
+
+        const clockwiseBtn = container!.querySelector('[aria-label="Roter med klokken"]');
         expect(clockwiseBtn).toBeTruthy();
     });
 });

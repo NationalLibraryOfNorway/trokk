@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach} from 'vitest';
-import {render, screen, fireEvent, waitFor} from '@testing-library/react';
+import {render, fireEvent, waitFor, act} from '@testing-library/react';
 import DetailedImageView from '../src/features/detailed-image-view/detailed-image-view';
 import {FileTree} from '../src/model/file-tree.ts';
 import {useTrokkFiles} from '../src/context/trokk-files-context.tsx';
@@ -88,10 +88,15 @@ describe('DetailedImageView Rotation Feature', () => {
 
     it('shows rotation button tooltips', async () => {
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        render(componentWithContext(fileTree));
+        const {container} = render(componentWithContext(fileTree));
 
-        const tooltips = await screen.findAllByText('Roter med klokken');
-        expect(tooltips.length).toBeGreaterThan(0);
+        const clockwiseBtn = await waitFor(() => {
+            const btn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLElement | null;
+            if (!btn) throw new Error('Rotation button not found');
+            return btn;
+        });
+
+        expect(clockwiseBtn.getAttribute('title')).toBe('Roter med klokken');
     });
 
     it('prevents click propagation when clicking rotation buttons', async () => {
@@ -107,7 +112,9 @@ describe('DetailedImageView Rotation Feature', () => {
             writable: false,
         });
 
-        clockwiseBtn.dispatchEvent(clickEvent);
+        await act(async () => {
+            clockwiseBtn.dispatchEvent(clickEvent);
+        });
 
         expect(mockStopPropagation).toHaveBeenCalled();
     });
@@ -123,7 +130,9 @@ describe('DetailedImageView Rotation Feature', () => {
 
         const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement;
 
-        fireEvent.click(clockwiseBtn);
+        await act(async () => {
+            fireEvent.click(clockwiseBtn);
+        });
 
         await waitFor(() => {
             expect(invoke).toHaveBeenCalled();
@@ -166,7 +175,10 @@ describe('DetailedImageView Rotation Feature', () => {
             throw new Error('Rotation button not found');
         }
 
-        fireEvent.click(clockwiseBtn);
+        // Click to start rotation
+        await act(async () => {
+            fireEvent.click(clockwiseBtn);
+        });
 
         await waitFor(() => {
             expect(invoke).toHaveBeenCalled();
@@ -191,7 +203,9 @@ describe('DetailedImageView Rotation Feature', () => {
             throw new Error('Rotation button not found');
         }
 
-        fireEvent.click(clockwiseBtn);
+        await act(async () => {
+            fireEvent.click(clockwiseBtn);
+        });
 
         // Verify rotation was invoked with correct parameters
         await waitFor(() => {
@@ -201,5 +215,38 @@ describe('DetailedImageView Rotation Feature', () => {
             });
         }, { timeout: 500 });
     });
-});
 
+    it('updates image src (cache buster) after rotation so it reloads', async () => {
+        const {invoke} = await import('@tauri-apps/api/core');
+        vi.mocked(invoke).mockResolvedValue(undefined);
+
+        const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
+        const {container} = render(componentWithContext(fileTree));
+
+        const img = container.querySelector('img') as HTMLImageElement | null;
+        expect(img).toBeTruthy();
+        const beforeSrc = img?.getAttribute('src');
+        expect(beforeSrc).toBeTruthy();
+
+        const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement | null;
+        expect(clockwiseBtn).toBeTruthy();
+
+        await act(async () => {
+            fireEvent.click(clockwiseBtn!);
+        });
+
+        await waitFor(() => {
+            expect(invoke).toHaveBeenCalledWith('rotate_image', {
+                filePath: '/path/test.jpg',
+                rotation: 90,
+            });
+        });
+
+        await waitFor(() => {
+            const after = (container.querySelector('img') as HTMLImageElement | null)?.getAttribute('src');
+            if (!after || after === beforeSrc) {
+                throw new Error('Expected image src to change after rotation');
+            }
+        });
+    });
+});

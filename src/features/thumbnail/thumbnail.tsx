@@ -22,7 +22,7 @@ export interface ThumbnailProps {
     delFilePath: string | null;
 }
 
- const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
+ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
   ({ fileTree, onClick, isChecked, isFocused }, ref) => {
 
     const {state} = useTrokkFiles();
@@ -101,11 +101,18 @@ export interface ThumbnailProps {
     }
 
     return (
-        <button
-            type="button"
+        <div
+            role="button"
+            tabIndex={0}
             key={fileTree.path}
             className="flex flex-col p-1 items-center"
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
             ref={ref}
         >
             <div className={`${initialStyle} ${containerClass} relative group`}>
@@ -114,6 +121,7 @@ export interface ThumbnailProps {
                 {(isSupported || hasWebpThumbnail) && (
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
+                            type="button"
                             onClick={handleRotateCounterClockwise}
                             disabled={imageIsRotating}
                             className={`bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -123,6 +131,7 @@ export interface ThumbnailProps {
                             <RotateCcw size={16} />
                         </button>
                         <button
+                            type="button"
                             onClick={handleRotateClockwise}
                             disabled={imageIsRotating}
                             className={`bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -137,7 +146,7 @@ export interface ThumbnailProps {
             <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
                 {fileName}
             </i>
-        </button>
+        </div>
     );
   });
 Thumbnail.displayName = 'Thumbnail';

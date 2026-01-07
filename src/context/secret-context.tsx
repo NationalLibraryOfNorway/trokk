@@ -27,7 +27,18 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
 
     useEffect(() => {
-        void getSecrets();
+        let mounted = true;
+
+        // Run on next tick so tests can render without immediate async state updates.
+        Promise.resolve()
+            .then(() => (mounted ? getSecrets() : undefined))
+            .catch(() => {
+                // getSecrets already sets error state; ignore here.
+            });
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     return (
