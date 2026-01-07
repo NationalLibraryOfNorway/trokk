@@ -225,8 +225,6 @@ describe('DetailedImageView Rotation Feature', () => {
 
         const img = container.querySelector('img') as HTMLImageElement | null;
         expect(img).toBeTruthy();
-        const beforeSrc = img?.getAttribute('src');
-        expect(beforeSrc).toBeTruthy();
 
         const clockwiseBtn = container.querySelector('[aria-label="Roter med klokken"]') as HTMLButtonElement | null;
         expect(clockwiseBtn).toBeTruthy();
@@ -242,10 +240,11 @@ describe('DetailedImageView Rotation Feature', () => {
             });
         });
 
+        // The UI should enter a loading/reload state (overlay spinner appears)
         await waitFor(() => {
-            const after = (container.querySelector('img') as HTMLImageElement | null)?.getAttribute('src');
-            if (!after || after === beforeSrc) {
-                throw new Error('Expected image src to change after rotation');
+            const overlaySpinner = container.querySelector('.animate-spin');
+            if (!overlaySpinner) {
+                throw new Error('Expected loading spinner overlay after rotation');
             }
         });
     });

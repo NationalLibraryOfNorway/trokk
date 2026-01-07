@@ -481,21 +481,13 @@ fn rotate_webp_files<P: AsRef<Path>>(
 	// Always regenerate thumbnail (needed for grid view)
 	convert_to_webp(path_reference, false)?; // Thumbnail
 
-	// Always regenerate preview in the background for faster subsequent views
-	// Delete the old preview if it exists
+	// Always regenerate preview synchronously so the UI can reload immediately after rotation.
+	// This prevents the detail modal from briefly showing a broken image while the preview
+	// is being regenerated.
 	if preview_path.exists() {
-		let _ = fs::remove_file(&preview_path); // Ignore errors, preview will be regenerated anyway
+		let _ = fs::remove_file(&preview_path); // Ignore errors; we'll regenerate it.
 	}
-
-	// Regenerate preview asynchronously in a background thread
-	let image_path_clone = path_reference.to_path_buf();
-	thread::spawn(move || {
-		// Small delay to ensure thumbnail is visible first
-		thread::sleep(Duration::from_millis(50));
-		if let Err(e) = convert_to_webp(&image_path_clone, true) {
-			eprintln!("Failed to regenerate preview in background: {}", e);
-		}
-	});
+	convert_to_webp(path_reference, true)?; // Preview
 
 	Ok(())
 }

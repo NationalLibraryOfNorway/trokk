@@ -17,8 +17,7 @@ export interface DetailedImageViewProps {
 export default function DetailedImageView({ image, totalImagesInFolder}: DetailedImageViewProps) {
     const {state, dispatch} = useTrokkFiles();
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const lastImageUrlRef = useRef<string | undefined>(undefined);
-    const loadingTimeoutRef = useRef<number | null>(null);
+    const lastUrlRef = useRef<string | undefined>(undefined);
     const {currentIndex, handleNext, handlePrevious, handleClose, handleCheck, checkedItems} = useSelection();
     const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
 
@@ -30,13 +29,11 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
     const previewPath = previewFile?.path || image.path;
     const previewCacheBuster = getFileCacheBuster(previewPath);
 
-    const getImageSrc = () => {
+    const imageUrl = useMemo(() => {
         const baseUrl = getPreviewURIFromTree(image, state);
         if (!baseUrl) return undefined;
-
-        // Add per-file cache buster to force reload after rotation
         return `${baseUrl}?v=${previewCacheBuster}`;
-    };
+    }, [image, state, previewCacheBuster]);
 
     const rotateClockwise = () => {
         rotateImage(image.path, 'clockwise');
@@ -47,56 +44,28 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
     };
 
     const isChecked = checkedItems.includes(image.path);
-    const imageUrl = useMemo(() => getImageSrc(), [image, state, previewCacheBuster]);
 
     useEffect(() => {
         dispatch({type: 'UPDATE_PREVIEW', payload: image});
     }, [image]);
 
     useEffect(() => {
+        // Initial open: show full-screen spinner if preview isn't available yet
         const previewExists = !!getPreviewFromTree(image, state);
         setIsLoading(!previewExists);
+        lastUrlRef.current = imageUrl;
     }, [state.preview, state.treeIndex, image]);
 
     useEffect(() => {
-        // When the cache buster changes (rotation completed), show loading until the new
-        // image finishes loading.
+        // After rotation: only show reload overlay if the URL actually changed.
+        // This avoids getting stuck if the cache buster didn't change for the preview URL.
         const previewExists = !!getPreviewFromTree(image, state);
-        if (previewExists && imageUrl && imageUrl !== lastImageUrlRef.current) {
+        if (previewExists && imageUrl && imageUrl !== lastUrlRef.current) {
             setIsLoading(true);
         }
-        lastImageUrlRef.current = imageUrl;
+        lastUrlRef.current = imageUrl;
     }, [previewCacheBuster, imageUrl, image, state]);
 
-    useEffect(() => {
-        // Safety net: if onLoad/onError never fires (some environments/drivers),
-        // don't leave the UI permanently blocked by a spinner.
-        if (!isLoading) {
-            if (loadingTimeoutRef.current) {
-                window.clearTimeout(loadingTimeoutRef.current);
-                loadingTimeoutRef.current = null;
-            }
-            return;
-        }
-
-        if (loadingTimeoutRef.current) {
-            window.clearTimeout(loadingTimeoutRef.current);
-        }
-
-        loadingTimeoutRef.current = window.setTimeout(() => {
-            setIsLoading(false);
-            loadingTimeoutRef.current = null;
-        }, 2500);
-
-        return () => {
-            if (loadingTimeoutRef.current) {
-                window.clearTimeout(loadingTimeoutRef.current);
-                loadingTimeoutRef.current = null;
-            }
-        };
-    }, [isLoading]);
-
-    // Split: initial load (no preview yet) blocks the view, reloads overlay the image.
     const initialLoading = isLoading && !getPreviewFromTree(image, state);
 
     return (
@@ -158,7 +127,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                 }}
                             />
 
-                            {/* Reload spinner overlay (keeps controls clickable/visible) */}
+                            {/* Reload spinner overlay */}
                             {isLoading && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px] z-[6]">
                                     <LoadingSpinner size={48} />
