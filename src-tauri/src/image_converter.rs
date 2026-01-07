@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
+#[cfg(target_os = "windows")]
+use std::time::SystemTime;
 use std::{
 	fs,
 	io::{BufReader, Cursor, Read, Seek, SeekFrom, Write},
@@ -217,10 +219,9 @@ pub fn rotate_image<P: AsRef<Path>>(
 	// Rotate WebP files (thumbnail and preview)
 	rotate_webp_files(path_reference, rotation)?;
 
-	// Windows Explorer is notorious for caching thumbnails and sometimes ignoring
-	// EXIF-only changes. A cheap way to force it to notice a change is an atomic
-	// rename to a temporary name and back.
-	invalidate_windows_explorer_thumbnail_cache(path_reference)?;
+	// Windows Explorer can cache thumbnails and sometimes miss EXIF-only changes.
+	// Bumping the file's modification time is a simple way to encourage thumbnail regeneration.
+	bump_mtime_for_windows_explorer(path_reference)?;
 
 	Ok(())
 }
@@ -498,29 +499,14 @@ fn rotate_webp_files<P: AsRef<Path>>(
 }
 
 #[cfg(target_os = "windows")]
-fn invalidate_windows_explorer_thumbnail_cache(path: &Path) -> Result<(), ImageConversionError> {
-	let parent = path.parent().ok_or_else(|| {
-		ImageConversionError::StrError(format!(
-			"Failed to get parent directory for: {:?}",
-			path.to_str()
-		))
-	})?;
-	let file_name = path.file_name().ok_or_else(|| {
-		ImageConversionError::StrError(format!("Failed to get file name for: {:?}", path.to_str()))
-	})?;
-
-	let mut tmp_name = file_name.to_os_string();
-	tmp_name.push(".trokk_tmp");
-	let tmp_path = parent.join(tmp_name);
-
-	fs::rename(path, &tmp_path)
-		.map_err(|e| ImageConversionError::StrError(format!("Failed to rename file: {e}")))?;
-	fs::rename(&tmp_path, path)
-		.map_err(|e| ImageConversionError::StrError(format!("Failed to rename file back: {e}")))?;
-	Ok(())
+fn bump_mtime_for_windows_explorer(path: &Path) -> Result<(), ImageConversionError> {
+	// "filetime" is already in Cargo.toml; on Windows this maps to the native SetFileTime.
+	let now = filetime::FileTime::from_system_time(SystemTime::now());
+	filetime::set_file_mtime(path, now)
+		.map_err(|e| ImageConversionError::StrError(format!("Failed to update mtime: {e}")))
 }
 
 #[cfg(not(target_os = "windows"))]
-fn invalidate_windows_explorer_thumbnail_cache(_path: &Path) -> Result<(), ImageConversionError> {
+fn bump_mtime_for_windows_explorer(_path: &Path) -> Result<(), ImageConversionError> {
 	Ok(())
 }
