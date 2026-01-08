@@ -1,0 +1,45 @@
+name: "Setup sccache"
+description: "Installs sccache for caching Rust builds"
+runs:
+  using: "composite"
+  steps:
+    - name: "Install using winget"
+      if: ${{ runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+        winget install --accept-source-agreements Mozilla.sccache
+        
+        # Fails pipeline if command unsuccessful
+        sccache --versions
+
+    - name: "Enable sccache + GitHub Actions cache backend"
+      if: ${{ runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+        # Rust: use sccache as compiler wrapper
+        Add-Content -Path $env:GITHUB_ENV -Value "RUSTC_WRAPPER=sccache"
+
+        # Optional but commonly recommended for CI: incremental builds aren't cacheable by sccache
+        # (release builds usually have this off already, but this makes it explicit)
+        Add-Content -Path $env:GITHUB_ENV -Value "CARGO_INCREMENTAL=0"
+
+        # Enable GitHub Actions cache backend for sccache
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_GHA_ENABLED=true"
+
+        # Optional: keep cache size bounded (local server metadata; actual storage is in GHA cache backend)
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_CACHE_SIZE=5G"
+
+    - name: "Export required runtime variables for sccache (GHA backend)"
+      if: ${{ runner.os == 'Windows' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_RESULTS_URL', process.env.ACTIONS_RESULTS_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+    - name: "Start sccache server + show initial stats"
+      if: ${{ runner.os == 'Windows' }}
+      shell: powershell
+      run: |
+        sccache --start-server
+        sccache --show-stats
