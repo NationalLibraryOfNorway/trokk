@@ -126,6 +126,11 @@ jobs:
 
       - name: Setup sccache
         if: ${{ matrix.windows }}
+        with:
+          s3_bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
+          s3_access_key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
+          s3_secret_key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          s3_host: ${{ secrets.S3_NB_CACHE_HOST }}
         uses: ./.github/actions/setup-sccache
 
       - name: Tauri build

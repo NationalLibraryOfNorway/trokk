@@ -5,6 +5,19 @@ inputs:
     description: "Sccache version"
     required: false
     default: "0.12.0"
+  s3_host:
+    description: S3 endpoint for cache
+    required: false
+  s3_access_key:
+    description: S3 access key for cache
+    required: false
+  s3_secret_key:
+    description: S3 secret key for cache
+    required: false
+  s3_bucket:
+    description: S3 bucket for cache
+    required: false
+
 runs:
   using: "composite"
   steps:
@@ -63,6 +76,11 @@ runs:
 
     - name: "Enable sccache + GitHub Actions cache backend"
       shell: powershell
+      env:
+        SCCACHE_BUCKET: ${{ inputs.s3_bucket }}
+        SCCACHE_ENDPOINT: ${{ inputs.s3_host }}
+        SCCACHE_ACCESS_KEY_ID: ${{ inputs.s3_access_key }}
+        SCCACHE_SECRET_ACCESS_KEY: ${{ inputs.s3_secret_key }}
       run: |
         # Rust: use sccache as compiler wrapper
         Add-Content -Path $env:GITHUB_ENV -Value "RUSTC_WRAPPER=sccache"
@@ -73,9 +91,12 @@ runs:
 
         # Enable GitHub Actions cache backend for sccache
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_GHA_ENABLED=true"
-
-        # Optional: keep cache size bounded (local server metadata; actual storage is in GHA cache backend)
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_CACHE_SIZE=5G"
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_BUCKET=$env:SCCACHE_BUCKET"
+        Add-content -Path $env:GITHUB_ENV -Value "SCCACHE_ENDPOINT=$env:SCCACHE_ENDPOINT"
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
+        Add-Content -Path $env:GITHUB_ENV -Value "AWS_ACCESS_KEY_ID=$env:SCCACHE_ACCESS_KEY_ID"
+        Add-Content -Path $env:GITHUB_ENV -Value "AWS_SECRET_ACCESS_KEY=$env:SCCACHE_SECRET_ACCESS_KEY"
 
     - name: "Export required runtime variables for sccache (GHA backend)"
       if: ${{ runner.os == 'Windows' }}
