@@ -124,6 +124,9 @@ jobs:
             echo "'${{ github.ref_name }}' is not a valid version - using default. Must be a numerical only semver version."
           fi
 
+      - name: Setup sccache
+        uses: ./.github/actions/setup-sccache
+
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         env:
