@@ -125,6 +125,7 @@ jobs:
           fi
 
       - name: Setup sccache
+        if: ${{ matrix.windows }}
         uses: ./.github/actions/setup-sccache
 
       - name: Tauri build

@@ -8,8 +8,19 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "Check for existing CMake"
+      id: check
+      shell: powershell
+      run: |
+        if (Get-Command cmake -ErrorAction SilentlyContinue) {
+          Write-Host "cmake already installed"
+          "installed=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        } else {
+          "installed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        } 
+
     - name: Install CMake dependency (Windows)
-      if: ${{ runner.os == 'Windows' }}
+      if: steps.check.outputs.installed != 'true'
       shell: powershell
       env:
         CMAKE_VERSION: ${{ inputs.version }}
@@ -31,6 +42,5 @@ runs:
         $bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Show CMake version (Windows)
-      if: ${{ runner.os == 'Windows' }}
       shell: powershell
       run: cmake --version

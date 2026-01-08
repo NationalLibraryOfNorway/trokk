@@ -8,8 +8,19 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: "Check for existing sccache"
+      id: check
+      shell: powershell
+      run: |
+        if (Get-Command sccache -ErrorAction SilentlyContinue) {
+          Write-Host "sccache already installed"
+          "installed=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        } else {
+          "installed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        } 
+
     - name: "Install sccache"
-      if: ${{ runner.os == 'Windows' }}
+      if: steps.check.outputs.installed != 'true'
       env:
         SCCACHE_VERSION: ${{ inputs.version }}
       shell: powershell
@@ -29,10 +40,9 @@ runs:
         $extractDir.FullName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
         
         # Fails pipeline if command unsuccessful
-        sccache --versions
+        sccache --version
 
     - name: "Enable sccache + GitHub Actions cache backend"
-      if: ${{ runner.os == 'Windows' }}
       shell: powershell
       run: |
         # Rust: use sccache as compiler wrapper
@@ -57,7 +67,6 @@ runs:
           core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
     - name: "Start sccache server + show initial stats"
-      if: ${{ runner.os == 'Windows' }}
       shell: powershell
       run: |
         sccache --start-server
