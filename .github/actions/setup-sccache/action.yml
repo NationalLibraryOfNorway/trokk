@@ -25,6 +25,8 @@ runs:
         SCCACHE_VERSION: ${{ inputs.version }}
       shell: powershell
       run: |
+        $ErrorActionPreference = "Stop"
+
         $v = $env:SCCACHE_VERSION
         $url = "https://github.com/mozilla/sccache/releases/download/v$v/sccache-v$v-x86_64-pc-windows-msvc.zip"
         $zip = "$env:RUNNER_TEMP\sccache-$v.zip"
@@ -36,11 +38,28 @@ runs:
         Invoke-WebRequest $url -OutFile $zip
         Expand-Archive -LiteralPath $zip -DestinationPath $destRoot -Force
 
-        $extractDir = Get-ChildItem $destRoot -Directory | Select-Object -First 1
-        $extractDir.FullName | Out-File -FilePath $env:Path -Encoding utf8 -Append
+        # Find sccache.exe regardless of archive layout
+        $sccacheExe = Get-ChildItem -Path $destRoot -Recurse -Filter "sccache.exe" | Select-Object -First 1
+        if (-not $sccacheExe) {
+          Write-Host "Could not find sccache.exe under: $destRoot"
+          Get-ChildItem -Path $destRoot -Recurse | Select-Object FullName | Format-Table -AutoSize
+          throw "sccache.exe not found after extracting archive"
+        }
 
-        # Fails pipeline if command unsuccessful
-        sccache --version
+        # Copy into a short, stable dir to avoid Windows long-path issues
+        $binDir = "$env:RUNNER_TEMP\bin\sccache"
+        if (Test-Path $binDir) { Remove-Item $binDir -Recurse -Force }
+        New-Item -ItemType Directory -Path $binDir | Out-Null
+
+        $binExe = Join-Path $binDir 'sccache.exe'
+        Copy-Item -LiteralPath $sccacheExe.FullName -Destination $binExe -Force
+
+        # IMPORTANT: write to GITHUB_PATH, not env:Path.
+        # GITHUB_PATH affects subsequent steps, not necessarily the current step.
+        $binDir | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+        # Verify in the same step using absolute path (so we don't depend on PATH update timing)
+        & $binExe --version
 
     - name: "Enable sccache + GitHub Actions cache backend"
       shell: powershell
@@ -69,5 +88,11 @@ runs:
     - name: "Start sccache server + show initial stats"
       shell: powershell
       run: |
+        $ErrorActionPreference = "Stop"
+        if (-not (Get-Command sccache -ErrorAction SilentlyContinue)) {
+          Write-Host "sccache is not on PATH. PATH is:"
+          Write-Host $env:PATH
+          throw "sccache not found on PATH"
+        }
         sccache --start-server
         sccache --show-stats
