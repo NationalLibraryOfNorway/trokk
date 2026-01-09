@@ -93,6 +93,8 @@ runs:
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_USE_SSL=true"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_KEY_PREFIX=cmake-sccache"
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_LOG=debug"
+        # Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_NO_DAEMON=1"
         
         # Configure S3 backend
         if ($env:S3_BUCKET) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_BUCKET=$env:S3_BUCKET" }
@@ -100,7 +102,7 @@ runs:
         if ($env:S3_ACCESS_KEY) { Add-Content -Path $env:GITHUB_ENV -Value "AWS_ACCESS_KEY_ID=$env:S3_ACCESS_KEY" }
         if ($env:S3_SECRET_KEY) { Add-Content -Path $env:GITHUB_ENV -Value "AWS_SECRET_ACCESS_KEY=$env:S3_SECRET_KEY" }
 
-    - name: "Start sccache server + show initial stats"
+    - name: "Start sccache server"
       shell: powershell
       run: |
         $ErrorActionPreference = "Stop"
@@ -110,25 +112,4 @@ runs:
           throw "sccache not found on PATH"
         }
         sccache --start-server
-        sccache --show-stats
 
-    - name: "Validate sccache is usable (or disable it)"
-      shell: powershell
-      run: |
-        $ErrorActionPreference = 'Continue'
-
-        if (-not (Get-Command sccache -ErrorAction SilentlyContinue)) {
-          Write-Host 'WARNING: sccache not found on PATH after setup; disabling RUSTC_WRAPPER.'
-          Add-Content -Path $env:GITHUB_ENV -Value 'RUSTC_WRAPPER='
-          exit 0
-        }
-
-        # sccache can exist but still be unusable (e.g., bad config, permissions, TLS issues).
-        # If this fails, disable wrapper so the build doesn't fail without an obvious error.
-        sccache --version
-        sccache --show-stats
-
-        if ($LASTEXITCODE -ne 0) {
-          Write-Host 'WARNING: sccache appears unusable; disabling RUSTC_WRAPPER for the rest of the job.'
-          Add-Content -Path $env:GITHUB_ENV -Value 'RUSTC_WRAPPER='
-        }
