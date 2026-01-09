@@ -68,14 +68,26 @@ runs:
 
         $testFile = Join-Path $root "cachetest.txt"
         $payload = "cachetest $(Get-Date -Format o)"
-        Set-Content -Path $testFile -Value $payload -Encoding utf8
 
-        $readBack = Get-Content -Path $testFile -Raw
+        # Write UTF-8 without BOM and without adding an extra newline.
+        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+        [System.IO.File]::WriteAllText($testFile, $payload, $utf8NoBom)
+
+        $readBackRaw = Get-Content -Path $testFile -Raw -Encoding utf8
+        # Normalize common Windows newline/EOF differences.
+        $readBack = $readBackRaw.TrimEnd("`r", "`n")
+
+        Write-Host "cachetest file: $testFile"
         Write-Host "cachetest wrote: $payload"
         Write-Host "cachetest read : $readBack"
+        Write-Host "cachetest lengths wrote/read: $($payload.Length)/$($readBack.Length)"
 
         if ($readBack -ne $payload) {
-          throw "cachetest mismatch - path may be unreliable or blocked by policy"
+          $wBytes = $utf8NoBom.GetBytes($payload)
+          $rBytes = $utf8NoBom.GetBytes($readBackRaw)
+          Write-Host "cachetest wrote bytes (hex): $([BitConverter]::ToString($wBytes))"
+          Write-Host "cachetest read  bytes (hex): $([BitConverter]::ToString($rBytes))"
+          throw "cachetest mismatch - content differs after normalization"
         }
 
     - name: Install CMake dependency (Windows)
