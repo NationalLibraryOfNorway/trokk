@@ -19,6 +19,22 @@ runs:
           "installed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         }
 
+    - name: Cachetest
+      uses: tespkg/actions-cache@v1
+      with:
+        endpoint: ${{ secrets.S3_NB_CACHE_HOST }}
+        accessKey: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
+        secretKey: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+        bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
+        use-fallback: true
+        path: |
+          $env:RUNNER_TEMP\cmake
+        key: ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-${{ github.run_id }}
+        restore-keys: |
+          ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-
+          ${{ runner.os }}-cachetest-${{ github.ref_name }}-
+          ${{ runner.os }}-cachetest-
+
     - name: Install CMake dependency (Windows)
       if: steps.check.outputs.installed != 'true'
       shell: powershell

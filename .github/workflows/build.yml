@@ -38,24 +38,7 @@ jobs:
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
 
-
     steps:
-      - name: Cachetest
-        uses: tespkg/actions-cache@v1
-        with:
-          endpoint: ${{ secrets.S3_NB_CACHE_HOST }}
-          accessKey: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
-          secretKey: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
-          bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
-          use-fallback: true
-          path: |
-            ~/.m2/repository
-          key: ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-
-            ${{ runner.os }}-cachetest-${{ github.ref_name }}-
-            ${{ runner.os }}-cachetest-
-
       - name: Import Secrets
         id: import-secrets
         uses: hashicorp/vault-action@v2
