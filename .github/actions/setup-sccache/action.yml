@@ -89,11 +89,12 @@ runs:
         Add-Content -Path $env:GITHUB_ENV -Value "CARGO_INCREMENTAL=0"
 
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_CACHE_SIZE=5G"
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE=true"
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
 
         # Configure S3 backend
         if ($env:S3_BUCKET) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_BUCKET=$env:S3_BUCKET" }
         if ($env:S3_HOST) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_ENDPOINT=$env:S3_HOST" }
-        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
         if ($env:S3_ACCESS_KEY) { Add-Content -Path $env:GITHUB_ENV -Value "AWS_ACCESS_KEY_ID=$env:S3_ACCESS_KEY" }
         if ($env:S3_SECRET_KEY) { Add-Content -Path $env:GITHUB_ENV -Value "AWS_SECRET_ACCESS_KEY=$env:S3_SECRET_KEY" }
 
