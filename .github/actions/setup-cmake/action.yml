@@ -50,12 +50,12 @@ runs:
         bucket: ${{ inputs.s3-bucket }}
         use-fallback: false
         path: |
-          $env:RUNNER_TEMP\cmake
-        key: ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-${{ github.run_id }}
+          ${{ runner.temp }}\\cmake
+        # Cache CMake downloads by OS + branch + requested CMake version.
+        key: ${{ runner.os }}-cmake-${{ github.ref_name }}-${{ inputs.version }}
         restore-keys: |
-          ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-
-          ${{ runner.os }}-cachetest-${{ github.ref_name }}-
-          ${{ runner.os }}-cachetest-
+          ${{ runner.os }}-cmake-${{ github.ref_name }}-
+          ${{ runner.os }}-cmake-
 
     - name: Install CMake dependency (Windows)
       if: steps.check.outputs.installed != 'true'
