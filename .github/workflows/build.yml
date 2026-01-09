@@ -40,6 +40,23 @@ jobs:
 
 
     steps:
+      - name: Cache
+        uses: tespkg/actions-cache@v1
+        with:
+          endpoint: ${{ secrets.S3_NB_CACHE_HOST }}
+          accessKey: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
+          secretKey: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
+          use-fallback: true
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ inputs.maven-version }}-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-maven-${{ inputs.maven_version }}-${{ github.ref_name }}-${{ hashFiles('pom.xml', '**/pom.xml') }}-
+            ${{ runner.os }}-maven-${{ inputs.maven_version }}-${{ github.ref_name }}-
+            ${{ runner.os }}-maven-${{ inputs.maven_version }}-
+            ${{ runner.os }}-maven-
+
       - name: Import Secrets
         id: import-secrets
         uses: hashicorp/vault-action@v2
