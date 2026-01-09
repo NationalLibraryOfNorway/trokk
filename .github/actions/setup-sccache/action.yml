@@ -82,16 +82,15 @@ runs:
         S3_ACCESS_KEY: ${{ inputs.s3-access-key }}
         S3_SECRET_KEY: ${{ inputs.s3-secret-key }}
       run: |
-        # Rust: use sccache as compiler wrapper
+        # Rust: use sccache as compiler wrapper (may be disabled later if validation fails)
         Add-Content -Path $env:GITHUB_ENV -Value "RUSTC_WRAPPER=sccache"
 
         # Optional but commonly recommended for CI: incremental builds aren't cacheable by sccache
-        # (release builds usually have this off already, but this makes it explicit)
         Add-Content -Path $env:GITHUB_ENV -Value "CARGO_INCREMENTAL=0"
 
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_CACHE_SIZE=5G"
 
-        # Configure S3 backend (used when SCCACHE_GHA_ENABLED is not used / or for your chosen backend)
+        # Configure S3 backend
         if ($env:S3_BUCKET) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_BUCKET=$env:S3_BUCKET" }
         if ($env:S3_HOST) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_ENDPOINT=$env:S3_HOST" }
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
@@ -109,3 +108,24 @@ runs:
         }
         sccache --start-server
         sccache --show-stats
+
+    - name: "Validate sccache is usable (or disable it)"
+      shell: powershell
+      run: |
+        $ErrorActionPreference = 'Continue'
+
+        if (-not (Get-Command sccache -ErrorAction SilentlyContinue)) {
+          Write-Host 'WARNING: sccache not found on PATH after setup; disabling RUSTC_WRAPPER.'
+          Add-Content -Path $env:GITHUB_ENV -Value 'RUSTC_WRAPPER='
+          exit 0
+        }
+
+        # sccache can exist but still be unusable (e.g., bad config, permissions, TLS issues).
+        # If this fails, disable wrapper so the build doesn't fail without an obvious error.
+        sccache --version
+        sccache --show-stats
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host 'WARNING: sccache appears unusable; disabling RUSTC_WRAPPER for the rest of the job.'
+          Add-Content -Path $env:GITHUB_ENV -Value 'RUSTC_WRAPPER='
+        }

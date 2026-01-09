@@ -128,12 +128,27 @@ jobs:
 
       - name: Setup sccache
         if: ${{ matrix.windows }}
+        continue-on-error: true
         with:
           s3-bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
           s3-access-key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
           s3-secret-key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
           s3-host: ${{ secrets.S3_NB_CACHE_HOST }}
         uses: ./.github/actions/setup-sccache
+
+      - name: Debug; toolchain + env (pre-build)
+        if: ${{ always() }}
+        shell: bash
+        run: |
+          set -euxo pipefail
+          node --version
+          npm --version
+          rustc --version || true
+          cargo --version || true
+          echo "RUSTC_WRAPPER=${RUSTC_WRAPPER-}"
+          echo "CARGO_INCREMENTAL=${CARGO_INCREMENTAL-}"
+          echo "SCCACHE_BUCKET=${SCCACHE_BUCKET-}"
+          echo "SCCACHE_ENDPOINT=${SCCACHE_ENDPOINT-}"
 
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
@@ -144,6 +159,28 @@ jobs:
           RUST_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_ENVIRONMENT }}
         id: tauri_build
 
+      - name: Debug; sccache stats (post-build)
+        if: ${{ always() && matrix.windows }}
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          if (Get-Command sccache -ErrorAction SilentlyContinue) {
+            sccache --show-stats
+          } else {
+            Write-Host 'sccache not found on PATH in post-build step'
+            Write-Host $env:PATH
+          }
+
+      - name: Debug; bundle folder listing
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ls -la src-tauri/target/release || true
+          ls -la src-tauri/target/release/bundle || true
+          find src-tauri/target/release/bundle -maxdepth 3 -type f -print || true
+
+      # Setup JFrog CLI
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
 
