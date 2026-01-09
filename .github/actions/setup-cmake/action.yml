@@ -5,6 +5,18 @@ inputs:
     description: "CMake version (e.g. 3.29.9)"
     required: false
     default: "3.29.9"
+  s3-host:
+    description: "S3 endpoint for cache"
+    required: false
+  s3-access-key:
+    description: "S3 access key for cache"
+    required: false
+  s3-secret-key:
+    description: "S3 secret key for cache"
+    required: false
+  s3-bucket:
+    description: "S3 bucket for cache"
+    required: false
 runs:
   using: "composite"
   steps:
@@ -19,14 +31,24 @@ runs:
           "installed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         }
 
-    - name: Cachetest
+    - name: Create destination root
+      if: steps.check.outputs.installed != 'true'
+      shell: powershell
+      run: |
+          $destRoot = "$env:RUNNER_TEMP\cmake"
+          if (-not (Test-Path $destRoot)) {
+            New-Item -ItemType Directory -Path $destRoot | Out-Null
+          }
+
+    - name: Enable cache restore for CMake (Windows)
+      if: steps.check.outputs.installed != 'true'
       uses: tespkg/actions-cache@v1
       with:
-        endpoint: ${{ secrets.S3_NB_CACHE_HOST }}
-        accessKey: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
-        secretKey: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
-        bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
-        use-fallback: true
+        endpoint: ${{ inputs.s3-host }}
+        accessKey: ${{ inputs.s3-access-key }}
+        secretKey: ${{ inputs.s3-secret-key }}
+        bucket: ${{ inputs.s3-bucket }}
+        use-fallback: false
         path: |
           $env:RUNNER_TEMP\cmake
         key: ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-${{ github.run_id }}

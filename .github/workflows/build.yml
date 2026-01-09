@@ -99,6 +99,11 @@ jobs:
         run: npm install @rollup/rollup-win32-x64-msvc
 
       - name: Windows; setup CMAke
+        with:
+          s3-bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
+          s3-access-key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
+          s3-secret-key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          s3-host: ${{ secrets.S3_NB_CACHE_HOST }}
         if: ${{ matrix.windows }}
         uses: ./.github/actions/setup-cmake
 
