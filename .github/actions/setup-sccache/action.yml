@@ -95,6 +95,8 @@ runs:
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_KEY_PREFIX=cmake-sccache"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_LOG=debug"
         # Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_NO_DAEMON=1"
+        Add-Content -Path $env:GITHUB_ENV -Value "DCMAKE_C_COMPILER_LAUNCHER=sccache"
+        Add-Content -Path $env:GITHUB_ENV -Value "DCMAKE_C_COMPILER_LAUNCHER=sccache"
         
         # Configure S3 backend
         if ($env:S3_BUCKET) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_BUCKET=$env:S3_BUCKET" }
