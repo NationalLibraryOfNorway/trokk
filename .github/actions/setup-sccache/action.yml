@@ -91,7 +91,9 @@ runs:
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_CACHE_SIZE=5G"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE=true"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
-
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_USE_SSL=true"
+        Add-Content -Path $env:GITHUB_ENV -Value  SCCACHE_S3_KEY_PREFIX=cmake-sccache"
+        
         # Configure S3 backend
         if ($env:S3_BUCKET) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_BUCKET=$env:S3_BUCKET" }
         if ($env:S3_HOST) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_ENDPOINT=$env:S3_HOST" }
