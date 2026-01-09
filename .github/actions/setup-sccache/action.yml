@@ -82,7 +82,7 @@ runs:
         S3_ACCESS_KEY: ${{ inputs.s3-access-key }}
         S3_SECRET_KEY: ${{ inputs.s3-secret-key }}
       run: |
-        # Rust: use sccache as compiler wrapper (may be disabled later if validation fails)
+        # Rust: use sccache as compiler wrapper (may be disabled later if connectivity check fails)
         Add-Content -Path $env:GITHUB_ENV -Value "RUSTC_WRAPPER=sccache"
 
         # Optional but commonly recommended for CI: incremental builds aren't cacheable by sccache
@@ -93,25 +93,59 @@ runs:
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_USE_SSL=true"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_KEY_PREFIX=cmake-sccache"
-        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_LOG=debug"
-        # Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_NO_DAEMON=1"
-        Add-Content -Path $env:GITHUB_ENV -Value "DCMAKE_C_COMPILER_LAUNCHER=sccache"
-        Add-Content -Path $env:GITHUB_ENV -Value "DCMAKE_C_COMPILER_LAUNCHER=sccache"
-        
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_LOG=info"
+
+        Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_C_COMPILER_LAUNCHER=sccache"
+        Add-Content -Path $env:GITHUB_ENV -Value "CMAKE_CXX_COMPILER_LAUNCHER=sccache"
+
         # Configure S3 backend
         if ($env:S3_BUCKET) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_BUCKET=$env:S3_BUCKET" }
         if ($env:S3_HOST) { Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_ENDPOINT=$env:S3_HOST" }
         if ($env:S3_ACCESS_KEY) { Add-Content -Path $env:GITHUB_ENV -Value "AWS_ACCESS_KEY_ID=$env:S3_ACCESS_KEY" }
         if ($env:S3_SECRET_KEY) { Add-Content -Path $env:GITHUB_ENV -Value "AWS_SECRET_ACCESS_KEY=$env:S3_SECRET_KEY" }
 
+    - name: "Check sccache backend connectivity (disable wrapper on failure)"
+      shell: powershell
+      run: |
+        $ErrorActionPreference = 'Continue'
+
+        if (-not (Get-Command sccache -ErrorAction SilentlyContinue)) {
+          Write-Host 'WARNING: sccache not found on PATH; disabling RUSTC_WRAPPER.'
+          Add-Content -Path $env:GITHUB_ENV -Value 'RUSTC_WRAPPER='
+          Add-Content -Path $env:GITHUB_ENV -Value 'SCCACHE_ENABLED=false'
+          exit 0
+        }
+
+        # This forces sccache to initialize the backend and touch the bucket (it accesses .sccache_check).
+        # If the runner is behind a proxy that can't tunnel to the endpoint, this will fail quickly.
+        sccache --show-stats 2>$null | Out-Null
+
+        if ($LASTEXITCODE -ne 0) {
+          Write-Host 'WARNING: sccache backend not reachable (proxy/endpoint/permissions). Disabling RUSTC_WRAPPER.'
+          Add-Content -Path $env:GITHUB_ENV -Value 'RUSTC_WRAPPER='
+          Add-Content -Path $env:GITHUB_ENV -Value 'SCCACHE_ENABLED=false'
+          exit 0
+        }
+
+        Add-Content -Path $env:GITHUB_ENV -Value 'SCCACHE_ENABLED=true'
+        Write-Host 'sccache backend reachable'
+
     - name: "Start sccache server"
       shell: powershell
       run: |
-        $ErrorActionPreference = "Stop"
+        $ErrorActionPreference = 'Continue'
+
+        if ($env:SCCACHE_ENABLED -ne 'true') {
+          Write-Host 'Skipping sccache server start (disabled)'
+          exit 0
+        }
+
         if (-not (Get-Command sccache -ErrorAction SilentlyContinue)) {
           Write-Host "sccache is not on PATH. PATH is:"
           Write-Host $env:PATH
-          throw "sccache not found on PATH"
+          Add-Content -Path $env:GITHUB_ENV -Value 'RUSTC_WRAPPER='
+          exit 0
         }
+
         sccache --start-server
 
