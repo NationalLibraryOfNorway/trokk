@@ -40,7 +40,7 @@ jobs:
 
 
     steps:
-      - name: Cache
+      - name: Cachetest
         uses: tespkg/actions-cache@v1
         with:
           endpoint: ${{ secrets.S3_NB_CACHE_HOST }}
@@ -50,12 +50,11 @@ jobs:
           use-fallback: true
           path: |
             ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ inputs.maven-version }}-${{ github.ref_name }}-${{ hashFiles('**/pom.xml') }}-${{ github.run_id }}
+          key: ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-${{ github.run_id }}
           restore-keys: |
-            ${{ runner.os }}-maven-${{ inputs.maven_version }}-${{ github.ref_name }}-${{ hashFiles('pom.xml', '**/pom.xml') }}-
-            ${{ runner.os }}-maven-${{ inputs.maven_version }}-${{ github.ref_name }}-
-            ${{ runner.os }}-maven-${{ inputs.maven_version }}-
-            ${{ runner.os }}-maven-
+            ${{ runner.os }}-cachetest-${{ github.ref_name }}-${{ hashFiles('package-lock.json', '**/package-lock.json', 'src-tauri/Cargo.lock', '**/Cargo.lock') }}-
+            ${{ runner.os }}-cachetest-${{ github.ref_name }}-
+            ${{ runner.os }}-cachetest-
 
       - name: Import Secrets
         id: import-secrets
