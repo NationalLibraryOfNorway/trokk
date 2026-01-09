@@ -4,7 +4,7 @@ inputs:
   version:
     description: "CMake version (e.g. 3.29.9)"
     required: false
-    default: "3.29.9"
+    default: "4.2.1"
   s3-host:
     description: "S3 endpoint for cache"
     required: false
