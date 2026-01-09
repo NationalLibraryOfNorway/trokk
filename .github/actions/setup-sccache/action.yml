@@ -91,7 +91,7 @@ runs:
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_CACHE_SIZE=5G"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE=true"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_REGION=auto"
-        # Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_USE_SSL=true"
+        Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_USE_SSL=true"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_S3_KEY_PREFIX=cmake-sccache"
         Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_LOG=debug"
         # Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_NO_DAEMON=1"

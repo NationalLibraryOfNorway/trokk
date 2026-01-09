@@ -141,18 +141,28 @@ jobs:
         uses: ./.github/actions/setup-sccache
 
       - name: Debug; toolchain + env (pre-build)
-        if: ${{ always() }}
-        shell: bash
+        if: ${{ always() && matrix.windows }}
+        shell: powershell
         run: |
-          set -euxo pipefail
+          $ErrorActionPreference = 'Continue'
           node --version
           npm --version
-          rustc --version || true
-          cargo --version || true
-          echo "RUSTC_WRAPPER=${RUSTC_WRAPPER-}"
-          echo "CARGO_INCREMENTAL=${CARGO_INCREMENTAL-}"
-          echo "SCCACHE_BUCKET=${SCCACHE_BUCKET-}"
-          echo "SCCACHE_ENDPOINT=${SCCACHE_ENDPOINT-}"
+          rustc --version
+          cargo --version
+          Write-Host "RUSTC_WRAPPER=$env:RUSTC_WRAPPER"
+          Write-Host "CARGO_INCREMENTAL=$env:CARGO_INCREMENTAL"
+          Write-Host "SCCACHE_BUCKET=$env:SCCACHE_BUCKET"
+          Write-Host "SCCACHE_ENDPOINT=$env:SCCACHE_ENDPOINT"
+          if (Get-Command sccache -ErrorAction SilentlyContinue) {
+            sccache --version
+            sccache --show-stats
+            # This should increment 'Compile requests' if rustc is available
+            sccache rustc -vV
+            sccache --show-stats
+          } else {
+            Write-Host 'sccache not found on PATH'
+            Write-Host $env:PATH
+          }
 
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
@@ -161,6 +171,15 @@ jobs:
           VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_ENVIRONMENT }}
           RUST_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_DSN }}
           RUST_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_ENVIRONMENT }}
+          # Ensure Cargo inside tauri-action inherits the wrapper settings
+          RUSTC_WRAPPER: ${{ env.RUSTC_WRAPPER }}
+          CARGO_INCREMENTAL: ${{ env.CARGO_INCREMENTAL }}
+          SCCACHE_BUCKET: ${{ env.SCCACHE_BUCKET }}
+          SCCACHE_ENDPOINT: ${{ env.SCCACHE_ENDPOINT }}
+          SCCACHE_REGION: ${{ env.SCCACHE_REGION }}
+          SCCACHE_S3_USE_SSL: ${{ env.SCCACHE_S3_USE_SSL }}
+          SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE: ${{ env.SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE }}
+          SCCACHE_S3_KEY_PREFIX: ${{ env.SCCACHE_S3_KEY_PREFIX }}
         id: tauri_build
 
       - name: Debug; sccache stats (post-build)
