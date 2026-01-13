@@ -221,5 +221,6 @@ jobs:
           echo '${{ steps.tauri_build.outputs.artifactPaths }}' |
           sed -e 's#\\#/#g' -e 's#//#/#g' |
           jq -r .[] |
+          grep -E '\\.msi$' |
           sed -n -e 's/^.*bundle\///p' |
           xargs -I % jf rt u --url ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }} --user ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }} --password ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
