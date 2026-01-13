@@ -147,9 +147,6 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                     title="Roter mot klokken"
                                 >
                                     <RotateCcw size={24} className={imageIsRotating ? 'animate-spin' : ''} />
-                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none">
-                                        Roter mot klokken
-                                    </span>
                                 </button>
                                 <button
                                     onClick={(e) => {
@@ -162,9 +159,6 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                     title="Roter med klokken"
                                 >
                                     <RotateCw size={24} className={imageIsRotating ? 'animate-spin' : ''} />
-                                    <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-sm rounded whitespace-nowrap opacity-0 group-hover/btn:opacity-100 transition-opacity pointer-events-none">
-                                        Roter med klokken
-                                    </span>
                                 </button>
                             </div>
                         </div>
