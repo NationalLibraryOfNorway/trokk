@@ -196,7 +196,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                 <div className="flex-shrink-0 flex items-center gap-2">
                     <div data-tauri-drag-region className="flex items-center pr-2 gap-1">
                         <div data-tauri-drag-region
-                             className="bg-stone-600 rounded-full cursor-default p-1.5 mb-1 mr-1 flex items-center justify-center">
+                             className="bg-stone-600 rounded-full cursor-default p-1.5 mb-1 mr-1 flex items-center justify-center"
+                        >
                             <User data-tauri-drag-region size={20}/>
                         </div>
                         <p data-tauri-drag-region

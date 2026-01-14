@@ -23,6 +23,8 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
 
     const imageStatus = getImageStatus(image.path);
     const imageIsRotating = imageStatus === 'rotating';
+    const initialLoading = isLoading && !getPreviewFromTree(image, state);
+    const rotateBtnClass = `bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm transition-all relative group/btn ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
     // Get preview file for cache busting
     const previewFile = getPreviewFromTree(image, state);
@@ -65,8 +67,6 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
         }
         lastUrlRef.current = imageUrl;
     }, [previewCacheBuster, imageUrl, image, state]);
-
-    const initialLoading = isLoading && !getPreviewFromTree(image, state);
 
     return (
         <div className='relative z-10' onClick={handleClose}>
@@ -142,7 +142,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                         rotateCounterClockwise();
                                     }}
                                     disabled={imageIsRotating}
-                                    className={`bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm transition-all relative group/btn ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={rotateBtnClass}
                                     aria-label="Roter mot klokken"
                                     title="Roter mot klokken"
                                 >
@@ -154,7 +154,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                         rotateClockwise();
                                     }}
                                     disabled={imageIsRotating}
-                                    className={`bg-black/50 hover:bg-black/70 text-white p-3 rounded-full backdrop-blur-sm transition-all relative group/btn ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    className={rotateBtnClass}
                                     aria-label="Roter med klokken"
                                     title="Roter med klokken"
                                 >

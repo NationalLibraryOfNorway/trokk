@@ -27,30 +27,12 @@ mod tests;
 
 #[cfg(not(feature = "debug-mock"))]
 pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnvironmentVariables {
-	vault_base_url: match option_env!("VAULT_BASE_URL") {
-		Some(v) => v,
-		None => "",
-	},
-	vault_environment: match option_env!("VAULT_ENVIRONMENT") {
-		Some(v) => v,
-		None => "",
-	},
-	vault_role_id: match option_env!("VAULT_ROLE_ID") {
-		Some(v) => v,
-		None => "",
-	},
-	vault_secret_id: match option_env!("VAULT_SECRET_ID") {
-		Some(v) => v,
-		None => "",
-	},
-	sentry_environment: match option_env!("RUST_SENTRY_ENVIRONMENT") {
-		Some(v) => v,
-		None => "",
-	},
-	sentry_dsn: match option_env!("RUST_SENTRY_DSN") {
-		Some(v) => v,
-		None => "",
-	},
+	vault_base_url: env!("VAULT_BASE_URL"),
+	vault_environment: env!("VAULT_ENVIRONMENT"),
+	vault_role_id: env!("VAULT_ROLE_ID"),
+	vault_secret_id: env!("VAULT_SECRET_ID"),
+	sentry_environment: env!("RUST_SENTRY_ENVIRONMENT"),
+	sentry_dsn: env!("RUST_SENTRY_DSN"),
 };
 
 #[cfg(not(feature = "debug-mock"))]

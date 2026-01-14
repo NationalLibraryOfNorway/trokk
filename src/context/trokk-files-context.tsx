@@ -41,7 +41,7 @@ type TrokkFilesAction =
 }
     | { type: 'SET_CURRENT'; payload: FileTree | undefined }
     | { type: 'SET_CURRENT_AND_EXPAND_PARENTS'; payload: FileTree }
-    | { type: 'REMOVE_PATH'; payload: string }
+    | { type: 'REMOVE_FOLDER_PATH'; payload: string }
     | { type: 'RESET' }
     | { type: 'UPDATE_STORE' }
     | { type: 'UPDATE_PREVIEW'; payload: FileTree | undefined }
@@ -237,7 +237,7 @@ function isFile(path: string): boolean {
     return isImage(path);
 }
 
-function splitWatchEvents(events: WatchEvent[], treeIndex: Map<string, FileTree>, processedEvents: Set<string>): PathsSorted {
+function splitWatchEvents(events: WatchEvent[], processedEvents: Set<string>): PathsSorted {
     const deduplicatedEvents = events.filter((event, index, self) => {
         if (event.paths.some((path) => path.endsWith('TeraCopyTestFile-1234567890'))) {
             return false; // Ignore TeraCopy test files
@@ -267,32 +267,20 @@ function splitWatchEvents(events: WatchEvent[], treeIndex: Map<string, FileTree>
         (acc, event) => {
             if (isCreate(event.type)) {
                 event.paths.forEach((path) => {
-                    const kind = isFile(path) ? 'file' : 'folder';
-                    acc.create.push({path: path, kind});
+                    acc.renameTo.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
                 });
             } else if (isModifyRenameFrom(event.type)) {
                 event.paths.forEach((path) => {
-                    const kind = isFile(path) ? 'file' : 'folder';
-                    acc.renameFrom.push({path: path, kind});
+                    acc.renameTo.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
+
                 });
             } else if (isModifyRenameTo(event.type)) {
                 event.paths.forEach((path) => {
-                    const kind = isFile(path) ? 'file' : 'folder';
-                    acc.renameTo.push({path: path, kind});
+                    acc.renameTo.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
                 });
             } else if (isDelete(event.type)) {
                 event.paths.forEach((path) => {
-                    let kind: 'file' | 'folder' = 'folder';
-                    const treeNode = treeIndex.get(path);
-                    if (isFile(path)) {
-                        kind = 'file';
-                    } else {
-                        // Check if it exists in the tree index
-                        if (treeNode) {
-                            kind = treeNode.isDirectory ? 'folder' : 'file';
-                        }
-                    }
-                    acc.remove.push({path, kind});
+                    acc.remove.push({path, kind: isFile(path) ? 'file' : 'folder'});
                 });
             } else {
                 console.debug('❓ Unknown event type:', JSON.stringify(event.type), 'for paths:', event.paths);
@@ -485,7 +473,7 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
             void createThumbnailsFromDirectory(action.payload.path);
             return setCurrentAndExpandParents(state, action.payload);
         }
-        case 'REMOVE_PATH': {
+        case 'REMOVE_FOLDER_PATH': {
             const pathToRemove = action.payload;
             const newState = removeFileTree(state, [{ path: pathToRemove, kind: 'folder' }]);
 
@@ -585,7 +573,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
                 }
             }
 
-            const {create, remove, renameFrom, renameTo} = splitWatchEvents(events, stateRef.current.treeIndex, processedEvents.current);
+            const {create, remove, renameFrom, renameTo} = splitWatchEvents(events, processedEvents.current);
 
             // Add detected deletions to the remove list
             deletedPaths.forEach(path => {

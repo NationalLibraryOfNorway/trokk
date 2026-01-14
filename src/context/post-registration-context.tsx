@@ -132,7 +132,7 @@ export function usePostRegistration() {
             });
 
             const removePath = (path: string) => {
-                dispatch({ type: 'REMOVE_PATH', payload: path });
+                dispatch({ type: 'REMOVE_FOLDER_PATH', payload: path });
             };
 
             await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress, removePath);
