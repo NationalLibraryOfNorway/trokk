@@ -217,7 +217,7 @@ pub fn rotate_image<P: AsRef<Path>>(
 	rotate_with_exif(path_reference, rotation)?;
 
 	// Rotate WebP files (thumbnail and preview)
-	rotate_webp_files(path_reference, rotation)?;
+	rerender_webp_files(path_reference, rotation)?;
 
 	// Windows Explorer can cache thumbnails and sometimes miss EXIF-only changes.
 	// Bumping the file's modification time is a simple way to encourage thumbnail regeneration.
@@ -463,38 +463,28 @@ fn update_tiff_orientation<P: AsRef<Path>>(path: P, orientation: u16) -> Result<
 }
 
 /// Regenerates WebP thumbnail and preview files from the rotated original
-fn rotate_webp_files<P: AsRef<Path>>(
+fn rerender_webp_files<P: AsRef<Path>>(
 	image_path: P,
 	_rotation: u16,
 ) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
-	let parent_directory =
-		file_utils::get_parent_directory(path_reference).map_err(ImageConversionError::StrError)?;
+	let parent_directory = file_utils::get_parent_directory(image_path.as_ref())
+		.map_err(ImageConversionError::StrError)?;
 	let filename_original_image =
 		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
-
-	// Build paths
-	let mut thumbnail_path = parent_directory.to_owned();
-	thumbnail_path.push(THUMBNAIL_FOLDER_NAME);
-	thumbnail_path.push(filename_original_image);
-	thumbnail_path.set_extension(WEBP_EXTENSION);
-
 	let mut preview_path = parent_directory.to_owned();
 	preview_path.push(PREVIEW_FOLDER_NAME);
 	preview_path.push(filename_original_image);
 	preview_path.set_extension(WEBP_EXTENSION);
-
 	// Always regenerate thumbnail (needed for grid view)
-	convert_to_webp(path_reference, false)?; // Thumbnail
-
-	// Always regenerate preview synchronously so the UI can reload immediately after rotation.
-	// This prevents the detail modal from briefly showing a broken image while the preview
-	// is being regenerated.
+	convert_to_webp(image_path.as_ref(), false)?; // Thumbnail
+											   // Always regenerate preview synchronously so the UI can reload immediately after rotation.
+											   // This prevents the detail modal from briefly showing a broken image while the preview
+											   // is being regenerated.
 	if preview_path.exists() {
 		let _ = fs::remove_file(&preview_path); // Ignore errors; we'll regenerate it.
 	}
 	convert_to_webp(path_reference, true)?; // Preview
-
 	Ok(())
 }
 

@@ -56,6 +56,7 @@ export interface ThumbnailProps {
     const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
     const hasWebpThumbnail = !!thumbnailUrl;
     const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
+    const rotateBtnClass = `bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
     if (isHiddenDir) return null;
 
@@ -124,7 +125,7 @@ export interface ThumbnailProps {
                             type="button"
                             onClick={handleRotateCounterClockwise}
                             disabled={imageIsRotating}
-                            className={`bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={rotateBtnClass}
                             aria-label="Roter mot klokken"
                             title="Roter mot klokken"
                         >
@@ -134,7 +135,7 @@ export interface ThumbnailProps {
                             type="button"
                             onClick={handleRotateClockwise}
                             disabled={imageIsRotating}
-                            className={`bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={rotateBtnClass}
                             aria-label="Roter med klokken"
                             title="Roter med klokken"
                         >
