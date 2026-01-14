@@ -553,10 +553,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             const pathsToCheck = new Set<string>();
             events.forEach(event => {
                 event.paths.forEach(path => {
-                    // Only check directories
-                    if (!isImage(path)) {
-                        pathsToCheck.add(path);
-                    }
+                    pathsToCheck.add(path);
                 });
             });
 
@@ -564,9 +561,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             for (const path of pathsToCheck) {
                 try {
                     const stillExists = await exists(path);
-                    if (!stillExists) {
-                        deletedPaths.push(path);
-                    }
+                    if (!stillExists) deletedPaths.push(path);
                 } catch {
                     // Path doesn't exist
                     deletedPaths.push(path);
