@@ -15,6 +15,7 @@ vi.mock('../src/context/trokk-files-context', () => {
 
 vi.mock('@tauri-apps/api/core', () => ({
         convertFileSrc: vi.fn((src: string) => `mocked://${src}`),
+        invoke: vi.fn().mockResolvedValue(undefined),
     })
 );
 

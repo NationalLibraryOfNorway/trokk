@@ -36,7 +36,7 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
         return fileCacheBusters.get(path) || cacheBuster;
     }, [fileCacheBusters, cacheBuster]);
 
-    const saveRotation = useCallback(async (path: string, rotation: number) => {
+    const saveRotation = useCallback(async (path: string, direction: 'clockwise'|'counterclockwise') => {
         // Wait for any active rotation to complete first
         const existingRotation = activeRotations.current.get(path);
         if (existingRotation) {
@@ -60,7 +60,7 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
                 // Backend handles: EXIF update + WebP thumbnail/preview regeneration
                 await invoke('rotate_image', {
                     filePath: path,
-                    rotation: rotation
+                    direction: direction
                 });
 
                 // Update cache buster to force browser to reload the new images
@@ -107,16 +107,8 @@ export const RotationProvider = ({children}: {children: ReactNode}) => {
             console.debug('Rotation already in progress for:', path);
             return;
         }
-
-        const rotationDelta = direction === 'clockwise' ? 90 : -90;
-        // Convert to positive rotation value
-        const newRotation = ((rotationDelta % 360) + 360) % 360;
-
-        // No immediate UI update - just start rotating the file
-        // The EXIF orientation will be applied when the image reloads
-        saveRotation(path, newRotation);
+        saveRotation(path, direction);
     }, [saveRotation]);
-
 
     return (
         <RotationContext.Provider value={{ rotateImage, isRotating, getImageStatus, hasAnyRotating, cacheBuster, getFileCacheBuster}}>

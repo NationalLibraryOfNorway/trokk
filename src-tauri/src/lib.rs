@@ -238,8 +238,8 @@ async fn upload_batch_to_s3(
 }
 
 #[tauri::command]
-async fn rotate_image(file_path: String, rotation: u16) -> Result<(), String> {
-	tokio::task::spawn_blocking(move || image_converter::rotate_image(file_path, rotation))
+async fn rotate_image(file_path: String, direction: String) -> Result<(), String> {
+	tokio::task::spawn_blocking(move || image_converter::rotate_image(file_path, &direction))
 		.await
 		.expect("Failed to run blocking task")
 		.map_err(|e| e.to_string())
@@ -265,6 +265,7 @@ pub fn run() {
 				.expect("no main window")
 				.set_focus();
 		}))*/
+        .plugin(tauri_plugin_window_state::Builder::default().build())
 		.plugin(tauri_plugin_store::Builder::new().build())
 		.plugin(tauri_plugin_http::init())
 		.plugin(tauri_plugin_process::init())
