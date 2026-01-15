@@ -58,7 +58,7 @@ describe('RotationContext', () => {
 
         expect(invoke).toHaveBeenCalledWith('rotate_image', {
             filePath: '/test/image.jpg',
-            rotation: 90,
+            direction: 'clockwise',
         });
     });
 
@@ -74,7 +74,7 @@ describe('RotationContext', () => {
 
         expect(invoke).toHaveBeenCalledWith('rotate_image', {
             filePath: '/test/image.jpg',
-            rotation: 270,
+            direction: 'counterclockwise',
         });
     });
 
@@ -202,7 +202,7 @@ describe('RotationContext', () => {
         expect(invoke).toHaveBeenCalledTimes(1);
         expect(invoke).toHaveBeenCalledWith('rotate_image', {
             filePath: '/test/image.jpg',
-            rotation: 90,
+            direction: 'clockwise',
         });
 
         // Second rotation - backend handles accumulation via EXIF
