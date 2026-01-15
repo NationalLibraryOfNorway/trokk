@@ -38,6 +38,11 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Windows; setup CMAke
+        inputs:
+          s3-bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
+          s3-access-key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
+          s3-secret-key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          s3-host: ${{ secrets.S3_NB_CACHE_HOST }}
         if: ${{ matrix.windows }}
         uses: ./.github/actions/setup-cmake
 
