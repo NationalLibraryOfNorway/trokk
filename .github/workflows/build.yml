@@ -218,9 +218,21 @@ jobs:
         shell: bash
         working-directory: ./src-tauri/target/release/bundle
         run: |
-          echo '${{ steps.tauri_build.outputs.artifactPaths }}' |
-          sed -e 's#\\#/#g' -e 's#//#/#g' |
-          jq -r .[] |
-          grep -E '\\.msi$' |
-          sed -n -e 's/^.*bundle\///p' |
-          xargs -I % jf rt u --url ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }} --user ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }} --password ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
+          set -euo pipefail
+
+          # `artifactPaths` is a JSON array of absolute paths. Normalize Windows paths and
+          # filter to MSI files inside jq to avoid fragile grep/xargs pipelines.
+          echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
+            | sed -e 's#\\#/#g' -e 's#//#/#g' \
+            | jq -r '.[] | select(test("\\.msi$"; "i"))' \
+            | sed -n -e 's#^.*bundle/##p' \
+            | while IFS= read -r relpath; do
+                [ -n "$relpath" ] || continue
+                echo "Uploading: $relpath"
+                jf rt u \
+                  --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
+                  --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
+                  --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
+                  "$relpath" \
+                  "generic/trokk/${{ github.ref_name }}/"
+              done
