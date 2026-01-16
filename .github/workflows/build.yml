@@ -181,6 +181,10 @@ jobs:
           SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE: ${{ env.SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE }}
           SCCACHE_S3_KEY_PREFIX: ${{ env.SCCACHE_S3_KEY_PREFIX }}
         id: tauri_build
+        with:
+          args: |
+            --release
+            --no-default-features
 
       - name: Debug; sccache stats (post-build)
         if: ${{ always() && matrix.windows }}
