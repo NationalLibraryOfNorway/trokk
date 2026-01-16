@@ -13,7 +13,7 @@ edition = "2024"
 tauri-build = { version = "2.5.3", features = [] }
 
 [dependencies]
-tauri = { version = "2.9.5", features = ["protocol-asset", "tray-icon"], optional = false }
+tauri = { version = "2.9.5", features = ["protocol-asset", "tray-icon", "test", "devtools"], optional = false }
 tauri-plugin-store = "2.4.2"
 tauri-plugin-fs = { version = "2.4.5", features = ["watch"] }
 tauri-plugin-oauth = "2.0.0"
@@ -43,15 +43,8 @@ tempfile = "3.24.0"
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!
-default = ["devtools"]
 debug-mock = []
 custom-protocol = ["tauri/custom-protocol"]
-
-# Enable tauri's internal test helpers only when running cargo tests.
-tauri-test = ["tauri/test"]
-
-# Enable Tauri devtools only when explicitly requested (keeps prod/release builds smaller)
-devtools = ["tauri/devtools"]
 
 [lib]
 name = "app_lib"
