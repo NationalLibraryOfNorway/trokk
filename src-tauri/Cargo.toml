@@ -13,27 +13,26 @@ edition = "2024"
 tauri-build = { version = "2.5.3", features = [] }
 
 [dependencies]
-tauri = { version = "2.9.5", features = ["protocol-asset", "test", "tray-icon"], optional = false }
+tauri = { version = "2.9.5", features = ["protocol-asset", "tray-icon"], optional = false }
 tauri-plugin-store = "2.4.2"
 tauri-plugin-fs = { version = "2.4.5", features = ["watch"] }
 tauri-plugin-oauth = "2.0.0"
 tauri-plugin-http = "2.5.6"
-sentry = "0.46.1"
+sentry = { version = "0.46.1", default-features = false, features = ["reqwest", "rustls", "tokio"] }
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
 gethostname = "1.1.0"
 url = "2.5.8"
-reqwest = "0.13.1"
+reqwest = { version = "0.13.1", default-features = false, features = ["rustls"] }
 once_cell = "1.21.3"
-image = "0.25.9"
-webp = "0.3.1"
+image = { version = "0.25.9", default-features = false, features = ["jpeg", "png", "tiff", "webp"] }
+webp = { version = "0.3.1", default-features = false, features = ["img"] }
 little_exif = "0.6.23"
 thiserror = "2.0.17"
-vaultrs = "0.7.4"
+vaultrs = { version = "0.7.4", default-features = false, features = ["rustls"] }
 vaultrs-login = "0.2.3"
-tokio = { version = "1.49.0", features = ["full"] }
-aws-credential-types = { version = "1.2.11", features = ["hardcoded-credentials"] }
-aws-sdk-s3 = { version = "1.119.0", features = ["rt-tokio", "behavior-version-latest"] }
+tokio = { version = "1.49.0", default-features = false, features = ["rt-multi-thread", "sync", "fs", "io-util"] }
+aws-sdk-s3 = { version = "1.119.0", default-features = false, features = ["rustls", "rt-tokio", "default-https-client", "behavior-version-latest"] }
 tauri-plugin-dialog = "2.6.0"
 tauri-plugin-process = "2.3.1"
 tauri-plugin-window-state = "2.4.1"
@@ -47,6 +46,9 @@ tempfile = "3.24.0"
 default = ["devtools"]
 debug-mock = []
 custom-protocol = ["tauri/custom-protocol"]
+
+# Enable tauri's internal test helpers only when running cargo tests.
+tauri-test = ["tauri/test"]
 
 # Enable Tauri devtools only when explicitly requested (keeps prod/release builds smaller)
 devtools = ["tauri/devtools"]

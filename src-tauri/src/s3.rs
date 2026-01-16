@@ -275,15 +275,16 @@ async fn get_client(secret_variables: &SecretVariables) -> Result<&'static Clien
 
 #[cfg(not(feature = "debug-mock"))]
 async fn create_client(secret_variables: &SecretVariables) -> Result<Client, String> {
-	let credentials = Credentials::from_keys(
-		&secret_variables.s3_access_key_id,
-		&secret_variables.s3_secret_access_key,
+	let credentials = Credentials::new(
+		secret_variables.s3_access_key_id.clone(),
+		secret_variables.s3_secret_access_key.clone(),
 		None,
+		None,
+		"trokk",
 	);
-
 	let config = aws_sdk_s3::Config::builder()
 		.credentials_provider(credentials)
-		.region(Region::new(secret_variables.s3_region.clone()))
+        .region(Region::new(secret_variables.s3_region.clone()))
 		.endpoint_url(&secret_variables.s3_url)
 		.disable_s3_express_session_auth(true)
 		.disable_multi_region_access_points(true)
