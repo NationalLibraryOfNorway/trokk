@@ -197,6 +197,7 @@ jobs:
           SCCACHE_S3_USE_SSL: ${{ env.SCCACHE_S3_USE_SSL }}
           SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE: ${{ env.SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE }}
           SCCACHE_S3_KEY_PREFIX: ${{ env.SCCACHE_S3_KEY_PREFIX }}
+          NO_STRIP: true
         id: tauri_build
         with:
           args: -- --no-default-features
@@ -266,7 +267,7 @@ jobs:
             # filter to upload only DEB and AppImage files
             echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
             | sed -e 's#\\#/#g' -e 's#//#/#g' \
-            | jq -r '.[] | select(test("\\.(deb|appimage)$"; "i"))' \
+            | jq -r '.[] | select(test("\\.(deb|appimage|rpm)$"; "i"))' \
             | sed -n -e 's#^.*bundle/##p' \
             | while IFS= read -r relpath; do
                 [ -n "$relpath" ] || continue
