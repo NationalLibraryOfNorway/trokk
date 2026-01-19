@@ -59,6 +59,11 @@ pkgs.mkShell {
     export CARGO_TARGET_DIR="$PWD/target"
     export RUSTFLAGS="-C link-arg=-Wl,-rpath,$CARGO_TARGET_DIR/debug/deps"
 
+
+    # AppImage bundling settings - NO_STRIP keeps debug symbols, APPIMAGE_BUNDLE_ALL bundles all deps
+    export NO_STRIP=1
+    export APPIMAGE_BUNDLE_ALL=1
+
     # Environment variables ensurance
     if [ -f .env ]; then set -a; . .env; set +a; fi
     echo -e "\033[1;33mChecking environment variables is set according to README.md\033[0m"
@@ -73,5 +78,11 @@ pkgs.mkShell {
     if [ "$START_DEV" = "1" ]; then
       npm run tauri dev
     fi
+
+    # Helper function to build for production
+    build_production() {
+      echo -e "\033[1;32mBuilding Trøkk for production with bundled AppImage...\033[0m"
+      npm run tauri build
+    }
   '';
 }

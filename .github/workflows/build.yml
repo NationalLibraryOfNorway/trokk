@@ -56,21 +56,11 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      - name: Ubuntu; Install dependencies
+      - name: Ubuntu; Install Nix
         if: ${{ matrix.linux }}
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libxdo-dev \
-            libssl-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            patchelf 
+        uses: cachix/install-nix-action@v27
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Rust; install Windows toolchain
         if: ${{ matrix.windows }}
@@ -80,13 +70,6 @@ jobs:
           toolchain: stable-x86_64-pc-windows-msvc
           components: rustfmt, clippy
 
-      - name: Rust; install Linux toolchain
-        if: ${{ matrix.linux }}
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          cache: false
-          toolchain: stable-x86_64-unknown-linux-gnu
-          components: rustfmt, clippy
 
       # Cache target directory, ignore the bundle directory. See reasons for this globbing https://github.com/actions/toolkit/issues/713
       # Only cache the target directory, avoid "~/.cargo" since this is on a self-hosted runner, there is no need.
@@ -99,11 +82,13 @@ jobs:
 
       - name: NPM; Sync node version and setup cache
         uses: actions/setup-node@v4
+        if: ${{ matrix.windows }}
         with:
           node-version: 'lts/*'
           cache: 'npm' # Set this to npm, yarn or pnpm.
 
       - name: NPM; Install frontend dependencies
+        if: ${{ matrix.windows }}
         run: npm ci
 
       - name: Windows NPM; Install toolchain dependency
@@ -124,6 +109,7 @@ jobs:
         uses: ./.github/actions/setup-cmake
 
       - name: NPM; Run frontend tests
+        if: ${{ matrix.windows }}
         run: npm run test
 
       # Regex match to simple semver without v, and can have an extra dash or plus with numbers behind.
@@ -180,7 +166,21 @@ jobs:
             Write-Host $env:PATH
           }
 
-      - name: Tauri build
+      - name: Linux; Tauri build via nix-shell
+        if: ${{ matrix.linux }}
+        id: tauri_build_linux
+        env:
+          VITE_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_ENVIRONMENT }}
+          RUST_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_DSN }}
+          RUST_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_ENVIRONMENT }}
+        run: |
+          nix-shell --run "npm run tauri build -- --no-default-features"
+          # Output artifact paths for upload step
+          echo "artifactPaths=$(find src-tauri/target/release/bundle -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.rpm' \) -printf '%p\n' | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> $GITHUB_OUTPUT
+
+      - name: Windows; Tauri build
+        if: ${{ matrix.windows }}
         uses: tauri-apps/tauri-action@v0
         env:
           VITE_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_DSN }}
@@ -195,7 +195,6 @@ jobs:
           SCCACHE_S3_USE_SSL: ${{ env.SCCACHE_S3_USE_SSL }}
           SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE: ${{ env.SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE }}
           SCCACHE_S3_KEY_PREFIX: ${{ env.SCCACHE_S3_KEY_PREFIX }}
-          TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: true
         id: tauri_build
         with:
           args: -- --no-default-features
@@ -260,20 +259,20 @@ jobs:
         if: ${{ matrix.linux && success() }}
         working-directory: ./src-tauri/target/release/bundle
         run: |
-            set -euo pipefail
-
-            # filter to upload only DEB and AppImage files
-            echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
-            | sed -e 's#\\#/#g' -e 's#//#/#g' \
-            | jq -r '.[] | select(test("\\.(deb|appimage|rpm)$"; "i"))' \
-            | sed -n -e 's#^.*bundle/##p' \
-            | while IFS= read -r relpath; do
-                [ -n "$relpath" ] || continue
-                echo "Uploading: $relpath"
-                jf rt u \
-                    --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
-                    --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
-                    --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
-                    "$relpath" \
-                    "generic/trokk/${{ github.ref_name }}/"
-                done
+          set -euo pipefail
+          
+          # filter to upload only DEB and AppImage files
+          echo '${{ steps.tauri_build_linux.outputs.artifactPaths }}' \
+          | sed -e 's#\\#/#g' -e 's#//#/#g' \
+          | jq -r '.[] | select(test("\\.(deb|appimage|rpm)$"; "i"))' \
+          | sed -n -e 's#^.*bundle/##p' \
+          | while IFS= read -r relpath; do
+              [ -n "$relpath" ] || continue
+              echo "Uploading: $relpath"
+              jf rt u \
+                  --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
+                  --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
+                  --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
+                  "$relpath" \
+                  "generic/trokk/${{ github.ref_name }}/"
+              done
