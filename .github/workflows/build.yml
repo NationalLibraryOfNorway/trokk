@@ -195,7 +195,6 @@ jobs:
           SCCACHE_S3_USE_SSL: ${{ env.SCCACHE_S3_USE_SSL }}
           SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE: ${{ env.SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE }}
           SCCACHE_S3_KEY_PREFIX: ${{ env.SCCACHE_S3_KEY_PREFIX }}
-          TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: true
         id: tauri_build
         with:
           args: -- --no-default-features
