@@ -245,7 +245,8 @@ function splitWatchEvents(events: WatchEvent[], processedEvents: Set<string>): P
 
         const eventTypeStr = JSON.stringify(event.type);
         const eventKey = `${event.paths.join('|')}::${eventTypeStr}`;
-
+        // NOTE: Since eventsKey is based on path and type, if the user performs multiple identical operations
+        // valid events may be ignored. Implement more sophisticated logic if needed.
         if (processedEvents.has(eventKey)) {
             return false;
         }
@@ -267,11 +268,11 @@ function splitWatchEvents(events: WatchEvent[], processedEvents: Set<string>): P
         (acc, event) => {
             if (isCreate(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.renameTo.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
+                    acc.create.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
                 });
             } else if (isModifyRenameFrom(event.type)) {
                 event.paths.forEach((path) => {
-                    acc.renameTo.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
+                    acc.renameFrom.push({path: path, kind: isFile(path) ? 'file' : 'folder'});
 
                 });
             } else if (isModifyRenameTo(event.type)) {
@@ -573,7 +574,7 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
             // Add detected deletions to the remove list
             deletedPaths.forEach(path => {
                 const treeNode = stateRef.current.treeIndex.get(path);
-                const kind = treeNode?.isDirectory ? 'folder' : 'folder'; // Assume folder for non-image paths
+                const kind = treeNode?.isDirectory ? 'folder' : 'file';
                 if (!remove.some(r => r.path === path)) {
                     remove.push({ path, kind });
                 }
@@ -595,18 +596,34 @@ export const TrokkFilesProvider: React.FC<{ children: React.ReactNode; scannerPa
 
             newState = removeFileTree(newState, remove);
 
-            if (renameTo.length > 0 && renameFrom.length > 0) {
-                for (let i = 0; i < renameFrom.length; i++) {
-                    const oldPath = renameFrom[i].path;
-                    const newPath = renameTo[i].path;
-                    const kind = renameFrom[i].kind;
-                    newState = updateRename(newState, oldPath, newPath, kind);
+            // Handles moves being treated as a rename-events from the OS
+            if (renameFrom.length > 0 || renameTo.length > 0) {
+                const usedTo = new Set<number>();
+
+                const baseName = (p: string) => p.split(sep()).pop() ?? p;
+
+                for (const from of renameFrom) {
+                    let toIndex = renameTo.findIndex((t, idx) => !usedTo.has(idx) && t.kind === from.kind && baseName(t.path) === baseName(from.path));
+
+                    if (toIndex === -1) {
+                        toIndex = renameTo.findIndex((t, idx) => !usedTo.has(idx) && t.kind === from.kind);
+                    }
+
+                    usedTo.add(toIndex);
+                    const newPath = renameTo[toIndex].path;
+                    newState = updateRename(newState, from.path, newPath, from.kind);
 
                     if (newPath.toLowerCase().endsWith('.tif') && stateRef.current?.current?.path) {
-                        createNewThumbnailFromEvents(stateRef.current.current.path, [{path: newPath, kind}]); //makes webp when renaming tif
+                        createNewThumbnailFromEvents(stateRef.current.current.path, [{ path: newPath, kind: from.kind }]);
                     }
                 }
+
+                const unpairedTo = renameTo.filter((_, idx) => !usedTo.has(idx));
+                if (unpairedTo.length > 0) {
+                    newState = await updateFileTreesWithNewObject(newState, unpairedTo);
+                }
             }
+
             // Rebuild index based on updated fileTrees (optional fallback)
             const newTreeIndex = populateIndex(newState.fileTrees);
 

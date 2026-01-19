@@ -239,17 +239,23 @@ fn rerender_webp_files<P: AsRef<Path>>(
 	image_path: P,
 ) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
+
 	let parent_directory = file_utils::get_parent_directory(image_path.as_ref())
 		.map_err(ImageConversionError::StrError)?;
-	let filename_original_image =
+
+    let filename_original_image =
 		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
-	let mut preview_path = parent_directory.to_owned();
-	preview_path.push(PREVIEW_FOLDER_NAME);
+
+    let mut preview_path = parent_directory.to_owned();
+
+    preview_path.push(PREVIEW_FOLDER_NAME);
 	preview_path.push(filename_original_image);
 	preview_path.set_extension(WEBP_EXTENSION);
-	// Always regenerate thumbnail (needed for grid view)
+
+    // Always regenerate thumbnail (needed for grid view)
 	convert_to_webp(image_path.as_ref(), false)?; // Thumbnail
-	if preview_path.exists() {
+
+    if preview_path.exists() {
 		let _ = fs::remove_file(&preview_path); // Ignore errors; we'll regenerate it.
 	}
 	convert_to_webp(path_reference, true)?; // Preview

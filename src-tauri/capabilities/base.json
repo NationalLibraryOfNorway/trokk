@@ -55,6 +55,7 @@
     "core:webview:allow-webview-close",
     "core:webview:allow-webview-size",
     "core:webview:allow-clear-all-browsing-data",
+    "window-state:default",
     {
       "identifier": "http:default",
       "allow": [
