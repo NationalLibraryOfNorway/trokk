@@ -6,7 +6,6 @@ on:
       - v*
       - test*
 
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -188,7 +187,6 @@ jobs:
           VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_ENVIRONMENT }}
           RUST_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_DSN }}
           RUST_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_ENVIRONMENT }}
-          # Ensure Cargo inside tauri-action inherits the wrapper settings
           RUSTC_WRAPPER: ${{ env.RUSTC_WRAPPER }}
           CARGO_INCREMENTAL: ${{ env.CARGO_INCREMENTAL }}
           SCCACHE_BUCKET: ${{ env.SCCACHE_BUCKET }}
@@ -197,7 +195,7 @@ jobs:
           SCCACHE_S3_USE_SSL: ${{ env.SCCACHE_S3_USE_SSL }}
           SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE: ${{ env.SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE }}
           SCCACHE_S3_KEY_PREFIX: ${{ env.SCCACHE_S3_KEY_PREFIX }}
-          NO_STRIP: true
+          TAURI_BUNDLER_NEW_APPIMAGE_FORMAT: true
         id: tauri_build
         with:
           args: -- --no-default-features
