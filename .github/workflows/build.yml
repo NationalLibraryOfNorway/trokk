@@ -17,9 +17,7 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # Disabled due to issues with linux building https://github.com/tauri-apps/tauri/issues/8929#issuecomment-1956338150
-          # NO_STRIP=TRUE fix didn't work, so we are disabling linux builds for now
-          #- [ self-hosted ]
+          - [ self-hosted ]
           - [ self-hosted, Windows ]
         include:
           - platform: [ self-hosted ]
@@ -63,13 +61,32 @@ jobs:
         if: ${{ matrix.linux }}
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf libssl-dev curl build-essential
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf 
 
-      - name: Rust; Install Rust stable actions rust lang
+      - name: Rust; install Windows toolchain
+        if: ${{ matrix.windows }}
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           cache: false
           toolchain: stable-x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+
+      - name: Rust; install Linux toolchain
+        if: ${{ matrix.linux }}
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: false
+          toolchain: stable-x86_64-unknown-linux-gnu
           components: rustfmt, clippy
 
       # Cache target directory, ignore the bundle directory. See reasons for this globbing https://github.com/actions/toolkit/issues/713
@@ -216,14 +233,14 @@ jobs:
       # e.g. C:\Users\user\actions-runner\_work\trokk\trokk\src-tauri\target\release\bundle\nsis\app.nsis
       # jq is used to parse the array
       # sed is used to remove the absolute path and only keep the relative path to the artifact
-      - name: Upload to Artifactory
+      - name: Upload Windows artifact(s) to Artifactory
         shell: bash
+        if: ${{ matrix.windows && success() }}
         working-directory: ./src-tauri/target/release/bundle
         run: |
           set -euo pipefail
 
-          # `artifactPaths` is a JSON array of absolute paths. Normalize Windows paths and
-          # filter to MSI files inside jq to avoid fragile grep/xargs pipelines.
+          # filter to upload only MSI files
           echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
             | sed -e 's#\\#/#g' -e 's#//#/#g' \
             | jq -r '.[] | select(test("\\.msi$"; "i"))' \
@@ -238,3 +255,26 @@ jobs:
                   "$relpath" \
                   "generic/trokk/${{ github.ref_name }}/"
               done
+
+      - name: Upload Linux artifact(s) to Artifactory
+        shell: bash
+        if: ${{ matrix.linux && success() }}
+        working-directory: ./src-tauri/target/release/bundle
+        run: |
+            set -euo pipefail
+
+            # filter to upload only DEB and AppImage files
+            echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
+            | sed -e 's#\\#/#g' -e 's#//#/#g' \
+            | jq -r '.[] | select(test("\\.(deb|appimage)$"; "i"))' \
+            | sed -n -e 's#^.*bundle/##p' \
+            | while IFS= read -r relpath; do
+                [ -n "$relpath" ] || continue
+                echo "Uploading: $relpath"
+                jf rt u \
+                    --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
+                    --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
+                    --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
+                    "$relpath" \
+                    "generic/trokk/${{ github.ref_name }}/"
+                done
