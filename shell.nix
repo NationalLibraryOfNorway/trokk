@@ -37,6 +37,12 @@ pkgs.mkShell {
     curl
     wget
     file
+    # AppImage bundling tools
+    patchelf
+    squashfs-tools-ng
+    appimage-run
+    fuse
+    zsync
   ];
 
   buildInputs = libraries ++ linkedLibraries;
@@ -55,14 +61,15 @@ pkgs.mkShell {
     # GTK/WebKitGTK schema setup for proper CSS rendering
     export GSETTINGS_SCHEMA_DIR="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas"
 
-    # Fix for impure path issue
-    export CARGO_TARGET_DIR="$PWD/target"
+    # Fix for impure path issue (for development)
+    export CARGO_TARGET_DIR="$PWD/src-tauri/target"
     export RUSTFLAGS="-C link-arg=-Wl,-rpath,$CARGO_TARGET_DIR/debug/deps"
-
 
     # AppImage bundling settings - NO_STRIP keeps debug symbols, APPIMAGE_BUNDLE_ALL bundles all deps
     export NO_STRIP=1
     export APPIMAGE_BUNDLE_ALL=1
+    # Required for building AppImage in CI environments without FUSE
+    export APPIMAGE_EXTRACT_AND_RUN=1
 
     # Environment variables ensurance
     # if [ -f .env ]; then set -a; . .env; set +a; fi

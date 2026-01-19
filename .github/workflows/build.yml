@@ -174,8 +174,12 @@ jobs:
           VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_ENVIRONMENT }}
           RUST_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_DSN }}
           RUST_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_ENVIRONMENT }}
+          # AppImage build settings
+          NO_STRIP: "1"
+          APPIMAGE_BUNDLE_ALL: "1"
+          APPIMAGE_EXTRACT_AND_RUN: "1"
         run: |
-          nix-shell --run "npm ci;npm run tauri build"
+          nix-shell --run "npm ci && npm run tauri build"
           # Output artifact paths for upload step
           echo "artifactPaths=$(find src-tauri/target/release/bundle -type f \( -name '*.deb' -o -name '*.AppImage' -o -name '*.rpm' \) -printf '%p\n' | jq -R -s -c 'split("\n") | map(select(length > 0))')" >> $GITHUB_OUTPUT
 
