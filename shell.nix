@@ -65,24 +65,24 @@ pkgs.mkShell {
     export APPIMAGE_BUNDLE_ALL=1
 
     # Environment variables ensurance
-    if [ -f .env ]; then set -a; . .env; set +a; fi
-    echo -e "\033[1;33mChecking environment variables is set according to README.md\033[0m"
-    required_vars=($(awk '/^### Krevde environment variabler/{flag=1; next} /^### /{flag=0} flag' README.md | grep -P "\| \`" | grep -oP "\`.*\`" | sed "s/\`//g"))
-    for var in ''${required_vars[@]}; do
-      if [ -z ''${!var} ]; then
-        echo -e "\033[1;31m\n==============================\nWARNING: Required environment variable '$var' is not set.\n==============================\033[0m"
-      fi
-    done
+    # if [ -f .env ]; then set -a; . .env; set +a; fi
+    # echo -e "\033[1;33mChecking environment variables is set according to README.md\033[0m"
+    # required_vars=($(awk '/^### Krevde environment variabler/{flag=1; next} /^### /{flag=0} flag' README.md | grep -P "\| \`" | grep -oP "\`.*\`" | sed "s/\`//g"))
+    # for var in ''${required_vars[@]}; do
+    #   if [ -z ''${!var} ]; then
+    #     echo -e "\033[1;31m\n==============================\nWARNING: Required environment variable '$var' is not set.\n==============================\033[0m"
+    #   fi
+    # done
 
-    # Optional: only start the dev server if requested
-    if [ "$START_DEV" = "1" ]; then
-      npm run tauri dev
-    fi
+    # # Optional: only start the dev server if requested
+    # if [ "$START_DEV" = "1" ]; then
+    #   npm run tauri dev
+    # fi
 
     # Helper function to build for production
-    build_production() {
-      echo -e "\033[1;32mBuilding Trøkk for production with bundled AppImage...\033[0m"
-      npm run tauri build
-    }
+    #  build_production() {
+    #   echo -e "\033[1;32mBuilding Trøkk for production with bundled AppImage...\033[0m"
+    #   npm run tauri build
+    # }
   '';
 }
