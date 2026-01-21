@@ -97,7 +97,7 @@ const FilesContainer: React.FC = () => {
                 )}
                 {state.current?.children && !isEven && (
                     <div
-                        className="p-4 border-b border-stone-600 bg-red-900 flex items-center gap-4 flex-shrink-0 w-full">
+                        className="py-3 bg-red-900 flex items-center flex-shrink-0 w-full">
                         <p className="font-semibold mx-auto">OBS! Det er et oddetall av filer i denne mappen</p>
                     </div>
                 )}
@@ -138,7 +138,7 @@ const FilesContainer: React.FC = () => {
                                                 <div
                                                     key={child.path}
                                                     ref={el => fileRefs.current[index] = el}
-                                                    className="relative space-y-2 py-2 focus-visible:outline-none focus:ring-0 flex flex-col items-center justify-start"
+                                                    className="relative space-y-2 py-2 focus-visible:outline-none flex flex-col items-center justify-start"
                                                     tabIndex={currentIndex === index ? 0 : -1}
                                                     onFocus={() => handleIndexChange(index)}
                                                 >

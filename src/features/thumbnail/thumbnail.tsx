@@ -61,14 +61,14 @@ export interface ThumbnailProps {
     if (isHiddenDir) return null;
 
     const initialStyle = 'max-h-[calc(100vh-250px)] ';
-    let imageClass = 'w-full object-contain';
-    let containerClass = 'p-[8px]';
+    let imageClass = 'w-full object-contain border-8 rounded-t-lg ';
 
     if (isChecked) {
-        imageClass = `${isFocused ? ' ring-4 ring-blue-600' : ''} border-8 border-amber-400 hover:border-amber-500`;
-        containerClass = 'p-0';
+        imageClass += `${isFocused ? 'border-amber-500' : ''} border-amber-400 hover:border-amber-500`;
     } else if (isFocused) {
-        imageClass = 'ring-4 ring-blue-600 hover:ring-blue-500';
+        imageClass += 'border-blue-600 hover:border-blue-500';
+    } else {
+        imageClass += 'border-transparent';
     }
 
     let content: React.ReactNode;
@@ -78,7 +78,7 @@ export interface ThumbnailProps {
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
                 <img
                     key={`${thumbnailPath}-${thumbnailCacheBuster}`}
-                    className={`${imageClass}`}
+                    className={imageClass}
                     src={srcUrl}
                     alt={fileTree.name} />
             </div>
@@ -91,7 +91,7 @@ export interface ThumbnailProps {
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
                 <img
                     key={`${fileTree.path}-${fileCacheBuster}`}
-                    className={`${imageClass}`}
+                    className={imageClass}
                     src={srcUrl}
                     alt={fileTree.name} />
             </div>
@@ -105,7 +105,7 @@ export interface ThumbnailProps {
             role="button"
             tabIndex={0}
             key={fileTree.path}
-            className="flex flex-col p-1 items-center bg-stone-900 hover:bg-stone-800 rounded-lg"
+            className="flex flex-col p-0 items-center bg-stone-900 hover:bg-stone-800 rounded-lg"
             onClick={onClick}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -115,11 +115,11 @@ export interface ThumbnailProps {
             }}
             ref={ref}
         >
-            <div className={`${initialStyle} ${containerClass} relative group`}>
+            <div className={`${initialStyle} relative group`}>
                 {content}
                 <StatusOverlay status={imageStatus} size="small" />
                 {(isSupported || hasWebpThumbnail) && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             type="button"
                             onClick={handleRotateCounterClockwise}
