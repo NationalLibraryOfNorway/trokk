@@ -63,12 +63,12 @@ pub fn list_image_files<P: AsRef<Path>>(
 				}
 			} else if path.is_file()
 				&& let Some(ext) = path.extension().and_then(|e| e.to_str())
-					&& IMAGE_EXTENSIONS
-						.iter()
-						.any(|&x| x.eq_ignore_ascii_case(ext))
-					{
-						files.push(path);
-					}
+				&& IMAGE_EXTENSIONS
+					.iter()
+					.any(|&x| x.eq_ignore_ascii_case(ext))
+			{
+				files.push(path);
+			}
 		}
 		Ok(())
 	}
