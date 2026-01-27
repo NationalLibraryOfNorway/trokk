@@ -1,5 +1,5 @@
-use image::metadata::Orientation;
 use image::ImageReader;
+use image::metadata::Orientation;
 use little_exif::exif_tag::ExifTag;
 use little_exif::metadata::Metadata;
 use serde::{Deserialize, Serialize};
@@ -60,29 +60,29 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 	let reader = ImageReader::open(path_reference)?.with_guessed_format()?;
 	let mut image: image::DynamicImage = reader.decode()?;
 
-    // Apply EXIF Orientation (if missing/invalid, do nothing)
-    let orientation = Metadata::new_from_path(path_reference)
-        .ok()
-        .and_then(|m| {
-            m.get_tag(&ExifTag::Orientation(vec![]))
-                .next()
-                .and_then(|t| match t {
-                    ExifTag::Orientation(v) => v.first().copied(),
-                    _ => None,
-                })
-        })
-        .unwrap_or(1);
+	// Apply EXIF Orientation (if missing/invalid, do nothing)
+	let orientation = Metadata::new_from_path(path_reference)
+		.ok()
+		.and_then(|m| {
+			m.get_tag(&ExifTag::Orientation(vec![]))
+				.next()
+				.and_then(|t| match t {
+					ExifTag::Orientation(v) => v.first().copied(),
+					_ => None,
+				})
+		})
+		.unwrap_or(1);
 
-    let orientation = Orientation::from_exif(orientation as u8).unwrap_or(Orientation::NoTransforms);
+	let orientation =
+		Orientation::from_exif(orientation as u8).unwrap_or(Orientation::NoTransforms);
 
-    image = match orientation {
-        Orientation::NoTransforms => image,
-        Orientation::Rotate90 => image.rotate90(),
-        Orientation::Rotate180 => image.rotate180(),
-        Orientation::Rotate270 => image.rotate270(),
-        _ => image,
-
-    };
+	image = match orientation {
+		Orientation::NoTransforms => image,
+		Orientation::Rotate90 => image.rotate90(),
+		Orientation::Rotate180 => image.rotate180(),
+		Orientation::Rotate270 => image.rotate270(),
+		_ => image,
+	};
 	let image = if high_res {
 		image.resize(
 			image.width() / 4,
@@ -165,97 +165,95 @@ pub fn rotate_image<P: AsRef<Path>>(
 ) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
 
-    rotate_image_by_exif(path_reference, direction)?;
-    rerender_webp_files(path_reference)?;
+	rotate_image_by_exif(path_reference, direction)?;
+	rerender_webp_files(path_reference)?;
 
 	Ok(())
 }
 
 fn rotate_image_by_exif(
-    path_reference: &Path,
-    direction: &str,
+	path_reference: &Path,
+	direction: &str,
 ) -> Result<(), ImageConversionError> {
-    let mut metadata = Metadata::new_from_path(path_reference).map_err(|e| {
-        ImageConversionError::StrError(format!(
-            "Failed to read EXIF metadata from {}: {}",
-            path_reference.display(),
-            e
-        ))
-    })?;
+	let mut metadata = Metadata::new_from_path(path_reference).map_err(|e| {
+		ImageConversionError::StrError(format!(
+			"Failed to read EXIF metadata from {}: {}",
+			path_reference.display(),
+			e
+		))
+	})?;
 
-    let current_orientation_u16 = match metadata.get_tag(&ExifTag::Orientation(vec![])).next() {
-        Some(ExifTag::Orientation(v)) => v.first().copied().unwrap_or(1),
-        _ => 1,
-    };
+	let current_orientation_u16 = match metadata.get_tag(&ExifTag::Orientation(vec![])).next() {
+		Some(ExifTag::Orientation(v)) => v.first().copied().unwrap_or(1),
+		_ => 1,
+	};
 
-    let current_orientation = Orientation::from_exif(current_orientation_u16 as u8)
-        .unwrap_or(Orientation::NoTransforms);
+	let current_orientation =
+		Orientation::from_exif(current_orientation_u16 as u8).unwrap_or(Orientation::NoTransforms);
 
-    let new_orientation = match direction.to_lowercase().as_str() {
-        "clockwise" => rotate_clockwise(current_orientation),
-        "counterclockwise" => rotate_counter_clockwise(current_orientation),
-        _ => {
-            return Err(ImageConversionError::StrError(format!(
-                "Invalid direction '{}'. Use 'clockwise' or 'counterclockwise'",
-                direction
-            )));
-        }
-    };
+	let new_orientation = match direction.to_lowercase().as_str() {
+		"clockwise" => rotate_clockwise(current_orientation),
+		"counterclockwise" => rotate_counter_clockwise(current_orientation),
+		_ => {
+			return Err(ImageConversionError::StrError(format!(
+				"Invalid direction '{}'. Use 'clockwise' or 'counterclockwise'",
+				direction
+			)));
+		}
+	};
 
-    let new_orientation_u16 = new_orientation.to_exif() as u16;
-    metadata.set_tag(ExifTag::Orientation(vec![new_orientation_u16]));
+	let new_orientation_u16 = new_orientation.to_exif() as u16;
+	metadata.set_tag(ExifTag::Orientation(vec![new_orientation_u16]));
 
-    // Write back to file
-    metadata.write_to_file(path_reference).map_err(|e| {
-        ImageConversionError::StrError(format!(
-            "Error writing EXIF metadata to {}: {}",
-            path_reference.display(),
-            e
-        ))
-    })?;
-    Ok(())
+	// Write back to file
+	metadata.write_to_file(path_reference).map_err(|e| {
+		ImageConversionError::StrError(format!(
+			"Error writing EXIF metadata to {}: {}",
+			path_reference.display(),
+			e
+		))
+	})?;
+	Ok(())
 }
 
 fn rotate_clockwise(current: Orientation) -> Orientation {
-    match current {
-        Orientation::NoTransforms => Orientation::Rotate90,
-        Orientation::Rotate90 => Orientation::Rotate180,
-        Orientation::Rotate180 => Orientation::Rotate270,
-        _ => Orientation::NoTransforms,
-    }
+	match current {
+		Orientation::NoTransforms => Orientation::Rotate90,
+		Orientation::Rotate90 => Orientation::Rotate180,
+		Orientation::Rotate180 => Orientation::Rotate270,
+		_ => Orientation::NoTransforms,
+	}
 }
 
 fn rotate_counter_clockwise(current: Orientation) -> Orientation {
-    match current {
-        Orientation::NoTransforms => Orientation::Rotate270,
-        Orientation::Rotate270 => Orientation::Rotate180,
-        Orientation::Rotate180 => Orientation::Rotate90,
-        _ => Orientation::NoTransforms,
-    }
+	match current {
+		Orientation::NoTransforms => Orientation::Rotate270,
+		Orientation::Rotate270 => Orientation::Rotate180,
+		Orientation::Rotate180 => Orientation::Rotate90,
+		_ => Orientation::NoTransforms,
+	}
 }
 
 /// Regenerates WebP thumbnail and preview files from the rotated original
-fn rerender_webp_files<P: AsRef<Path>>(
-	image_path: P,
-) -> Result<(), ImageConversionError> {
+fn rerender_webp_files<P: AsRef<Path>>(image_path: P) -> Result<(), ImageConversionError> {
 	let path_reference = image_path.as_ref();
 
 	let parent_directory = file_utils::get_parent_directory(image_path.as_ref())
 		.map_err(ImageConversionError::StrError)?;
 
-    let filename_original_image =
+	let filename_original_image =
 		file_utils::get_file_name(path_reference).map_err(ImageConversionError::StrError)?;
 
-    let mut preview_path = parent_directory.to_owned();
+	let mut preview_path = parent_directory.to_owned();
 
-    preview_path.push(PREVIEW_FOLDER_NAME);
+	preview_path.push(PREVIEW_FOLDER_NAME);
 	preview_path.push(filename_original_image);
 	preview_path.set_extension(WEBP_EXTENSION);
 
-    // Always regenerate thumbnail (needed for grid view)
+	// Always regenerate thumbnail (needed for grid view)
 	convert_to_webp(image_path.as_ref(), false)?; // Thumbnail
 
-    if preview_path.exists() {
+	if preview_path.exists() {
 		let _ = fs::remove_file(&preview_path); // Ignore errors; we'll regenerate it.
 	}
 	convert_to_webp(path_reference, true)?; // Preview

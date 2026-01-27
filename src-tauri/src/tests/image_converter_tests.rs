@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use ::tempfile::TempDir;
 
 use crate::image_converter::*;
-use crate::tests::test_utils::get_test_resource_dir;
 use crate::tests::test_utils::TEST_IMAGE_PNG;
+use crate::tests::test_utils::get_test_resource_dir;
 
 fn setup_temp_dir<F: FnMut(PathBuf)>(mut handler: F) {
 	let input_image_path = get_test_resource_dir().join(TEST_IMAGE_PNG);

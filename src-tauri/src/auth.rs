@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use tauri::Emitter;
 use tauri::Window;
-use tauri_plugin_oauth::{start_with_config, OauthConfig};
+use tauri_plugin_oauth::{OauthConfig, start_with_config};
 use url::Url;
 
 #[cfg(not(feature = "debug-mock"))]
