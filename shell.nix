@@ -7,6 +7,7 @@ let
     pkgs.cairo
     pkgs.gdk-pixbuf
     pkgs.glib
+    pkgs.glib-networking
     pkgs.gtk3
     pkgs.harfbuzz
     pkgs.librsvg
@@ -14,6 +15,10 @@ let
     pkgs.pango
     pkgs.webkitgtk_4_1
     pkgs.openssl
+    pkgs.xdotool
+    pkgs.gsettings-desktop-schemas
+    pkgs.dconf
+    pkgs.adwaita-icon-theme
   ];
 
   linkedLibraries = [
@@ -23,23 +28,33 @@ in
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     rustc
+    clippy
     gcc
     pkg-config
     gobject-introspection
     cargo
     cargo-tauri
     nodejs
+    curl
+    wget
+    file
   ];
 
   buildInputs = libraries ++ linkedLibraries;
 
   env = {
     LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath linkedLibraries;
+    GIO_MODULE_DIR = "${pkgs.glib-networking}/lib/gio/modules/";
+    XDG_DATA_DIRS = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}:${pkgs.adwaita-icon-theme}/share:$XDG_DATA_DIRS";
+    GTK_THEME = "Adwaita";
   };
 
   shellHook = ''
     echo -e "\033[1;32mWelcome to the Trøkk development environment!\033[0m"
     export PS1="\\[\\033[1;33m\\][nix-shell:trokk] \\[\\033[0m\\]\\u@\\h:\\w\\$"
+
+    # GTK/WebKitGTK schema setup for proper CSS rendering
+    export GSETTINGS_SCHEMA_DIR="${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}/glib-2.0/schemas:${pkgs.gtk3}/share/gsettings-schemas/${pkgs.gtk3.name}/glib-2.0/schemas"
 
     # Fix for impure path issue
     export CARGO_TARGET_DIR="$PWD/target"

@@ -1,19 +1,19 @@
 #[cfg(not(feature = "debug-mock"))]
+use crate::HashMap;
+#[cfg(not(feature = "debug-mock"))]
 use crate::file_utils::get_file_paths_in_directory;
 #[cfg(not(feature = "debug-mock"))]
 use crate::get_secret_variables;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
-use crate::HashMap;
+use aws_sdk_s3::Client;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::config::{Credentials, Region};
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::primitives::ByteStream;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
-#[cfg(not(feature = "debug-mock"))]
-use aws_sdk_s3::Client;
 #[cfg(not(feature = "debug-mock"))]
 use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
@@ -275,12 +275,13 @@ async fn get_client(secret_variables: &SecretVariables) -> Result<&'static Clien
 
 #[cfg(not(feature = "debug-mock"))]
 async fn create_client(secret_variables: &SecretVariables) -> Result<Client, String> {
-	let credentials = Credentials::from_keys(
-		&secret_variables.s3_access_key_id,
-		&secret_variables.s3_secret_access_key,
+	let credentials = Credentials::new(
+		secret_variables.s3_access_key_id.clone(),
+		secret_variables.s3_secret_access_key.clone(),
 		None,
+		None,
+		"trokk",
 	);
-
 	let config = aws_sdk_s3::Config::builder()
 		.credentials_provider(credentials)
 		.region(Region::new(secret_variables.s3_region.clone()))

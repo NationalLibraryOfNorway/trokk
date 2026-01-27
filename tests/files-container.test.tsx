@@ -2,6 +2,7 @@ import {act, fireEvent, render, screen} from '@testing-library/react';
 import FilesContainer from '../src/features/files-container/files-container';
 import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-context';
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
+import {RotationProvider} from '../src/context/rotation-context';
 import {beforeAll, beforeEach, describe, expect, it, Mock, vi} from 'vitest';
 
 vi.mock('../src/context/trokk-files-context', () => {
@@ -14,6 +15,7 @@ vi.mock('../src/context/trokk-files-context', () => {
 
 vi.mock('@tauri-apps/api/core', () => ({
         convertFileSrc: vi.fn((src: string) => `mocked://${src}`),
+        invoke: vi.fn().mockResolvedValue(undefined),
     })
 );
 
@@ -58,9 +60,11 @@ const mockHandle = {
 const renderWithContext = () => {
     return render(
         <TrokkFilesProvider scannerPath="/mock/path">
-            <SelectionProvider>
-                <FilesContainer/>
-            </SelectionProvider>
+            <RotationProvider>
+                <SelectionProvider>
+                    <FilesContainer/>
+                </SelectionProvider>
+            </RotationProvider>
         </TrokkFilesProvider>
     );
 };
@@ -80,7 +84,7 @@ describe('FilesContainer', () => {
         const thumbnailPath = '/mock/path/.thumbnails/example.webp';
 
         // Add the thumbnail FileTree to treeIndex map
-        const treeIndex = new Map<string, any>();
+        const treeIndex = new Map<string, {name: string; path: string; isDirectory: boolean}>();
         treeIndex.set(thumbnailPath, {
             name: 'example.webp',
             path: thumbnailPath,
@@ -126,7 +130,7 @@ describe('FilesContainer', () => {
 
     it('renders empty folder message when selected folder has no children', () => {
         (useTrokkFiles as Mock).mockReturnValue({
-            state: {current: {name: "Empty", path: "/empty", children: []}},
+            state: {current: {name: 'Empty', path: '/empty', children: []}},
             dispatch: vi.fn(),
         });
 

@@ -5,6 +5,7 @@ import {UploadProgressProvider} from '../src/context/upload-progress-context';
 import {TransferLogProvider} from '../src/context/transfer-log-context';
 import {SecretProvider} from '../src/context/secret-context';
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
+import {RotationProvider} from '../src/context/rotation-context';
 import {AuthProvider} from '../src/context/auth-context';
 import {useEffect} from 'react';
 import {MessageProvider} from '../src/context/message-context';
@@ -32,7 +33,7 @@ vi.mock('uuidv7', () => ({
     uuidv7: () => 'mocked-uuid'
 }));
 
-vi.mock('../../tauri-store/setting-store.ts', () => ({
+vi.mock('@/tauri-store/setting-store.ts', () => ({
     settings: {
         getAuthResponse: vi.fn(() => Promise.resolve({userInfo: {name: 'Test User'}})),
         getScannerPath: vi.fn(() => Promise.resolve('/scanner'))
@@ -48,25 +49,19 @@ vi.mock('@tauri-apps/api/path', async (importOriginal) => {
     };
 });
 
-vi.mock('../../context/auth-context.tsx', () => ({
+vi.mock('@/context/auth-context.tsx', () => ({
     useAuth: () => ({loggedOut: false}),
     AuthProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
-vi.mock('../../context/selection-context.tsx', () => ({
-    useSelection: () => ({
-        checkedItems: [],
-        setCheckedItems: vi.fn()
-    }),
-    SelectionProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
-}));
+// Don't mock SelectionProvider - use the real one to allow state updates
 
-vi.mock('../../context/secret-context.tsx', () => ({
+vi.mock('@/context/secret-context.tsx', () => ({
     useSecrets: () => ({secrets: {papiPath: 'http://mock-papi'}}),
     SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
-vi.mock('../../context/transfer-log-context.tsx', () => ({
+vi.mock('@/context/transfer-log-context.tsx', () => ({
     useTransferLog: () => ({addLog: vi.fn()}),
     TransferLogProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
@@ -108,10 +103,12 @@ function RegistrationFormWrapper({ checkedItems }: { checkedItems: string[] }) {
                 <TransferLogProvider>
                     <UploadProgressProvider>
                         <MessageProvider>
-                            <SelectionProvider>
-                                <SetSelection checkedItems={checkedItems} />
-                                <RegistrationForm />
-                            </SelectionProvider>
+                            <RotationProvider>
+                                <SelectionProvider>
+                                    <SetSelection checkedItems={checkedItems} />
+                                    <RegistrationForm />
+                                </SelectionProvider>
+                            </RotationProvider>
                         </MessageProvider>
                     </UploadProgressProvider>
                 </TransferLogProvider>
@@ -147,7 +144,7 @@ describe('RegistrationForm', () => {
     });
 
     it('disables submit button when state.current.path is undefined', async () => {
-        vi.doMock('../../context/trokk-files-context.tsx', () => ({
+        vi.doMock('@/context/trokk-files-context.tsx', () => ({
             useTrokkFiles: () => ({
                 state: {
                     current: {

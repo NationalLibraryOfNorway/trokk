@@ -63,12 +63,16 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 	MOCK_SECRETS
 		.get_or_try_init(|| async {
 			Ok(SecretVariables {
-				oidc_client_id: env!("OIDC_CLIENT_ID").to_string(),
-				oidc_client_secret: env!("OIDC_CLIENT_SECRET").to_string(),
-				oidc_base_url: env!("OIDC_BASE_URL").to_string(),
-				oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID").to_string(),
-				oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET").to_string(),
-				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string(),
+				oidc_client_id: option_env!("OIDC_CLIENT_ID").unwrap_or("").to_string(),
+				oidc_client_secret: option_env!("OIDC_CLIENT_SECRET").unwrap_or("").to_string(),
+				oidc_base_url: option_env!("OIDC_BASE_URL").unwrap_or("").to_string(),
+				oidc_tekst_client_id: option_env!("OIDC_TEKST_CLIENT_ID")
+					.unwrap_or("")
+					.to_string(),
+				oidc_tekst_client_secret: option_env!("OIDC_TEKST_CLIENT_SECRET")
+					.unwrap_or("")
+					.to_string(),
+				oidc_tekst_base_url: option_env!("OIDC_TEKST_BASE_URL").unwrap_or("").to_string(),
 			})
 		})
 		.await
@@ -92,13 +96,15 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 
 #[tauri::command]
 async fn ensure_all_previews_and_thumbnails(directory_path: String) -> Result<(), String> {
-	let image_files = file_utils::find_all_images(&directory_path)?;
+	let image_files =
+		file_utils::list_image_files(&directory_path, true).map_err(|e| e.to_string())?;
 	for file_path in image_files {
-		if !image_converter::check_if_preview_exists(&file_path).unwrap_or(false) {
-			image_converter::convert_to_webp(file_path.clone(), true).ok();
+		let file_path_str = file_path.to_string_lossy().to_string();
+		if !image_converter::check_if_preview_exists(&file_path_str).unwrap_or(false) {
+			image_converter::convert_to_webp(file_path_str.clone(), true).ok();
 		}
-		if !image_converter::check_if_thumbnail_exists(&file_path).unwrap_or(false) {
-			image_converter::convert_to_webp(file_path, false).ok();
+		if !image_converter::check_if_thumbnail_exists(&file_path_str).unwrap_or(false) {
+			image_converter::convert_to_webp(file_path_str, false).ok();
 		}
 	}
 	Ok(())
@@ -231,6 +237,24 @@ async fn upload_batch_to_s3(
 	s3::upload_batch_to_s3(batch_map, material_type, app_window).await
 }
 
+#[tauri::command]
+async fn rotate_image(file_path: String, direction: String) -> Result<(), String> {
+	tokio::task::spawn_blocking(move || image_converter::rotate_image(file_path, &direction))
+		.await
+		.expect("Failed to run blocking task")
+		.map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn delete_all_previews_and_thumbnails(directory_path: String) -> Result<u32, String> {
+	tokio::task::spawn_blocking(move || {
+		file_utils::delete_all_previews_and_thumbnails(directory_path)
+	})
+	.await
+	.expect("Failed to run blocking task")
+	.map_err(|e| e.to_string())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
@@ -241,6 +265,7 @@ pub fn run() {
 				.expect("no main window")
 				.set_focus();
 		}))*/
+		.plugin(tauri_plugin_window_state::Builder::default().build())
 		.plugin(tauri_plugin_store::Builder::new().build())
 		.plugin(tauri_plugin_http::init())
 		.plugin(tauri_plugin_process::init())
@@ -266,6 +291,8 @@ pub fn run() {
 			create_preview_webp,
 			convert_directory_to_webp,
 			pick_directory,
+			rotate_image,
+			delete_all_previews_and_thumbnails,
 			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]

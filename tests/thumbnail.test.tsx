@@ -1,10 +1,11 @@
-import { render, screen} from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import Thumbnail from '../src/features/thumbnail/thumbnail';
 import {FileTree} from '../src/model/file-tree.ts';
 import {useTrokkFiles} from '../src/context/trokk-files-context.tsx';
 import {SelectionProvider} from '../src/context/selection-context';
 import {SecretProvider} from '../src/context/secret-context';
+import {RotationProvider} from '../src/context/rotation-context';
 
 vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: vi.fn(),
@@ -35,6 +36,8 @@ const baseProps = {
     onClick: vi.fn(),
     isChecked: false,
     isFocused: false,
+    setDelFilePath: vi.fn(),
+    delFilePath: null,
 };
 
 const mockTrokkFilesState = {
@@ -63,13 +66,15 @@ function createMockFileTree(name: string, path: string): FileTree {
     };
 }
 
-const componentWithContext = (fileTree: FileTree, baseProps: any) => {
+const componentWithContext = (fileTree: FileTree, props: typeof baseProps) => {
     return (
-        <SelectionProvider>
-            <SecretProvider>
-                <Thumbnail fileTree={fileTree} {...baseProps} />
-            </SecretProvider>
-        </SelectionProvider>
+        <RotationProvider>
+            <SelectionProvider>
+                <SecretProvider>
+                    <Thumbnail fileTree={fileTree} {...props} />
+                </SecretProvider>
+            </SelectionProvider>
+        </RotationProvider>
     );
 };
 
@@ -83,7 +88,9 @@ describe('Thumbnail', () => {
 
     it('renders an image if the file type is supported', async () => {
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
-        render(componentWithContext(fileTree, baseProps));
+        await act(async () => {
+            render(componentWithContext(fileTree, baseProps));
+        });
         expect(await screen.findByAltText('example.jpg')).toBeDefined();
     });
 
@@ -91,7 +98,9 @@ describe('Thumbnail', () => {
         const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('webp');
         const fileTree = createMockFileTree('example.other', '/mock/path/example.other');
-        render(componentWithContext(fileTree, baseProps));
+        await act(async () => {
+            render(componentWithContext(fileTree, baseProps));
+        });
         expect(await screen.findByAltText('example.other')).toBeDefined();
     });
 
@@ -99,8 +108,27 @@ describe('Thumbnail', () => {
         const fileUtils = await import('../src/util/file-utils.ts');
         vi.mocked(fileUtils.getThumbnailExtensionFromTree).mockReturnValue('unknown');
         const fileTree = createMockFileTree('.thumbnails', 'docs/.thumbnails');
-        render(componentWithContext(fileTree, baseProps));
+        await act(async () => {
+            render(componentWithContext(fileTree, baseProps));
+        });
         await expect(screen.findByAltText('.thumbnail')).rejects.toThrow();
         await expect(screen.findByAltText('docs/.thumbnails')).rejects.toThrow();
     });
+
+    it('shows rotation buttons on hover for supported images', async () => {
+        const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
+
+        // Initialize to satisfy TS definite assignment, then overwrite inside act.
+        let renderResult: ReturnType<typeof render> = render(componentWithContext(fileTree, baseProps));
+        await act(async () => {
+            renderResult = render(componentWithContext(fileTree, baseProps));
+        });
+
+        const rotateClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter med klokken"]');
+        const rotateCounterClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter mot klokken"]');
+
+        expect(rotateClockwiseBtn).toBeDefined();
+        expect(rotateCounterClockwiseBtn).toBeDefined();
+    });
+
 });

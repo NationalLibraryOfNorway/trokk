@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { useTrokkFiles } from '../../context/trokk-files-context';
-import { FileTree } from '../../model/file-tree';
+import { useTrokkFiles } from '@/context/trokk-files-context';
+import { FileTree } from '@/model/file-tree';
 import FileTreeItem from '../file-tree-item/file-tree-item.tsx';
 
 const FileTreeComponent: React.FC = () => {

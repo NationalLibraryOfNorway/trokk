@@ -1,18 +1,19 @@
 import React, {useEffect, useState} from 'react';
-import {MaterialType} from '../../model/registration-enums';
+import {MaterialType} from '@/model/registration-enums';
 import {invoke} from '@tauri-apps/api/core';
-import {AllTransferProgress, TransferProgress} from '../../model/transfer-progress';
-import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {AllTransferProgress, TransferProgress} from '@/model/transfer-progress';
+import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import {SubmitHandler, useForm} from 'react-hook-form';
 import {RegistrationFormProps} from './registration-form-props.tsx';
-import {usePostRegistration} from '../../context/post-registration-context.tsx';
-import LoadingSpinner from '../../components/ui/loading-spinner.tsx';
-import {useMessage} from '../../context/message-context.tsx';
-import {useUploadProgress} from '../../context/upload-progress-context.tsx';
+import {usePostRegistration} from '@/context/post-registration-context.tsx';
+import LoadingSpinner from '@/components/ui/loading-spinner.tsx';
+import {useMessage} from '@/context/message-context.tsx';
+import {useUploadProgress} from '@/context/upload-progress-context.tsx';
 import type {Event} from '@tauri-apps/api/event';
 import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
-import {useSecrets} from '../../context/secret-context.tsx';
-import {useSelection} from '../../context/selection-context.tsx';
+import {useSecrets} from '@/context/secret-context.tsx';
+import {useSelection} from '@/context/selection-context.tsx';
+import {useRotation} from '@/context/rotation-context.tsx';
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
@@ -21,8 +22,10 @@ const RegistrationForm: React.FC = () => {
     const {checkedItems} = useSelection();
     const {postRegistration} = usePostRegistration();
     const {errorMessage, handleError, successMessage, removeMessages} = useMessage();
+    const {hasAnyRotating} = useRotation();
     const [barWidth, setBarWidth] = useState(0);
     const appWindow = getCurrentWebviewWindow();
+    const isAnyImageRotating = hasAnyRotating();
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [disabled, setDisabled] = useState(false);
@@ -200,8 +203,8 @@ const RegistrationForm: React.FC = () => {
             <p className="mb-4 font-semibold">
                 {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
             </p>
-            <div className={`flex ${disabled ? 'opacity-30' : ''}`}>
-                <button disabled={disabled || isSubmitting} type='submit'
+            <div className={`flex ${disabled || isAnyImageRotating ? 'opacity-30' : ''}`}>
+                <button disabled={disabled || isSubmitting || isAnyImageRotating} type='submit'
                         className="w-full flex items-center justify-center">
                     {isSubmitting ? (
                         <LoadingSpinner size={24}/>
@@ -210,6 +213,9 @@ const RegistrationForm: React.FC = () => {
                     )}
                 </button>
             </div>
+            {isAnyImageRotating && (
+                <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
+            )}
 
             <div className="mt-2 w-full h-full flex flex-col relative mb-4">
                 <span className="absolute z-10 flex justify-center items-center w-full h-6">

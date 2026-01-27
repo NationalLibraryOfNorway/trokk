@@ -1,8 +1,8 @@
 use tauri::menu::MenuBuilder;
 use tauri::{
+	Manager, Runtime,
 	menu::MenuItem,
 	tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-	Manager, Runtime,
 };
 
 pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {

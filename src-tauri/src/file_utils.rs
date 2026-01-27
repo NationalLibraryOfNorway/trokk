@@ -1,8 +1,6 @@
+use std::ffi::OsStr;
 use std::fs;
-use std::path::Path;
-
-#[cfg(not(feature = "debug-mock"))]
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use tauri_plugin_dialog::DialogExt;
 
@@ -37,25 +35,106 @@ pub(crate) fn get_file_paths_in_directory(directory_path: &str) -> Result<Vec<Pa
 	Ok(file_paths)
 }
 
-pub fn find_all_images(directory: &str) -> Result<Vec<String>, String> {
-	let mut images = Vec::new();
-	let endings = ["tif", "tiff", "jpg", "jpeg", "png"];
+/// Lists image files in a directory
+/// Supports: tif, tiff, jpg, jpeg, png, webp
+///
+/// # Arguments
+/// * `directory_path` - The directory to search
+/// * `recursive` - If true, searches subdirectories recursively
+pub fn list_image_files<P: AsRef<Path>>(
+	directory_path: P,
+	recursive: bool,
+) -> Result<Vec<PathBuf>, std::io::Error> {
+	const IMAGE_EXTENSIONS: &[&str] = &["tif", "tiff", "jpg", "jpeg", "png", "webp"];
 
-	fn visit_dirs(dir: &Path, endings: &[&str], images: &mut Vec<String>) -> Result<(), String> {
-		for entry in fs::read_dir(dir).map_err(|e| e.to_string())? {
-			let entry = entry.map_err(|e| e.to_string())?;
+	let mut files = Vec::new();
+
+	fn visit_dirs(
+		dir: &Path,
+		recursive: bool,
+		files: &mut Vec<PathBuf>,
+	) -> Result<(), std::io::Error> {
+		for entry in fs::read_dir(dir)? {
+			let entry = entry?;
 			let path = entry.path();
 			if path.is_dir() {
-				visit_dirs(&path, endings, images)?;
-			} else if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-				if endings.iter().any(|&x| x.eq_ignore_ascii_case(ext)) {
-					images.push(path.to_string_lossy().to_string());
+				if recursive {
+					visit_dirs(&path, recursive, files)?;
+				}
+			} else if path.is_file()
+				&& let Some(ext) = path.extension().and_then(|e| e.to_str())
+				&& IMAGE_EXTENSIONS
+					.iter()
+					.any(|&x| x.eq_ignore_ascii_case(ext))
+			{
+				files.push(path);
+			}
+		}
+		Ok(())
+	}
+
+	visit_dirs(directory_path.as_ref(), recursive, &mut files)?;
+	files.sort();
+	Ok(files)
+}
+
+pub fn directory_exists<P: AsRef<Path>>(path: P) -> bool {
+	fs::metadata(path)
+		.map(|metadata| metadata.is_dir())
+		.unwrap_or(false)
+}
+
+pub fn get_parent_directory(path_reference: &Path) -> Result<&Path, String> {
+	path_reference.parent().ok_or_else(|| {
+		format!(
+			"Failed to get parent directory for: {:?}",
+			path_reference.to_str()
+		)
+	})
+}
+
+pub fn get_file_name(path_reference: &Path) -> Result<&OsStr, String> {
+	path_reference
+		.file_name()
+		.ok_or_else(|| format!("Failed to get file name for: {:?}", path_reference.to_str()))
+}
+
+/// Deletes all .previews folders recursively in a directory
+/// Returns the number of preview folders deleted
+pub fn delete_all_previews_and_thumbnails<P: AsRef<Path>>(
+	directory_path: P,
+) -> Result<u32, std::io::Error> {
+	const PREVIEW_FOLDER_NAME: &str = ".previews";
+	const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
+
+	let path_reference = directory_path.as_ref();
+	let mut deleted_count = 0;
+
+	// Recursively walk through all directories
+	fn walk_and_delete(dir: &Path, count: &mut u32) -> Result<(), std::io::Error> {
+		for entry in fs::read_dir(dir)? {
+			let entry = entry?;
+			let path = entry.path();
+
+			if path.is_dir() {
+				let dir_name = path.file_name().and_then(|n| n.to_str());
+
+				// If this is a .previews folder, delete it
+				if dir_name == Some(PREVIEW_FOLDER_NAME) || dir_name == Some(THUMBNAIL_FOLDER_NAME)
+				{
+					fs::remove_dir_all(&path)?;
+					*count += 1;
+				} else if dir_name != Some(THUMBNAIL_FOLDER_NAME)
+					|| dir_name != Some(PREVIEW_FOLDER_NAME)
+				{
+					// Don't recurse into .thumbnails or .previews folders, but do recurse into other directories
+					walk_and_delete(&path, count)?;
 				}
 			}
 		}
 		Ok(())
 	}
 
-	visit_dirs(Path::new(directory), &endings, &mut images)?;
-	Ok(images)
+	walk_and_delete(path_reference, &mut deleted_count)?;
+	Ok(deleted_count)
 }

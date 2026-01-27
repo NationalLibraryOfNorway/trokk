@@ -45,10 +45,13 @@ async function handleApiResponse(
     handleError: (message: string) => void,
     pushedDir: string,
     deleteDirFromProgress: () => void,
+    removePath: (path: string) => void,
 ) {
     if (response.status >= 200 && response.status < 300) {
         clearError();
-        void remove(pushedDir, {recursive: true});
+        console.debug('Deleting directory:', pushedDir);
+        await remove(pushedDir, {recursive: true});
+        removePath(pushedDir);
         deleteDirFromProgress();
         const items: TextItemResponse[] = await response.json();
         items.forEach(displaySuccessMessage);
@@ -64,7 +67,7 @@ async function handleApiResponse(
 }
 
 export function usePostRegistration() {
-    const {state} = useTrokkFiles();
+    const {state, dispatch} = useTrokkFiles();
     const {secrets} = useSecrets();
     const auth = useAuth();
     const {handleError, clearError, displaySuccessMessage} = useMessage();
@@ -78,7 +81,9 @@ export function usePostRegistration() {
         const papiPath = secrets?.papiPath;
         const loggedOut = auth?.loggedOut;
 
-        if (!state.current?.path) return;
+        if (!state.current?.path) {
+            return;
+        }
         const pushedDir = state.current.path;
         const authResp = await settings.getAuthResponse();
         if (!authResp || loggedOut) return Promise.reject('Not logged in');
@@ -109,7 +114,6 @@ export function usePostRegistration() {
             machineName,
             registration.workingTitle
         );
-
         await body.setVersion();
 
         try {
@@ -127,7 +131,11 @@ export function usePostRegistration() {
                 return progress;
             });
 
-            await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress);
+            const removePath = (path: string) => {
+                dispatch({ type: 'REMOVE_FOLDER_PATH', payload: path });
+            };
+
+            await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress, removePath);
 
         } catch (error) {
             handleError('Nettverksfeil ved lagring av objektet');

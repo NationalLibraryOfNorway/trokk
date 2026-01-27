@@ -18,6 +18,7 @@ vi.mock('@tauri-apps/api/webviewWindow', () => ({
 
 vi.mock('@tauri-apps/api/path', () => ({
     documentDir: async () => '/mocked/document/dir',
+    sep: () => '/',
 }));
 
 class ResizeObserver {

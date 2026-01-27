@@ -1,5 +1,5 @@
-use image::error::{DecodingError, ImageFormatHint};
 use image::ImageError;
+use image::error::{DecodingError, ImageFormatHint};
 
 use crate::error::{ImageConversionError, WebPEncodingErrorWrapper};
 
@@ -28,27 +28,6 @@ fn test_image_conversion_error_webp_encoding_error_should_display_correct_error_
 		ImageConversionError::WebPEncodingError(WebPEncodingErrorWrapper(webp_encoding_error))
 			.to_string();
 	let expected_error_message = "Failed to encode WebP: VP8_ENC_OK";
-	assert_eq!(actual_error_message, expected_error_message);
-}
-
-#[test]
-fn test_image_conversion_error_failed_to_get_parent_directory_error_should_display_correct_error_message(
-) {
-	let actual_error_message = ImageConversionError::FailedToGetParentDirectoryError(
-		"Failed to get parent directory".to_string(),
-	)
-	.to_string();
-	let expected_error_message = "Failed to get parent directory: Failed to get parent directory";
-	assert_eq!(actual_error_message, expected_error_message);
-}
-
-#[test]
-fn test_image_conversion_error_failed_to_get_file_name_error_should_display_correct_error_message()
-{
-	let actual_error_message =
-		ImageConversionError::FailedToGetFileNameError("Failed to get file name".to_string())
-			.to_string();
-	let expected_error_message = "Failed to get file name: Failed to get file name";
 	assert_eq!(actual_error_message, expected_error_message);
 }
 

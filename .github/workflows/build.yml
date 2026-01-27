@@ -6,7 +6,6 @@ on:
       - v*
       - test*
 
-
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -17,12 +16,10 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          # Disabled due to issues with linux building https://github.com/tauri-apps/tauri/issues/8929#issuecomment-1956338150
-          # NO_STRIP=TRUE fix didn't work, so we are disabling linux builds for now
-          #- [ self-hosted ]
+          - [ self-hosted-linux ]
           - [ self-hosted, Windows ]
         include:
-          - platform: [ self-hosted ]
+          - platform: [ self-hosted-linux ]
             linux: true
           - platform: [ self-hosted, Windows ]
             windows: true
@@ -37,6 +34,7 @@ jobs:
       RUST_BACKTRACE: full
       RUST_LOG: debug
       ACTIONS_STEP_DEBUG: true
+
     steps:
       - name: Import Secrets
         id: import-secrets
@@ -62,13 +60,32 @@ jobs:
         if: ${{ matrix.linux }}
         run: |
           sudo apt-get update -y
-          sudo apt-get install -y libgtk-3-dev webkit2gtk-4.0 libappindicator3-dev librsvg2-dev patchelf libssl-dev curl build-essential
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf 
 
-      - name: Rust; Install Rust stable actions rust lang
+      - name: Rust; install Windows toolchain
+        if: ${{ matrix.windows }}
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           cache: false
           toolchain: stable-x86_64-pc-windows-msvc
+          components: rustfmt, clippy
+
+      - name: Rust; install Linux toolchain
+        if: ${{ matrix.linux }}
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache: false
+          toolchain: stable-x86_64-unknown-linux-gnu
           components: rustfmt, clippy
 
       # Cache target directory, ignore the bundle directory. See reasons for this globbing https://github.com/actions/toolkit/issues/713
@@ -98,6 +115,11 @@ jobs:
         run: npm install @rollup/rollup-win32-x64-msvc
 
       - name: Windows; setup CMAke
+        with:
+          s3-bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
+          s3-access-key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
+          s3-secret-key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          s3-host: ${{ secrets.S3_NB_CACHE_HOST }}
         if: ${{ matrix.windows }}
         uses: ./.github/actions/setup-cmake
 
@@ -124,6 +146,40 @@ jobs:
             echo "'${{ github.ref_name }}' is not a valid version - using default. Must be a numerical only semver version."
           fi
 
+      - name: Setup sccache
+        if: ${{ matrix.windows }}
+        continue-on-error: true
+        with:
+          s3-bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
+          s3-access-key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
+          s3-secret-key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          s3-host: ${{ secrets.S3_NB_CACHE_HOST }}
+        uses: ./.github/actions/setup-sccache
+
+      - name: Debug; toolchain + env (pre-build)
+        if: ${{ always() && matrix.windows }}
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          node --version
+          npm --version
+          rustc --version
+          cargo --version
+          Write-Host "RUSTC_WRAPPER=$env:RUSTC_WRAPPER"
+          Write-Host "CARGO_INCREMENTAL=$env:CARGO_INCREMENTAL"
+          Write-Host "SCCACHE_BUCKET=$env:SCCACHE_BUCKET"
+          Write-Host "SCCACHE_ENDPOINT=$env:SCCACHE_ENDPOINT"
+          if (Get-Command sccache -ErrorAction SilentlyContinue) {
+            sccache --version
+            sccache --show-stats
+            # This should increment 'Compile requests' if rustc is available
+            sccache rustc -vV
+            sccache --show-stats
+          } else {
+            Write-Host 'sccache not found on PATH'
+            Write-Host $env:PATH
+          }
+
       - name: Tauri build
         uses: tauri-apps/tauri-action@v0
         env:
@@ -131,8 +187,40 @@ jobs:
           VITE_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_VITE_SENTRY_ENVIRONMENT }}
           RUST_SENTRY_DSN: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_DSN }}
           RUST_SENTRY_ENVIRONMENT: ${{ steps.import-secrets.outputs.TROKK_RUST_SENTRY_ENVIRONMENT }}
+          RUSTC_WRAPPER: ${{ env.RUSTC_WRAPPER }}
+          CARGO_INCREMENTAL: ${{ env.CARGO_INCREMENTAL }}
+          SCCACHE_BUCKET: ${{ env.SCCACHE_BUCKET }}
+          SCCACHE_ENDPOINT: ${{ env.SCCACHE_ENDPOINT }}
+          SCCACHE_REGION: ${{ env.SCCACHE_REGION }}
+          SCCACHE_S3_USE_SSL: ${{ env.SCCACHE_S3_USE_SSL }}
+          SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE: ${{ env.SCCACHE_S3_ENABLE_VIRTUAL_HOST_STYLE }}
+          SCCACHE_S3_KEY_PREFIX: ${{ env.SCCACHE_S3_KEY_PREFIX }}
         id: tauri_build
+        with:
+          args: -- --no-default-features
 
+      - name: Debug; sccache stats (post-build)
+        if: ${{ always() && matrix.windows }}
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          if (Get-Command sccache -ErrorAction SilentlyContinue) {
+            sccache --show-stats
+          } else {
+            Write-Host 'sccache not found on PATH in post-build step'
+            Write-Host $env:PATH
+          }
+
+      - name: Debug; bundle folder listing
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          set -euxo pipefail
+          ls -la src-tauri/target/release || true
+          ls -la src-tauri/target/release/bundle || true
+          find src-tauri/target/release/bundle -maxdepth 3 -type f -print || true
+
+      # Setup JFrog CLI
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v3
 
@@ -143,12 +231,48 @@ jobs:
       # e.g. C:\Users\user\actions-runner\_work\trokk\trokk\src-tauri\target\release\bundle\nsis\app.nsis
       # jq is used to parse the array
       # sed is used to remove the absolute path and only keep the relative path to the artifact
-      - name: Upload to Artifactory
+      - name: Upload Windows artifact(s) to Artifactory
         shell: bash
+        if: ${{ matrix.windows && success() }}
         working-directory: ./src-tauri/target/release/bundle
         run: |
-          echo '${{ steps.tauri_build.outputs.artifactPaths }}' |
-          sed -e 's#\\#/#g' -e 's#//#/#g' |
-          jq -r .[] |
-          sed -n -e 's/^.*bundle\///p' |
-          xargs -I % jf rt u --url ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }} --user ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }} --password ${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }} % "generic/trokk/${{ github.ref_name }}/"
+          set -euo pipefail
+
+          # filter to upload only MSI files
+          echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
+            | sed -e 's#\\#/#g' -e 's#//#/#g' \
+            | jq -r '.[] | select(test("\\.msi$"; "i"))' \
+            | sed -n -e 's#^.*bundle/##p' \
+            | while IFS= read -r relpath; do
+                [ -n "$relpath" ] || continue
+                echo "Uploading: $relpath"
+                jf rt u \
+                  --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
+                  --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
+                  --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
+                  "$relpath" \
+                  "generic/trokk/${{ github.ref_name }}/"
+              done
+
+      - name: Upload Linux artifact(s) to Artifactory
+        shell: bash
+        if: ${{ matrix.linux && success() }}
+        working-directory: ./src-tauri/target/release/bundle
+        run: |
+            set -euo pipefail
+
+            # filter to upload only DEB and AppImage files
+            echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
+            | sed -e 's#\\#/#g' -e 's#//#/#g' \
+            | jq -r '.[] | select(test("\\.(deb|appimage|rpm)$"; "i"))' \
+            | sed -n -e 's#^.*bundle/##p' \
+            | while IFS= read -r relpath; do
+                [ -n "$relpath" ] || continue
+                echo "Uploading: $relpath"
+                jf rt u \
+                    --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
+                    --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
+                    --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
+                    "$relpath" \
+                    "generic/trokk/${{ github.ref_name }}/"
+                done

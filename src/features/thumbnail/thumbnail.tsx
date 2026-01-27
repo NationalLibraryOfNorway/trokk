@@ -1,14 +1,16 @@
 import {
     formatFileNames,
     getFileExtension,
-    getThumbnailExtensionFromTree,
+    getThumbnailFromTree,
     getThumbnailURIFromTree,
     supportedFileTypes
-} from '../../util/file-utils.ts';
-import {FileTree} from '../../model/file-tree.ts';
+} from '@/util/file-utils.ts';
+import {FileTree} from '@/model/file-tree.ts';
 import {convertFileSrc} from '@tauri-apps/api/core';
-import {File} from 'lucide-react';
-import {useTrokkFiles} from '../../context/trokk-files-context.tsx';
+import {File, RotateCw, RotateCcw} from 'lucide-react';
+import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
+import {useRotation} from '@/context/rotation-context.tsx';
+import StatusOverlay from '@/components/ui/rotation-status-overlay.tsx';
 import React, {forwardRef} from 'react';
 
 export interface ThumbnailProps {
@@ -20,20 +22,41 @@ export interface ThumbnailProps {
     delFilePath: string | null;
 }
 
- const Thumbnail = forwardRef<HTMLButtonElement, ThumbnailProps>(
+ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
   ({ fileTree, onClick, isChecked, isFocused }, ref) => {
 
     const {state} = useTrokkFiles();
+    const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
+
+    const imageStatus = getImageStatus(fileTree.path);
+    const imageIsRotating = imageStatus === 'rotating';
+
+    // Get thumbnail file for cache busting
+    const thumbnailFile = getThumbnailFromTree(fileTree, state);
+    const thumbnailPath = thumbnailFile?.path || fileTree.path;
+    const thumbnailCacheBuster = getFileCacheBuster(thumbnailPath);
 
     const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
         if (str.length <= frontLen + backLen) return str;
         return str.slice(0, frontLen) + '...' + str.slice(str.length - backLen);
     };
 
+    const handleRotateClockwise = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        rotateImage(fileTree.path, 'clockwise');
+    };
+
+    const handleRotateCounterClockwise = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        rotateImage(fileTree.path, 'counterclockwise');
+    };
+
     const fileName = truncateMiddle(formatFileNames(fileTree.name), 7, 10);
     const isSupported = supportedFileTypes.includes(getFileExtension(fileTree?.path));
-    const isWebp = getThumbnailExtensionFromTree(fileTree, state) === 'webp';
+    const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
+    const hasWebpThumbnail = !!thumbnailUrl;
     const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
+    const rotateBtnClass = `bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
     if (isHiddenDir) return null;
 
@@ -49,32 +72,82 @@ export interface ThumbnailProps {
     }
 
     let content: React.ReactNode;
-    if (isSupported) {
-        content = <img className={`${imageClass}`} src={convertFileSrc(fileTree.path)}
-                       alt={fileTree.name}/>;
-    } else if (isWebp) {
-        content =
-            <img className={`${imageClass}`} src={getThumbnailURIFromTree(fileTree, state)}
-                 alt={fileTree.name}/>;
+    // No CSS transforms needed - EXIF orientation is applied automatically by the browser
+    if (hasWebpThumbnail) {
+        const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
+        content = (
+            <div className="overflow-hidden flex items-center justify-center w-full h-full">
+                <img
+                    key={`${thumbnailPath}-${thumbnailCacheBuster}`}
+                    className={`${imageClass}`}
+                    src={srcUrl}
+                    alt={fileTree.name} />
+            </div>
+        );
+    } else if (isSupported) {
+        // Fallback to original file if no WebP thumbnail exists
+        const fileCacheBuster = getFileCacheBuster(fileTree.path);
+        const srcUrl = `${convertFileSrc(fileTree.path)}?v=${fileCacheBuster}`;
+        content = (
+            <div className="overflow-hidden flex items-center justify-center w-full h-full">
+                <img
+                    key={`${fileTree.path}-${fileCacheBuster}`}
+                    className={`${imageClass}`}
+                    src={srcUrl}
+                    alt={fileTree.name} />
+            </div>
+        );
     } else {
         content = <File size="96" color="gray"/>;
     }
 
     return (
-        <button
-            type="button"
+        <div
+            role="button"
+            tabIndex={0}
             key={fileTree.path}
             className="flex flex-col p-1 items-center"
             onClick={onClick}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick();
+                }
+            }}
             ref={ref}
         >
-            <div className={`${initialStyle} ${containerClass}`}>
+            <div className={`${initialStyle} ${containerClass} relative group`}>
                 {content}
+                <StatusOverlay status={imageStatus} size="small" />
+                {(isSupported || hasWebpThumbnail) && (
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                            type="button"
+                            onClick={handleRotateCounterClockwise}
+                            disabled={imageIsRotating}
+                            className={rotateBtnClass}
+                            aria-label="Roter mot klokken"
+                            title="Roter mot klokken"
+                        >
+                            <RotateCcw size={16} />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleRotateClockwise}
+                            disabled={imageIsRotating}
+                            className={rotateBtnClass}
+                            aria-label="Roter med klokken"
+                            title="Roter med klokken"
+                        >
+                            <RotateCw size={16} />
+                        </button>
+                    </div>
+                )}
             </div>
             <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
                 {fileName}
             </i>
-        </button>
+        </div>
     );
   });
 Thumbnail.displayName = 'Thumbnail';

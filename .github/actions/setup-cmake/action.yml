@@ -4,33 +4,103 @@ inputs:
   version:
     description: "CMake version (e.g. 3.29.9)"
     required: false
-    default: "3.29.9"
+    default: "4.1.4"
+  s3-host:
+    description: "S3 endpoint for cache"
+    required: false
+  s3-access-key:
+    description: "S3 access key for cache"
+    required: false
+  s3-secret-key:
+    description: "S3 secret key for cache"
+    required: false
+  s3-bucket:
+    description: "S3 bucket for cache"
+    required: false
 runs:
   using: "composite"
   steps:
+    - name: "Check for existing CMake"
+      id: check
+      shell: powershell
+      run: |
+        if (Get-Command cmake -ErrorAction SilentlyContinue) {
+          Write-Host "cmake already installed"
+          "installed=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        } else {
+          "installed=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+        }
+
+    - name: Create destination root
+      if: steps.check.outputs.installed != 'true'
+      shell: powershell
+      run: |
+          $destRoot = "$env:RUNNER_TEMP\cmake"
+          if (-not (Test-Path $destRoot)) {
+            New-Item -ItemType Directory -Path $destRoot | Out-Null
+          }
+
+    - name: Enable cache restore for CMake (Windows)
+      if: steps.check.outputs.installed != 'true'
+      uses: tespkg/actions-cache@v1
+      with:
+        endpoint: ${{ inputs.s3-host }}
+        accessKey: ${{ inputs.s3-access-key }}
+        secretKey: ${{ inputs.s3-secret-key }}
+        bucket: ${{ inputs.s3-bucket }}
+        use-fallback: false
+        path: |
+          ${{ runner.temp }}\\cmake
+        # Cache CMake downloads by OS + branch + requested CMake version.
+        key: ${{ runner.os }}-cmake-${{ github.ref_name }}-${{ inputs.version }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-${{ github.ref_name }}-
+          ${{ runner.os }}-cmake-
+
     - name: Install CMake dependency (Windows)
-      if: ${{ runner.os == 'Windows' }}
+      if: steps.check.outputs.installed != 'true'
       shell: powershell
       env:
         CMAKE_VERSION: ${{ inputs.version }}
       run: |
         $v = $env:CMAKE_VERSION
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        $url = "https://github.com/Kitware/CMake/releases/download/v$v/cmake-$v-windows-x86_64.zip"
-        $zip = "$env:RUNNER_TEMP\cmake-$v.zip"
-        $destRoot = "$env:RUNNER_TEMP\cmake"
 
-        if (Test-Path $destRoot) { Remove-Item $destRoot -Recurse -Force }
-        New-Item -ItemType Directory -Path $destRoot | Out-Null
+        $root = "$env:RUNNER_TEMP\cmake"
+        $destRoot = Join-Path $root $v
+        $marker = Join-Path $destRoot ".installed"
 
-        Invoke-WebRequest $url -OutFile $zip
-        Expand-Archive -LiteralPath $zip -DestinationPath $destRoot -Force
+        # If we've already extracted this version (likely from cache), reuse it.
+        if (Test-Path $marker) {
+          Write-Host "Using cached CMake $v from $destRoot"
+        } else {
+          $url = "https://github.com/Kitware/CMake/releases/download/v$v/cmake-$v-windows-x86_64.zip"
+          $zip = "$env:RUNNER_TEMP\cmake-$v.zip"
 
-        $extractDir = Get-ChildItem $destRoot -Directory | Select-Object -First 1
+          if (-not (Test-Path $destRoot)) {
+            New-Item -ItemType Directory -Path $destRoot | Out-Null
+          }
+
+          Write-Host "Downloading $url"
+          Invoke-WebRequest $url -OutFile $zip
+          Expand-Archive -LiteralPath $zip -DestinationPath $destRoot -Force
+
+          "ok" | Out-File -FilePath $marker -Encoding utf8
+        }
+
+        # Find the extracted folder (cmake-<ver>-windows-x86_64) and add its bin to PATH.
+        $extractDir = Get-ChildItem $destRoot -Directory | Where-Object { $_.Name -like "cmake-*" } | Select-Object -First 1
+        if (-not $extractDir) {
+          throw "CMake extract dir not found under $destRoot"
+        }
+
         $bin = Join-Path $extractDir.FullName 'bin'
+        if (-not (Test-Path $bin)) {
+          throw "CMake bin folder not found at $bin"
+        }
+
         $bin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
     - name: Show CMake version (Windows)
-      if: ${{ runner.os == 'Windows' }}
       shell: powershell
       run: cmake --version
