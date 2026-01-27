@@ -61,16 +61,14 @@ pub fn list_image_files<P: AsRef<Path>>(
 				if recursive {
 					visit_dirs(&path, recursive, files)?;
 				}
-			} else if path.is_file() {
-				if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
-					if IMAGE_EXTENSIONS
+			} else if path.is_file()
+				&& let Some(ext) = path.extension().and_then(|e| e.to_str())
+					&& IMAGE_EXTENSIONS
 						.iter()
 						.any(|&x| x.eq_ignore_ascii_case(ext))
 					{
 						files.push(path);
 					}
-				}
-			}
 		}
 		Ok(())
 	}
