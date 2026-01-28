@@ -61,14 +61,28 @@ export interface ThumbnailProps {
     if (isHiddenDir) return null;
 
     const initialStyle = 'max-h-[calc(100vh-250px)] ';
-    let imageClass = 'w-full object-contain border-8 rounded-t-lg ';
+
+    const borderThickness = 'p-2';
+
+    const checkedBorder = 'bg-amber-400';
+    const focusedBorder = 'bg-blue-600';
+
+    let frameClass = `w-full rounded-t-lg ${borderThickness} bg-transparent relative z-0`;
+
+    const imageClass = 'w-full object-contain rounded-[calc(theme(borderRadius.lg)-0.5rem)] relative z-10 transform-gpu will-change-transform';
+
+    const checkedGradientOverlay =
+        ' before:content-[""] before:absolute before:inset-0 before:rounded-t-lg before:z-[5] before:pointer-events-none before:transition-opacity' +
+        ' before:bg-gradient-to-br before:from-amber-400 before:from-[0%] before:via-amber-400 before:via-[60%] before:to-blue-600 before:to-[75%]';
 
     if (isChecked) {
-        imageClass += `${isFocused ? 'border-amber-500' : ''} border-amber-400 hover:border-amber-500`;
+        frameClass += ` ${checkedBorder} before:opacity-0` + checkedGradientOverlay;
+        frameClass += ' active:bg-transparent active:before:opacity-100';
+        if (isFocused)  frameClass += ' bg-transparent before:opacity-100';
     } else if (isFocused) {
-        imageClass += 'border-blue-600 hover:border-blue-500';
+        frameClass += ` ${focusedBorder}`;
     } else {
-        imageClass += 'border-transparent';
+        frameClass += 'bg-transparent';
     }
 
     let content: React.ReactNode;
@@ -76,11 +90,13 @@ export interface ThumbnailProps {
         const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
         content = (
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
-                <img
-                    key={`${thumbnailPath}-${thumbnailCacheBuster}`}
-                    className={imageClass}
-                    src={srcUrl}
-                    alt={fileTree.name} />
+                <div className={frameClass}>
+                    <img
+                        key={`${thumbnailPath}-${thumbnailCacheBuster}`}
+                        className={imageClass}
+                        src={srcUrl}
+                        alt={fileTree.name} />
+                </div>
             </div>
         );
     } else if (isSupported) {
@@ -89,11 +105,13 @@ export interface ThumbnailProps {
         const srcUrl = `${convertFileSrc(fileTree.path)}?v=${fileCacheBuster}`;
         content = (
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
-                <img
-                    key={`${fileTree.path}-${fileCacheBuster}`}
-                    className={imageClass}
-                    src={srcUrl}
-                    alt={fileTree.name} />
+                <div className={frameClass}>
+                    <img
+                        key={`${fileTree.path}-${fileCacheBuster}`}
+                        className={imageClass}
+                        src={srcUrl}
+                        alt={fileTree.name} />
+                </div>
             </div>
         );
     } else {
@@ -105,7 +123,7 @@ export interface ThumbnailProps {
             role="button"
             tabIndex={0}
             key={fileTree.path}
-            className="flex flex-col p-0 items-center bg-stone-900 hover:bg-stone-800 rounded-lg"
+            className="flex flex-col p-0 items-center bg-stone-900 hover:bg-stone-800 rounded-lg group"
             onClick={onClick}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -115,7 +133,7 @@ export interface ThumbnailProps {
             }}
             ref={ref}
         >
-            <div className={`${initialStyle} relative group`}>
+            <div className={`${initialStyle} relative`}>
                 {content}
                 <StatusOverlay status={imageStatus} size="small" />
                 {(isSupported || hasWebpThumbnail) && (
