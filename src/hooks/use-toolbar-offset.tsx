@@ -13,15 +13,15 @@ import React, {useLayoutEffect} from 'react';
 export function useToolbarOffset(ref: React.RefObject<HTMLElement>) {
     useLayoutEffect(() => {
         const root = document.documentElement;
-        let ro: ResizeObserver | null = null;
+        let resizeObserver: ResizeObserver | null = null;
         let raf = 0;
         let resizeHandler: (() => void) | null = null;
         let cancelled = false;
 
         const init = () => {
             if (cancelled) return;
-            const el = ref.current;
-            if (!el) {
+            const element = ref.current;
+            if (!element) {
                 // Wait for the element to mount
                 raf = requestAnimationFrame(init);
                 return;
@@ -29,16 +29,16 @@ export function useToolbarOffset(ref: React.RefObject<HTMLElement>) {
 
             const set = () => {
                 // Use both getBoundingClientRect and offsetHeight as fallbacks
-                const rectH = el.getBoundingClientRect().height;
-                const h = rectH || (el as HTMLElement).offsetHeight || 0;
-                if (h > 0) root.style.setProperty('--toolbar-h', `${Math.round(h)}px`);
+                const rectHeight = element.getBoundingClientRect().height;
+                const height = rectHeight || (element as HTMLElement).offsetHeight || 0;
+                if (height > 0) root.style.setProperty('--toolbar-h', `${Math.round(height)}px`);
             };
 
             set();
 
             if (typeof ResizeObserver !== 'undefined') {
-                ro = new ResizeObserver(set);
-                ro.observe(el);
+                resizeObserver = new ResizeObserver(set);
+                resizeObserver.observe(element);
             }
 
             resizeHandler = set;
@@ -52,7 +52,7 @@ export function useToolbarOffset(ref: React.RefObject<HTMLElement>) {
 
         return () => {
             cancelled = true;
-            if (ro) ro.disconnect();
+            if (resizeObserver) resizeObserver.disconnect();
             if (resizeHandler) window.removeEventListener('resize', resizeHandler);
             if (raf) cancelAnimationFrame(raf);
         };
