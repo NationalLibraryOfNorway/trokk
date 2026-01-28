@@ -28,6 +28,7 @@ in
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     rustc
+    clippy
     gcc
     pkg-config
     gobject-introspection
