@@ -1,5 +1,5 @@
-use image::error::{DecodingError, ImageFormatHint};
 use image::ImageError;
+use image::error::{DecodingError, ImageFormatHint};
 
 use crate::error::{ImageConversionError, WebPEncodingErrorWrapper};
 

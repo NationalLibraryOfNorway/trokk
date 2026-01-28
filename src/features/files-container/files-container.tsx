@@ -82,7 +82,7 @@ const FilesContainer: React.FC = () => {
                             {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
                         </p>
                         <label htmlFor="columns" className="text-sm font-medium text-gray-300 ml-auto ">
-                            Visning: {columns}
+                            Bilder per rad: {columns}
                         </label>
                         <input
                             id="columns"
