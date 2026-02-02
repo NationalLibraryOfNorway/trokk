@@ -31,7 +31,11 @@
   "productName": "Trøkk",
   "version": "../package.json",
   "identifier": "no.nb.trokk",
-  "plugins": {},
+  "plugins": {
+    "fs": {
+      "requireLiteralLeadingDot": false
+    }
+  },
   "app": {
     "withGlobalTauri": false,
     "trayIcon": {
