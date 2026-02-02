@@ -42,7 +42,7 @@
       "assetProtocol": {
         "scope": {
           "allow": [
-            "**"
+            "**/*"
           ],
           "deny": [],
           "requireLiteralLeadingDot": false

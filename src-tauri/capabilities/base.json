@@ -11,27 +11,15 @@
     "store:default",
     "fs:default",
     "fs:read-all",
-    "fs:allow-read",
+    "fs:write-all",
+    "fs:allow-exists",
+    "fs:allow-watch",
     "fs:allow-write",
     "fs:allow-remove",
     {
       "identifier": "fs:scope",
       "allow": [
-        {
-          "path": "**"
-        },
-        {
-          "path": "**/.thumbnails"
-        },
-        {
-          "path": "**/.thumbnails/**"
-        },
-        {
-          "path": "**/.previews"
-        },
-        {
-          "path": "**/.previews/**"
-        }
+        { "path": "**/*" }
       ]
     },
     "core:default",
