@@ -62,12 +62,10 @@ export interface ThumbnailProps {
 
     const initialStyle = 'max-h-[calc(100vh-250px)] ';
 
-    const borderThickness = 'p-2';
-
     const checkedBorder = 'bg-amber-400';
     const focusedBorder = 'bg-blue-600';
 
-    let frameClass = `w-full rounded-t-lg ${borderThickness} bg-transparent relative z-0`;
+    let frameClass = 'w-full rounded-t-lg p-2 relative z-0';
 
     const imageClass = 'w-full object-contain rounded-[calc(theme(borderRadius.lg)-0.5rem)] relative z-10 transform-gpu will-change-transform';
 
