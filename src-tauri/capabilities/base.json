@@ -3,7 +3,8 @@
   "description": "base permissions for the app",
   "local": true,
   "windows": [
-    "main"
+    "main",
+    "Login"
   ],
   "permissions": [
     "dialog:default",
