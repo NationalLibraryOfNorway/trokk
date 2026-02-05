@@ -5,6 +5,7 @@ use tauri::Emitter;
 use tauri::Window;
 use tauri_plugin_oauth::{OauthConfig, start_with_config};
 use url::Url;
+use sentry::{add_breadcrumb, Breadcrumb, Level};
 
 #[cfg(not(feature = "debug-mock"))]
 use std::error::Error;
@@ -100,7 +101,20 @@ async fn create_token(_client: Client, _body: String) -> AuthenticationResponse 
 #[cfg(not(feature = "debug-mock"))]
 async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
-	let secrets = get_secret_variables().await.unwrap();
+
+    add_breadcrumb(Breadcrumb {
+        message: Some("Creating token".into()),
+        level: Level::Debug,
+        ..Default::default()
+    });
+
+    let secrets = get_secret_variables().await.unwrap();
+
+    add_breadcrumb(Breadcrumb {
+        message: Some("Fetched secret variables".into()),
+        level: Level::Debug,
+        ..Default::default()
+    });
 
 	let time_now = SystemTime::now()
 		.duration_since(UNIX_EPOCH)
@@ -115,6 +129,12 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.await;
 	let token_response: TokenResponse =
 		serde_json::from_str(&res.unwrap().text().await.unwrap()).unwrap();
+
+    add_breadcrumb(Breadcrumb {
+        message: Some("Received token response".into()),
+        level: Level::Debug,
+        ..Default::default()
+    });
 
 	// For easier use in Frontend
 	let expire_info: ExpireInfo = ExpireInfo {
@@ -132,6 +152,12 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.await;
 	let user_info: UserInfo =
 		serde_json::from_str(&user_response.unwrap().text().await.unwrap()).unwrap();
+
+    add_breadcrumb(Breadcrumb {
+        message: Some("Fetched user info".into()),
+        level: Level::Debug,
+        ..Default::default()
+    });
 
 	let authentication_response: AuthenticationResponse = AuthenticationResponse {
 		token_response,
