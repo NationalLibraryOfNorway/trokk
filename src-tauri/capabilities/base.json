@@ -55,7 +55,6 @@
           "url": "https://*.nb.no/*"
         }
       ]
-    },
-    "store:default"
+    }
   ]
 }
