@@ -16,6 +16,7 @@ import {useRotation} from '@/context/rotation-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
 import {LoaderCircle} from 'lucide-react';
+import {Field, FieldLabel} from "@/components/ui/field.tsx";
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
@@ -222,8 +223,13 @@ const RegistrationForm: React.FC = () => {
 
             <div className="mt-2 w-full h-full flex flex-col relative">
                 <div className="flex items-center gap-2">
-                    <Progress value={barWidth} className="[&>div]:bg-amber-600 bg-stone-900"/>
-                    <div className='text-sm'>{barWidth.toFixed(0)}%</div>
+                    <Field className="w-full max-w-sm">
+                        <FieldLabel htmlFor="progress-upload">
+                            <span>Fremdrift</span>
+                            <span className="ml-auto">{barWidth.toFixed(0)}%</span>
+                        </FieldLabel>
+                        <Progress value={barWidth} className="[&>div]:bg-amber-600 bg-stone-900"/>
+                    </Field>
                 </div>
             </div>
 

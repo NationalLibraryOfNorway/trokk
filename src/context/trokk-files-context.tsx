@@ -1,12 +1,12 @@
 import React, {createContext, useContext, useEffect, useReducer, useRef} from 'react';
 import {
+    exists,
     WatchEvent,
     WatchEventKind,
     WatchEventKindCreate,
     WatchEventKindModify,
     WatchEventKindRemove,
-    watchImmediate,
-    exists
+    watchImmediate
 } from '@tauri-apps/plugin-fs';
 import {FileTree} from '../model/file-tree';
 import {invoke} from '@tauri-apps/api/core';
@@ -100,10 +100,7 @@ const calculateIsEven = (fileTree: FileTree | undefined): boolean => {
         !child.name.startsWith('.previews')
     ).length;
 
-    const isEven = fileCount % 2 === 0;
-    console.log(`calculateIsEven: fileCount=${fileCount}, isEven=${isEven}, folder=${fileTree.name}`);
-
-    return isEven;
+    return fileCount % 2 === 0;
 };
 
 const createThumbnailsFromDirectory = async (directoryPath: string) => {
