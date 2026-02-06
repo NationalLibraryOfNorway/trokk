@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings} from 'lucide-react';
+import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings, Loader2} from 'lucide-react';
 import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
 import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
@@ -52,7 +52,7 @@ interface ContentProps {
 }
 
 const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
-    const {authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
+    const {authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
     const {scannerPath} = useSettings();
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
@@ -145,11 +145,32 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         );
     }
 
-    if (loggedOut && !isLoggingIn) {
+    if (isRefreshingToken && !authResponse) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-10 w-10 animate-spin" aria-label="Logger inn" />
+                    <p className="text-xl">Logger inn</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (loggedOut) {
+        return (
+            <div data-tauri-drag-region className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
+                {isLoggingIn ? (
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="h-10 w-10 animate-spin" aria-label="Logger inn" />
+                        <p className="text-xl">Logger inn</p>
+                    </div>
+                ) : (
+                    <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>
+                        Logg inn <LogIn/>
+                    </Button>
+                )}
             </div>
         );
     }
@@ -167,9 +188,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     if (!authResponse) {
         return (
-            <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+            <div data-tauri-drag-region className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
+                <Button
+                    className={'w-[150px] h-[75px] text-2xl'}
+                    onClick={login}
+                >
+                    Logg inn <LogIn/>
+                </Button>
             </div>
         );
     }
