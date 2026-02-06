@@ -92,7 +92,6 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 				);
 				let client = Client::new();
 				let authentication_response = create_token(client, body).await;
-				let _ = window.emit("token_exchanged", authentication_response);
 			});
 		},
 	)
