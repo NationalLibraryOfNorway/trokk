@@ -158,6 +158,7 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		level: Level::Info,
 		..Default::default()
 	});
+	sentry::capture_message("Token creation successful", Level::Info);
 
 	let authentication_response: AuthenticationResponse = AuthenticationResponse {
 		token_response,
