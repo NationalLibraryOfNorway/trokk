@@ -104,7 +104,7 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 
 	add_breadcrumb(Breadcrumb {
 		message: Some("Creating token".into()),
-		level: Level::Debug,
+		level: Level::Info,
 		..Default::default()
 	});
 
@@ -112,7 +112,7 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 
 	add_breadcrumb(Breadcrumb {
 		message: Some("Fetched secret variables".into()),
-		level: Level::Debug,
+		level: Level::Info,
 		..Default::default()
 	});
 
@@ -132,7 +132,7 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 
 	add_breadcrumb(Breadcrumb {
 		message: Some("Received token response".into()),
-		level: Level::Debug,
+		level: Level::Info,
 		..Default::default()
 	});
 
@@ -155,7 +155,7 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 
 	add_breadcrumb(Breadcrumb {
 		message: Some("Fetched user info".into()),
-		level: Level::Debug,
+		level: Level::Info,
 		..Default::default()
 	});
 
