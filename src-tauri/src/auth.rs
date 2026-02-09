@@ -2,20 +2,20 @@ use reqwest::Client;
 use sentry::{Breadcrumb, Level, add_breadcrumb};
 use std::borrow::Cow;
 use std::collections::HashMap;
+use tauri::Emitter;
 use tauri::Window;
 use tauri_plugin_oauth::{OauthConfig, start_with_config};
 use url::Url;
 
 #[cfg(not(feature = "debug-mock"))]
 use std::error::Error;
-use std::thread::Thread;
 #[cfg(not(feature = "debug-mock"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::get_secret_variables;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::TokenResponseWithoutRefresh;
-use crate::model::{AuthenticationResponse, ExpireInfo, SecretVariables, TokenResponse, UserInfo};
+use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo};
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
 	start_with_config(
@@ -92,6 +92,7 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 				);
 				let client = Client::new();
 				let authentication_response = create_token(client, body).await;
+				let _ = window.emit("token_exchanged", authentication_response);
 			});
 		},
 	)
