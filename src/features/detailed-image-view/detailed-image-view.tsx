@@ -1,8 +1,7 @@
 import {useEffect, useState, useMemo} from 'react';
-import {ChevronLeft, ChevronRight, RotateCw, RotateCcw} from 'lucide-react';
+import {ChevronLeft, ChevronRight, RotateCw, RotateCcw, LoaderCircle} from 'lucide-react';
 import {FileTree} from '@/model/file-tree.ts';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
-import LoadingSpinner from '@/components/ui/loading-spinner.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import Checkbox from '@/components/ui/checkbox.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
@@ -99,7 +98,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                             bilde {currentIndex + 1} av {totalImagesInFolder}</p>
                     </div>
                     <div
-                        className={`relative group mt-4 mb-10 border-2 mx-auto flex items-center justify-center ${isChecked ? 'ring-4 ring-amber-400' : 'border-gray-300'}`}
+                        className={`relative group mt-4 mb-10 border-2 mx-auto flex items-center justify-center ${isChecked ? 'border-4 border-amber-400' : 'border-gray-300'}`}
                         style={{
                             maxWidth: 'calc(100vw - 400px)',
                             maxHeight: 'calc(100vh - 250px)',
@@ -135,7 +134,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                         {/* Reload spinner overlay */}
                         {isLoading && (
                             <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px] z-[6]">
-                                <LoadingSpinner size={48} />
+                                <LoaderCircle size={50} className="animate-spin mb-40" />
                             </div>
                         )}
 
@@ -194,3 +193,4 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
         </div>
     )
 }
+

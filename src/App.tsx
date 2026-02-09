@@ -1,13 +1,11 @@
-import React, {useState} from 'react';
-import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings} from 'lucide-react';
+import React, {useRef, useState} from 'react';
+import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings, Loader2} from 'lucide-react';
 import './App.css';
 import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
 import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
 import MainLayout from './components/layouts/main-layout.tsx';
-import Modal from './components/ui/modal.tsx';
 import SettingsForm from './features/settings/settings.tsx';
 import {UploadProgressProvider} from './context/upload-progress-context.tsx';
-import Button from './components/ui/button.tsx';
 import {SecretProvider} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
 import {MessageProvider} from './context/message-context.tsx';
@@ -16,6 +14,10 @@ import {SelectionProvider} from './context/selection-context.tsx';
 import {RotationProvider} from './context/rotation-context.tsx';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
+import {useTextSizeShortcuts} from './hooks/use-text-size-shortcuts.tsx';
+import {Button} from '@/components/ui/button.tsx';
+import {Dialog, DialogContent, DialogTrigger} from '@/components/ui/dialog.tsx';
+import {useToolbarOffset} from '@/hooks/use-toolbar-offset';
 
 
 function App() {
@@ -25,22 +27,19 @@ function App() {
         console.error(event);
         throw event;
     });
-
     const [openSettings, setOpenSettings] = useState<boolean>(false);
 
     return (
         <SecretProvider>
             <AuthProvider>
                 <SettingProvider>
-                    <main className="flex flex-col">
+                    <main className="h-screen w-screen flex flex-col overflow-hidden">
                         <Content
                             openSettings={openSettings}
                             setOpenSettings={setOpenSettings}
                         />
                     </main>
-                    <Modal isOpen={openSettings} onClose={() => setOpenSettings(false)}>
-                        <SettingsForm/>
-                    </Modal>
+
                 </SettingProvider>
             </AuthProvider>
         </SecretProvider>
@@ -53,10 +52,15 @@ interface ContentProps {
 }
 
 const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
-    const {authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
+    const {authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
     const {scannerPath} = useSettings();
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
+    const toolbarRef = useRef<HTMLDivElement>(null);
+    useToolbarOffset(toolbarRef);
+
+    // Enable keyboard shortcuts for text size control
+    useTextSizeShortcuts();
 
     const copyPathToClipboard = async () => {
         try {
@@ -132,7 +136,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     <h1 className={'text-center'}>Trøkk</h1>
                     <p></p>
                 </div>
-                <div className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 errorColor">
+                <div
+                    className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 bg-destructive text-destructive-foreground">
                     <h1>Feil ved innhenting av hemmeligheter</h1>
                     <p>{fetchSecretsError}</p>
                 </div>
@@ -140,11 +145,32 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         );
     }
 
-    if (loggedOut && !isLoggingIn) {
+    if (isRefreshingToken && !authResponse) {
         return (
             <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-10 w-10 animate-spin" aria-label="Logger inn" />
+                    <p className="text-xl">Logger inn</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (loggedOut) {
+        return (
+            <div data-tauri-drag-region className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
+                {isLoggingIn ? (
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="h-10 w-10 animate-spin" aria-label="Logger inn" />
+                        <p className="text-xl">Logger inn</p>
+                    </div>
+                ) : (
+                    <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>
+                        Logg inn <LogIn/>
+                    </Button>
+                )}
             </div>
         );
     }
@@ -162,26 +188,31 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     if (!authResponse) {
         return (
-            <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
+            <div data-tauri-drag-region className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
                 <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>Logg inn <LogIn/></Button>
+                <Button
+                    className={'w-[150px] h-[75px] text-2xl'}
+                    onClick={login}
+                >
+                    Logg inn <LogIn/>
+                </Button>
             </div>
         );
     }
 
     return (
-        <div className="relative h-full flex-col">
-            <div data-tauri-drag-region
-                 className="flex flex-row py-2 px-3 sticky w-full z-10 top-0 bg-stone-700 border-2 border-stone-800 items-center justify-between">
+        <div className="relative flex-1 w-full flex flex-col overflow-hidden min-h-0">
+            <div data-tauri-drag-region ref={toolbarRef}
+                className="flex flex-row py-2 px-3 w-full bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
-                    <button onClick={copyPathToClipboard}
-                            className="px-2 hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none rounded-md cursor-pointer flex"
+                    <Button onClick={copyPathToClipboard}
+                            className="hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none flex"
                             title="Klikk for å kopiere">
-                        <FolderOpen size="32" className=""/>
-                        <span className="mt-1 ms-1 relative group hidden md:inline">
+                        <FolderOpen size="32" className="ms-2"/>
+                        <span className="mt-1 me-2 relative group hidden md:inline">
                             {scannerPath}
                         </span>
-                    </button>
+                    </Button>
                 </div>
                 {showCopiedTooltip && (
                     <span
@@ -190,8 +221,8 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                             </span>
                 )}
                 <div data-tauri-drag-region className="text-4xl cursor-default overflow-hidden">
-                <img data-tauri-drag-region src={'/banner.png'} alt="Trøkk Logo"
-                     className="h-10 inline-block ms-2 sm:w-auto w-10 object-cover object-left"/>
+                    <img data-tauri-drag-region src={'/banner.png'} alt="Trøkk Logo"
+                         className="h-10 inline-block ms-2 sm:w-auto w-10 object-cover object-left"/>
                 </div>
                 <div className="flex-shrink-0 flex items-center gap-2">
                     <div data-tauri-drag-region className="flex items-center pr-2 gap-1">
@@ -203,11 +234,19 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                         <p data-tauri-drag-region
                            className="cursor-default hidden md:inline">{authResponse.userInfo.givenName}</p>
                     </div>
-                    <Button onClick={() => setOpenSettings(!openSettings)} className="flex">
-                        <span className="hidden lg:inline">Innstillinger</span>
-                        <Settings className="lg:ms-2"/>
-                    </Button>
-                    <Button onClick={logout} className="flex">
+
+                    <Dialog open={openSettings} onOpenChange={setOpenSettings} >
+                        <DialogTrigger asChild>
+                            <Button onClick={() => setOpenSettings(!openSettings)}>
+                                <span className="hidden lg:inline">Innstillinger</span>
+                                <Settings className="lg:ms-2"/>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className='bg-stone-900 flex flex-col w-3/4 max-w-3xl'>
+                            <SettingsForm setOpen={setOpenSettings}/>
+                        </DialogContent>
+                    </Dialog>
+                    <Button onClick={logout}>
                         <span className="hidden lg:inline">Logg&nbsp;ut</span>
                         <LogOut className="lg:ms-2"/>
                     </Button>
@@ -229,19 +268,21 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     />
                 </div>
             </div>
-            <TrokkFilesProvider scannerPath={scannerPath}>
-                <SelectionProvider>
-                    <RotationProvider>
-                        <UploadProgressProvider>
-                            <TransferLogProvider>
-                                <MessageProvider>
-                                    <MainLayout/>
-                                </MessageProvider>
-                            </TransferLogProvider>
-                        </UploadProgressProvider>
-                    </RotationProvider>
-                </SelectionProvider>
-            </TrokkFilesProvider>
+            <div className="flex-1 min-h-0 flex flex-col">
+                <TrokkFilesProvider scannerPath={scannerPath}>
+                    <SelectionProvider>
+                        <RotationProvider>
+                            <UploadProgressProvider>
+                                <TransferLogProvider>
+                                    <MessageProvider>
+                                        <MainLayout/>
+                                    </MessageProvider>
+                                </TransferLogProvider>
+                            </UploadProgressProvider>
+                        </RotationProvider>
+                    </SelectionProvider>
+                </TrokkFilesProvider>
+            </div>
         </div>
     );
 };

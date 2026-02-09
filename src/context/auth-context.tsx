@@ -11,6 +11,7 @@ export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
     loggedOut: boolean;
     isLoggingIn: boolean;
+    isRefreshingToken: boolean;
     fetchSecretsError: string | null;
     login: () => Promise<void>;
     logout: () => Promise<void>;
@@ -27,6 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [loggedOut, setLoggedOut] = useState(false);
     const refreshIntervalId = useRef<number | null>(null);
     const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
+    const [isRefreshingToken, setIsRefreshingToken] = useState<boolean>(false);
     const appWindow = getCurrentWindow();
 
     const { secrets, getSecrets, fetchSecretsError } = useSecrets();
@@ -106,8 +108,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const refreshAccessToken = async () => {
         const authResponse = await settings.getAuthResponse();
         if (await canRefresh() && authResponse) {
-            const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken });
-            await settings.setAuthResponse(res);
+            // Drives the spinner during refresh_token, even without backend events.
+            setIsRefreshingToken(true);
+            try {
+                const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken });
+                await settings.setAuthResponse(res);
+            } finally {
+                setIsRefreshingToken(false);
+            }
         } else {
             await login();
             throw new Error('Refresh token expired');
@@ -136,7 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ authResponse, loggedOut, isLoggingIn, fetchSecretsError, login, logout }}>
+        <AuthContext.Provider value={{ authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

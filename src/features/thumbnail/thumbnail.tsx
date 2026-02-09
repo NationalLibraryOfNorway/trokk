@@ -61,27 +61,40 @@ export interface ThumbnailProps {
     if (isHiddenDir) return null;
 
     const initialStyle = 'max-h-[calc(100vh-250px)] ';
-    let imageClass = 'w-full object-contain';
-    let containerClass = 'p-[8px]';
+
+    const checkedBorder = 'bg-amber-400';
+    const focusedBorder = 'bg-blue-600';
+
+    let frameClass = 'w-full rounded-t-lg p-2 relative z-0';
+
+    const imageClass = 'w-full object-contain rounded-[calc(theme(borderRadius.lg)-0.5rem)] relative z-10 transform-gpu will-change-transform';
+
+    const checkedGradientOverlay =
+        ' before:content-[""] before:absolute before:inset-0 before:rounded-t-lg before:z-[5] before:pointer-events-none before:transition-opacity' +
+        ' before:bg-gradient-to-br before:from-amber-400 before:from-[0%] before:via-amber-400 before:via-[60%] before:to-blue-600 before:to-[75%]';
 
     if (isChecked) {
-        imageClass = `${isFocused ? ' ring-4 ring-blue-600' : ''} border-8 border-amber-400 hover:border-amber-500`;
-        containerClass = 'p-0';
+        frameClass += ` ${checkedBorder} before:opacity-0` + checkedGradientOverlay;
+        frameClass += ' active:bg-transparent active:before:opacity-100';
+        if (isFocused)  frameClass += ' bg-transparent before:opacity-100';
     } else if (isFocused) {
-        imageClass = 'ring-4 ring-blue-600 hover:ring-blue-500';
+        frameClass += ` ${focusedBorder}`;
+    } else {
+        frameClass += 'bg-transparent';
     }
 
     let content: React.ReactNode;
-    // No CSS transforms needed - EXIF orientation is applied automatically by the browser
     if (hasWebpThumbnail) {
         const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
         content = (
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
-                <img
-                    key={`${thumbnailPath}-${thumbnailCacheBuster}`}
-                    className={`${imageClass}`}
-                    src={srcUrl}
-                    alt={fileTree.name} />
+                <div className={frameClass}>
+                    <img
+                        key={`${thumbnailPath}-${thumbnailCacheBuster}`}
+                        className={imageClass}
+                        src={srcUrl}
+                        alt={fileTree.name} />
+                </div>
             </div>
         );
     } else if (isSupported) {
@@ -90,11 +103,13 @@ export interface ThumbnailProps {
         const srcUrl = `${convertFileSrc(fileTree.path)}?v=${fileCacheBuster}`;
         content = (
             <div className="overflow-hidden flex items-center justify-center w-full h-full">
-                <img
-                    key={`${fileTree.path}-${fileCacheBuster}`}
-                    className={`${imageClass}`}
-                    src={srcUrl}
-                    alt={fileTree.name} />
+                <div className={frameClass}>
+                    <img
+                        key={`${fileTree.path}-${fileCacheBuster}`}
+                        className={imageClass}
+                        src={srcUrl}
+                        alt={fileTree.name} />
+                </div>
             </div>
         );
     } else {
@@ -106,7 +121,7 @@ export interface ThumbnailProps {
             role="button"
             tabIndex={0}
             key={fileTree.path}
-            className="flex flex-col p-1 items-center"
+            className="flex flex-col p-0 items-center bg-stone-900 hover:bg-stone-800 rounded-lg group"
             onClick={onClick}
             onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -116,11 +131,11 @@ export interface ThumbnailProps {
             }}
             ref={ref}
         >
-            <div className={`${initialStyle} ${containerClass} relative group`}>
+            <div className={`${initialStyle} relative`}>
                 {content}
                 <StatusOverlay status={imageStatus} size="small" />
                 {(isSupported || hasWebpThumbnail) && (
-                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             type="button"
                             onClick={handleRotateCounterClockwise}

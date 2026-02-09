@@ -1,12 +1,12 @@
 import React, {createContext, useContext, useEffect, useReducer, useRef} from 'react';
 import {
+    exists,
     WatchEvent,
     WatchEventKind,
     WatchEventKindCreate,
     WatchEventKindModify,
     WatchEventKindRemove,
-    watchImmediate,
-    exists
+    watchImmediate
 } from '@tauri-apps/plugin-fs';
 import {FileTree} from '../model/file-tree';
 import {invoke} from '@tauri-apps/api/core';
@@ -20,6 +20,7 @@ export interface TrokkFilesState {
     treeIndex: Map<string, FileTree>;
     current: FileTree | undefined;
     preview: FileTree | undefined;
+    isEven: boolean;
 }
 
 interface InitializeState {
@@ -51,7 +52,8 @@ const initialState: TrokkFilesState = {
     fileTrees: [],
     treeIndex: new Map<string, FileTree>(),
     current: undefined,
-    preview: undefined
+    preview: undefined,
+    isEven: true
 };
 
 export const TrokkFilesContext = createContext<{
@@ -80,7 +82,25 @@ const setCurrentAndExpandParents = (state: TrokkFilesState, fileTree: FileTree):
     const newFileTrees = [...state.fileTrees];
     updateFileTree(newFileTrees, fileTree);
 
-    return {...state, fileTrees: newFileTrees, current: fileTree, preview: undefined};
+    const isEven = calculateIsEven(fileTree);
+
+    return {...state, fileTrees: newFileTrees, current: fileTree, preview: undefined, isEven};
+};
+
+const calculateIsEven = (fileTree: FileTree | undefined): boolean => {
+    if (!fileTree?.children) {
+        console.log('calculateIsEven: No children, returning true');
+        return true; // Default to true if no children
+    }
+
+    // Count only files, excluding directories and hidden folders
+    const fileCount = fileTree.children.filter(child =>
+        !child.isDirectory &&
+        !child.name.startsWith('.thumbnails') &&
+        !child.name.startsWith('.previews')
+    ).length;
+
+    return fileCount % 2 === 0;
 };
 
 const createThumbnailsFromDirectory = async (directoryPath: string) => {
@@ -457,18 +477,22 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
             return {...state, treeIndex: populateIndex(state.fileTrees)};
         case 'SET_TREE_INDEX':
             return {...state, treeIndex: action.payload};
-        case 'UPDATE_FILE_TREES_AND_TREE_INDEX':
+        case 'UPDATE_FILE_TREES_AND_TREE_INDEX': {
+            const isEven = calculateIsEven(action.payloadCurrent);
             return {
                 ...state,
                 treeIndex: action.payloadIndex,
                 fileTrees: action.payloadFileTrees,
-                current: action.payloadCurrent
+                current: action.payloadCurrent,
+                isEven
             };
+        }
         case 'SET_CURRENT': {
             if (action.payload) {
                 void createThumbnailsFromDirectory(action.payload.path);
             }
-            return {...state, current: action.payload, preview: undefined};
+            const isEven = calculateIsEven(action.payload);
+            return {...state, current: action.payload, preview: undefined, isEven};
         }
         case 'SET_CURRENT_AND_EXPAND_PARENTS': {
             void createThumbnailsFromDirectory(action.payload.path);
@@ -485,10 +509,13 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
                 ? undefined
                 : (state.current?.path ? newTreeIndex.get(state.current.path) : undefined);
 
+            const isEven = calculateIsEven(newCurrent);
+
             return {
                 ...newState,
                 treeIndex: newTreeIndex,
-                current: newCurrent
+                current: newCurrent,
+                isEven
             };
         }
         case 'RESET':

@@ -52,11 +52,6 @@ export const getPreviewFromTree = (tree: FileTree, state: TrokkFilesState): File
     return state.treeIndex.get(previewPath);
 };
 
-export const getPreviewURIFromTree = (tree: FileTree, state: TrokkFilesState) => {
-    const foundPreview = getPreviewFromTree(tree, state);
-    return foundPreview ? convertFileSrc(foundPreview.path) : undefined;
-};
-
 export const isImage = (path: string): boolean => {
     return path.endsWith('.webp') || path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png') || path.endsWith(('.tif')) || path.endsWith('.tiff');
 }

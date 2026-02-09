@@ -6,7 +6,6 @@ import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import {SubmitHandler, useForm} from 'react-hook-form';
 import {RegistrationFormProps} from './registration-form-props.tsx';
 import {usePostRegistration} from '@/context/post-registration-context.tsx';
-import LoadingSpinner from '@/components/ui/loading-spinner.tsx';
 import {useMessage} from '@/context/message-context.tsx';
 import {useUploadProgress} from '@/context/upload-progress-context.tsx';
 import type {Event} from '@tauri-apps/api/event';
@@ -14,6 +13,10 @@ import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {useSecrets} from '@/context/secret-context.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
+import {Button} from '@/components/ui/button.tsx';
+import {Progress} from '@/components/ui/progress.tsx';
+import {LoaderCircle} from 'lucide-react';
+import {Field, FieldLabel} from "@/components/ui/field.tsx";
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
@@ -131,7 +134,7 @@ const RegistrationForm: React.FC = () => {
     };
 
     return (
-        <form className="flex flex-col w-80 m-4" onSubmit={handleSubmit(onSubmit)}>
+        <form className="flex flex-col w-full max-w-full px-4 py-4" onSubmit={handleSubmit(onSubmit)}>
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
                 <label className="text-stone-100">Materialtype</label>
                 <select
@@ -151,81 +154,82 @@ const RegistrationForm: React.FC = () => {
                 </select>
             </div>
 
-            <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('font')}
-                        className="accent-amber-400"
-                        value={'ANTIQUA'}
-                    />{' '}
-                    Antiqua
-                </label>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('font')}
-                        className="accent-amber-400"
-                        value={'FRAKTUR'}
-                    />{' '}
-                    Fraktur
-                </label>
+            <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
+                <label className="text-stone-100 mb-2">Skrifttype</label>
+                <div className="flex flex-row flex-wrap gap-4">
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('font')}
+                            className="accent-amber-400"
+                            value={'ANTIQUA'}
+                        />
+                        Antiqua
+                    </label>
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('font')}
+                            className="accent-amber-400"
+                            value={'FRAKTUR'}
+                        />
+                        Fraktur
+                    </label>
+                </div>
             </div>
 
-            <div className={`flex flex-row mb-4 space-x-5 ${disabled ? 'opacity-30' : ''}`}>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('language')}
-                        className="accent-amber-400"
-                        value={'NOB'}
-                    />{' '}
-                    Norsk
-                </label>
-                <label>
-                    <input
-                        type='radio'
-                        {...register('language')}
-                        className="accent-amber-400"
-                        value={'SME'}
-                    />{' '}
-                    Samisk
-                </label>
+            <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
+                <label className="text-stone-100 mb-2">Språk</label>
+                <div className="flex flex-row flex-wrap gap-4">
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('language')}
+                            className="accent-amber-400"
+                            value={'NOB'}
+                        />
+                        Norsk
+                    </label>
+                    <label className="flex items-center gap-2">
+                        <input
+                            type='radio'
+                            {...register('language')}
+                            className="accent-amber-400"
+                            value={'SME'}
+                        />
+                        Samisk
+                    </label>
+                </div>
             </div>
-            {/*<div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label htmlFor="workingTitle">Arbeidstittel (Blir ikke brukt i produksjon)</label>
-                <input
-                    type='text'
-                    id='workingTitle'
-                    {...register('workingTitle')}
-                />
-            </div>*/}
             <p className="mb-4 font-semibold">
                 {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
             </p>
             <div className={`flex ${disabled || isAnyImageRotating ? 'opacity-30' : ''}`}>
-                <button disabled={disabled || isSubmitting || isAnyImageRotating} type='submit'
-                        className="w-full flex items-center justify-center">
+                <Button
+                    disabled={disabled || isSubmitting || isAnyImageRotating}
+                    type='submit'
+                    className="w-full flex items-center justify-center"
+                >
                     {isSubmitting ? (
-                        <LoadingSpinner size={24}/>
+                        <LoaderCircle size={24} className='animate-spin' />
                     ) : (
                         'TRØKK!'
                     )}
-                </button>
+                </Button>
             </div>
             {isAnyImageRotating && (
                 <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
             )}
 
-            <div className="mt-2 w-full h-full flex flex-col relative mb-4">
-                <span className="absolute z-10 flex justify-center items-center w-full h-6">
-                  {barWidth.toFixed(0)}%
-                </span>
-                <div className="absolute z-0 w-full rounded-full bg-stone-800 h-6 overflow-hidden">
-                    <div
-                        className="bg-amber-600 h-6 transition-width duration-500"
-                        style={{width: `${barWidth}%`}}
-                    ></div>
+            <div className="mt-2 w-full h-full flex flex-col relative">
+                <div className="flex items-center gap-2">
+                    <Field className="w-full max-w-sm">
+                        <FieldLabel htmlFor="progress-upload">
+                            <span>Fremdrift</span>
+                            <span className="ml-auto">{barWidth.toFixed(0)}%</span>
+                        </FieldLabel>
+                        <Progress value={barWidth} className="[&>div]:bg-amber-600 bg-stone-900"/>
+                    </Field>
                 </div>
             </div>
 

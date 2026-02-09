@@ -8,58 +8,100 @@ html, body {
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 0 0% 96.1%;
-        --secondary-foreground: 0 0% 9%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 9%;
-        --destructive: 0 84.2% 60.2%;
+        /* Base colors - stone/gray dark theme */
+        --background: 25 5% 18.4%;        /* stone-800 #2f2f2f */
+        --foreground: 0 0% 96.5%;         /* stone-50 #f6f6f6 */
+
+        /* Card/elevated surfaces */
+        --card: 25 5% 15.7%;              /* stone-900 darker */
+        --card-foreground: 0 0% 96.5%;
+
+        /* Popovers/dropdowns */
+        --popover: 25 5% 15.7%;           /* stone-900 */
+        --popover-foreground: 0 0% 96.5%;
+
+        /* Primary action - darker stone for buttons */
+        --primary: 25 5% 11%;             /* stone-900 #1c1917 */
+        --primary-foreground: 0 0% 98%;   /* white text */
+
+        /* Secondary actions */
+        --secondary: 25 5% 25%;           /* stone-700 */
+        --secondary-foreground: 0 0% 96.5%;
+
+        /* Muted/disabled */
+        --muted: 25 5% 25%;               /* stone-700 */
+        --muted-foreground: 30 5% 55%;    /* stone-500 */
+
+        /* Accent/highlights - stone-500 for visible hover */
+        --accent: 30 5% 50%;              /* stone-500 more visible hover */
+        --accent-foreground: 0 0% 98%;
+
+        /* Destructive/errors */
+        --destructive: 0 67% 33%;         /* red-800 #aa0000 */
         --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
-        --chart-1: 12 76% 61%;
+
+        /* Borders */
+        --border: 30 5% 35%;              /* stone-600/700 border */
+        --input: 25 5% 25%;               /* stone-700 input bg */
+
+        /* Focus rings */
+        --ring: 30 5% 55%;                /* stone-400 lighter focus */
+
+        /* Charts (keep existing vibrant colors) */
+        --chart-1: 30 5% 45%;             /* stone-500 */
+        --chart-2: 173 58% 39%;           /* teal */
+        --chart-3: 197 37% 24%;           /* blue-gray */
+        --chart-4: 43 74% 66%;            /* yellow */
+        --chart-5: 27 87% 67%;            /* orange */
+
+        /* Border radius */
+        --radius: 0.5rem;
+
+        /* Sidebar colors */
+        --sidebar-background: 25 5% 16%;  /* stone-850 */
+        --sidebar-foreground: 0 0% 96%;
+        --sidebar-primary: 30 5% 45%;     /* stone-500 lighter */
+        --sidebar-primary-foreground: 0 0% 98%;
+        --sidebar-accent: 25 5% 25%;      /* stone-700 */
+        --sidebar-accent-foreground: 0 0% 96%;
+        --sidebar-border: 30 5% 35%;      /* stone-600 */
+        --sidebar-ring: 30 5% 55%;        /* stone-400 lighter */
+    }
+
+    .dark {
+        /* Dark mode uses same values since app is dark by default */
+        --background: 25 5% 18.4%;
+        --foreground: 0 0% 96.5%;
+        --card: 25 5% 15.7%;
+        --card-foreground: 0 0% 96.5%;
+        --popover: 25 5% 15.7%;
+        --popover-foreground: 0 0% 96.5%;
+        --primary: 38 92% 50%;
+        --primary-foreground: 25 5% 18.4%;
+        --secondary: 25 5% 25%;
+        --secondary-foreground: 0 0% 96.5%;
+        --muted: 25 5% 25%;
+        --muted-foreground: 30 5% 55%;
+        --accent: 38 92% 50%;
+        --accent-foreground: 25 5% 18.4%;
+        --destructive: 0 67% 33%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 30 5% 35%;
+        --input: 25 5% 25%;
+        --ring: 38 92% 50%;
+        --chart-1: 38 92% 50%;
         --chart-2: 173 58% 39%;
         --chart-3: 197 37% 24%;
         --chart-4: 43 74% 66%;
         --chart-5: 27 87% 67%;
-        --radius: 0.5rem
-    }
-
-    .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
-        --chart-1: 220 70% 50%;
-        --chart-2: 160 60% 45%;
-        --chart-3: 30 80% 55%;
-        --chart-4: 280 65% 60%;
-        --chart-5: 340 75% 55%
+        --sidebar-background: 25 5% 16%;
+        --sidebar-foreground: 0 0% 96%;
+        --sidebar-primary: 38 92% 50%;
+        --sidebar-primary-foreground: 25 5% 18.4%;
+        --sidebar-accent: 25 5% 25%;
+        --sidebar-accent-foreground: 0 0% 96%;
+        --sidebar-border: 30 5% 35%;
+        --sidebar-ring: 38 92% 50%;
     }
 }
 
@@ -67,7 +109,6 @@ html, body {
     * {
         @apply border-border;
     }
-
     body {
         @apply bg-background text-foreground;
     }

@@ -1,4 +1,5 @@
 use reqwest::Client;
+use sentry::{Breadcrumb, Level, add_breadcrumb};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use tauri::Emitter;
@@ -20,9 +21,52 @@ pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String>
 	start_with_config(
 		OauthConfig {
 			response: Some(Cow::Borrowed(
-				"
-				<html><body>Login complete! Closing</body></html>
-				",
+				r#"<!doctype html>
+<html lang="no">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fullfører innlogging</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #ffffff;
+        color: #111827;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+      }
+      .spinner {
+        margin-top: 16px;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 4px solid rgba(17, 24, 39, 0.15);
+        border-top-color: rgba(17, 24, 39, 0.8);
+        animation: spin 900ms linear infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Fullfører innlogging</h1>
+    <div class="spinner" aria-label="Laster"></div>
+  </body>
+</html>"#,
 			)),
 			ports: None,
 		},
@@ -107,6 +151,12 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.expect("Time went backwards")
 		.as_millis();
 
+	// For debugging av treg tokenhenting. Remove when stable.
+	add_breadcrumb(Breadcrumb {
+		message: Some("Getting token".into()),
+		level: Level::Info,
+		..Default::default()
+	});
 	let res = client
 		.post(format!("{}{}", secrets.oidc_base_url, "/token"))
 		.header("Content-Type", "application/x-www-form-urlencoded")
@@ -115,6 +165,13 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.await;
 	let token_response: TokenResponse =
 		serde_json::from_str(&res.unwrap().text().await.unwrap()).unwrap();
+
+	add_breadcrumb(Breadcrumb {
+		message: Some("Received token response".into()),
+		level: Level::Info,
+		..Default::default()
+	});
+	sentry::capture_message("Token creation successful", Level::Info);
 
 	// For easier use in Frontend
 	let expire_info: ExpireInfo = ExpireInfo {
