@@ -111,7 +111,7 @@ export interface ThumbnailProps {
             </div>
         );
     } else {
-        content = <File size="96" color="gray"/>;
+        content = <File size="96" className='mx-auto mt-1' color="gray"/>;
     }
 
     return (
@@ -157,7 +157,7 @@ export interface ThumbnailProps {
                     </div>
                 )}
             </div>
-            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
+            <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
                 {fileName}
             </i>
         </div>

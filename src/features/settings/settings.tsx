@@ -7,7 +7,7 @@ import {ALargeSmall, X} from 'lucide-react';
 import {Separator} from '@/components/ui/separator.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Input} from '@/components/ui/input.tsx';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select.tsx';
+import {Slider} from '@/components/ui/slider.tsx';
 
 interface SettingsFormProps {
     setOpen: (open: boolean) => void;
@@ -33,16 +33,16 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
     const [sizeFractionsStatus, setSizeFractionsStatus] = useState<string | undefined>(undefined);
 
     const [scannerPathEdit, setScannerPathEdit] = useState<string>(scannerPath);
-    const [thumbnailSizeFractionEdit, setThumbnailSizeFractionEdit] = useState<number>(thumbnailSizeFraction);
-    const [previewSizeFractionEdit, setPreviewSizeFractionEdit] = useState<number>(previewSizeFraction);
+    const [thumbnailSizeEdit, setThumbnailSizeEdit] = useState<number>(thumbnailSizeFraction);
+    const [previewSizeFractionEdit, setPreviewSizeEdit] = useState<number>(previewSizeFraction);
 
     useEffect(() => {
         setScannerPathEdit(scannerPath);
     }, [scannerPath]);
 
     useEffect(() => {
-        setThumbnailSizeFractionEdit(thumbnailSizeFraction);
-        setPreviewSizeFractionEdit(previewSizeFraction);
+        setThumbnailSizeEdit(thumbnailSizeFraction);
+        setPreviewSizeEdit(previewSizeFraction);
     }, [thumbnailSizeFraction, previewSizeFraction]);
 
     const pickScannerPath = async () => {
@@ -81,10 +81,6 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             return;
         }
 
-        if (!confirm('Er du sikker på at du vil slette alle forhåndsvisninger? Dette kan ikke angres.')) {
-            return;
-        }
-
         setIsDeleting(true);
         setDeletePreviewsStatus(undefined);
 
@@ -102,13 +98,8 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
         }
     };
 
-    const getFractionText = (fraction: number): string => {
-        return `1/${fraction}`;
-    };
-    const fractionOptions = Array.from({length: 16}, (_, index) => index + 1);
-
     const handleSaveImageSizeFractions = async () => {
-        const hasChanged = thumbnailSizeFractionEdit !== thumbnailSizeFraction
+        const hasChanged = thumbnailSizeEdit !== thumbnailSizeFraction
             || previewSizeFractionEdit !== previewSizeFraction;
 
         if (!hasChanged) {
@@ -121,10 +112,10 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
         setSizeFractionsStatus(undefined);
 
         try {
-            setThumbnailSizeFraction(thumbnailSizeFractionEdit);
+            setThumbnailSizeFraction(thumbnailSizeEdit);
             setPreviewSizeFraction(previewSizeFractionEdit);
             await invoke('set_image_size_fractions', {
-                thumbnailFraction: thumbnailSizeFractionEdit,
+                thumbnailFraction: thumbnailSizeEdit,
                 previewFraction: previewSizeFractionEdit
             });
 
@@ -206,51 +197,47 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 {scanPathSuccess && <p className="text-green-500 ml-2">{scanPathSuccess}</p>}
             </div>
 
+            <label htmlFor="thumbnailSizeFraction" className="w-32">Bildekvalitet</label>
+            <hr className='mb-2'/>
             <div className="flex mb-2 items-center">
-                <label htmlFor="thumbnailSizeFraction" className="w-32">Miniatyrstørrelse</label>
-                <Select
-                    value={thumbnailSizeFractionEdit.toString()}
-                    onValueChange={(value) => setThumbnailSizeFractionEdit(Number(value))}
-                >
-                    <SelectTrigger id="thumbnailSizeFraction" className="ml-2 w-32">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {fractionOptions.map((fraction) => (
-                            <SelectItem key={`thumbnail-fraction-${fraction}`} value={fraction.toString()}>
-                                {getFractionText(fraction)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <label htmlFor="thumbnailSizeFraction" className="w-40">Miniatyrbilder</label>
+                <div className='flex flex-row gap-2 w-full px-6'>
+                    <span className='text-muted'>Minst</span>
+                    <Slider
+                        onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
+                        min={1}
+                        max={16}
+                        step={1}
+                    />
+                    <span className='text-muted'>Størst</span>
+                </div>
             </div>
 
             <div className="flex mb-2 items-center">
-                <label htmlFor="previewSizeFraction" className="w-32">Forhåndsvisning</label>
-                <Select
-                    value={previewSizeFractionEdit.toString()}
-                    onValueChange={(value) => setPreviewSizeFractionEdit(Number(value))}
-                >
-                    <SelectTrigger id="previewSizeFraction" className="ml-2 w-32">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {fractionOptions.map((fraction) => (
-                            <SelectItem key={`preview-fraction-${fraction}`} value={fraction.toString()}>
-                                {getFractionText(fraction)}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <label htmlFor="previewSizeFraction" className="w-40">Forhåndsvisninger</label>
+                <div className='flex flex-row gap-2 w-full px-6'>
+                    <span className='text-muted'>Minst</span>
+                    <Slider
+                        onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
+                        min={1}
+                        max={16}
+                        step={1}
+                    />
+                    <span className='text-muted'>Størst</span>
+                </div>
+            </div>
+
+            <div className="flex mb-2 ml-40">
                 <Button
                     type="button"
                     variant="secondary"
                     onClick={handleSaveImageSizeFractions}
                     disabled={isSavingSizeFractions}
-                    className="ml-2"
+                    className="w-40"
                 >
-                    {isSavingSizeFractions ? 'Lagrer...' : 'Lagre størrelser'}
+                    {isSavingSizeFractions ? 'Lagrer...' : 'Lagre bildekvalitet'}
                 </Button>
+
                 {sizeFractionsStatus && (
                     <p className={`ml-2 ${sizeFractionsStatus.startsWith('Feil') ? 'text-red-500' : 'text-green-500'}`}>
                         {sizeFractionsStatus}
@@ -258,19 +245,17 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 )}
             </div>
 
-            <div className="flex mb-6 ml-32">
-                <span className="ml-2 text-xs text-muted-foreground">
+            <span className="text-xs ml-40 text-muted-foreground">
                     Ved endring av disse størrelsene slettes alle eksisterende forhåndsvisninger og miniatyrbilder automatisk.
-                </span>
-            </div>
+            </span>
 
-            <div className="flex mb-2 items-center">
-                <label className="w-32">Forhåndsvisninger</label>
+            <div className="flex mb-2 mt-10 items-center">
+                <label className="w-40">Feilsøking</label>
                 <Button
                     type="button"
                     onClick={handleDeleteAllPreviews}
                     disabled={isDeleting || !scannerPath}
-                    className="ml-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white "
+                    className='bg-stone-700 hover:bg-stone-600'
                 >
                     {isDeleting ? 'Sletter...' : 'Slett alle forhåndsvisninger'}
                 </Button>
