@@ -255,6 +255,14 @@ async fn delete_all_previews_and_thumbnails(directory_path: String) -> Result<u3
 	.map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+async fn set_image_size_fractions(
+	thumbnail_fraction: u32,
+	preview_fraction: u32,
+) -> Result<(), String> {
+	image_converter::set_image_size_fractions(thumbnail_fraction, preview_fraction)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
@@ -293,6 +301,7 @@ pub fn run() {
 			pick_directory,
 			rotate_image,
 			delete_all_previews_and_thumbnails,
+			set_image_size_fractions,
 			#[cfg(not(feature = "debug-mock"))]
 			get_papi_access_token,
 			#[cfg(not(feature = "debug-mock"))]

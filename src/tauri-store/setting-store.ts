@@ -3,6 +3,14 @@ import {AuthenticationResponse} from '../model/authentication-response.ts';
 import {documentDir, sep} from '@tauri-apps/api/path';
 
 const defaultScannerPath = await documentDir() + sep() + 'trokk' + sep() + 'files';
+const defaultThumbnailSizeFraction = 8;
+const defaultPreviewSizeFraction = 4;
+const minSizeFraction = 1;
+const maxSizeFraction = 16;
+
+const clampSizeFraction = (fraction: number): number => {
+    return Math.max(minSizeFraction, Math.min(maxSizeFraction, fraction));
+};
 
 class SettingStore {
     private static instance: SettingStore;
@@ -121,6 +129,62 @@ class SettingStore {
             });
         } catch (error) {
             console.error('Error setting text size:', error);
+        }
+    }
+
+    async getThumbnailSizeFraction(): Promise<number> {
+        await this.ensureStore();
+        const fraction = await this.store!.get<number>('thumbnailSizeFraction')
+            .catch(error => {
+                console.error('Error getting thumbnail size fraction:', error);
+                return defaultThumbnailSizeFraction;
+            });
+        const clampedFraction = clampSizeFraction(fraction ?? defaultThumbnailSizeFraction);
+        if (fraction == undefined || clampedFraction !== fraction) {
+            await this.setThumbnailSizeFraction(clampedFraction);
+        }
+        return clampedFraction;
+    }
+
+    async setThumbnailSizeFraction(fraction: number): Promise<void> {
+        await this.ensureStore();
+        const clampedFraction = clampSizeFraction(fraction);
+        try {
+            await this.store!.set('thumbnailSizeFraction', clampedFraction).then(async () => {
+                await this.store!.save();
+            }).catch(error => {
+                console.error('Error setting thumbnail size fraction:', error);
+            });
+        } catch (error) {
+            console.error('Error setting thumbnail size fraction:', error);
+        }
+    }
+
+    async getPreviewSizeFraction(): Promise<number> {
+        await this.ensureStore();
+        const fraction = await this.store!.get<number>('previewSizeFraction')
+            .catch(error => {
+                console.error('Error getting preview size fraction:', error);
+                return defaultPreviewSizeFraction;
+            });
+        const clampedFraction = clampSizeFraction(fraction ?? defaultPreviewSizeFraction);
+        if (fraction == undefined || clampedFraction !== fraction) {
+            await this.setPreviewSizeFraction(clampedFraction);
+        }
+        return clampedFraction;
+    }
+
+    async setPreviewSizeFraction(fraction: number): Promise<void> {
+        await this.ensureStore();
+        const clampedFraction = clampSizeFraction(fraction);
+        try {
+            await this.store!.set('previewSizeFraction', clampedFraction).then(async () => {
+                await this.store!.save();
+            }).catch(error => {
+                console.error('Error setting preview size fraction:', error);
+            });
+        } catch (error) {
+            console.error('Error setting preview size fraction:', error);
         }
     }
 }
