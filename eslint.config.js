@@ -13,8 +13,14 @@ export default [
   pluginReact.configs.flat.recommended,
   { ignores: ['src-tauri/**/*', 'dist/**/*', 'node_modules/**/*'] },
   {
+    settings: {
+      react: {
+        version: 'detect'
+      }
+    },
     rules: {
       'quotes': ['error', 'single', { 'avoidEscape': true }],
       'react/react-in-jsx-scope': 'off'
-    } }
+    }
+  }
 ];
