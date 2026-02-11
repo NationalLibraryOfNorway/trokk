@@ -47,7 +47,7 @@ pub fn set_image_size_fractions(
 	preview_fraction: u32,
 ) -> Result<(), String> {
     let valid_range = MIN_SIZE_FRACTION..=MAX_SIZE_FRACTION;
-    if(!valid_range.contains(&thumbnail_fraction) || !valid_range.contains(&preview_fraction)) {
+    if !valid_range.contains(&thumbnail_fraction) || !valid_range.contains(&preview_fraction) {
         return Err(format!(
             "Invalid thumbnail or preview fraction. Both must be between {} and {}.",
             MIN_SIZE_FRACTION, MAX_SIZE_FRACTION
