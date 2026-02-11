@@ -14,12 +14,14 @@ vi.mock('@tauri-apps/api/core', () => ({
     invoke: vi.fn().mockResolvedValue({ oidcBaseUrl: 'http://mock-url' }),
 }));
 
-const mockStoreData: Record<string, any> = {};
+const mockStoreData: Record<string, unknown> = {};
 
-vi.mock("@tauri-apps/plugin-store", () => ({
+type StoreValue = unknown;
+
+vi.mock('@tauri-apps/plugin-store', () => ({
     load: vi.fn().mockResolvedValue({
-        get: vi.fn(async (key: string) => mockStoreData[key] ?? null),
-        set: vi.fn(async (key: string, val: any) => { mockStoreData[key] = val; }),
+        get: vi.fn(async (key: string) => (mockStoreData[key] as StoreValue) ?? null),
+        set: vi.fn(async (key: string, val: StoreValue) => { mockStoreData[key] = val; }),
         save: vi.fn(async () => {}),
     }),
     Store: vi.fn(),
@@ -157,8 +159,8 @@ describe('RegistrationForm', () => {
 
         render(<RegistrationFormWrapper checkedItems={['id1']} />);
         await waitFor(() => {
-            const button = screen.getByRole("button", { name: /TRØKK!/i });
-            expect(button.hasAttribute("disabled")).toBe(true);
+            const button = screen.getByRole('button', { name: /TRØKK!/i });
+            expect(button.hasAttribute('disabled')).toBe(true);
         });
     });
 

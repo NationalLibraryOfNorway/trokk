@@ -11,7 +11,14 @@ export default [
   pluginJs.configs.recommended,
   ...tseslint.configs.recommended,
   pluginReact.configs.flat.recommended,
-  { ignores: ['src-tauri/**/*', 'dist/**/*', 'node_modules/**/*'] },
+  {
+    ignores: [
+      'src-tauri/**/*',
+      'dist/**/*',
+      'node_modules/**/*',
+      'src/components/ui/**/*'
+    ]
+  },
   {
     settings: {
       react: {

@@ -70,7 +70,10 @@ vi.mock('../src/tauri-store/setting-store.ts', () => ({
 
 
 vi.mock('@tauri-apps/plugin-http', () => ({
-    fetch: vi.fn((url: string, init?: RequestInit) => (global.fetch as any)(url, init)),
+    fetch: vi.fn((url: string, init?: RequestInit) => {
+        const typedFetch = global.fetch as unknown as (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
+        return typedFetch(url, init);
+    }),
 }));
 
 vi.mock('@tauri-apps/plugin-fs', () => ({
