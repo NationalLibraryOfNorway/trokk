@@ -60,8 +60,6 @@ export interface ThumbnailProps {
 
     if (isHiddenDir) return null;
 
-    const initialStyle = 'max-h-[calc(100vh-250px)] ';
-
     const checkedBorder = 'bg-amber-400';
     const focusedBorder = 'bg-blue-600';
 
@@ -87,7 +85,7 @@ export interface ThumbnailProps {
     if (hasWebpThumbnail) {
         const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
         content = (
-            <div className="overflow-hidden flex items-center justify-center w-full h-full">
+            <div className="flex items-center justify-center w-full">
                 <div className={frameClass}>
                     <img
                         key={`${thumbnailPath}-${thumbnailCacheBuster}`}
@@ -102,7 +100,7 @@ export interface ThumbnailProps {
         const fileCacheBuster = getFileCacheBuster(fileTree.path);
         const srcUrl = `${convertFileSrc(fileTree.path)}?v=${fileCacheBuster}`;
         content = (
-            <div className="overflow-hidden flex items-center justify-center w-full h-full">
+            <div className="flex items-center justify-center w-full">
                 <div className={frameClass}>
                     <img
                         key={`${fileTree.path}-${fileCacheBuster}`}
@@ -113,7 +111,7 @@ export interface ThumbnailProps {
             </div>
         );
     } else {
-        content = <File size="96" color="gray"/>;
+        content = <File size="96" className='mx-auto mt-1' color="gray"/>;
     }
 
     return (
@@ -131,7 +129,7 @@ export interface ThumbnailProps {
             }}
             ref={ref}
         >
-            <div className={`${initialStyle} relative`}>
+            <div className="relative w-full">
                 {content}
                 <StatusOverlay status={imageStatus} size="small" />
                 {(isSupported || hasWebpThumbnail) && (
@@ -159,7 +157,7 @@ export interface ThumbnailProps {
                     </div>
                 )}
             </div>
-            <i className={`flex content-center justify-center pt-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
+            <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
                 {fileName}
             </i>
         </div>

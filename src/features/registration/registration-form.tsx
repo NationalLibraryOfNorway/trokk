@@ -16,7 +16,7 @@ import {useRotation} from '@/context/rotation-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
 import {LoaderCircle} from 'lucide-react';
-import {Field, FieldLabel} from "@/components/ui/field.tsx";
+import {Field, FieldLabel} from '@/components/ui/field.tsx';
 
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();

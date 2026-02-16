@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {invoke} from '@tauri-apps/api/core';
 import {readDir} from '@tauri-apps/plugin-fs';
 import {useSettings} from '@/context/setting-context.tsx';
@@ -7,19 +7,43 @@ import {ALargeSmall, X} from 'lucide-react';
 import {Separator} from '@/components/ui/separator.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Input} from '@/components/ui/input.tsx';
+import {Slider} from '@/components/ui/slider.tsx';
 
 interface SettingsFormProps {
     setOpen: (open: boolean) => void;
 }
 
 const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
-    const {scannerPath, setScannerPathSetting, version, textSize, setTextSize} = useSettings();
+    const {
+        scannerPath,
+        setScannerPathSetting,
+        version,
+        textSize,
+        setTextSize,
+        thumbnailSizeFraction,
+        previewSizeFraction,
+        setThumbnailSizeFraction,
+        setPreviewSizeFraction
+    } = useSettings();
     const [scanPathError, setScanPathError] = useState<string | undefined>(undefined);
     const [scanPathSuccess, setScanPathSuccess] = useState<string | undefined>(undefined);
     const [deletePreviewsStatus, setDeletePreviewsStatus] = useState<string | undefined>(undefined);
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const [isSavingSizeFractions, setIsSavingSizeFractions] = useState<boolean>(false);
+    const [sizeFractionsStatus, setSizeFractionsStatus] = useState<string | undefined>(undefined);
 
     const [scannerPathEdit, setScannerPathEdit] = useState<string>(scannerPath);
+    const [thumbnailSizeEdit, setThumbnailSizeEdit] = useState<number>(thumbnailSizeFraction);
+    const [previewSizeFractionEdit, setPreviewSizeEdit] = useState<number>(previewSizeFraction);
+
+    useEffect(() => {
+        setScannerPathEdit(scannerPath);
+    }, [scannerPath]);
+
+    useEffect(() => {
+        setThumbnailSizeEdit(thumbnailSizeFraction);
+        setPreviewSizeEdit(previewSizeFraction);
+    }, [thumbnailSizeFraction, previewSizeFraction]);
 
     const pickScannerPath = async () => {
         try {
@@ -57,10 +81,6 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             return;
         }
 
-        if (!confirm('Er du sikker på at du vil slette alle forhåndsvisninger? Dette kan ikke angres.')) {
-            return;
-        }
-
         setIsDeleting(true);
         setDeletePreviewsStatus(undefined);
 
@@ -75,6 +95,48 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             setDeletePreviewsStatus(`Feil: ${error}`);
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleSaveImageSizeFractions = async () => {
+        const hasChanged = thumbnailSizeEdit !== thumbnailSizeFraction
+            || previewSizeFractionEdit !== previewSizeFraction;
+
+        if (!hasChanged) {
+            setSizeFractionsStatus('Ingen endringer å lagre.');
+            setTimeout(() => setSizeFractionsStatus(undefined), 5000);
+            return;
+        }
+
+        setIsSavingSizeFractions(true);
+        setSizeFractionsStatus(undefined);
+
+        try {
+            setThumbnailSizeFraction(thumbnailSizeEdit);
+            setPreviewSizeFraction(previewSizeFractionEdit);
+            await invoke('set_image_size_fractions', {
+                thumbnailFraction: thumbnailSizeEdit,
+                previewFraction: previewSizeFractionEdit
+            });
+
+            if (!scannerPath) {
+                setSizeFractionsStatus('Lagret, men ingen skanner mappe valgt for sletting.');
+                return;
+            }
+
+            const deletedCount = await invoke<number>('delete_all_previews_and_thumbnails', {
+                directoryPath: scannerPath
+            });
+            setSizeFractionsStatus(
+                `Lagret. Slettet ${deletedCount} forhåndsvisninger og miniatyrbilder.`
+            );
+            setDeletePreviewsStatus(undefined);
+        } catch (error) {
+            console.error('Failed to save size fractions:', error);
+            setSizeFractionsStatus(`Feil ved lagring: ${error}`);
+        } finally {
+            setIsSavingSizeFractions(false);
+            setTimeout(() => setSizeFractionsStatus(undefined), 5000);
         }
     };
 
@@ -96,19 +158,19 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             <div className="flex mb-2 mt-4 items-center">
                 <label htmlFor="textSize" className="w-32">Tekststørrelse</label>
                 <div className="ml-2 flex items-center gap-2">
-                    <Button variant="outline" className='w-[24px] h-[24px] p-0' onClick={() => setTextSize(75)} >
+                    <Button type="button" variant="outline" className='w-[24px] h-[24px] p-0' onClick={() => setTextSize(75)} >
                         <ALargeSmall className="!w-[24px] !h-[24px]"/>
                     </Button>
 
-                    <Button variant="outline" className='w-[32px] h-[32px] p-0' onClick={() => setTextSize(100)} >
+                    <Button type="button" variant="outline" className='w-[32px] h-[32px] p-0' onClick={() => setTextSize(100)} >
                         <ALargeSmall className="!w-[32px] !h-[32px]"/>
                     </Button>
 
-                    <Button variant="outline" className='w-[40px] h-[40px] p-0' onClick={() => setTextSize(125)} >
+                    <Button type="button" variant="outline" className='w-[40px] h-[40px] p-0' onClick={() => setTextSize(125)} >
                         <ALargeSmall className="!w-[40px] !h-[40px]"/>
                     </Button>
 
-                    <Button variant="outline" className='w-[48px] h-[48px] p-0' onClick={() => setTextSize(150)} >
+                    <Button type="button" variant="outline" className='w-[48px] h-[48px] p-0' onClick={() => setTextSize(150)} >
                         <ALargeSmall  className="!w-[48px] !h-[48px]"/>
                     </Button>
                 </div>
@@ -135,13 +197,65 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 {scanPathSuccess && <p className="text-green-500 ml-2">{scanPathSuccess}</p>}
             </div>
 
+            <label htmlFor="thumbnailSizeFraction" className="w-32">Bildekvalitet</label>
+            <hr className='mb-2'/>
             <div className="flex mb-2 items-center">
-                <label className="w-32">Forhåndsvisninger</label>
+                <label htmlFor="thumbnailSizeFraction" className="w-40">Miniatyrbilder</label>
+                <div className='flex flex-row gap-2 w-full px-6'>
+                    <span className='text-muted'>Minst</span>
+                    <Slider
+                        onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
+                        min={1}
+                        max={16}
+                        step={1}
+                    />
+                    <span className='text-muted'>Størst</span>
+                </div>
+            </div>
+
+            <div className="flex mb-2 items-center">
+                <label htmlFor="previewSizeFraction" className="w-40">Forhåndsvisninger</label>
+                <div className='flex flex-row gap-2 w-full px-6'>
+                    <span className='text-muted'>Minst</span>
+                    <Slider
+                        onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
+                        min={1}
+                        max={16}
+                        step={1}
+                    />
+                    <span className='text-muted'>Størst</span>
+                </div>
+            </div>
+
+            <div className="flex mb-2 ml-40">
+                <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleSaveImageSizeFractions}
+                    disabled={isSavingSizeFractions}
+                    className="w-40"
+                >
+                    {isSavingSizeFractions ? 'Lagrer...' : 'Lagre bildekvalitet'}
+                </Button>
+
+                {sizeFractionsStatus && (
+                    <p className={`ml-2 ${sizeFractionsStatus.startsWith('Feil') ? 'text-red-500' : 'text-green-500'}`}>
+                        {sizeFractionsStatus}
+                    </p>
+                )}
+            </div>
+
+            <span className="text-xs ml-40 text-muted-foreground">
+                    Ved endring av disse størrelsene slettes alle eksisterende forhåndsvisninger og miniatyrbilder automatisk.
+            </span>
+
+            <div className="flex mb-2 mt-10 items-center">
+                <label className="w-40">Feilsøking</label>
                 <Button
                     type="button"
                     onClick={handleDeleteAllPreviews}
                     disabled={isDeleting || !scannerPath}
-                    className="ml-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white "
+                    className='bg-stone-700 hover:bg-stone-600'
                 >
                     {isDeleting ? 'Sletter...' : 'Slett alle forhåndsvisninger'}
                 </Button>

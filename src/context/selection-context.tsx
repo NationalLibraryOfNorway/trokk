@@ -25,7 +25,8 @@ export interface SelectionContextProps {
 
 const SelectionContext = createContext<SelectionContextProps | undefined>(undefined);
 
-
+// We can disable the eslint rule for prop-types since we're using TypeScript for type checking.
+// eslint-disable-next-line react/prop-types
 export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [currentIndex, setCurrentIndex] = useState<number>(0);
     const [currentFolderPath, setCurrentFolderPath] = useState<string | undefined>(undefined);

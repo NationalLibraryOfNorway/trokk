@@ -139,9 +139,10 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                         )}
 
                         {hasError && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-black/30 backdrop-blur-[1px] z-[6]">
+                            <div className="absolute inset-0 flex items-center bg-stone-900 justify-center z-[6]">
                                 <p className="text-white text-sm px-4 text-center">
-                                    Kunne ikke laste forhåndsvisning. Regenererer…
+                                    <LoaderCircle className="animate-spin mx-auto mb-2" />
+                                    Genererer forhåndsvisning…
                                 </p>
                             </div>
                         )}

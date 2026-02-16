@@ -1,5 +1,5 @@
 import {render} from '@testing-library/react';
-import {vi} from 'vitest';
+import {vi, type Mock} from 'vitest';
 import {useSelection} from '../src/context/selection-context';
 import {useTrokkFiles} from '../src/context/trokk-files-context';
 import {useKeyboardNavigation} from '../src/hooks/use-keyboard-navigation';
@@ -14,12 +14,19 @@ const mockChildren = [
     {isDirectory: false, path: '/test/file3'},
 ];
 
+interface TestComponentProps {
+    delFilePath: string;
+    setDelFilePath: (path: string | null) => void;
+    previewDialogOpen: boolean;
+    setPreviewDialogOpen: (open: boolean) => void;
+}
+
 function TestComponent({
                            delFilePath,
                            setDelFilePath,
                            previewDialogOpen,
                            setPreviewDialogOpen,
-                       }: any) {
+                       }: TestComponentProps) {
     useKeyboardNavigation({
         delFilePath,
         setDelFilePath,
@@ -40,7 +47,7 @@ const setupMocks = (currentIndex = 0) => {
     const setDelFilePath = vi.fn();
     const setPreviewDialogOpen = vi.fn();
 
-    (useSelection as vi.Mock).mockReturnValue({
+    (useSelection as unknown as Mock).mockReturnValue({
         currentIndex,
         handleIndexChange,
         handleNext,
@@ -51,7 +58,7 @@ const setupMocks = (currentIndex = 0) => {
         columns: 1,
     });
 
-    (useTrokkFiles as vi.Mock).mockReturnValue({
+    (useTrokkFiles as unknown as Mock).mockReturnValue({
         state: {
             current: {
                 path: '/test',
@@ -62,7 +69,7 @@ const setupMocks = (currentIndex = 0) => {
 
     render(
         <TestComponent
-            delFilePath={null}
+            delFilePath={''}
             setDelFilePath={setDelFilePath}
             previewDialogOpen={false}
             setPreviewDialogOpen={setPreviewDialogOpen}
@@ -86,7 +93,7 @@ beforeAll(() => {
 });
 
 afterEach(() => {
-    window.onkeyPress = null;
+    window.onkeypress = null;
 });
 
 describe('useKeyboardNavigation', () => {

@@ -4,23 +4,75 @@ use little_exif::exif_tag::ExifTag;
 use little_exif::metadata::Metadata;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use std::time::Duration;
 use std::{fs, thread};
 use webp::Encoder;
 
 use crate::error::ImageConversionError;
 use crate::file_utils;
+use once_cell::sync::Lazy;
 
 const THUMBNAIL_FOLDER_NAME: &str = ".thumbnails";
 const PREVIEW_FOLDER_NAME: &str = ".previews";
 const WEBP_EXTENSION: &str = "webp";
 const WEBP_QUALITY: f32 = 25.0;
+const DEFAULT_THUMBNAIL_FRACTION: u32 = 8;
+const DEFAULT_PREVIEW_FRACTION: u32 = 4;
+const MIN_SIZE_FRACTION: u32 = 1;
+const MAX_SIZE_FRACTION: u32 = 16;
+
+#[derive(Debug, Clone, Copy)]
+struct ImageSizeFractions {
+	thumbnail_fraction: u32,
+	preview_fraction: u32,
+}
+
+static IMAGE_SIZE_FRACTIONS: Lazy<Mutex<ImageSizeFractions>> = Lazy::new(|| {
+	Mutex::new(ImageSizeFractions {
+		thumbnail_fraction: DEFAULT_THUMBNAIL_FRACTION,
+		preview_fraction: DEFAULT_PREVIEW_FRACTION,
+	})
+});
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConversionCount {
 	pub(crate) converted: u32,
 	pub(crate) already_converted: u32,
+}
+
+pub fn set_image_size_fractions(
+	thumbnail_fraction: u32,
+	preview_fraction: u32,
+) -> Result<(), String> {
+	let valid_range = MIN_SIZE_FRACTION..=MAX_SIZE_FRACTION;
+	if !valid_range.contains(&thumbnail_fraction) || !valid_range.contains(&preview_fraction) {
+		return Err(format!(
+			"Invalid thumbnail or preview fraction. Both must be between {} and {}.",
+			MIN_SIZE_FRACTION, MAX_SIZE_FRACTION
+		));
+	}
+
+	let mut fractions = IMAGE_SIZE_FRACTIONS.lock().map_err(|e| e.to_string())?;
+	fractions.thumbnail_fraction = thumbnail_fraction;
+	fractions.preview_fraction = preview_fraction;
+	Ok(())
+}
+
+fn get_fraction(high_res: bool) -> u32 {
+	let fractions = IMAGE_SIZE_FRACTIONS
+		.lock()
+		.map(|f| *f)
+		.unwrap_or(ImageSizeFractions {
+			thumbnail_fraction: DEFAULT_THUMBNAIL_FRACTION,
+			preview_fraction: DEFAULT_PREVIEW_FRACTION,
+		});
+	if high_res {
+		fractions.preview_fraction
+	} else {
+		fractions.thumbnail_fraction
+	}
 }
 
 pub fn convert_directory_to_webp<P: AsRef<Path>>(
@@ -83,19 +135,14 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		Orientation::Rotate270 => image.rotate270(),
 		_ => image,
 	};
-	let image = if high_res {
-		image.resize(
-			image.width() / 4,
-			image.height() / 4,
-			image::imageops::FilterType::Nearest,
-		)
-	} else {
-		image.resize(
-			image.width() / 8,
-			image.height() / 8,
-			image::imageops::FilterType::Nearest,
-		)
-	};
+	let fraction = get_fraction(high_res);
+	let resized_width = (image.width() / fraction).max(1);
+	let resized_height = (image.height() / fraction).max(1);
+	let image = image.resize(
+		resized_width,
+		resized_height,
+		image::imageops::FilterType::Nearest,
+	);
 
 	let encoder: Encoder =
 		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
