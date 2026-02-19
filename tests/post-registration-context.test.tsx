@@ -14,6 +14,7 @@ import {SelectionProvider} from '../src/context/selection-context';
 const mockHandleError = vi.fn();
 const mockClearError = vi.fn();
 const mockDisplaySuccessMessage = vi.fn();
+let mockUploadVersionBlocking = false;
 
 vi.mock('@tauri-apps/api/app', () => ({
     getVersion: vi.fn(() => Promise.resolve('1.0.0')),
@@ -26,7 +27,10 @@ vi.mock('../src/context/auth-context', () => ({
 
 vi.mock('../src/context/secret-context', () => ({
     SecretProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-    useSecrets: () => ({ secrets: {papiPath: 'https://papi',oidcClientSecret: 'mock', oidcClientId: 'mockId', oidcBaseUrl: 'mock'} }),
+    useSecrets: () => ({
+        secrets: {papiPath: 'https://papi',oidcClientSecret: 'mock', oidcClientId: 'mockId', oidcBaseUrl: 'mock'},
+        uploadVersionBlocking: mockUploadVersionBlocking
+    }),
     useTransferLog: () => ({
         useSecrets: () => ({}),
     }),
@@ -117,6 +121,7 @@ const mockCommonSetup = () => {
 describe('usePostRegistration', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        mockUploadVersionBlocking = false;
     });
 
     it('successfully posts a registration', async () => {
@@ -154,6 +159,18 @@ describe('usePostRegistration', () => {
         const { result } = renderHook(() => usePostRegistration(), { wrapper });
 
         await expect(result.current.postRegistration('TestMachine', registration)).rejects.toThrow('upload failed');
+    });
+
+    it('blocks posting when version is blocking', async () => {
+        mockUploadVersionBlocking = true;
+
+        const { result } = renderHook(() => usePostRegistration(), { wrapper });
+
+        await expect(result.current.postRegistration('TestMachine', registration)).rejects.toEqual('Version blocked');
+        expect(uploadToS3).not.toHaveBeenCalled();
+        expect(mockHandleError).toHaveBeenCalledWith(
+            expect.stringContaining('Ny versjon kreves før opplasting')
+        );
     });
 
     it('handles different API error statuses correctly', async () => {

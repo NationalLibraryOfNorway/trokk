@@ -1,16 +1,24 @@
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+#[cfg(not(feature = "debug-mock"))]
+use reqwest::Client;
+#[cfg(not(feature = "debug-mock"))]
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::string::ToString;
 use std::sync::Mutex;
+#[cfg(not(feature = "debug-mock"))]
+use std::time::Duration;
 use tauri::Window;
 use tokio::sync::OnceCell;
 
 use crate::image_converter::ConversionCount;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::RequiredEnvironmentVariables;
-use crate::model::{AuthenticationResponse, SecretVariables};
+use crate::model::{
+	AuthenticationResponse, DesktopVersionGateResponse, SecretVariables, StartupVersionStatus,
+};
 
 mod auth;
 mod error;
@@ -38,10 +46,11 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 #[cfg(not(feature = "debug-mock"))]
 // Use Tokio's OnceCell to fetch secrets from Vault only once
 static VAULT_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
+#[cfg(feature = "debug-mock")]
+static MOCK_SECRET_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
 
 #[cfg(not(feature = "debug-mock"))]
-#[tauri::command]
-async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
+pub(crate) async fn get_cached_secret_variables() -> Result<&'static SecretVariables, String> {
 	// Fetch secrets from Vault only once, the cell functions as a cache
 	VAULT_CELL
 		.get_or_try_init(|| async { vault::fetch_secrets_from_vault().await })
@@ -57,10 +66,8 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 }
 
 #[cfg(feature = "debug-mock")]
-#[tauri::command]
-async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
-	static MOCK_SECRETS: OnceCell<SecretVariables> = OnceCell::const_new();
-	MOCK_SECRETS
+pub(crate) async fn get_cached_secret_variables() -> Result<&'static SecretVariables, String> {
+	MOCK_SECRET_CELL
 		.get_or_try_init(|| async {
 			Ok(SecretVariables {
 				oidc_client_id: option_env!("OIDC_CLIENT_ID").unwrap_or("").to_string(),
@@ -73,9 +80,306 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 					.unwrap_or("")
 					.to_string(),
 				oidc_tekst_base_url: option_env!("OIDC_TEKST_BASE_URL").unwrap_or("").to_string(),
+				startup_version_message: None,
+				current_version: Some(env!("CARGO_PKG_VERSION").to_string()),
+				latest_version: Some(env!("CARGO_PKG_VERSION").to_string()),
+				auto_login_allowed: true,
 			})
 		})
 		.await
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[derive(Clone, Copy)]
+struct ParsedVersion {
+	major: u64,
+	minor: u64,
+	patch: u64,
+}
+
+#[cfg(not(feature = "debug-mock"))]
+fn parse_version(input: &str) -> Result<ParsedVersion, String> {
+	let trimmed = input.trim();
+	let no_prefix = trimmed
+		.strip_prefix('v')
+		.or_else(|| trimmed.strip_prefix('V'))
+		.unwrap_or(trimmed);
+	let mut parts = no_prefix.split('.');
+	let major = parts
+		.next()
+		.ok_or_else(|| format!("Ugyldig versjonsformat: {input}"))?
+		.parse::<u64>()
+		.map_err(|_| format!("Ugyldig versjonsformat: {input}"))?;
+	let minor = parts
+		.next()
+		.ok_or_else(|| format!("Ugyldig versjonsformat: {input}"))?
+		.parse::<u64>()
+		.map_err(|_| format!("Ugyldig versjonsformat: {input}"))?;
+	let patch_part = parts
+		.next()
+		.ok_or_else(|| format!("Ugyldig versjonsformat: {input}"))?;
+	if parts.next().is_some() {
+		return Err(format!("Ugyldig versjonsformat: {input}"));
+	}
+	if patch_part.contains('-') || patch_part.contains('+') {
+		return Err(format!(
+			"Ugyldig versjonsformat: {input}. Appended informasjon støttes ikke."
+		));
+	}
+	let patch = patch_part
+		.parse::<u64>()
+		.map_err(|_| format!("Ugyldig versjonsformat: {input}"))?;
+	Ok(ParsedVersion {
+		major,
+		minor,
+		patch,
+	})
+}
+
+#[cfg(not(feature = "debug-mock"))]
+fn compare_versions(a: ParsedVersion, b: ParsedVersion) -> Ordering {
+	a.major
+		.cmp(&b.major)
+		.then(a.minor.cmp(&b.minor))
+		.then(a.patch.cmp(&b.patch))
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct StartupVersionPolicy {
+	pub(crate) status: StartupVersionStatus,
+	pub(crate) startup_version_message: Option<String>,
+	pub(crate) auto_login_allowed: bool,
+}
+
+#[cfg(not(feature = "debug-mock"))]
+pub(crate) fn evaluate_startup_version_policy(
+	current_version: &str,
+	latest_version: &str,
+) -> Result<StartupVersionPolicy, String> {
+	let current_version_text = format!("v{current_version}");
+	let current = parse_version(current_version)
+		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
+	let latest = parse_version(latest_version).map_err(|e| {
+		format!(
+			"{e} (nåværende versjon: {current_version_text}, mottatt siste versjon: {latest_version})"
+		)
+	})?;
+
+	match compare_versions(current, latest) {
+		Ordering::Greater | Ordering::Equal => Ok(StartupVersionPolicy {
+			status: StartupVersionStatus::UpToDate,
+			startup_version_message: None,
+			auto_login_allowed: true,
+		}),
+		Ordering::Less => {
+			if current.major != latest.major {
+				return Ok(StartupVersionPolicy {
+					status: StartupVersionStatus::MajorBlocking,
+					startup_version_message: Some(format!(
+						"Ny hovedversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan fortsette."
+					)),
+					auto_login_allowed: false,
+				});
+			}
+			if current.minor != latest.minor {
+				return Ok(StartupVersionPolicy {
+					status: StartupVersionStatus::MinorBlocking,
+					startup_version_message: Some(format!(
+						"Ny delversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan fortsette."
+					)),
+					auto_login_allowed: false,
+				});
+			}
+			Ok(StartupVersionPolicy {
+				status: StartupVersionStatus::PatchAvailable,
+				startup_version_message: Some(format!(
+					"Ny patch-versjon er tilgjengelig ({latest_version}). Du må logge inn manuelt."
+				)),
+				auto_login_allowed: false,
+			})
+		}
+	}
+}
+
+#[cfg(not(feature = "debug-mock"))]
+pub(crate) fn evaluate_desktop_version_gate(
+	current_version: &str,
+	latest_version: &str,
+) -> Result<DesktopVersionGateResponse, String> {
+	let current_version_text = format!("v{current_version}");
+	let current = parse_version(current_version)
+		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
+	let latest = parse_version(latest_version).map_err(|e| {
+		format!(
+			"{e} (nåværende versjon: {current_version_text}, mottatt siste versjon: {latest_version})"
+		)
+	})?;
+
+	let response = match compare_versions(current, latest) {
+		Ordering::Greater | Ordering::Equal => DesktopVersionGateResponse {
+			status: StartupVersionStatus::UpToDate,
+			is_blocking: false,
+			is_patch: false,
+			message: None,
+			current_version: current_version_text,
+			latest_version: Some(latest_version.to_string()),
+		},
+		Ordering::Less => {
+			if current.major != latest.major {
+				DesktopVersionGateResponse {
+					status: StartupVersionStatus::MajorBlocking,
+					is_blocking: true,
+					is_patch: false,
+					message: Some(format!(
+						"Ny hovedversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan TRØKKE."
+					)),
+					current_version: current_version_text,
+					latest_version: Some(latest_version.to_string()),
+				}
+			} else if current.minor != latest.minor {
+				DesktopVersionGateResponse {
+					status: StartupVersionStatus::MinorBlocking,
+					is_blocking: true,
+					is_patch: false,
+					message: Some(format!(
+						"Ny delversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan TRØKKE."
+					)),
+					current_version: current_version_text,
+					latest_version: Some(latest_version.to_string()),
+				}
+			} else {
+				DesktopVersionGateResponse {
+					status: StartupVersionStatus::PatchAvailable,
+					is_blocking: false,
+					is_patch: true,
+					message: Some(format!(
+						"Ny patch-versjon er tilgjengelig ({latest_version}). Du kan fortsette, men det anbefales å oppdatere."
+					)),
+					current_version: current_version_text,
+					latest_version: Some(latest_version.to_string()),
+				}
+			}
+		}
+	};
+
+	Ok(response)
+}
+
+#[cfg(not(feature = "debug-mock"))]
+async fn fetch_latest_desktop_version(desktop_version_base_uri: &str) -> Result<String, String> {
+	let desktop_version_uri = format!(
+		"{}/Tr%C3%B8kk",
+		desktop_version_base_uri.trim_end_matches('/')
+	);
+	let client = Client::builder()
+		.timeout(Duration::from_secs(15))
+		.build()
+		.map_err(|e| format!("Kunne ikke initialisere HTTP-klient: {e}"))?;
+	let response = client
+		.get(&desktop_version_uri)
+		.send()
+		.await
+		.map_err(|e| format!("Kunne ikke hente siste versjon: {e}"))?;
+	if !response.status().is_success() {
+		return Err(format!(
+			"Kunne ikke hente siste versjon. Status: {}",
+			response.status()
+		));
+	}
+	let latest_version_raw = response
+		.text()
+		.await
+		.map_err(|e| format!("Kunne ikke lese versjonssvar: {e}"))?;
+	let trimmed = latest_version_raw.trim();
+	let normalized = trimmed
+		.strip_prefix('"')
+		.and_then(|v| v.strip_suffix('"'))
+		.unwrap_or(trimmed)
+		.trim()
+		.to_string();
+	if normalized.is_empty() {
+		return Err("Versjonssvar var tomt.".to_string());
+	}
+	Ok(normalized)
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[tauri::command]
+async fn get_secret_variables(
+	desktop_version_uri: Option<String>,
+) -> Result<SecretVariables, String> {
+	let cached = get_cached_secret_variables().await?;
+	let mut secret_variables = cached.clone();
+	let version_uri = desktop_version_uri
+		.map(|uri| uri.trim().to_string())
+		.filter(|uri| !uri.is_empty())
+		.ok_or_else(|| {
+			"Mangler konfigurasjon for versjonssjekk (VITE_PAPI_API_DESKTOP_VERSION_URI)."
+				.to_string()
+		})?;
+
+	let current_version = env!("CARGO_PKG_VERSION").to_string();
+	let current_version_text = format!("v{current_version}");
+	let latest_version = fetch_latest_desktop_version(&version_uri)
+		.await
+		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
+	let version_policy = evaluate_startup_version_policy(&current_version, &latest_version)?;
+
+	secret_variables.current_version = Some(current_version.clone());
+	secret_variables.latest_version = Some(latest_version.clone());
+	secret_variables.startup_version_status = Some(version_policy.status);
+	secret_variables.startup_version_message = version_policy.startup_version_message;
+	secret_variables.auto_login_allowed = version_policy.auto_login_allowed;
+
+	Ok(secret_variables)
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[tauri::command]
+async fn check_desktop_version_gate(
+	desktop_version_uri: String,
+) -> Result<DesktopVersionGateResponse, String> {
+	let version_uri = desktop_version_uri.trim();
+	if version_uri.is_empty() {
+		return Err(
+			"Mangler konfigurasjon for versjonssjekk (VITE_PAPI_API_DESKTOP_VERSION_URI)."
+				.to_string(),
+		);
+	}
+
+	let current_version = env!("CARGO_PKG_VERSION").to_string();
+	let current_version_text = format!("v{current_version}");
+	let latest_version = fetch_latest_desktop_version(version_uri)
+		.await
+		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
+	let response = evaluate_desktop_version_gate(&current_version, &latest_version)?;
+
+	Ok(response)
+}
+
+#[cfg(feature = "debug-mock")]
+#[tauri::command]
+async fn get_secret_variables(
+	_desktop_version_uri: Option<String>,
+) -> Result<SecretVariables, String> {
+	let cached = get_cached_secret_variables().await?;
+	Ok(cached.clone())
+}
+
+#[cfg(feature = "debug-mock")]
+#[tauri::command]
+async fn check_desktop_version_gate(
+	_desktop_version_uri: String,
+) -> Result<DesktopVersionGateResponse, String> {
+	Ok(DesktopVersionGateResponse {
+		status: StartupVersionStatus::UpToDate,
+		is_blocking: false,
+		is_patch: false,
+		message: None,
+		current_version: format!("v{}", env!("CARGO_PKG_VERSION")),
+		latest_version: Some(format!("v{}", env!("CARGO_PKG_VERSION"))),
+	})
 }
 
 #[tauri::command]
@@ -212,9 +516,7 @@ async fn pick_directory<R: tauri::Runtime>(
 #[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn get_papi_access_token() -> Result<String, String> {
-	auth::get_access_token_for_papi()
-		.await
-		.map_err(|e| format!("Could not get token for Papi. {e:?}"))
+	auth::get_access_token_for_papi().await
 }
 
 #[cfg(not(feature = "debug-mock"))]
@@ -292,6 +594,7 @@ pub fn run() {
 		.invoke_handler(tauri::generate_handler![
 			get_hostname,
 			get_secret_variables,
+			check_desktop_version_gate,
 			log_in,
 			refresh_token,
 			create_thumbnail_webp,

@@ -1,7 +1,7 @@
 import React, {useRef, useState} from 'react';
-import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings, Loader2} from 'lucide-react';
+import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings} from 'lucide-react';
 import './App.css';
-import {AuthContextType, AuthProvider, useAuth} from './context/auth-context.tsx';
+import {AuthProvider, useAuth} from './context/auth-context.tsx';
 import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
 import MainLayout from './components/layouts/main-layout.tsx';
 import SettingsForm from './features/settings/settings.tsx';
@@ -12,13 +12,14 @@ import {MessageProvider} from './context/message-context.tsx';
 import {TransferLogProvider} from './context/transfer-log-context.tsx';
 import {SelectionProvider} from './context/selection-context.tsx';
 import {RotationProvider} from './context/rotation-context.tsx';
+import {useSecrets} from './context/secret-context.tsx';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
 import {useTextSizeShortcuts} from './hooks/use-text-size-shortcuts.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Dialog, DialogContent, DialogTrigger} from '@/components/ui/dialog.tsx';
 import {useToolbarOffset} from '@/hooks/use-toolbar-offset';
-
+import {StartupMessageCard, StartupScreen, StartupSpinner} from '@/components/startup/startup-screen.tsx';
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -52,11 +53,14 @@ interface ContentProps {
 }
 
 const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
-    const {authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout} = useAuth() as AuthContextType;
+    const {authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout} = useAuth();
     const {scannerPath} = useSettings();
+    const {startupVersionMessage, startupVersionStatus, getSecrets} = useSecrets();
+    const [isRetryingStartup, setIsRetryingStartup] = useState(false);
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
     const toolbarRef = useRef<HTMLDivElement>(null);
+    const startupWarningMessageClass = 'border-yellow-600 bg-yellow-950/40 text-yellow-100';
     useToolbarOffset(toolbarRef);
 
     // Enable keyboard shortcuts for text size control
@@ -100,6 +104,13 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         }
     };
 
+    const handleRetryStartup = async () => {
+        setIsRetryingStartup(true);
+        await getSecrets()
+            .catch(() => undefined)
+            .finally(() => setIsRetryingStartup(false));
+    };
+
     // Listen for window maximize/unmaximize events
     React.useEffect(() => {
         const appWindow = getCurrentWindow();
@@ -129,74 +140,83 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     }, []);
 
     if (fetchSecretsError) {
+        const startupErrorTitle = 'Feil ved oppstart';
+        const startupMessageClass = 'border-destructive bg-destructive text-destructive-foreground';
+
         return (
-            <>
-                <div className="flex flex-row justify-between sticky top-0 h-[5vh]">
-                    <p></p>
-                    <h1 className={'text-center'}>Trøkk</h1>
-                    <p></p>
+            <StartupScreen logoClassName="w-96">
+                <StartupMessageCard title={startupErrorTitle} message={fetchSecretsError} className={startupMessageClass}>
+                </StartupMessageCard>
+                <div className="flex items-center gap-3">
+                    <Button onClick={handleRetryStartup} disabled={isRetryingStartup}>
+                        {isRetryingStartup ? 'Prøver igjen...' : 'Prøv igjen'}
+                    </Button>
+                    <Button variant="secondary" onClick={handleExit}>
+                        Lukk app
+                    </Button>
                 </div>
-                <div
-                    className="flex flex-col justify-center items-center w-max self-center rounded-md p-2 bg-destructive text-destructive-foreground">
-                    <h1>Feil ved innhenting av hemmeligheter</h1>
-                    <p>{fetchSecretsError}</p>
-                </div>
-            </>
+            </StartupScreen>
         );
     }
 
     if (isRefreshingToken && !authResponse) {
         return (
-            <div className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-10 w-10 animate-spin" aria-label="Logger inn" />
-                    <p className="text-xl">Logger inn</p>
-                </div>
-            </div>
+            <StartupScreen>
+                <StartupSpinner label="Logger inn"/>
+            </StartupScreen>
         );
     }
 
     if (loggedOut) {
+        const isStartupBlocking =
+            startupVersionStatus === 'MAJOR_BLOCKING' || startupVersionStatus === 'MINOR_BLOCKING';
+
         return (
-            <div data-tauri-drag-region className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
-                {isLoggingIn ? (
-                    <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="h-10 w-10 animate-spin" aria-label="Logger inn" />
-                        <p className="text-xl">Logger inn</p>
-                    </div>
-                ) : (
-                    <Button className={'w-[150px] h-[75px] text-2xl'} onClick={login}>
-                        Logg inn <LogIn/>
-                    </Button>
+            <StartupScreen>
+                {startupVersionMessage && (
+                    <p data-tauri-drag-region className={`mb-6 max-w-xl rounded-md border px-4 py-3 text-sm ${startupWarningMessageClass}`}>
+                        {startupVersionMessage}
+                    </p>
                 )}
-            </div>
+                {isLoggingIn ? (
+                    <StartupSpinner label="Logger inn"/>
+                ) : (
+                    <div className="flex items-center gap-3">
+                        {!isStartupBlocking && (
+                            <Button size='lg' onClick={login}>
+                                Logg inn <LogIn/>
+                            </Button>
+                        )}
+                        {startupVersionMessage && isStartupBlocking && (
+                            <Button size='lg' variant="secondary" onClick={handleExit}>
+                                Lukk app
+                            </Button>
+                        )}
+                    </div>
+                )}
+            </StartupScreen>
         );
     }
 
     if (isLoggingIn && !authResponse) {
         return (
-            <div data-tauri-drag-region
-                 className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img data-tauri-drag-region alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
+            <StartupScreen>
                 <h2 data-tauri-drag-region className={'h-[75px]'}>Nytt innloggingsvindu åpnet, vennligst logg inn
                     der...</h2>
-            </div>
+            </StartupScreen>
         );
     }
 
     if (!authResponse) {
         return (
-            <div data-tauri-drag-region className={'w-screen h-screen flex flex-col justify-center items-center text-center'}>
-                <img alt={'Trøkk logo'} src="/banner.png" className={'w-96 pb-10'}></img>
+            <StartupScreen>
                 <Button
                     className={'w-[150px] h-[75px] text-2xl'}
                     onClick={login}
                 >
                     Logg inn <LogIn/>
                 </Button>
-            </div>
+            </StartupScreen>
         );
     }
 

@@ -68,7 +68,7 @@ async function handleApiResponse(
 
 export function usePostRegistration() {
     const {state, dispatch} = useTrokkFiles();
-    const {secrets} = useSecrets();
+    const {secrets, uploadVersionBlocking} = useSecrets();
     const auth = useAuth();
     const {handleError, clearError, displaySuccessMessage} = useMessage();
     const {setAllUploadProgress} = useUploadProgress();
@@ -78,6 +78,11 @@ export function usePostRegistration() {
         machineName: string,
         registration: RegistrationFormProps
     ) {
+        if (uploadVersionBlocking) {
+            handleError('Ny versjon kreves før opplasting. Oppdater appen og prøv igjen.');
+            return Promise.reject('Version blocked');
+        }
+
         const papiPath = secrets?.papiPath;
         const loggedOut = auth?.loggedOut;
 

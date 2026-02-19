@@ -127,6 +127,29 @@ pub struct SecretVariables {
 	pub(crate) s3_bucket_name: String,
 	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) s3_region: String,
+	#[serde(skip_deserializing, default)]
+	pub(crate) startup_version_message: Option<String>,
+	#[serde(skip_deserializing, default)]
+	pub(crate) startup_version_status: Option<StartupVersionStatus>,
+	#[serde(skip_deserializing, default)]
+	pub(crate) current_version: Option<String>,
+	#[serde(skip_deserializing, default)]
+	pub(crate) latest_version: Option<String>,
+	#[serde(skip_deserializing, default = "default_auto_login_allowed")]
+	pub(crate) auto_login_allowed: bool,
+}
+
+fn default_auto_login_allowed() -> bool {
+	true
+}
+
+#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
+#[serde(rename_all(serialize = "SCREAMING_SNAKE_CASE"))]
+pub enum StartupVersionStatus {
+	UpToDate,
+	PatchAvailable,
+	MinorBlocking,
+	MajorBlocking,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -136,4 +159,15 @@ pub struct TransferProgress {
 	pub(crate) directory: String,
 	pub(crate) page_nr: usize,
 	pub(crate) total_pages: usize,
+}
+
+#[derive(Debug, Serialize, Clone)]
+#[serde(rename_all(serialize = "camelCase"))]
+pub struct DesktopVersionGateResponse {
+	pub(crate) status: StartupVersionStatus,
+	pub(crate) is_blocking: bool,
+	pub(crate) is_patch: bool,
+	pub(crate) message: Option<String>,
+	pub(crate) current_version: String,
+	pub(crate) latest_version: Option<String>,
 }
