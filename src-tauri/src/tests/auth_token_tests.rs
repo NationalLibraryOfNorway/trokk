@@ -20,11 +20,6 @@ fn create_secret_variables(oidc_tekst_base_url: String) -> SecretVariables {
 		s3_url: "http://localhost".to_string(),
 		s3_bucket_name: "bucket".to_string(),
 		s3_region: "eu-north-1".to_string(),
-		startup_version_message: None,
-		startup_version_status: None,
-		current_version: None,
-		latest_version: None,
-		auto_login_allowed: true,
 	}
 }
 

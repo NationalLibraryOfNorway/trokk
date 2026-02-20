@@ -13,6 +13,7 @@ import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {useSecrets} from '@/context/secret-context.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
+import {useVersion} from '@/context/version-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
 import {LoaderCircle} from 'lucide-react';
@@ -21,12 +22,8 @@ import {Field, FieldLabel} from '@/components/ui/field.tsx';
 const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
     const {allUploadProgress, setAllUploadProgress} = useUploadProgress();
-    const {
-        secrets,
-        uploadVersionBlocking,
-        uploadVersionMessage,
-        checkUploadVersionGate
-    } = useSecrets();
+    const {secrets} = useSecrets();
+    const {uploadVersionBlocking, uploadVersionMessage, checkUploadVersionGate} = useVersion();
     const {checkedItems} = useSelection();
     const {postRegistration} = usePostRegistration();
     const {errorMessage, handleError, successMessage, removeMessages} = useMessage();

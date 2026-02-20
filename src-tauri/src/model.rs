@@ -127,20 +127,6 @@ pub struct SecretVariables {
 	pub(crate) s3_bucket_name: String,
 	#[cfg(not(feature = "debug-mock"))]
 	pub(crate) s3_region: String,
-	#[serde(skip_deserializing, default)]
-	pub(crate) startup_version_message: Option<String>,
-	#[serde(skip_deserializing, default)]
-	pub(crate) startup_version_status: Option<StartupVersionStatus>,
-	#[serde(skip_deserializing, default)]
-	pub(crate) current_version: Option<String>,
-	#[serde(skip_deserializing, default)]
-	pub(crate) latest_version: Option<String>,
-	#[serde(skip_deserializing, default = "default_auto_login_allowed")]
-	pub(crate) auto_login_allowed: bool,
-}
-
-fn default_auto_login_allowed() -> bool {
-	true
 }
 
 #[derive(Debug, Serialize, Clone, PartialEq, Eq)]

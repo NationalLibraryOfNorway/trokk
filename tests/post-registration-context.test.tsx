@@ -28,12 +28,18 @@ vi.mock('../src/context/auth-context', () => ({
 vi.mock('../src/context/secret-context', () => ({
     SecretProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     useSecrets: () => ({
-        secrets: {papiPath: 'https://papi',oidcClientSecret: 'mock', oidcClientId: 'mockId', oidcBaseUrl: 'mock'},
-        uploadVersionBlocking: mockUploadVersionBlocking
+        secrets: {papiPath: 'https://papi',oidcClientSecret: 'mock', oidcClientId: 'mockId', oidcBaseUrl: 'mock'}
     }),
     useTransferLog: () => ({
         useSecrets: () => ({}),
     }),
+}));
+
+vi.mock('../src/context/version-context', () => ({
+    useVersion: () => ({
+        uploadVersionBlocking: mockUploadVersionBlocking
+    }),
+    VersionProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
 vi.mock('@tauri-apps/api/core', () => ({

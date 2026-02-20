@@ -9,9 +9,4 @@ export interface SecretVariables {
     oidcBaseUrl: string;
     oidcClientId: string;
     oidcClientSecret: string;
-    startupVersionMessage?: string;
-    startupVersionStatus?: StartupVersionStatus;
-    currentVersion?: string;
-    latestVersion?: string;
-    autoLoginAllowed?: boolean;
 }

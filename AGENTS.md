@@ -56,6 +56,7 @@ Only change lockfiles intentionally through dependency operations:
 
 # Tauri/Rust Rules
 - Add/modify commands in `src-tauri/src/lib.rs` with `#[tauri::command]` and register them in `tauri::generate_handler!`.
+- Keep Rust scope minimal: use Rust primarily for Tauri command boundaries and strictly necessary OS/file-system integrations. Handle application/business flow in React/TypeScript.
 - For blocking CPU/file work, use `tokio::task::spawn_blocking` (current pattern in image conversion and deletion commands).
 - Keep plugin and runtime wiring in `run()` and `main.rs` consistent with existing setup (Tokio runtime + Sentry init).
 - Follow rustfmt settings (`src-tauri/rustfmt.toml`: hard tabs).
@@ -105,6 +106,10 @@ Only change lockfiles intentionally through dependency operations:
 - Keep watcher/event handling bounded and deduplicated; avoid introducing unbounded memory or event storms.
 - Long-running operations must surface progress or clear status (`transfer_progress` event flow).
 - Error states must be actionable and non-silent in both frontend and Rust boundaries.
+
+# Sentry Strategy
+- Add Sentry breadcrumbs before every external call and image operation (for example rotation), and include completion breadcrumbs for both success and failure paths.
+- Ensure breadcrumbs are sent by emitting Sentry events for both success and failure outcomes (for example `captureMessage`/`captureException`) when these operations run.
 
 # Style and Consistency
 - Frontend lint style is authoritative (`eslint.config.js`): single quotes, React rules, TypeScript ESLint recommendations.

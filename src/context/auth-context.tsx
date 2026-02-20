@@ -6,6 +6,7 @@ import { settings } from '../tauri-store/setting-store.ts';
 import { Event } from '@tauri-apps/api/event';
 import { AuthenticationResponse } from '../model/authentication-response.ts';
 import { useSecrets } from './secret-context.tsx';
+import {useVersion} from './version-context.tsx';
 
 export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
@@ -31,7 +32,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [isRefreshingToken, setIsRefreshingToken] = useState<boolean>(false);
     const appWindow = getCurrentWindow();
 
-    const { secrets, getSecrets, fetchSecretsError, autoLoginAllowed } = useSecrets();
+    const { secrets, getSecrets, fetchSecretsError } = useSecrets();
+    const {requiresManualLogin, isStartupBlocking, startupVersionError} = useVersion();
 
     useEffect(() => {
         const logInOnSecretChange = async () => {
@@ -40,9 +42,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                     await refreshAccessToken();
                     await setRefreshAccessTokenInterval(null);
                     setAuthResponse(await settings.getAuthResponse());
-                } else if (secrets && autoLoginAllowed) {
+                } else if (secrets && !requiresManualLogin) {
                     await login();
-                } else if (secrets && !autoLoginAllowed) {
+                } else if (secrets && requiresManualLogin) {
                     setLoggedOut(true);
                 }
             } catch (error) {
@@ -50,11 +52,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
             }
         };
         void logInOnSecretChange();
-    }, [secrets, autoLoginAllowed]);
+    }, [secrets, requiresManualLogin]);
 
     const login = async () => {
         setAuthResponse(null);
         if (isLoggingIn) return;
+        if (isStartupBlocking || !!startupVersionError) return;
         setIsLoggingIn(true);
 
         if (!secrets?.oidcClientSecret) {

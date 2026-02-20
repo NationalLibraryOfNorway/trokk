@@ -8,6 +8,7 @@ import {useUploadProgress} from './upload-progress-context.tsx';
 import {useAuth} from './auth-context.tsx';
 import {uploadToS3} from '../features/registration/upload-to-s3.tsx';
 import {useSecrets} from './secret-context.tsx';
+import {useVersion} from './version-context.tsx';
 import {useSelection} from '../context/selection-context.tsx';
 import {uuidv7} from 'uuidv7';
 import {FileTree} from '@/model/file-tree.ts';
@@ -68,7 +69,8 @@ async function handleApiResponse(
 
 export function usePostRegistration() {
     const {state, dispatch} = useTrokkFiles();
-    const {secrets, uploadVersionBlocking} = useSecrets();
+    const {secrets} = useSecrets();
+    const {uploadVersionBlocking} = useVersion();
     const auth = useAuth();
     const {handleError, clearError, displaySuccessMessage} = useMessage();
     const {setAllUploadProgress} = useUploadProgress();

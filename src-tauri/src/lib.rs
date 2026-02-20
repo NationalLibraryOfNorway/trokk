@@ -80,10 +80,6 @@ pub(crate) async fn get_cached_secret_variables() -> Result<&'static SecretVaria
 					.unwrap_or("")
 					.to_string(),
 				oidc_tekst_base_url: option_env!("OIDC_TEKST_BASE_URL").unwrap_or("").to_string(),
-				startup_version_message: None,
-				current_version: Some(env!("CARGO_PKG_VERSION").to_string()),
-				latest_version: Some(env!("CARGO_PKG_VERSION").to_string()),
-				auto_login_allowed: true,
 			})
 		})
 		.await
@@ -132,6 +128,7 @@ fn compare_versions(a: ParsedVersion, b: ParsedVersion) -> Ordering {
 }
 
 #[cfg(not(feature = "debug-mock"))]
+#[cfg(test)]
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct StartupVersionPolicy {
 	pub(crate) status: StartupVersionStatus,
@@ -191,6 +188,7 @@ fn evaluate_version(
 }
 
 #[cfg(not(feature = "debug-mock"))]
+#[cfg(test)]
 pub(crate) fn evaluate_startup_version_policy(
 	current_version: &str,
 	latest_version: &str,
@@ -295,33 +293,9 @@ async fn fetch_latest_desktop_version(desktop_version_base_uri: &str) -> Result<
 
 #[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
-async fn get_secret_variables(
-	desktop_version_uri: Option<String>,
-) -> Result<SecretVariables, String> {
+async fn get_secret_variables() -> Result<SecretVariables, String> {
 	let cached = get_cached_secret_variables().await?;
-	let mut secret_variables = cached.clone();
-	let version_uri = desktop_version_uri
-		.map(|uri| uri.trim().to_string())
-		.filter(|uri| !uri.is_empty())
-		.ok_or_else(|| {
-			"Mangler konfigurasjon for versjonssjekk (VITE_PAPI_API_DESKTOP_VERSION_URI)."
-				.to_string()
-		})?;
-
-	let current_version = env!("CARGO_PKG_VERSION").to_string();
-	let current_version_text = format!("v{current_version}");
-	let latest_version = fetch_latest_desktop_version(&version_uri)
-		.await
-		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
-	let version_policy = evaluate_startup_version_policy(&current_version, &latest_version)?;
-
-	secret_variables.current_version = Some(current_version.clone());
-	secret_variables.latest_version = Some(latest_version.clone());
-	secret_variables.startup_version_status = Some(version_policy.status);
-	secret_variables.startup_version_message = version_policy.startup_version_message;
-	secret_variables.auto_login_allowed = version_policy.auto_login_allowed;
-
-	Ok(secret_variables)
+	Ok(cached.clone())
 }
 
 #[cfg(not(feature = "debug-mock"))]
@@ -349,9 +323,7 @@ async fn check_desktop_version_gate(
 
 #[cfg(feature = "debug-mock")]
 #[tauri::command]
-async fn get_secret_variables(
-	_desktop_version_uri: Option<String>,
-) -> Result<SecretVariables, String> {
+async fn get_secret_variables() -> Result<SecretVariables, String> {
 	let cached = get_cached_secret_variables().await?;
 	Ok(cached.clone())
 }

@@ -1,104 +1,82 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { SecretVariables, StartupVersionStatus } from '../model/secret-variables.ts';
-
-interface DesktopVersionGateResponse {
-    status: StartupVersionStatus;
-    isBlocking: boolean;
-    isPatch: boolean;
-    message: string | null;
-    currentVersion: string;
-    latestVersion: string | null;
-}
+import React, {createContext, ReactNode, useCallback, useContext, useEffect, useState} from 'react';
+import {invoke} from '@tauri-apps/api/core';
+import * as Sentry from '@sentry/react';
+import {SecretVariables} from '../model/secret-variables.ts';
+import {useVersion} from './version-context.tsx';
 
 interface SecretContextType {
     secrets: SecretVariables | null;
     fetchSecretsError: string | null;
-    startupVersionMessage: string | null;
-    startupVersionStatus: StartupVersionStatus | null;
-    autoLoginAllowed: boolean;
-    uploadVersionBlocking: boolean;
-    uploadVersionMessage: string | null;
     getSecrets: () => Promise<void>;
-    checkUploadVersionGate: () => Promise<boolean>;
 }
 
 const SecretContext = createContext<SecretContextType | null>(null);
 
+const getInvokeErrorMessage = (error: unknown): string => {
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object') {
+        const invokeError = error as { message?: string; error?: string };
+        if (invokeError.message) return invokeError.message;
+        if (invokeError.error) return invokeError.error;
+    }
+    return String(error);
+};
+
 export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [secrets, setSecrets] = useState<SecretVariables | null>(null);
     const [fetchSecretsError, setFetchSecretsError] = useState<string | null>(null);
-    const [startupVersionMessage, setStartupVersionMessage] = useState<string | null>(null);
-    const [startupVersionStatus, setStartupVersionStatus] = useState<StartupVersionStatus | null>(null);
-    const [autoLoginAllowed, setAutoLoginAllowed] = useState<boolean>(true);
-    const [uploadVersionBlocking, setUploadVersionBlocking] = useState<boolean>(false);
-    const [uploadVersionMessage, setUploadVersionMessage] = useState<string | null>(null);
+    const [isFetchingSecrets, setIsFetchingSecrets] = useState<boolean>(false);
+    const {canFetchStartupSecrets} = useVersion();
 
-    const getDesktopVersionUri = () => {
-        const value = import.meta.env.VITE_PAPI_API_DESKTOP_VERSION_URI as string | undefined;
-        return value?.trim() || null;
-    };
-
-    const getInvokeErrorMessage = (error: unknown): string => {
-        if (typeof error === 'string') return error;
-        if (error && typeof error === 'object') {
-            const invokeError = error as { message?: string; error?: string };
-            if (invokeError.message) return invokeError.message;
-            if (invokeError.error) return invokeError.error;
-        }
-        return String(error);
-    };
-
-    const getSecrets = async () => {
-        const desktopVersionUri = getDesktopVersionUri();
-        await invoke<SecretVariables>('get_secret_variables', { desktopVersionUri })
+    const getSecrets = useCallback(async () => {
+        setIsFetchingSecrets(true);
+        Sentry.addBreadcrumb({
+            category: 'external.secrets',
+            message: 'Secret fetch started',
+            level: 'info',
+            data: {
+                command: 'get_secret_variables',
+            },
+        });
+        Sentry.captureMessage('Secret fetch started', 'info');
+        await invoke<SecretVariables>('get_secret_variables')
             .then((fetchedSecrets) => {
                 const safeSecrets = (fetchedSecrets ?? {}) as SecretVariables;
                 setSecrets(safeSecrets);
                 setFetchSecretsError(null);
-                setStartupVersionMessage(safeSecrets.startupVersionMessage ?? null);
-                setStartupVersionStatus(safeSecrets.startupVersionStatus ?? null);
-                setAutoLoginAllowed(safeSecrets.autoLoginAllowed ?? true);
+                Sentry.addBreadcrumb({
+                    category: 'external.secrets',
+                    message: 'Secret fetch completed',
+                    level: 'info',
+                    data: {
+                        command: 'get_secret_variables',
+                    },
+                });
+                Sentry.captureMessage('Secret fetch completed', 'info');
             }).catch((error) => {
                 console.error(error);
                 setFetchSecretsError(getInvokeErrorMessage(error));
-                setStartupVersionMessage(null);
-                setStartupVersionStatus(null);
-                setAutoLoginAllowed(true);
+                Sentry.addBreadcrumb({
+                    category: 'external.secrets',
+                    message: 'Secret fetch failed',
+                    level: 'error',
+                    data: {
+                        command: 'get_secret_variables',
+                        error: getInvokeErrorMessage(error),
+                    },
+                });
+                Sentry.captureMessage('Secret fetch failed', 'error');
                 throw error;
-            });
-    };
-
-    const checkUploadVersionGate = async (): Promise<boolean> => {
-        const desktopVersionUri = getDesktopVersionUri();
-        if (!desktopVersionUri) {
-            setUploadVersionBlocking(false);
-            setUploadVersionMessage('Mangler konfigurasjon for versjonssjekk.');
-            return false;
-        }
-
-        return invoke<DesktopVersionGateResponse>('check_desktop_version_gate', { desktopVersionUri })
-            .then((response) => {
-                const safeResponse = response as DesktopVersionGateResponse;
-                const isBlockingStatus =
-                    safeResponse.status === 'MAJOR_BLOCKING' || safeResponse.status === 'MINOR_BLOCKING';
-                setUploadVersionBlocking(isBlockingStatus);
-                setUploadVersionMessage(safeResponse.message ?? null);
-                return isBlockingStatus;
             })
-            .catch((error) => {
-                setUploadVersionBlocking(false);
-                setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${getInvokeErrorMessage(error)}`);
-                return false;
-            });
-    };
+            .finally(() => setIsFetchingSecrets(false));
+    }, []);
 
     useEffect(() => {
         let mounted = true;
 
         // Run on next tick so tests can render without immediate async state updates.
         Promise.resolve()
-            .then(() => (mounted ? getSecrets() : undefined))
+            .then(() => (mounted && canFetchStartupSecrets && !secrets && !isFetchingSecrets ? getSecrets() : undefined))
             .catch(() => {
                 // getSecrets already sets error state; ignore here.
             });
@@ -106,19 +84,13 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return () => {
             mounted = false;
         };
-    }, []);
+    }, [canFetchStartupSecrets, secrets, isFetchingSecrets, getSecrets]);
 
     return (
         <SecretContext.Provider value={{
             secrets,
             fetchSecretsError,
-            startupVersionMessage,
-            startupVersionStatus,
-            autoLoginAllowed,
-            uploadVersionBlocking,
-            uploadVersionMessage,
-            getSecrets,
-            checkUploadVersionGate
+            getSecrets
         }}>
             {children}
         </SecretContext.Provider>

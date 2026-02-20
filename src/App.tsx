@@ -13,6 +13,7 @@ import {TransferLogProvider} from './context/transfer-log-context.tsx';
 import {SelectionProvider} from './context/selection-context.tsx';
 import {RotationProvider} from './context/rotation-context.tsx';
 import {useSecrets} from './context/secret-context.tsx';
+import {useVersion, VersionProvider} from './context/version-context.tsx';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
 import {useTextSizeShortcuts} from './hooks/use-text-size-shortcuts.tsx';
@@ -31,19 +32,21 @@ function App() {
     const [openSettings, setOpenSettings] = useState<boolean>(false);
 
     return (
-        <SecretProvider>
-            <AuthProvider>
-                <SettingProvider>
-                    <main className="h-screen w-screen flex flex-col overflow-hidden">
-                        <Content
-                            openSettings={openSettings}
-                            setOpenSettings={setOpenSettings}
-                        />
-                    </main>
+        <VersionProvider>
+            <SecretProvider>
+                <AuthProvider>
+                    <SettingProvider>
+                        <main className="h-screen w-screen flex flex-col overflow-hidden">
+                            <Content
+                                openSettings={openSettings}
+                                setOpenSettings={setOpenSettings}
+                            />
+                        </main>
 
-                </SettingProvider>
-            </AuthProvider>
-        </SecretProvider>
+                    </SettingProvider>
+                </AuthProvider>
+            </SecretProvider>
+        </VersionProvider>
     );
 }
 
@@ -55,7 +58,15 @@ interface ContentProps {
 const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout} = useAuth();
     const {scannerPath} = useSettings();
-    const {startupVersionMessage, startupVersionStatus, getSecrets} = useSecrets();
+    const {getSecrets} = useSecrets();
+    const {
+        startupVersionMessage,
+        startupVersionError,
+        isCheckingStartupVersion,
+        isStartupBlocking,
+        retryStartupVersionCheck,
+        hasCheckedStartupVersion,
+    } = useVersion();
     const [isRetryingStartup, setIsRetryingStartup] = useState(false);
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
@@ -106,7 +117,9 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     const handleRetryStartup = async () => {
         setIsRetryingStartup(true);
-        await getSecrets()
+        await (startupVersionError || !hasCheckedStartupVersion
+            ? retryStartupVersionCheck()
+            : getSecrets())
             .catch(() => undefined)
             .finally(() => setIsRetryingStartup(false));
     };
@@ -139,6 +152,34 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         };
     }, []);
 
+    if (isCheckingStartupVersion) {
+        return (
+            <StartupScreen>
+                <StartupSpinner label="Sjekker versjon"/>
+            </StartupScreen>
+        );
+    }
+
+    if (startupVersionError) {
+        const startupErrorTitle = 'Feil ved oppstart';
+        const startupMessageClass = 'border-destructive bg-destructive text-destructive-foreground';
+
+        return (
+            <StartupScreen logoClassName="w-96">
+                <StartupMessageCard title={startupErrorTitle} message={startupVersionError} className={startupMessageClass}>
+                </StartupMessageCard>
+                <div className="flex items-center gap-3">
+                    <Button onClick={handleRetryStartup} disabled={isRetryingStartup}>
+                        {isRetryingStartup ? 'Prøver igjen...' : 'Prøv igjen'}
+                    </Button>
+                    <Button variant="secondary" onClick={handleExit}>
+                        Lukk app
+                    </Button>
+                </div>
+            </StartupScreen>
+        );
+    }
+
     if (fetchSecretsError) {
         const startupErrorTitle = 'Feil ved oppstart';
         const startupMessageClass = 'border-destructive bg-destructive text-destructive-foreground';
@@ -159,6 +200,21 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         );
     }
 
+    if (isStartupBlocking) {
+        return (
+            <StartupScreen>
+                {startupVersionMessage && (
+                    <p data-tauri-drag-region className={`mb-6 max-w-xl rounded-md border px-4 py-3 text-sm ${startupWarningMessageClass}`}>
+                        {startupVersionMessage}
+                    </p>
+                )}
+                <Button size='lg' variant="secondary" onClick={handleExit}>
+                    Lukk app
+                </Button>
+            </StartupScreen>
+        );
+    }
+
     if (isRefreshingToken && !authResponse) {
         return (
             <StartupScreen>
@@ -168,9 +224,6 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     }
 
     if (loggedOut) {
-        const isStartupBlocking =
-            startupVersionStatus === 'MAJOR_BLOCKING' || startupVersionStatus === 'MINOR_BLOCKING';
-
         return (
             <StartupScreen>
                 {startupVersionMessage && (

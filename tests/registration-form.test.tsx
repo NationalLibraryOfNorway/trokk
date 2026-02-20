@@ -69,12 +69,18 @@ const mockCheckUploadVersionGate = vi.fn(async () => false);
 
 vi.mock('@/context/secret-context.tsx', () => ({
     useSecrets: () => ({
-        secrets: {papiPath: 'http://mock-papi'},
+        secrets: {papiPath: 'http://mock-papi'}
+    }),
+    SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
+}));
+
+vi.mock('@/context/version-context.tsx', () => ({
+    useVersion: () => ({
         uploadVersionBlocking: mockUploadVersionBlocking,
         uploadVersionMessage: mockUploadVersionMessage,
         checkUploadVersionGate: mockCheckUploadVersionGate
     }),
-    SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
+    VersionProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
 vi.mock('@/context/transfer-log-context.tsx', () => ({
