@@ -277,21 +277,16 @@ async fn fetch_latest_desktop_version(desktop_version_base_uri: &str) -> Result<
 			response.status()
 		));
 	}
-	let latest_version_raw = response
+	response
 		.text()
 		.await
-		.map_err(|e| format!("Kunne ikke lese versjonssvar: {e}"))?;
-	let trimmed = latest_version_raw.trim();
-	let normalized = trimmed
-		.strip_prefix('"')
-		.and_then(|v| v.strip_suffix('"'))
-		.unwrap_or(trimmed)
-		.trim()
-		.to_string();
-	if normalized.is_empty() {
-		return Err("Versjonssvar var tomt.".to_string());
-	}
-	Ok(normalized)
+		.map_err(|e| format!("Kunne ikke lese versjonssvar: {e}"))
+		.map(|raw| raw.trim().trim_matches('"').trim().to_string())
+		.and_then(|normalized| {
+			(!normalized.is_empty())
+				.then_some(normalized)
+				.ok_or_else(|| "Versjonssvar var tomt.".to_string())
+		})
 }
 
 #[cfg(not(feature = "debug-mock"))]

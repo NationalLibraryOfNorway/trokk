@@ -124,29 +124,34 @@ pub(crate) async fn get_access_token_for_papi_with_secrets(
 		.timeout(Duration::from_secs(15))
 		.build()
 		.map_err(|e| format!("Kunne ikke initialisere HTTP-klient: {e}"))?;
-	let body = format!(
-		"client_id={}&client_secret={}&grant_type=client_credentials",
-		secrets.oidc_tekst_client_id, secrets.oidc_tekst_client_secret
-	);
 
-	let res = client
+	let response = client
 		.post(format!("{}{}", secrets.oidc_tekst_base_url, "/token"))
 		.header("Content-Type", "application/x-www-form-urlencoded")
-		.body(body)
+		.body(format!(
+			"client_id={}&client_secret={}&grant_type=client_credentials",
+			secrets.oidc_tekst_client_id, secrets.oidc_tekst_client_secret
+		))
 		.send()
 		.await
-		.map_err(|e| format!("Kunne ikke hente autentiseringstoken: {e}"))?;
-	if !res.status().is_success() {
-		return Err(format!(
-			"Kunne ikke hente autentiseringstoken. Status: {}",
-			res.status()
-		));
-	}
-	let body = res
+		.map_err(|e| format!("Kunne ikke hente autentiseringstoken: {e}"))
+		.and_then(|response| {
+			let status = response.status();
+			if status.is_success() {
+				Ok(response)
+			} else {
+				Err(format!(
+					"Kunne ikke hente autentiseringstoken. Status: {}",
+					status
+				))
+			}
+		})?;
+
+	response
 		.text()
 		.await
-		.map_err(|e| format!("Kunne ikke lese token-respons: {e}"))?;
-	parse_papi_token_response(&body)
+		.map_err(|e| format!("Kunne ikke lese token-respons: {e}"))
+		.and_then(|body| parse_papi_token_response(&body))
 }
 
 #[cfg(not(feature = "debug-mock"))]
