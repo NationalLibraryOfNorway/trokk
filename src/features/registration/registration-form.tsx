@@ -13,6 +13,7 @@ import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
 import {useSecrets} from '@/context/secret-context.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
+import {useVersion} from '@/context/version-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
 import {LoaderCircle} from 'lucide-react';
@@ -22,6 +23,7 @@ const RegistrationForm: React.FC = () => {
     const {state} = useTrokkFiles();
     const {allUploadProgress, setAllUploadProgress} = useUploadProgress();
     const {secrets} = useSecrets();
+    const {uploadVersionBlocking, uploadVersionMessage, checkUploadVersionGate} = useVersion();
     const {checkedItems} = useSelection();
     const {postRegistration} = usePostRegistration();
     const {errorMessage, handleError, successMessage, removeMessages} = useMessage();
@@ -73,6 +75,10 @@ const RegistrationForm: React.FC = () => {
 
     const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
         if (checkedItems.length > 0) {
+            const isVersionBlocking = await checkUploadVersionGate();
+            if (isVersionBlocking) {
+                return;
+            }
             setIsSubmitting(true);
             setDisabled(true);
             await invoke<string>('get_hostname')
@@ -206,7 +212,7 @@ const RegistrationForm: React.FC = () => {
             </p>
             <div className={`flex ${disabled || isAnyImageRotating ? 'opacity-30' : ''}`}>
                 <Button
-                    disabled={disabled || isSubmitting || isAnyImageRotating}
+                    disabled={disabled || isSubmitting || isAnyImageRotating || uploadVersionBlocking}
                     type='submit'
                     className="w-full flex items-center justify-center"
                 >
@@ -219,6 +225,11 @@ const RegistrationForm: React.FC = () => {
             </div>
             {isAnyImageRotating && (
                 <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
+            )}
+            {uploadVersionMessage && (
+                <p className={`text-sm mt-2 ${uploadVersionBlocking ? 'text-red-500' : 'text-amber-500'}`}>
+                    {uploadVersionMessage}
+                </p>
             )}
 
             <div className="mt-2 w-full h-full flex flex-col relative">
