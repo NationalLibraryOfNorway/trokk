@@ -99,40 +99,27 @@ struct ParsedVersion {
 
 #[cfg(not(feature = "debug-mock"))]
 fn parse_version(input: &str) -> Result<ParsedVersion, String> {
-	let trimmed = input.trim();
-	let no_prefix = trimmed
-		.strip_prefix('v')
-		.or_else(|| trimmed.strip_prefix('V'))
-		.unwrap_or(trimmed);
-	let mut parts = no_prefix.split('.');
-	let major = parts
-		.next()
-		.ok_or_else(|| format!("Ugyldig versjonsformat: {input}"))?
-		.parse::<u64>()
-		.map_err(|_| format!("Ugyldig versjonsformat: {input}"))?;
-	let minor = parts
-		.next()
-		.ok_or_else(|| format!("Ugyldig versjonsformat: {input}"))?
-		.parse::<u64>()
-		.map_err(|_| format!("Ugyldig versjonsformat: {input}"))?;
-	let patch_part = parts
-		.next()
-		.ok_or_else(|| format!("Ugyldig versjonsformat: {input}"))?;
-	if parts.next().is_some() {
-		return Err(format!("Ugyldig versjonsformat: {input}"));
+	let invalid_format = || format!("Ugyldig versjonsformat: {input}");
+	let trimmed = input.trim().trim_start_matches(['v', 'V']);
+
+	let (major_part, rest) = trimmed.split_once('.').ok_or_else(invalid_format)?;
+	let (minor_part, patch_part) = rest.split_once('.').ok_or_else(invalid_format)?;
+
+	// Exactly three numeric parts are supported.
+	if patch_part.contains('.') {
+		return Err(invalid_format());
 	}
 	if patch_part.contains('-') || patch_part.contains('+') {
 		return Err(format!(
 			"Ugyldig versjonsformat: {input}. Appended informasjon støttes ikke."
 		));
 	}
-	let patch = patch_part
-		.parse::<u64>()
-		.map_err(|_| format!("Ugyldig versjonsformat: {input}"))?;
+
+	let parse_number = |part: &str| part.parse::<u64>().map_err(|_| invalid_format());
 	Ok(ParsedVersion {
-		major,
-		minor,
-		patch,
+		major: parse_number(major_part)?,
+		minor: parse_number(minor_part)?,
+		patch: parse_number(patch_part)?,
 	})
 }
 
@@ -165,41 +152,44 @@ pub(crate) fn evaluate_startup_version_policy(
 			"{e} (nåværende versjon: {current_version_text}, mottatt siste versjon: {latest_version})"
 		)
 	})?;
-
-	match compare_versions(current, latest) {
-		Ordering::Greater | Ordering::Equal => Ok(StartupVersionPolicy {
+	if compare_versions(current, latest) != Ordering::Less {
+		return Ok(StartupVersionPolicy {
 			status: StartupVersionStatus::UpToDate,
 			startup_version_message: None,
 			auto_login_allowed: true,
-		}),
-		Ordering::Less => {
-			if current.major != latest.major {
-				return Ok(StartupVersionPolicy {
-					status: StartupVersionStatus::MajorBlocking,
-					startup_version_message: Some(format!(
-						"Ny hovedversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan fortsette."
-					)),
-					auto_login_allowed: false,
-				});
-			}
-			if current.minor != latest.minor {
-				return Ok(StartupVersionPolicy {
-					status: StartupVersionStatus::MinorBlocking,
-					startup_version_message: Some(format!(
-						"Ny delversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan fortsette."
-					)),
-					auto_login_allowed: false,
-				});
-			}
-			Ok(StartupVersionPolicy {
-				status: StartupVersionStatus::PatchAvailable,
-				startup_version_message: Some(format!(
-					"Ny patch-versjon er tilgjengelig ({latest_version}). Du må logge inn manuelt."
-				)),
-				auto_login_allowed: false,
-			})
-		}
+		});
 	}
+
+	let blocking_message = |version_label: &str| {
+		format!(
+			"Ny {version_label} er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan fortsette."
+		)
+	};
+
+	let (status, startup_version_message) = if current.major != latest.major {
+		(
+			StartupVersionStatus::MajorBlocking,
+			Some(blocking_message("hovedversjon")),
+		)
+	} else if current.minor != latest.minor {
+		(
+			StartupVersionStatus::MinorBlocking,
+			Some(blocking_message("delversjon")),
+		)
+	} else {
+		(
+			StartupVersionStatus::PatchAvailable,
+			Some(format!(
+				"Ny patch-versjon er tilgjengelig ({latest_version}). Du må logge inn manuelt."
+			)),
+		)
+	};
+
+	Ok(StartupVersionPolicy {
+		status,
+		startup_version_message,
+		auto_login_allowed: false,
+	})
 }
 
 #[cfg(not(feature = "debug-mock"))]
