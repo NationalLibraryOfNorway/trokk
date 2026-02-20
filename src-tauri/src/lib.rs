@@ -128,15 +128,6 @@ fn compare_versions(a: ParsedVersion, b: ParsedVersion) -> Ordering {
 }
 
 #[cfg(not(feature = "debug-mock"))]
-#[cfg(test)]
-#[derive(Debug, PartialEq, Eq)]
-pub(crate) struct StartupVersionPolicy {
-	pub(crate) status: StartupVersionStatus,
-	pub(crate) startup_version_message: Option<String>,
-	pub(crate) auto_login_allowed: bool,
-}
-
-#[cfg(not(feature = "debug-mock"))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum VersionDelta {
 	UpToDate,
@@ -184,40 +175,6 @@ fn evaluate_version(
 		status,
 		current_version_text,
 		latest_version_text,
-	})
-}
-
-#[cfg(not(feature = "debug-mock"))]
-#[cfg(test)]
-pub(crate) fn evaluate_startup_version_policy(
-	current_version: &str,
-	latest_version: &str,
-) -> Result<StartupVersionPolicy, String> {
-	let evaluation = evaluate_version(current_version, latest_version)?;
-	let blocking_message = |version_label: &str| {
-		format!(
-			"Ny {version_label} er tilgjengelig ({}). Nåværende versjon: {}. Oppdater appen før du kan fortsette.",
-			evaluation.latest_version_text, evaluation.current_version_text
-		)
-	};
-
-	let (startup_version_message, auto_login_allowed) = match evaluation.delta {
-		VersionDelta::UpToDate => (None, true),
-		VersionDelta::Major => (Some(blocking_message("hovedversjon")), false),
-		VersionDelta::Minor => (Some(blocking_message("delversjon")), false),
-		VersionDelta::Patch => (
-			Some(format!(
-				"Ny patch-versjon er tilgjengelig ({}). Du må logge inn manuelt.",
-				evaluation.latest_version_text
-			)),
-			false,
-		),
-	};
-
-	Ok(StartupVersionPolicy {
-		status: evaluation.status,
-		startup_version_message,
-		auto_login_allowed,
 	})
 }
 
