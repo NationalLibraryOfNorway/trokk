@@ -52,6 +52,24 @@ fn test_startup_version_policy_patch_update_requires_manual_login() {
 
 #[cfg(not(feature = "debug-mock"))]
 #[test]
+fn test_startup_version_policy_up_to_date_allows_auto_login() {
+	let policy = evaluate_startup_version_policy("0.1.0", "0.1.0").unwrap();
+	assert_eq!(policy.status, StartupVersionStatus::UpToDate);
+	assert!(policy.auto_login_allowed);
+	assert!(policy.startup_version_message.is_none());
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[test]
+fn test_startup_version_policy_rejects_appended_version_metadata() {
+	let error = evaluate_startup_version_policy("0.1.0", "0.1.1-rc1")
+		.err()
+		.expect("Expected invalid version format to fail");
+	assert!(error.contains("Appended informasjon støttes ikke"));
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[test]
 fn test_desktop_version_gate_major_update_is_blocking() {
 	let result = evaluate_desktop_version_gate("0.1.0", "1.0.0").unwrap();
 	assert_eq!(result.status, StartupVersionStatus::MajorBlocking);
@@ -78,6 +96,16 @@ fn test_desktop_version_gate_minor_update_is_blocking() {
 			.unwrap()
 			.contains("Ny delversjon er tilgjengelig")
 	);
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[test]
+fn test_desktop_version_gate_up_to_date_has_no_blocking() {
+	let result = evaluate_desktop_version_gate("0.1.0", "0.1.0").unwrap();
+	assert_eq!(result.status, StartupVersionStatus::UpToDate);
+	assert!(!result.is_blocking);
+	assert!(!result.is_patch);
+	assert!(result.message.is_none());
 }
 
 #[cfg(not(feature = "debug-mock"))]

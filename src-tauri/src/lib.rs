@@ -140,55 +140,86 @@ pub(crate) struct StartupVersionPolicy {
 }
 
 #[cfg(not(feature = "debug-mock"))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum VersionDelta {
+	UpToDate,
+	Patch,
+	Minor,
+	Major,
+}
+
+#[cfg(not(feature = "debug-mock"))]
+#[derive(Debug, PartialEq, Eq)]
+struct VersionEvaluation {
+	delta: VersionDelta,
+	status: StartupVersionStatus,
+	current_version_text: String,
+	latest_version_text: String,
+}
+
+#[cfg(not(feature = "debug-mock"))]
+fn evaluate_version(
+	current_version: &str,
+	latest_version: &str,
+) -> Result<VersionEvaluation, String> {
+	let current_version_text = format!("v{current_version}");
+	let current = parse_version(current_version)
+		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
+	let latest_version_text = latest_version.to_string();
+	let latest = parse_version(latest_version).map_err(|e| {
+		format!(
+			"{e} (nåværende versjon: {current_version_text}, mottatt siste versjon: {latest_version_text})"
+		)
+	})?;
+
+	let (delta, status) = if compare_versions(current, latest) != Ordering::Less {
+		(VersionDelta::UpToDate, StartupVersionStatus::UpToDate)
+	} else if current.major != latest.major {
+		(VersionDelta::Major, StartupVersionStatus::MajorBlocking)
+	} else if current.minor != latest.minor {
+		(VersionDelta::Minor, StartupVersionStatus::MinorBlocking)
+	} else {
+		(VersionDelta::Patch, StartupVersionStatus::PatchAvailable)
+	};
+
+	Ok(VersionEvaluation {
+		delta,
+		status,
+		current_version_text,
+		latest_version_text,
+	})
+}
+
+#[cfg(not(feature = "debug-mock"))]
 pub(crate) fn evaluate_startup_version_policy(
 	current_version: &str,
 	latest_version: &str,
 ) -> Result<StartupVersionPolicy, String> {
-	let current_version_text = format!("v{current_version}");
-	let current = parse_version(current_version)
-		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
-	let latest = parse_version(latest_version).map_err(|e| {
-		format!(
-			"{e} (nåværende versjon: {current_version_text}, mottatt siste versjon: {latest_version})"
-		)
-	})?;
-	if compare_versions(current, latest) != Ordering::Less {
-		return Ok(StartupVersionPolicy {
-			status: StartupVersionStatus::UpToDate,
-			startup_version_message: None,
-			auto_login_allowed: true,
-		});
-	}
-
+	let evaluation = evaluate_version(current_version, latest_version)?;
 	let blocking_message = |version_label: &str| {
 		format!(
-			"Ny {version_label} er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan fortsette."
+			"Ny {version_label} er tilgjengelig ({}). Nåværende versjon: {}. Oppdater appen før du kan fortsette.",
+			evaluation.latest_version_text, evaluation.current_version_text
 		)
 	};
 
-	let (status, startup_version_message) = if current.major != latest.major {
-		(
-			StartupVersionStatus::MajorBlocking,
-			Some(blocking_message("hovedversjon")),
-		)
-	} else if current.minor != latest.minor {
-		(
-			StartupVersionStatus::MinorBlocking,
-			Some(blocking_message("delversjon")),
-		)
-	} else {
-		(
-			StartupVersionStatus::PatchAvailable,
+	let (startup_version_message, auto_login_allowed) = match evaluation.delta {
+		VersionDelta::UpToDate => (None, true),
+		VersionDelta::Major => (Some(blocking_message("hovedversjon")), false),
+		VersionDelta::Minor => (Some(blocking_message("delversjon")), false),
+		VersionDelta::Patch => (
 			Some(format!(
-				"Ny patch-versjon er tilgjengelig ({latest_version}). Du må logge inn manuelt."
+				"Ny patch-versjon er tilgjengelig ({}). Du må logge inn manuelt.",
+				evaluation.latest_version_text
 			)),
-		)
+			false,
+		),
 	};
 
 	Ok(StartupVersionPolicy {
-		status,
+		status: evaluation.status,
 		startup_version_message,
-		auto_login_allowed: false,
+		auto_login_allowed,
 	})
 }
 
@@ -197,63 +228,36 @@ pub(crate) fn evaluate_desktop_version_gate(
 	current_version: &str,
 	latest_version: &str,
 ) -> Result<DesktopVersionGateResponse, String> {
-	let current_version_text = format!("v{current_version}");
-	let current = parse_version(current_version)
-		.map_err(|e| format!("{e} (nåværende versjon: {current_version_text})"))?;
-	let latest = parse_version(latest_version).map_err(|e| {
+	let evaluation = evaluate_version(current_version, latest_version)?;
+	let blocking_message = |version_label: &str| {
 		format!(
-			"{e} (nåværende versjon: {current_version_text}, mottatt siste versjon: {latest_version})"
+			"Ny {version_label} er tilgjengelig ({}). Nåværende versjon: {}. Oppdater appen før du kan TRØKKE.",
+			evaluation.latest_version_text, evaluation.current_version_text
 		)
-	})?;
-
-	let response = match compare_versions(current, latest) {
-		Ordering::Greater | Ordering::Equal => DesktopVersionGateResponse {
-			status: StartupVersionStatus::UpToDate,
-			is_blocking: false,
-			is_patch: false,
-			message: None,
-			current_version: current_version_text,
-			latest_version: Some(latest_version.to_string()),
-		},
-		Ordering::Less => {
-			if current.major != latest.major {
-				DesktopVersionGateResponse {
-					status: StartupVersionStatus::MajorBlocking,
-					is_blocking: true,
-					is_patch: false,
-					message: Some(format!(
-						"Ny hovedversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan TRØKKE."
-					)),
-					current_version: current_version_text,
-					latest_version: Some(latest_version.to_string()),
-				}
-			} else if current.minor != latest.minor {
-				DesktopVersionGateResponse {
-					status: StartupVersionStatus::MinorBlocking,
-					is_blocking: true,
-					is_patch: false,
-					message: Some(format!(
-						"Ny delversjon er tilgjengelig ({latest_version}). Nåværende versjon: {current_version_text}. Oppdater appen før du kan TRØKKE."
-					)),
-					current_version: current_version_text,
-					latest_version: Some(latest_version.to_string()),
-				}
-			} else {
-				DesktopVersionGateResponse {
-					status: StartupVersionStatus::PatchAvailable,
-					is_blocking: false,
-					is_patch: true,
-					message: Some(format!(
-						"Ny patch-versjon er tilgjengelig ({latest_version}). Du kan fortsette, men det anbefales å oppdatere."
-					)),
-					current_version: current_version_text,
-					latest_version: Some(latest_version.to_string()),
-				}
-			}
-		}
 	};
 
-	Ok(response)
+	let (message, is_blocking, is_patch) = match evaluation.delta {
+		VersionDelta::UpToDate => (None, false, false),
+		VersionDelta::Major => (Some(blocking_message("hovedversjon")), true, false),
+		VersionDelta::Minor => (Some(blocking_message("delversjon")), true, false),
+		VersionDelta::Patch => (
+			Some(format!(
+				"Ny patch-versjon er tilgjengelig ({}). Du kan fortsette, men det anbefales å oppdatere.",
+				evaluation.latest_version_text
+			)),
+			false,
+			true,
+		),
+	};
+
+	Ok(DesktopVersionGateResponse {
+		status: evaluation.status,
+		is_blocking,
+		is_patch,
+		message,
+		current_version: evaluation.current_version_text,
+		latest_version: Some(evaluation.latest_version_text),
+	})
 }
 
 #[cfg(not(feature = "debug-mock"))]
