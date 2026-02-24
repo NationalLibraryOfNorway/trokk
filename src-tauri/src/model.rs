@@ -129,15 +129,6 @@ pub struct SecretVariables {
 	pub(crate) s3_region: String,
 }
 
-#[derive(Debug, Serialize, Clone, PartialEq, Eq)]
-#[serde(rename_all(serialize = "SCREAMING_SNAKE_CASE"))]
-pub enum StartupVersionStatus {
-	UpToDate,
-	PatchAvailable,
-	MinorBlocking,
-	MajorBlocking,
-}
-
 #[derive(Debug, Serialize, Clone)]
 #[serde(rename_all(serialize = "camelCase"))]
 // We send "camelCase" to frontend
@@ -145,15 +136,4 @@ pub struct TransferProgress {
 	pub(crate) directory: String,
 	pub(crate) page_nr: usize,
 	pub(crate) total_pages: usize,
-}
-
-#[derive(Debug, Serialize, Clone)]
-#[serde(rename_all(serialize = "camelCase"))]
-pub struct DesktopVersionGateResponse {
-	pub(crate) status: StartupVersionStatus,
-	pub(crate) is_blocking: bool,
-	pub(crate) is_patch: bool,
-	pub(crate) message: Option<String>,
-	pub(crate) current_version: String,
-	pub(crate) latest_version: Option<String>,
 }

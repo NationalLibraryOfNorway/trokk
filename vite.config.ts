@@ -1,8 +1,13 @@
 import {defineConfig} from 'vite';
+import fs from 'node:fs';
 import path from 'path'
 import react from '@vitejs/plugin-react'
 
 const host = process.env.TAURI_DEV_HOST;
+
+const cargoToml = fs.readFileSync(path.resolve(__dirname, 'src-tauri/Cargo.toml'), 'utf8');
+const cargoVersionMatch = cargoToml.match(/^version\s*=\s*"([^"]+)"/m);
+const appVersion = cargoVersionMatch?.[1] ?? '0.0.0';
 
 // https://vitejs.dev/config/
 export default defineConfig(async () => ({
@@ -11,6 +16,9 @@ export default defineConfig(async () => ({
         alias: {
             '@': path.resolve(__dirname, './src'),
         },
+    },
+    define: {
+        'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
     },
     // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
     //

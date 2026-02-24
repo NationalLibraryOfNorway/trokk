@@ -1,16 +1,11 @@
 import React, {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState} from 'react';
-import {invoke} from '@tauri-apps/api/core';
 import * as Sentry from '@sentry/react';
 import {StartupVersionStatus} from '@/model/secret-variables.ts';
-
-interface DesktopVersionGateResponse {
-	status: StartupVersionStatus;
-	isBlocking: boolean;
-	isPatch: boolean;
-	message: string | null;
-	currentVersion: string;
-	latestVersion: string | null;
-}
+import {
+	DesktopVersionGateResponse,
+	evaluateDesktopVersionGate,
+	fetchLatestDesktopVersion,
+} from '@/lib/version-gate.ts';
 
 interface VersionContextType {
 	startupVersionStatus: StartupVersionStatus | null;
@@ -34,15 +29,22 @@ const getDesktopVersionUri = () => {
 	return value?.trim() || null;
 };
 
-const getInvokeErrorMessage = (error: unknown): string => {
+const getCurrentAppVersion = () => {
+	const value = import.meta.env.VITE_APP_VERSION as string | undefined;
+	return value?.trim() || '0.0.0';
+};
+
+const getErrorMessage = (error: unknown): string => {
 	if (typeof error === 'string') return error;
 	if (error && typeof error === 'object') {
-		const invokeError = error as { message?: string; error?: string };
-		if (invokeError.message) return invokeError.message;
-		if (invokeError.error) return invokeError.error;
+		const knownError = error as { message?: string; error?: string };
+		if (knownError.message) return knownError.message;
+		if (knownError.error) return knownError.error;
 	}
 	return String(error);
 };
+
+const VERSION_GATE_COMMAND = 'frontend_desktop_version_gate';
 
 export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) => {
 	const [startupVersionStatus, setStartupVersionStatus] = useState<StartupVersionStatus | null>(null);
@@ -59,10 +61,15 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 	const canFetchStartupSecrets =
 		hasCheckedStartupVersion && !isCheckingStartupVersion && !startupVersionError && !isStartupBlocking;
 
+	const runVersionGateCheck = useCallback(async (desktopVersionUri: string): Promise<DesktopVersionGateResponse> => {
+		const currentVersion = getCurrentAppVersion();
+		const latestVersion = await fetchLatestDesktopVersion(desktopVersionUri);
+		return evaluateDesktopVersionGate(currentVersion, latestVersion);
+	}, []);
+
 	const applyVersionResponse = useCallback((response: DesktopVersionGateResponse) => {
-		const safeResponse = response as DesktopVersionGateResponse;
-		setStartupVersionStatus(safeResponse.status);
-		setStartupVersionMessage(safeResponse.message ?? null);
+		setStartupVersionStatus(response.status);
+		setStartupVersionMessage(response.message ?? null);
 		setStartupVersionError(null);
 		setHasCheckedStartupVersion(true);
 	}, []);
@@ -84,19 +91,19 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 			message: 'Startup version check started',
 			level: 'info',
 			data: {
-				command: 'check_desktop_version_gate',
+				command: VERSION_GATE_COMMAND,
 			},
 		});
 		Sentry.captureMessage('Startup version check started', 'info');
 
-		return invoke<DesktopVersionGateResponse>('check_desktop_version_gate', {desktopVersionUri})
+		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
 				Sentry.addBreadcrumb({
 					category: 'external.version',
 					message: 'Startup version check completed',
 					level: 'info',
 					data: {
-						command: 'check_desktop_version_gate',
+						command: VERSION_GATE_COMMAND,
 						status: response.status,
 					},
 				});
@@ -110,18 +117,18 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 					message: 'Startup version check failed',
 					level: 'error',
 					data: {
-						command: 'check_desktop_version_gate',
-						error: getInvokeErrorMessage(error),
+						command: VERSION_GATE_COMMAND,
+						error: getErrorMessage(error),
 					},
 				});
 				Sentry.captureMessage('Startup version check failed', 'error');
 				setStartupVersionStatus(null);
 				setStartupVersionMessage(null);
-				setStartupVersionError(`Kunne ikke sjekke versjon ved oppstart. ${getInvokeErrorMessage(error)}`);
+				setStartupVersionError(`Kunne ikke sjekke versjon ved oppstart. ${getErrorMessage(error)}`);
 				setHasCheckedStartupVersion(true);
 				throw error;
 			});
-	}, [applyVersionResponse]);
+	}, [applyVersionResponse, runVersionGateCheck]);
 
 	const retryStartupVersionCheck = useCallback(async () => {
 		setIsCheckingStartupVersion(true);
@@ -143,19 +150,19 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 			message: 'Upload version check started',
 			level: 'info',
 			data: {
-				command: 'check_desktop_version_gate',
+				command: VERSION_GATE_COMMAND,
 			},
 		});
 		Sentry.captureMessage('Upload version check started', 'info');
 
-		return invoke<DesktopVersionGateResponse>('check_desktop_version_gate', {desktopVersionUri})
+		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
 				Sentry.addBreadcrumb({
 					category: 'external.version',
 					message: 'Upload version check completed',
 					level: 'info',
 					data: {
-						command: 'check_desktop_version_gate',
+						command: VERSION_GATE_COMMAND,
 						status: response.status,
 					},
 				});
@@ -163,11 +170,10 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 				return response;
 			})
 			.then((response) => {
-				const safeResponse = response as DesktopVersionGateResponse;
 				const isBlockingStatus =
-					safeResponse.status === 'MAJOR_BLOCKING' || safeResponse.status === 'MINOR_BLOCKING';
+					response.status === 'MAJOR_BLOCKING' || response.status === 'MINOR_BLOCKING';
 				setUploadVersionBlocking(isBlockingStatus);
-				setUploadVersionMessage(safeResponse.message ?? null);
+				setUploadVersionMessage(response.message ?? null);
 				return isBlockingStatus;
 			})
 			.catch((error) => {
@@ -176,16 +182,16 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 					message: 'Upload version check failed',
 					level: 'error',
 					data: {
-						command: 'check_desktop_version_gate',
-						error: getInvokeErrorMessage(error),
+						command: VERSION_GATE_COMMAND,
+						error: getErrorMessage(error),
 					},
 				});
 				Sentry.captureMessage('Upload version check failed', 'error');
 				setUploadVersionBlocking(false);
-				setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${getInvokeErrorMessage(error)}`);
+				setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${getErrorMessage(error)}`);
 				return false;
 			});
-	}, []);
+	}, [runVersionGateCheck]);
 
 	useEffect(() => {
 		void runStartupVersionCheck().finally(() => setIsCheckingStartupVersion(false));
