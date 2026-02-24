@@ -34,7 +34,7 @@ interface StartupMessageCardProps {
 export const StartupMessageCard: React.FC<StartupMessageCardProps> = ({title, message, className, children}) => (
     <div
         data-tauri-drag-region
-        className={`flex max-w-2xl flex-col justify-center items-center rounded-md border p-4 ${className}`}>
+        className={`flex max-w-2xl flex-col justify-center items-center rounded-md border p-4 m-4 ${className}`}>
         <h1>{title}</h1>
         <p>{message}</p>
         {children}

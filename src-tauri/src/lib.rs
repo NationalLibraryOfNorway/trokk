@@ -46,11 +46,10 @@ pub static ENVIRONMENT_VARIABLES: RequiredEnvironmentVariables = RequiredEnviron
 #[cfg(not(feature = "debug-mock"))]
 // Use Tokio's OnceCell to fetch secrets from Vault only once
 static VAULT_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
-#[cfg(feature = "debug-mock")]
-static MOCK_SECRET_CELL: OnceCell<SecretVariables> = OnceCell::const_new();
 
 #[cfg(not(feature = "debug-mock"))]
-pub(crate) async fn get_cached_secret_variables() -> Result<&'static SecretVariables, String> {
+#[tauri::command]
+async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 	// Fetch secrets from Vault only once, the cell functions as a cache
 	VAULT_CELL
 		.get_or_try_init(|| async { vault::fetch_secrets_from_vault().await })
@@ -66,20 +65,17 @@ pub(crate) async fn get_cached_secret_variables() -> Result<&'static SecretVaria
 }
 
 #[cfg(feature = "debug-mock")]
-pub(crate) async fn get_cached_secret_variables() -> Result<&'static SecretVariables, String> {
-	MOCK_SECRET_CELL
+async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
+	#[tauri::command]
+	MOCK_SECRETS
 		.get_or_try_init(|| async {
 			Ok(SecretVariables {
-				oidc_client_id: option_env!("OIDC_CLIENT_ID").unwrap_or("").to_string(),
-				oidc_client_secret: option_env!("OIDC_CLIENT_SECRET").unwrap_or("").to_string(),
-				oidc_base_url: option_env!("OIDC_BASE_URL").unwrap_or("").to_string(),
-				oidc_tekst_client_id: option_env!("OIDC_TEKST_CLIENT_ID")
-					.unwrap_or("")
-					.to_string(),
-				oidc_tekst_client_secret: option_env!("OIDC_TEKST_CLIENT_SECRET")
-					.unwrap_or("")
-					.to_string(),
-				oidc_tekst_base_url: option_env!("OIDC_TEKST_BASE_URL").unwrap_or("").to_string(),
+				oidc_client_id: env!("OIDC_CLIENT_ID").to_string(),
+				oidc_client_secret: env!("OIDC_CLIENT_SECRET").to_string(),
+				oidc_base_url: env!("OIDC_BASE_URL").to_string(),
+				oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID").to_string(),
+				oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET").to_string(),
+				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string(),
 			})
 		})
 		.await
@@ -250,13 +246,6 @@ async fn fetch_latest_desktop_version(desktop_version_base_uri: &str) -> Result<
 
 #[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
-async fn get_secret_variables() -> Result<SecretVariables, String> {
-	let cached = get_cached_secret_variables().await?;
-	Ok(cached.clone())
-}
-
-#[cfg(not(feature = "debug-mock"))]
-#[tauri::command]
 async fn check_desktop_version_gate(
 	desktop_version_uri: String,
 ) -> Result<DesktopVersionGateResponse, String> {
@@ -276,13 +265,6 @@ async fn check_desktop_version_gate(
 	let response = evaluate_desktop_version_gate(&current_version, &latest_version)?;
 
 	Ok(response)
-}
-
-#[cfg(feature = "debug-mock")]
-#[tauri::command]
-async fn get_secret_variables() -> Result<SecretVariables, String> {
-	let cached = get_cached_secret_variables().await?;
-	Ok(cached.clone())
 }
 
 #[cfg(feature = "debug-mock")]

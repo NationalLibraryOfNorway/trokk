@@ -3,7 +3,7 @@ use crate::HashMap;
 #[cfg(not(feature = "debug-mock"))]
 use crate::file_utils::get_file_paths_in_directory;
 #[cfg(not(feature = "debug-mock"))]
-use crate::get_cached_secret_variables;
+use crate::get_secret_variables;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
@@ -36,7 +36,7 @@ pub(crate) async fn upload_directory(
 	material_type: &str,
 	app_window: Window,
 ) -> Result<usize, String> {
-	let secret_variables = get_cached_secret_variables()
+	let secret_variables = get_secret_variables()
 		.await
 		.map_err(|e| format!("Failed to get secret variables: {e}"))?;
 
@@ -77,7 +77,7 @@ pub(crate) async fn upload_batch_to_s3(
 	material_type: &str,
 	app_window: Window,
 ) -> Result<usize, String> {
-	let secret_variables = get_cached_secret_variables()
+	let secret_variables = get_secret_variables()
 		.await
 		.map_err(|e| format!("Failed to get secret variables: {e}"))?;
 	let client = get_client(&secret_variables.clone())
