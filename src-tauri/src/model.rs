@@ -1,5 +1,11 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Deserialize)]
+pub(crate) struct BatchRepresentation {
+    pub(crate) primary: Vec<String>,
+    pub(crate) access: Vec<String>,
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct AuthenticationResponse {

@@ -11,6 +11,7 @@ use crate::image_converter::ConversionCount;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::RequiredEnvironmentVariables;
 use crate::model::{AuthenticationResponse, SecretVariables};
+use crate::model::BatchRepresentation;
 
 mod auth;
 mod error;
@@ -230,11 +231,11 @@ async fn upload_directory_to_s3(
 
 #[tauri::command]
 async fn upload_batch_to_s3(
-	batch_map: HashMap<String, Vec<String>>,
-	material_type: &str,
-	app_window: tauri::Window,
+    batch_map: HashMap<String, BatchRepresentation>,
+    material_type: &str,
+    app_window: tauri::Window,
 ) -> Result<usize, String> {
-	s3::upload_batch_to_s3(batch_map, material_type, app_window).await
+    s3::upload_batch_to_s3(batch_map, material_type, app_window).await
 }
 
 #[tauri::command]
