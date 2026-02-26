@@ -16,7 +16,7 @@ const FileTreeComponent: React.FC = () => {
     }, []);
 
     const changeViewDirectory = (fileTree: FileTree): void => {
-        dispatch({ type: 'SET_CURRENT', payload: fileTree });
+        dispatch({ type: 'SET_CURRENT_AND_EXPAND_PARENTS', payload: fileTree });
     };
 
     const toggleFolderExpand = (fileTree: FileTree): void => {

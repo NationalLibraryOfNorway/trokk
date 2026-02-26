@@ -42,7 +42,15 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                             className={`flex items-center w-full rounded-md transition-colors duration-200 cursor-pointer ${getSelectedDirectoryHighlight(file.path)} -ml-2 pl-2`}
                             onClick={(e) => {
                                 e.preventDefault();
-                                changeViewDirectory(file);
+                                // Find a child named 'merge' that is a directory
+                                const mergeChild = file.children?.find(
+                                    (child) => child.name === 'merge' && child.isDirectory
+                                );
+                                if (mergeChild) {
+                                    changeViewDirectory(mergeChild);
+                                } else {
+                                    changeViewDirectory(file);
+                                }
                                 removeMessages();
                             }}
                             onDoubleClick={(e) => {

@@ -19,21 +19,31 @@ import {remove} from '@tauri-apps/plugin-fs';
 function groupFilesByCheckedItems(
     allFilesInFolder: FileTree[],
     checkedItems: string[]
-): Map<string, string[]> {
-    const batchMap = new Map<string, string[]>();
+): Map<string, {
+    primary: string[],
+    access: string[]
+}> {
+    const batchMap = new Map<string, {
+        primary: string[],
+        access: string[]
+    }>();
     let objectId: string = '';
-
     for (const file of allFilesInFolder) {
         if (!file) continue;
         if (checkedItems.includes(file.path)) {
             objectId = uuidv7().toString();
             batchMap.set(
-                objectId,
-                [file.path]
-            )
-        } else {
-            if (batchMap.get(objectId) !== undefined) batchMap.get(objectId)!.push(file.path);
+                objectId, {
+                    primary: [],
+                    access: []
+                });
         }
+        if (!objectId) continue;
+        const batch = batchMap.get(objectId);
+        if (!batch) continue;
+        const primaryPath = file.path.replace('/merge/', '/');
+        batch.access.push(file.path);
+        batch.primary.push(primaryPath);
     }
     return batchMap;
 }
@@ -97,11 +107,10 @@ export function usePostRegistration() {
             handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.', undefined, error);
             return Promise.reject(error);
         });
-
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
         for (const [batchId, pages] of batchMap.entries()) {
-            itemIdToCountOfItems.set(batchId, pages.length);
+            itemIdToCountOfItems.set(batchId, pages.access.length);
         }
 
         const body = new BatchTextInputDto(
@@ -132,7 +141,7 @@ export function usePostRegistration() {
             });
 
             const removePath = (path: string) => {
-                dispatch({ type: 'REMOVE_FOLDER_PATH', payload: path });
+                dispatch({type: 'REMOVE_FOLDER_PATH', payload: path});
             };
 
             await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress, removePath);
