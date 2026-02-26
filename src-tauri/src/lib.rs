@@ -57,22 +57,17 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 }
 
 #[cfg(feature = "debug-mock")]
-#[tauri::command]
 async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
-	static MOCK_SECRETS: OnceCell<SecretVariables> = OnceCell::const_new();
+	#[tauri::command]
 	MOCK_SECRETS
 		.get_or_try_init(|| async {
 			Ok(SecretVariables {
-				oidc_client_id: option_env!("OIDC_CLIENT_ID").unwrap_or("").to_string(),
-				oidc_client_secret: option_env!("OIDC_CLIENT_SECRET").unwrap_or("").to_string(),
-				oidc_base_url: option_env!("OIDC_BASE_URL").unwrap_or("").to_string(),
-				oidc_tekst_client_id: option_env!("OIDC_TEKST_CLIENT_ID")
-					.unwrap_or("")
-					.to_string(),
-				oidc_tekst_client_secret: option_env!("OIDC_TEKST_CLIENT_SECRET")
-					.unwrap_or("")
-					.to_string(),
-				oidc_tekst_base_url: option_env!("OIDC_TEKST_BASE_URL").unwrap_or("").to_string(),
+				oidc_client_id: env!("OIDC_CLIENT_ID").to_string(),
+				oidc_client_secret: env!("OIDC_CLIENT_SECRET").to_string(),
+				oidc_base_url: env!("OIDC_BASE_URL").to_string(),
+				oidc_tekst_client_id: env!("OIDC_TEKST_CLIENT_ID").to_string(),
+				oidc_tekst_client_secret: env!("OIDC_TEKST_CLIENT_SECRET").to_string(),
+				oidc_tekst_base_url: env!("OIDC_TEKST_BASE_URL").to_string(),
 			})
 		})
 		.await
@@ -212,9 +207,7 @@ async fn pick_directory<R: tauri::Runtime>(
 #[cfg(not(feature = "debug-mock"))]
 #[tauri::command]
 async fn get_papi_access_token() -> Result<String, String> {
-	auth::get_access_token_for_papi()
-		.await
-		.map_err(|e| format!("Could not get token for Papi. {e:?}"))
+	auth::get_access_token_for_papi().await
 }
 
 #[cfg(not(feature = "debug-mock"))]

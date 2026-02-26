@@ -51,16 +51,45 @@ vi.mock('@tauri-apps/api/path', async (importOriginal) => {
     };
 });
 
+let mockLoggedOut = false;
+let mockIsLoggingIn = false;
+const mockLogin = vi.fn();
+const mockAuthResponse = {tokenResponse: {accessToken: 'token'}};
 vi.mock('@/context/auth-context.tsx', () => ({
-    useAuth: () => ({loggedOut: false}),
+    useAuth: () => ({
+        loggedOut: mockLoggedOut,
+        isLoggingIn: mockIsLoggingIn,
+        login: mockLogin,
+        authResponse: mockLoggedOut ? null : mockAuthResponse
+    }),
     AuthProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
+}));
+
+const mockPostRegistration = vi.fn();
+vi.mock('@/context/post-registration-context.tsx', () => ({
+    usePostRegistration: () => ({ postRegistration: mockPostRegistration })
 }));
 
 // Don't mock SelectionProvider - use the real one to allow state updates
 
+let mockUploadVersionBlocking = false;
+let mockUploadVersionMessage: string | null = null;
+const mockCheckUploadVersionGate = vi.fn(async () => false);
+
 vi.mock('@/context/secret-context.tsx', () => ({
-    useSecrets: () => ({secrets: {papiPath: 'http://mock-papi'}}),
+    useSecrets: () => ({
+        secrets: {papiPath: 'http://mock-papi'}
+    }),
     SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
+}));
+
+vi.mock('@/context/version-context.tsx', () => ({
+    useVersion: () => ({
+        uploadVersionBlocking: mockUploadVersionBlocking,
+        uploadVersionMessage: mockUploadVersionMessage,
+        checkUploadVersionGate: mockCheckUploadVersionGate
+    }),
+    VersionProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
 vi.mock('@/context/transfer-log-context.tsx', () => ({
@@ -133,6 +162,10 @@ describe('RegistrationForm', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         cleanup();
+        mockUploadVersionBlocking = false;
+        mockUploadVersionMessage = null;
+        mockLoggedOut = false;
+        mockIsLoggingIn = false;
     });
 
     it('renders without crashing', async () => {
@@ -178,4 +211,18 @@ describe('RegistrationForm', () => {
             expect(screen.getByText(/2 forsider valgt/i)).toBeDefined()
         );
     });
+
+    it('disables submit button and shows side-panel message when version is blocking', async () => {
+        mockUploadVersionBlocking = true;
+        mockUploadVersionMessage = 'Ny delversjon er tilgjengelig. Oppdater appen før du kan TRØKKE.';
+
+        render(<RegistrationFormWrapper checkedItems={['id1']} />);
+
+        await waitFor(() => {
+            const button = screen.getByRole('button', { name: /TRØKK!/i });
+            expect(button.hasAttribute('disabled')).toBe(true);
+            expect(screen.getByText(/Oppdater appen før du kan TRØKKE/i)).toBeDefined();
+        });
+    });
+
 });

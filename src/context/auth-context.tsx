@@ -1,4 +1,4 @@
-import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, type WindowOptions } from '@tauri-apps/api/window';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
@@ -6,6 +6,7 @@ import { settings } from '../tauri-store/setting-store.ts';
 import { Event } from '@tauri-apps/api/event';
 import { AuthenticationResponse } from '../model/authentication-response.ts';
 import { useSecrets } from './secret-context.tsx';
+import {useVersion} from './version-context.tsx';
 
 export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
@@ -23,7 +24,7 @@ interface AuthProviderProps {
     children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export function AuthProvider({ children }: AuthProviderProps) {
     const [authResponse, setAuthResponse] = useState<AuthenticationResponse | null>(null);
     const [loggedOut, setLoggedOut] = useState(false);
     const refreshIntervalId = useRef<number | null>(null);
@@ -32,6 +33,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const appWindow = getCurrentWindow();
 
     const { secrets, getSecrets, fetchSecretsError } = useSecrets();
+    const {requiresManualLogin, isStartupBlocking, startupVersionError} = useVersion();
 
     useEffect(() => {
         const logInOnSecretChange = async () => {
@@ -40,19 +42,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     await refreshAccessToken();
                     await setRefreshAccessTokenInterval(null);
                     setAuthResponse(await settings.getAuthResponse());
-                } else if (secrets) {
+                } else if (secrets && !requiresManualLogin) {
                     await login();
+                } else if (secrets && requiresManualLogin) {
+                    setLoggedOut(true);
                 }
             } catch (error) {
                 console.error('Error logging in: ', error);
             }
         };
         void logInOnSecretChange();
-    }, [secrets]);
+    }, [secrets, requiresManualLogin]);
 
     const login = async () => {
         setAuthResponse(null);
         if (isLoggingIn) return;
+        if (isStartupBlocking || !!startupVersionError) return;
         setIsLoggingIn(true);
 
         if (!secrets?.oidcClientSecret) {
@@ -148,12 +153,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             {children}
         </AuthContext.Provider>
     );
-};
+}
 
-export const useAuth = () => {
+export function useAuth(): AuthContextType {
     const context = useContext(AuthContext);
     if (!context) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
-};
+}
