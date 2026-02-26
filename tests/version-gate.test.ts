@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {invoke} from '@tauri-apps/api/core';
 import {
 	compareVersions,
 	evaluateDesktopVersionGate,
@@ -6,7 +7,13 @@ import {
 	parseVersion,
 } from '../src/lib/version-gate';
 
+vi.mock('@tauri-apps/api/core', () => ({
+	invoke: vi.fn(),
+}));
+
 describe('version-gate', () => {
+	const invokeMock = vi.mocked(invoke);
+
 	beforeEach(() => {
 		vi.clearAllMocks();
 	});
@@ -45,41 +52,23 @@ describe('version-gate', () => {
 	});
 
 	it('fetches and normalizes latest desktop version', async () => {
-		const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-			ok: true,
-			status: 200,
-			text: async () => '"1.2.3"',
-		} as Response);
+		invokeMock.mockResolvedValue('"1.2.3"');
 
 		const latest = await fetchLatestDesktopVersion('https://example.com/version/');
 		expect(latest).toBe('1.2.3');
-		expect(fetchMock).toHaveBeenCalledWith('https://example.com/version/Tr%C3%B8kk', {
-			method: 'GET',
-			signal: expect.any(AbortSignal),
+		expect(invokeMock).toHaveBeenCalledWith('fetch_desktop_version_text', {
+			url: 'https://example.com/version/Tr%C3%B8kk',
 		});
-		fetchMock.mockRestore();
 	});
 
 	it('throws when latest desktop version response is empty', async () => {
-		const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue({
-			ok: true,
-			status: 200,
-			text: async () => '   ',
-		} as Response);
+		invokeMock.mockResolvedValue('   ');
 
 		await expect(fetchLatestDesktopVersion('https://example.com/version')).rejects.toThrow('Versjonssvar var tomt.');
-		fetchMock.mockRestore();
 	});
 
 	it('times out when latest desktop version never responds', async () => {
-		vi.useFakeTimers();
-		const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(() => new Promise(() => {}));
-
-		const pending = fetchLatestDesktopVersion('https://example.com/version', 10);
-		const assertion = expect(pending).rejects.toThrow('Versjonssjekk timet ut');
-		await vi.advanceTimersByTimeAsync(20);
-		await assertion;
-		fetchMock.mockRestore();
-		vi.useRealTimers();
+		invokeMock.mockRejectedValue(new Error('Versjonssjekk timet ut etter 5 sekunder.'));
+		await expect(fetchLatestDesktopVersion('https://example.com/version')).rejects.toThrow('Versjonssjekk timet ut');
 	});
 });

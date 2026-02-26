@@ -93,7 +93,10 @@ export function usePostRegistration() {
         }
         const pushedDir = state.current.path;
         const authResp = await settings.getAuthResponse();
-        if (!authResp || loggedOut) return Promise.reject('Not logged in');
+        if (!authResp || loggedOut) {
+            handleError('Du må logge inn før du kan TRØKKE.');
+            return Promise.reject('Not logged in');
+        }
 
         const batchMap = groupFilesByCheckedItems(
             state.current?.children ?? [],

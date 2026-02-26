@@ -51,8 +51,17 @@ vi.mock('@tauri-apps/api/path', async (importOriginal) => {
     };
 });
 
+let mockLoggedOut = false;
+let mockIsLoggingIn = false;
+const mockLogin = vi.fn();
+const mockAuthResponse = {tokenResponse: {accessToken: 'token'}};
 vi.mock('@/context/auth-context.tsx', () => ({
-    useAuth: () => ({loggedOut: false}),
+    useAuth: () => ({
+        loggedOut: mockLoggedOut,
+        isLoggingIn: mockIsLoggingIn,
+        login: mockLogin,
+        authResponse: mockLoggedOut ? null : mockAuthResponse
+    }),
     AuthProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
 
@@ -155,6 +164,8 @@ describe('RegistrationForm', () => {
         cleanup();
         mockUploadVersionBlocking = false;
         mockUploadVersionMessage = null;
+        mockLoggedOut = false;
+        mockIsLoggingIn = false;
     });
 
     it('renders without crashing', async () => {
@@ -213,4 +224,5 @@ describe('RegistrationForm', () => {
             expect(screen.getByText(/Oppdater appen før du kan TRØKKE/i)).toBeDefined();
         });
     });
+
 });

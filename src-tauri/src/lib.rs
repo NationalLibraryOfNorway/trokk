@@ -145,6 +145,7 @@ async fn create_preview_webp(file_path: String) -> Result<(), String> {
 
 static CURRENT_DIRECTORIES_PROCESSING: Lazy<Mutex<Vec<String>>> =
 	Lazy::new(|| Mutex::new(Vec::new()));
+const VERSION_CHECK_TIMEOUT_MS: u64 = 5_000;
 
 #[tauri::command]
 async fn convert_directory_to_webp(directory_path: String) -> Result<ConversionCount, String> {

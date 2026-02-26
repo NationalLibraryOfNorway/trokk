@@ -14,6 +14,7 @@ import {useSecrets} from '@/context/secret-context.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
 import {useVersion} from '@/context/version-context.tsx';
+import {useAuth} from '@/context/auth-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
 import {LoaderCircle} from 'lucide-react';
@@ -28,6 +29,7 @@ const RegistrationForm: React.FC = () => {
     const {postRegistration} = usePostRegistration();
     const {errorMessage, handleError, successMessage, removeMessages} = useMessage();
     const {hasAnyRotating} = useRotation();
+    const {authResponse, loggedOut, login, isLoggingIn} = useAuth();
     const [barWidth, setBarWidth] = useState(0);
     const appWindow = getCurrentWebviewWindow();
     const isAnyImageRotating = hasAnyRotating();
@@ -74,19 +76,51 @@ const RegistrationForm: React.FC = () => {
     }, [secrets]);
 
     const onSubmit: SubmitHandler<RegistrationFormProps> = async (registration: RegistrationFormProps) => {
+        removeMessages();
         if (checkedItems.length > 0) {
             const isVersionBlocking = await checkUploadVersionGate();
             if (isVersionBlocking) {
                 return;
             }
+            if (!authResponse || loggedOut) {
+                handleError('Du må logge inn før du kan TRØKKE. Starter innlogging...');
+                if (!isLoggingIn) {
+                    await login().catch((error) => {
+                        console.error(error);
+                        handleError('Kunne ikke starte innlogging.', undefined, String(error));
+                    });
+                }
+                setDisabled(false);
+                return;
+            }
             setIsSubmitting(true);
             setDisabled(true);
-            await invoke<string>('get_hostname')
-                .then(async hostname => await postRegistration(hostname, registration))
-                .catch(error => {
-                    console.error(error);
-                })
-                .finally(() => setIsSubmitting(false));
+            try {
+                const hostname = await invoke<string>('get_hostname');
+                await postRegistration(hostname, registration);
+            } catch (error) {
+                console.error(error);
+                const errorMessage = typeof error === 'string'
+                    ? error
+                    : error instanceof Error
+                        ? error.message
+                        : String(error);
+                if (errorMessage === 'Not logged in') {
+                    handleError('Du må logge inn før du kan TRØKKE. Starter innlogging...');
+                    if (!isLoggingIn) {
+                        await login().catch((loginError) => {
+                            console.error(loginError);
+                            handleError('Kunne ikke starte innlogging.', undefined, String(loginError));
+                        });
+                    }
+                } else {
+                    handleError('Kunne ikke starte opplasting.', undefined, errorMessage);
+                }
+            } finally {
+                setIsSubmitting(false);
+                // If folder is still selected after submit attempt, allow retry.
+                setDisabled(state.current?.path === undefined);
+            }
         } else {
             handleError('Velg forsider før du kan gå videre!');
         }
@@ -219,7 +253,7 @@ const RegistrationForm: React.FC = () => {
                     {isSubmitting ? (
                         <LoaderCircle size={24} className='animate-spin' />
                     ) : (
-                        'TRØKK!'
+                        errorMessage ? 'Forsøk TRØKK på nytt!' : 'TRØKK!'
                     )}
                 </Button>
             </div>

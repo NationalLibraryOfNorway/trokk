@@ -1,4 +1,5 @@
 import type {StartupVersionStatus} from '@/model/secret-variables.ts';
+import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 
 export interface DesktopVersionGateResponse {
 	status: StartupVersionStatus;
@@ -15,20 +16,7 @@ interface ParsedVersion {
 	patch: number;
 }
 
-const VERSION_CHECK_TIMEOUT_MS = 15_000;
 const getInvalidFormatError = (input: string) => `Ugyldig versjonsformat: ${input}`;
-
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, timeoutMessage: string): Promise<T> {
-	let timeoutId: ReturnType<typeof setTimeout> | undefined;
-	const timeoutPromise = new Promise<T>((_, reject) => {
-		timeoutId = setTimeout(() => reject(new Error(timeoutMessage)), timeoutMs);
-	});
-	try {
-		return await Promise.race([promise, timeoutPromise]);
-	} finally {
-		if (timeoutId) clearTimeout(timeoutId);
-	}
-}
 
 export function parseVersion(input: string): ParsedVersion {
 	const trimmed = input.trim().replace(/^[vV]/, '');
@@ -124,41 +112,17 @@ export function evaluateDesktopVersionGate(
 
 export async function fetchLatestDesktopVersion(
 	desktopVersionBaseUri: string,
-	timeoutMs: number = VERSION_CHECK_TIMEOUT_MS,
 ): Promise<string> {
 	const desktopVersionUri = `${desktopVersionBaseUri.trim().replace(/\/+$/, '')}/Tr%C3%B8kk`;
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-	let response: Response;
-	try {
-		response = await withTimeout(
-			fetch(desktopVersionUri, {
-				method: 'GET',
-				signal: controller.signal,
-			}),
-			timeoutMs,
-			`Versjonssjekk timet ut etter ${Math.ceil(timeoutMs / 1000)} sekunder.`,
-		);
-	} catch (error) {
-		if (error instanceof DOMException && error.name === 'AbortError') {
-			throw new Error(`Versjonssjekk timet ut etter ${Math.ceil(timeoutMs / 1000)} sekunder.`);
+    const raw = await tauriFetch(desktopVersionUri).then((res) => {
+		if (!res.ok) {
+			throw new Error(`Failed to fetch desktop version. HTTP status: ${res.status}`);
 		}
-		throw error;
-	} finally {
-		clearTimeout(timeoutId);
-	}
+		return res.text();
+	});
 
-	if (!response.ok) {
-		throw new Error(`Kunne ikke hente siste versjon. Status: ${response.status}`);
-	}
-
-	const raw = await withTimeout(
-		response.text(),
-		timeoutMs,
-		`Kunne ikke lese versjonssvar innen ${Math.ceil(timeoutMs / 1000)} sekunder.`,
-	);
-	const normalized = raw.trim().replace(/^"|"$/g, '').trim();
+    const normalized = raw.trim().replace(/^"|"$/g, '').trim();
 	if (!normalized) {
 		throw new Error('Versjonssvar var tomt.');
 	}

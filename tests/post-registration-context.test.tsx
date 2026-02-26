@@ -155,6 +155,7 @@ describe('usePostRegistration', () => {
         const { result } = renderHook(() => usePostRegistration(), { wrapper });
 
         await expect(result.current.postRegistration('TestMachine', registration)).rejects.toEqual('Not logged in');
+        expect(mockHandleError).toHaveBeenCalledWith(expect.stringContaining('Du må logge inn'));
     });
 
     it('handles upload-error', async () => {
