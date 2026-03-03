@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {invoke} from '@tauri-apps/api/core';
+import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 import {
 	compareVersions,
 	evaluateDesktopVersionGate,
@@ -7,12 +7,12 @@ import {
 	parseVersion,
 } from '../src/lib/version-gate';
 
-vi.mock('@tauri-apps/api/core', () => ({
-	invoke: vi.fn(),
+vi.mock('@tauri-apps/plugin-http', () => ({
+	fetch: vi.fn(),
 }));
 
 describe('version-gate', () => {
-	const invokeMock = vi.mocked(invoke);
+	const tauriFetchMock = vi.mocked(tauriFetch);
 
 	beforeEach(() => {
 		vi.clearAllMocks();
@@ -52,23 +52,29 @@ describe('version-gate', () => {
 	});
 
 	it('fetches and normalizes latest desktop version', async () => {
-		invokeMock.mockResolvedValue('"1.2.3"');
+		tauriFetchMock.mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: async () => '"1.2.3"',
+		} as Response);
 
 		const latest = await fetchLatestDesktopVersion('https://example.com/version/');
 		expect(latest).toBe('1.2.3');
-		expect(invokeMock).toHaveBeenCalledWith('fetch_desktop_version_text', {
-			url: 'https://example.com/version/Tr%C3%B8kk',
-		});
+		expect(tauriFetchMock).toHaveBeenCalledWith('https://example.com/version/Tr%C3%B8kk');
 	});
 
 	it('throws when latest desktop version response is empty', async () => {
-		invokeMock.mockResolvedValue('   ');
+		tauriFetchMock.mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: async () => '   ',
+		} as Response);
 
 		await expect(fetchLatestDesktopVersion('https://example.com/version')).rejects.toThrow('Versjonssvar var tomt.');
 	});
 
 	it('times out when latest desktop version never responds', async () => {
-		invokeMock.mockRejectedValue(new Error('Versjonssjekk timet ut etter 5 sekunder.'));
+		tauriFetchMock.mockRejectedValue(new Error('Versjonssjekk timet ut etter 5 sekunder.'));
 		await expect(fetchLatestDesktopVersion('https://example.com/version')).rejects.toThrow('Versjonssjekk timet ut');
 	});
 });
