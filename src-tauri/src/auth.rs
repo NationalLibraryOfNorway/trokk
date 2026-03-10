@@ -1,10 +1,10 @@
 use reqwest::Client;
-use sentry::{Breadcrumb, Level, add_breadcrumb};
+use sentry::{add_breadcrumb, Breadcrumb, Level};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use tauri::Emitter;
 use tauri::Window;
-use tauri_plugin_oauth::{OauthConfig, start_with_config};
+use tauri_plugin_oauth::{start_with_config, OauthConfig};
 use url::Url;
 
 #[cfg(not(feature = "debug-mock"))]
@@ -109,6 +109,7 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 	);
 	create_token(client, body).await
 }
+
 #[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>> {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
@@ -129,6 +130,7 @@ pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>
 	let token_response: TokenResponseWithoutRefresh = serde_json::from_str(&res?.text().await?)?;
 	Ok(token_response.access_token)
 }
+
 #[cfg(feature = "debug-mock")]
 async fn create_token(_client: Client, _body: String) -> AuthenticationResponse {
 	AuthenticationResponse {
@@ -167,11 +169,10 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		serde_json::from_str(&res.unwrap().text().await.unwrap()).unwrap();
 
 	add_breadcrumb(Breadcrumb {
-		message: Some("Received token response".into()),
+		message: Some("Received token response, requesting user information".into()),
 		level: Level::Info,
 		..Default::default()
 	});
-	sentry::capture_message("Token creation successful", Level::Info);
 
 	// For easier use in Frontend
 	let expire_info: ExpireInfo = ExpireInfo {
@@ -187,6 +188,15 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		)
 		.send()
 		.await;
+	add_breadcrumb(Breadcrumb {
+		message: Some("Received userinfo response".into()),
+		level: Level::Info,
+		..Default::default()
+	});
+	sentry::capture_message(
+		"Token creation and userinfo fetched successful",
+		Level::Info,
+	);
 	let user_info: UserInfo =
 		serde_json::from_str(&user_response.unwrap().text().await.unwrap()).unwrap();
 

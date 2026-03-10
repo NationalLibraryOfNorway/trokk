@@ -1,11 +1,12 @@
-import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow, type WindowOptions } from '@tauri-apps/api/window';
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
-import { settings } from '../tauri-store/setting-store.ts';
-import { Event } from '@tauri-apps/api/event';
-import { AuthenticationResponse } from '../model/authentication-response.ts';
-import { useSecrets } from './secret-context.tsx';
+import React, {createContext, ReactNode, useContext, useEffect, useRef, useState} from 'react';
+import {invoke} from '@tauri-apps/api/core';
+import {getCurrentWindow, type WindowOptions} from '@tauri-apps/api/window';
+import {WebviewWindow} from '@tauri-apps/api/webviewWindow';
+import {settings} from '../tauri-store/setting-store.ts';
+import {Event} from '@tauri-apps/api/event';
+import {AuthenticationResponse} from '../model/authentication-response.ts';
+import {useSecrets} from './secret-context.tsx';
+import * as Sentry from '@sentry/react';
 
 export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
@@ -58,6 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (!secrets?.oidcClientSecret) {
             await getSecrets();
         }
+
         const port = await invoke<number>('log_in');
 
         if (secrets && 'oidcBaseUrl' in secrets) {
@@ -111,7 +113,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // Drives the spinner during refresh_token, even without backend events.
             setIsRefreshingToken(true);
             try {
+                Sentry.addBreadcrumb({
+                    category: 'refreshToken',
+                    message: 'Refreshing token for user',
+                    level: 'info',
+                });
                 const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken });
+                Sentry.captureMessage(
+                    'Token refreshed successfully for user',
+                )
                 await settings.setAuthResponse(res);
             } finally {
                 setIsRefreshingToken(false);
