@@ -1,19 +1,21 @@
 #[cfg(not(feature = "debug-mock"))]
-use crate::HashMap;
-#[cfg(not(feature = "debug-mock"))]
 use crate::file_utils::get_file_paths_in_directory;
 #[cfg(not(feature = "debug-mock"))]
 use crate::get_secret_variables;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
-use aws_sdk_s3::Client;
+use crate::HashMap;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::config::{Credentials, Region};
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::primitives::ByteStream;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
+#[cfg(not(feature = "debug-mock"))]
+use aws_sdk_s3::Client;
+#[cfg(not(feature = "debug-mock"))]
+use sentry::{add_breadcrumb, capture_message, Breadcrumb, Level};
 #[cfg(not(feature = "debug-mock"))]
 use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
@@ -87,10 +89,29 @@ pub(crate) async fn upload_batch_to_s3(
 	let mut uploaded_count = 0;
 	let total_files: usize = batch_map.values().map(|v| v.len()).sum();
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("s3".into()),
+		message: Some("Started s3 upload".into()),
+		level: Level::Info,
+		..Default::default()
+	});
 	for (batch_id, batch) in batch_map.iter() {
 		for (file_index, file_path_str) in batch.iter().enumerate() {
 			let page_nr = file_index + 1;
 			let file_path = PathBuf::from(file_path_str);
+
+			let meta = tokio::fs::metadata(file_path)
+				.await
+				.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
+			let file_size = meta.len() as usize;
+
+			add_breadcrumb(Breadcrumb {
+				category: Some("s3".into()),
+				message: Some(format!("Uploading file with size {}", file_size)),
+				level: Level::Info,
+				..Default::default()
+			});
+
 			put_object(
 				client,
 				secret_variables,
@@ -98,9 +119,20 @@ pub(crate) async fn upload_batch_to_s3(
 				batch_id,
 				page_nr,
 				material_type,
+				file_size.clone(),
 			)
 			.await?;
 			uploaded_count += 1;
+
+			add_breadcrumb(Breadcrumb {
+				category: Some("s3".into()),
+				message: Some(format!(
+					"File with size {}, successfully uploaded to S3",
+					file_size
+				)),
+				level: Level::Info,
+				..Default::default()
+			});
 
 			let directory = Path::new(file_path_str)
 				.parent()
@@ -119,6 +151,7 @@ pub(crate) async fn upload_batch_to_s3(
 				.map_err(|e| e.to_string())?;
 		}
 	}
+	capture_message("Finished uploading to S3", Level::Info);
 	Ok(total_files)
 }
 
@@ -130,6 +163,7 @@ async fn put_object(
 	object_id: &str,
 	page_nr: usize,
 	material_type: &str,
+	file_size: usize,
 ) -> Result<(), String> {
 	let key = format!(
 		"{}/{}/{}_{:0>5}.{}", // The "{:0>5}" is used to pad the page number with zeros.
@@ -139,11 +173,6 @@ async fn put_object(
 		page_nr,
 		path.extension().unwrap().to_str().unwrap()
 	);
-
-	let meta = tokio::fs::metadata(path)
-		.await
-		.map_err(|e| format!("stat failed for {}: {e}", path.display()))?;
-	let file_size = meta.len() as usize;
 
 	if file_size <= MULTIPART_PART_SIZE {
 		// Small file, upload in a single PUT request
