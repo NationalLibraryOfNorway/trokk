@@ -83,7 +83,7 @@ pub(crate) async fn upload_batch_to_s3(
         .await
         .map_err(|e| format!("Failed to get secret variables: {e}"))?;
 
-    let client = get_client(&secret_variables)
+    let client = get_client(secret_variables)
         .await
         .map_err(|e| format!("Failed to get S3 client: {e}"))?;
 
