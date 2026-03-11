@@ -26,6 +26,11 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
         return dirName === currentPath ? 'bg-blue-500 text-white' : 'hover:bg-stone-700';
     };
 
+    //Avoids having two progress percentages when merge folder is open
+    const hasChildProgress = file.children?.some(
+        (child) => allUploadProgress.dir[child.path]
+    );
+
     return (
         <li key={file.path} className="my-0">
             {file.isDirectory ? (
@@ -68,7 +73,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                             ) : (
                                 <Folder size="16" className="mr-2 mb-1 flex-shrink-0"/>
                             )}
-                            {allUploadProgress.dir[file.path] && (
+                            {allUploadProgress.dir[file.path] && !hasChildProgress && (
                                 <span className="flex items-center pr-1 text-amber-400">
                                     <Upload className="mb-1" size="16"/>
                                     &nbsp;

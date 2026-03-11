@@ -15,8 +15,34 @@ import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
 import {TextItemResponse} from '../model/text-input-response.ts';
 import {remove} from '@tauri-apps/plugin-fs';
+import {TransferProgress} from '@/model/transfer-progress.ts';
 
-function groupFilesByCheckedItems(
+type UploadProgress = {
+    dir: Record<string, TransferProgress>;
+};
+
+export function deleteDirFromProgressState(
+    progress: UploadProgress,
+    pushedDir: string
+): UploadProgress {
+    const newDir = { ...progress.dir };
+
+    delete newDir[pushedDir];
+
+    if (pushedDir.endsWith('/merge')) {
+        const parentDir = pushedDir.substring(0, pushedDir.lastIndexOf('/merge'));
+        if (parentDir) {
+            delete newDir[parentDir];
+        }
+    }
+
+    return {
+        ...progress,
+        dir: newDir
+    };
+}
+
+export function groupFilesByCheckedItems(
     allFilesInFolder: FileTree[],
     checkedItems: string[]
 ): Map<string, {
@@ -109,8 +135,9 @@ export function usePostRegistration() {
         });
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
-        for (const [batchId, pages] of batchMap.entries()) {
-            itemIdToCountOfItems.set(batchId, pages.access.length);
+        for (const [itemId, pages] of batchMap.entries()) {
+            const totalItems = pages.access.length;
+            itemIdToCountOfItems.set(itemId, totalItems);
         }
 
         const body = new BatchTextInputDto(
@@ -135,10 +162,10 @@ export function usePostRegistration() {
                 body: JSON.stringify(body)
             });
 
-            const deleteDirFromProgress = () => setAllUploadProgress(progress => {
-                delete progress.dir[pushedDir];
-                return progress;
-            });
+            const deleteDirFromProgress = () =>
+                setAllUploadProgress(progress =>
+                    deleteDirFromProgressState(progress, pushedDir)
+                );
 
             const removePath = (path: string) => {
                 dispatch({type: 'REMOVE_FOLDER_PATH', payload: path});

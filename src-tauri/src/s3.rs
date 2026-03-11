@@ -95,62 +95,52 @@ pub(crate) async fn upload_batch_to_s3(
         .sum();
 
     for (batch_id, batch) in batch_map.iter() {
+        let prefixed_batch_id = format!("tekst_{}", batch_id);
 
-        // primary files
-        for (index, file_path_str) in batch.primary.iter().enumerate() {
-            let page_nr = index + 1;
-            let file_path = PathBuf::from(file_path_str);
+        for (files, rep_type) in [
+            (&batch.primary, "primary"),
+            (&batch.access, "access"),
+        ] {
 
-            put_object(
-                &client,
-                &secret_variables,
-                &file_path,
-                batch_id,
-                page_nr,
-                material_type,
-                Some("primary"),
-            )
-            .await?;
+            for (index, file_path_str) in files.iter().enumerate() {
+                let page_nr = index + 1;
+                let file_path = PathBuf::from(file_path_str);
 
-            uploaded_count += 1;
+                put_object(
+                    client,
+                    secret_variables,
+                    &file_path,
+                    &prefixed_batch_id,
+                    page_nr,
+                    material_type,
+                    Some(rep_type),
+                )
+                .await?;
 
-            emit_progress(
-                &app_window,
-                file_path_str,
-                uploaded_count,
-                total_files,
-            )?;
-        }
+                uploaded_count += 1;
 
-        // access files
-        for (index, file_path_str) in batch.access.iter().enumerate() {
-            let page_nr = index + 1;
-            let file_path = PathBuf::from(file_path_str);
+                let directory = Path::new(file_path_str)
+                    .parent()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_default();
 
-            put_object(
-                &client,
-                &secret_variables,
-                &file_path,
-                batch_id,
-                page_nr,
-                material_type,
-                Some("access"),
-            )
-            .await?;
-
-            uploaded_count += 1;
-
-            emit_progress(
-                &app_window,
-                file_path_str,
-                uploaded_count,
-                total_files,
-            )?;
+                app_window
+                    .emit(
+                        "transfer_progress",
+                        TransferProgress {
+                            directory,
+                            page_nr: uploaded_count,
+                            total_pages: total_files,
+                        },
+                    )
+                    .map_err(|e| e.to_string())?;
+            }
         }
     }
 
     Ok(uploaded_count)
 }
+
 
 #[cfg(not(feature = "debug-mock"))]
 async fn put_object(
@@ -170,7 +160,7 @@ async fn put_object(
 
    let key = if let Some(rep_type) = representation_type {
        format!(
-           "{}/{}/representations/{}/{}_{:0>4}.{}",
+           "{}/{}/representations/{}/data/{}_{:0>5}.{}",
            material_type,
            object_id,
            rep_type,
@@ -180,7 +170,7 @@ async fn put_object(
        )
    } else {
        format!(
-           "{}/{}/{}_{:0>4}.{}",
+           "{}/{}/{}_{:0>5}.{}",
            material_type,
            object_id,
            object_id,
@@ -298,29 +288,6 @@ async fn put_object(
         .map_err(|e| format!("complete multipart failed: {e:?}"))?;
 
     Ok(())
-}
-
-fn emit_progress(
-    app_window: &Window,
-    file_path_str: &str,
-    uploaded_count: usize,
-    total_files: usize,
-) -> Result<(), String> {
-    let directory = Path::new(file_path_str)
-        .parent()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default();
-
-    app_window
-        .emit(
-            "transfer_progress",
-            TransferProgress {
-                directory,
-                page_nr: uploaded_count,
-                total_pages: total_files,
-            },
-        )
-        .map_err(|e| e.to_string())
 }
 
 // Use Tokio's OnceCell to create the S3 client only once

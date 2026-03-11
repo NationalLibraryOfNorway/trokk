@@ -1,5 +1,5 @@
 import { act, renderHook } from '@testing-library/react';
-import { usePostRegistration } from '../src/context/post-registration-context.tsx';
+import {deleteDirFromProgressState, usePostRegistration} from '../src/context/post-registration-context.tsx';
 import { settings } from '../src/tauri-store/setting-store.ts';
 import { uploadToS3 } from '../src/features/registration/upload-to-s3.tsx';
 import { MaterialType } from '../src/model/registration-enums.ts';
@@ -10,6 +10,8 @@ import { invoke } from '@tauri-apps/api/core';
 import {AuthProvider} from '../src/context/auth-context';
 import {SecretProvider} from '../src/context/secret-context';
 import {SelectionProvider} from '../src/context/selection-context';
+import { groupFilesByCheckedItems } from '../src/context/post-registration-context';
+import { TransferProgress } from '@/model/transfer-progress';
 
 const mockHandleError = vi.fn();
 const mockClearError = vi.fn();
@@ -79,6 +81,8 @@ vi.mock('@tauri-apps/plugin-http', () => ({
 vi.mock('@tauri-apps/plugin-fs', () => ({
     remove: vi.fn(),
 }));
+
+const progressItem = {} as TransferProgress;
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
     <AuthProvider>
@@ -185,4 +189,74 @@ describe('usePostRegistration', () => {
             vi.clearAllMocks();
         }
     });
+
+    it('groupFilesByCheckedItems returns a batchMap in correct format', async () => {
+        const accessFiles = [
+            { path: '/merge/file1.pdf' },
+            { path: '/merge/file2.pdf' },
+            { path: '/merge/file3.pdf' },
+            { path: '/merge/file4.pdf' },
+            { path: '/merge/file5.pdf' }
+        ] as never;
+
+        const checkedItems = ['/merge/file1.pdf', '/merge/file3.pdf'];
+        const batchMap = groupFilesByCheckedItems(accessFiles, checkedItems);
+
+        expect(batchMap.size).toBe(2);
+        expect(batchMap).toBeInstanceOf(Map);
+
+        const batches = Array.from(batchMap.values());
+        expect(batches[0].primary).toEqual(['/file1.pdf', '/file2.pdf']);
+        expect(batches[0].access).toEqual(['/merge/file1.pdf', '/merge/file2.pdf']);
+        expect(batches[1].primary.length).toEqual(3);
+        expect(batches[1].access.length).toEqual(3);
+    });
+
+    it('deletes the parent and merge folder', () => {
+        const progress = {
+            dir: {
+                '/parent/merge': progressItem,
+                '/parent': progressItem,
+                '/other': progressItem
+            }
+        };
+
+        const result = deleteDirFromProgressState(progress, '/parent/merge');
+
+        expect(result.dir).toEqual({
+            '/other': {}
+        });
+    });
+
+    it('deletes only the specified folder if not merge', () => {
+        const progress = {
+            dir: {
+                '/parent/merge': progressItem,
+                '/parent': progressItem,
+                '/other': progressItem
+            }
+        };
+
+        const result = deleteDirFromProgressState(progress, '/other');
+
+        expect(result.dir).toEqual({
+            '/parent/merge': progressItem,
+            '/parent': progressItem
+        });
+    });
+
+    it('does not delete parent if the folder is not a merge folder', () => {
+        const progress = {
+            dir: {
+                '/parent': progressItem,
+                '/other': progressItem
+            }
+        };
+
+        const result = deleteDirFromProgressState(progress, '/other');
+        expect(result.dir).toEqual({
+            '/parent': progressItem
+        });
+    });
+
 });
