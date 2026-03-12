@@ -234,7 +234,7 @@ async fn put_object(
 
 		let part_stream = ByteStream::from(buf[..filled].to_vec());
 
-		let resp = client
+		let resp = match client
 			.upload_part()
 			.bucket(&secret_variables.s3_bucket_name)
 			.key(&key)
@@ -243,7 +243,20 @@ async fn put_object(
 			.body(part_stream)
 			.send()
 			.await
-			.map_err(|e| format!("upload_part #{part_number} failed: {e:?}"))?;
+		{
+			Ok(resp) => resp,
+			Err(e) => {
+				// Abort multipart upload on failure
+				let _ = client
+					.abort_multipart_upload()
+					.bucket(&secret_variables.s3_bucket_name)
+					.key(&key)
+					.upload_id(&upload_id)
+					.send()
+					.await;
+				return Err(format!("upload_part #{part_number} failed: {e:?}"));
+			}
+		};
 
 		completed.push(
 			CompletedPart::builder()
