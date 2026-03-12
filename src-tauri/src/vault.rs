@@ -3,6 +3,8 @@ use crate::ENVIRONMENT_VARIABLES;
 #[cfg(not(feature = "debug-mock"))]
 use crate::SecretVariables;
 #[cfg(not(feature = "debug-mock"))]
+use sentry::{Breadcrumb, Level, add_breadcrumb, capture_message};
+#[cfg(not(feature = "debug-mock"))]
 use vaultrs::client::{VaultClient, VaultClientSettingsBuilder};
 #[cfg(not(feature = "debug-mock"))]
 use vaultrs::error::ClientError;
@@ -12,15 +14,15 @@ use vaultrs::kv2;
 use vaultrs_login::LoginClient;
 #[cfg(not(feature = "debug-mock"))]
 use vaultrs_login::engines::approle::AppRoleLogin;
-#[cfg(not(feature = "debug-mock"))]
-use sentry::{add_breadcrumb, capture_message, Breadcrumb, Level};
 
 #[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, ClientError> {
-
 	add_breadcrumb(Breadcrumb {
 		category: Some("vault".into()),
-		message: Some(format!("Fetching secrets from Vault at {}", ENVIRONMENT_VARIABLES.vault_base_url)),
+		message: Some(format!(
+			"Fetching secrets from Vault at {}",
+			ENVIRONMENT_VARIABLES.vault_base_url
+		)),
 		level: Level::Info,
 		..Default::default()
 	});
@@ -42,7 +44,10 @@ pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, Client
 
 	add_breadcrumb(Breadcrumb {
 		category: Some("vault".into()),
-		message: Some(format!("Successfully authenticated with Vault, fetching secrets from environment {}", vault_environment)),
+		message: Some(format!(
+			"Successfully authenticated with Vault, fetching secrets from environment {}",
+			vault_environment
+		)),
 		level: Level::Info,
 		..Default::default()
 	});
@@ -57,7 +62,10 @@ pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, Client
 
 	add_breadcrumb(Breadcrumb {
 		category: Some("vault".into()),
-		message: Some(format!("Secrets successfully fetched from Vault for environment {}", vault_environment)),
+		message: Some(format!(
+			"Secrets successfully fetched from Vault for environment {}",
+			vault_environment
+		)),
 		level: Level::Info,
 		..Default::default()
 	});

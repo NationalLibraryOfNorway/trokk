@@ -1,11 +1,13 @@
 #[cfg(not(feature = "debug-mock"))]
+use crate::HashMap;
+#[cfg(not(feature = "debug-mock"))]
 use crate::file_utils::get_file_paths_in_directory;
 #[cfg(not(feature = "debug-mock"))]
 use crate::get_secret_variables;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
-use crate::HashMap;
+use aws_sdk_s3::Client;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::config::{Credentials, Region};
 #[cfg(not(feature = "debug-mock"))]
@@ -13,9 +15,7 @@ use aws_sdk_s3::primitives::ByteStream;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 #[cfg(not(feature = "debug-mock"))]
-use aws_sdk_s3::Client;
-#[cfg(not(feature = "debug-mock"))]
-use sentry::{add_breadcrumb, capture_message, Breadcrumb, Level};
+use sentry::{Breadcrumb, Level, add_breadcrumb, capture_message};
 #[cfg(not(feature = "debug-mock"))]
 use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
