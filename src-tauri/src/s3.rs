@@ -4,6 +4,7 @@ use crate::HashMap;
 use crate::file_utils::get_file_paths_in_directory;
 #[cfg(not(feature = "debug-mock"))]
 use crate::get_secret_variables;
+use crate::model::BatchRepresentation;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
@@ -27,7 +28,6 @@ use tokio::{
 	fs::File,
 	io::{AsyncReadExt, BufReader},
 };
-use crate::model::BatchRepresentation;
 const MULTIPART_PART_SIZE: usize = 16 * 1024 * 1024; // 16 MiB (server limit)
 
 #[cfg(not(feature = "debug-mock"))]
@@ -75,219 +75,201 @@ pub(crate) async fn upload_directory(
 
 #[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn upload_batch_to_s3(
-    batch_map: HashMap<String, BatchRepresentation>,
-    material_type: &str,
-    app_window: Window,
+	batch_map: HashMap<String, BatchRepresentation>,
+	material_type: &str,
+	app_window: Window,
 ) -> Result<usize, String> {
-    let secret_variables = get_secret_variables()
-        .await
-        .map_err(|e| format!("Failed to get secret variables: {e}"))?;
+	let secret_variables = get_secret_variables()
+		.await
+		.map_err(|e| format!("Failed to get secret variables: {e}"))?;
 
-    let client = get_client(secret_variables)
-        .await
-        .map_err(|e| format!("Failed to get S3 client: {e}"))?;
+	let client = get_client(secret_variables)
+		.await
+		.map_err(|e| format!("Failed to get S3 client: {e}"))?;
 
-    let mut uploaded_count = 0;
+	let mut uploaded_count = 0;
 
-    let total_files: usize = batch_map
-        .values()
-        .map(|batch| batch.primary.len() + batch.access.len())
-        .sum();
+	let total_files: usize = batch_map
+		.values()
+		.map(|batch| batch.primary.len() + batch.access.len())
+		.sum();
 
-    for (batch_id, batch) in batch_map.iter() {
-        let prefixed_batch_id = format!("tekst_{}", batch_id);
+	for (batch_id, batch) in batch_map.iter() {
+		let prefixed_batch_id = format!("tekst_{}", batch_id);
 
-        for (files, rep_type) in [
-            (&batch.primary, "primary"),
-            (&batch.access, "access"),
-        ] {
+		for (files, rep_type) in [(&batch.primary, "primary"), (&batch.access, "access")] {
+			for (index, file_path_str) in files.iter().enumerate() {
+				let page_nr = index + 1;
+				let file_path = PathBuf::from(file_path_str);
 
-            for (index, file_path_str) in files.iter().enumerate() {
-                let page_nr = index + 1;
-                let file_path = PathBuf::from(file_path_str);
+				put_object(
+					client,
+					secret_variables,
+					&file_path,
+					&prefixed_batch_id,
+					page_nr,
+					material_type,
+					Some(rep_type),
+				)
+				.await?;
 
-                put_object(
-                    client,
-                    secret_variables,
-                    &file_path,
-                    &prefixed_batch_id,
-                    page_nr,
-                    material_type,
-                    Some(rep_type),
-                )
-                .await?;
+				uploaded_count += 1;
 
-                uploaded_count += 1;
+				let directory = Path::new(file_path_str)
+					.parent()
+					.map(|p| p.to_string_lossy().to_string())
+					.unwrap_or_default();
 
-                let directory = Path::new(file_path_str)
-                    .parent()
-                    .map(|p| p.to_string_lossy().to_string())
-                    .unwrap_or_default();
+				app_window
+					.emit(
+						"transfer_progress",
+						TransferProgress {
+							directory,
+							page_nr: uploaded_count,
+							total_pages: total_files,
+						},
+					)
+					.map_err(|e| e.to_string())?;
+			}
+		}
+	}
 
-                app_window
-                    .emit(
-                        "transfer_progress",
-                        TransferProgress {
-                            directory,
-                            page_nr: uploaded_count,
-                            total_pages: total_files,
-                        },
-                    )
-                    .map_err(|e| e.to_string())?;
-            }
-        }
-    }
-
-    Ok(uploaded_count)
+	Ok(uploaded_count)
 }
-
 
 #[cfg(not(feature = "debug-mock"))]
 async fn put_object(
-    client: &Client,
-    secret_variables: &SecretVariables,
-    path: &PathBuf,
-    object_id: &str,
-    page_nr: usize,
-    material_type: &str,
-    representation_type: Option<&str>,
+	client: &Client,
+	secret_variables: &SecretVariables,
+	path: &PathBuf,
+	object_id: &str,
+	page_nr: usize,
+	material_type: &str,
+	representation_type: Option<&str>,
 ) -> Result<(), String> {
+	let extension = path
+		.extension()
+		.and_then(|ext| ext.to_str())
+		.ok_or("Missing file extension")?;
 
-    let extension = path
-        .extension()
-        .and_then(|ext| ext.to_str())
-        .ok_or("Missing file extension")?;
+	let key = if let Some(rep_type) = representation_type {
+		format!(
+			"{}/{}/representations/{}/data/{}_{:0>5}.{}",
+			material_type, object_id, rep_type, object_id, page_nr, extension
+		)
+	} else {
+		format!(
+			"{}/{}/{}_{:0>5}.{}",
+			material_type, object_id, object_id, page_nr, extension
+		)
+	};
 
-   let key = if let Some(rep_type) = representation_type {
-       format!(
-           "{}/{}/representations/{}/data/{}_{:0>5}.{}",
-           material_type,
-           object_id,
-           rep_type,
-           object_id,
-           page_nr,
-           extension
-       )
-   } else {
-       format!(
-           "{}/{}/{}_{:0>5}.{}",
-           material_type,
-           object_id,
-           object_id,
-           page_nr,
-           extension
-       )
-   };
+	let meta = tokio::fs::metadata(path)
+		.await
+		.map_err(|e| format!("stat failed for {}: {e}", path.display()))?;
 
-    let meta = tokio::fs::metadata(path)
-        .await
-        .map_err(|e| format!("stat failed for {}: {e}", path.display()))?;
+	let file_size = meta.len() as usize;
 
-    let file_size = meta.len() as usize;
+	// Small file, upload in a single PUT request
+	if file_size <= MULTIPART_PART_SIZE {
+		let body = ByteStream::read_from()
+			.path(path)
+			.build()
+			.await
+			.map_err(|e| format!("Failed to read file: {e}"))?;
 
-    // Small file, upload in a single PUT request
-    if file_size <= MULTIPART_PART_SIZE {
-        let body = ByteStream::read_from()
-            .path(path)
-            .build()
-            .await
-            .map_err(|e| format!("Failed to read file: {e}"))?;
+		client
+			.put_object()
+			.bucket(&secret_variables.s3_bucket_name)
+			.key(&key)
+			.content_length(file_size as i64)
+			.body(body)
+			.send()
+			.await
+			.map_err(|e| format!("Failed to upload file: {e:?}"))?;
 
-        client
-            .put_object()
-            .bucket(&secret_variables.s3_bucket_name)
-            .key(&key)
-            .content_length(file_size as i64)
-            .body(body)
-            .send()
-            .await
-            .map_err(|e| format!("Failed to upload file: {e:?}"))?;
+		return Ok(());
+	}
 
-        return Ok(());
-    }
+	// Large file, use multipart upload
+	let init = client
+		.create_multipart_upload()
+		.bucket(&secret_variables.s3_bucket_name)
+		.key(&key)
+		.send()
+		.await
+		.map_err(|e| format!("init multipart failed: {e:?}"))?;
 
-    // Large file, use multipart upload
-    let init = client
-        .create_multipart_upload()
-        .bucket(&secret_variables.s3_bucket_name)
-        .key(&key)
-        .send()
-        .await
-        .map_err(|e| format!("init multipart failed: {e:?}"))?;
+	let upload_id = init.upload_id().ok_or("missing upload_id")?.to_string();
 
-    let upload_id = init
-        .upload_id()
-        .ok_or("missing upload_id")?
-        .to_string();
+	let file = File::open(path)
+		.await
+		.map_err(|e| format!("open failed for {}: {e}", path.display()))?;
 
-    let file = File::open(path)
-        .await
-        .map_err(|e| format!("open failed for {}: {e}", path.display()))?;
+	let mut reader = BufReader::new(file);
+	let mut buf = vec![0u8; MULTIPART_PART_SIZE];
+	let mut part_number: i32 = 1;
+	let mut completed: Vec<CompletedPart> = Vec::new();
 
-    let mut reader = BufReader::new(file);
-    let mut buf = vec![0u8; MULTIPART_PART_SIZE];
-    let mut part_number: i32 = 1;
-    let mut completed: Vec<CompletedPart> = Vec::new();
+	loop {
+		// Fill up to MULTIPART_PART_SIZE
+		let mut filled = 0usize;
 
-    loop {
-        // Fill up to MULTIPART_PART_SIZE
-        let mut filled = 0usize;
+		while filled < MULTIPART_PART_SIZE {
+			let n = reader
+				.read(&mut buf[filled..])
+				.await
+				.map_err(|e| format!("read failed: {e}"))?;
 
-        while filled < MULTIPART_PART_SIZE {
-            let n = reader
-                .read(&mut buf[filled..])
-                .await
-                .map_err(|e| format!("read failed: {e}"))?;
+			if n == 0 {
+				break;
+			}
 
-            if n == 0 {
-                break;
-            }
+			filled += n;
+		}
 
-            filled += n;
-        }
+		if filled == 0 {
+			break;
+		}
 
-        if filled == 0 {
-            break;
-        }
+		let part_stream = ByteStream::from(buf[..filled].to_vec());
 
-        let part_stream = ByteStream::from(buf[..filled].to_vec());
+		let resp = client
+			.upload_part()
+			.bucket(&secret_variables.s3_bucket_name)
+			.key(&key)
+			.upload_id(&upload_id)
+			.part_number(part_number)
+			.body(part_stream)
+			.send()
+			.await
+			.map_err(|e| format!("upload_part #{part_number} failed: {e:?}"))?;
 
-        let resp = client
-            .upload_part()
-            .bucket(&secret_variables.s3_bucket_name)
-            .key(&key)
-            .upload_id(&upload_id)
-            .part_number(part_number)
-            .body(part_stream)
-            .send()
-            .await
-            .map_err(|e| format!("upload_part #{part_number} failed: {e:?}"))?;
+		completed.push(
+			CompletedPart::builder()
+				.part_number(part_number)
+				.e_tag(resp.e_tag().unwrap_or_default())
+				.build(),
+		);
 
-        completed.push(
-            CompletedPart::builder()
-                .part_number(part_number)
-                .e_tag(resp.e_tag().unwrap_or_default())
-                .build(),
-        );
+		part_number += 1;
+	}
 
-        part_number += 1;
-    }
+	client
+		.complete_multipart_upload()
+		.bucket(&secret_variables.s3_bucket_name)
+		.key(&key)
+		.upload_id(upload_id)
+		.multipart_upload(
+			CompletedMultipartUpload::builder()
+				.set_parts(Some(completed))
+				.build(),
+		)
+		.send()
+		.await
+		.map_err(|e| format!("complete multipart failed: {e:?}"))?;
 
-    client
-        .complete_multipart_upload()
-        .bucket(&secret_variables.s3_bucket_name)
-        .key(&key)
-        .upload_id(upload_id)
-        .multipart_upload(
-            CompletedMultipartUpload::builder()
-                .set_parts(Some(completed))
-                .build(),
-        )
-        .send()
-        .await
-        .map_err(|e| format!("complete multipart failed: {e:?}"))?;
-
-    Ok(())
+	Ok(())
 }
 
 // Use Tokio's OnceCell to create the S3 client only once
