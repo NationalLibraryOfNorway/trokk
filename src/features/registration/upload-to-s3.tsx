@@ -8,7 +8,7 @@ export async function uploadToS3(
         primary: string[],
         access: string[]
     }>
-): Promise<number[]> {
+): Promise<number> {
     const materialType = getMaterialTypeAsKeyString(registration.materialType);
 
     return await invoke('upload_batch_to_s3', {

@@ -31,6 +31,14 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
         (child) => allUploadProgress.dir[child.path]
     );
 
+    const getTargetDirectory = (file: FileTree): FileTree => {
+        const mergeChild = file.children?.find(
+            (child) => child.name === 'merge' && child.isDirectory
+        );
+        return mergeChild || file;
+    };
+
+
     return (
         <li key={file.path} className="my-0">
             {file.isDirectory ? (
@@ -47,15 +55,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                             className={`flex items-center w-full rounded-md transition-colors duration-200 cursor-pointer ${getSelectedDirectoryHighlight(file.path)} -ml-2 pl-2`}
                             onClick={(e) => {
                                 e.preventDefault();
-                                // Find a child named 'merge' that is a directory
-                                const mergeChild = file.children?.find(
-                                    (child) => child.name === 'merge' && child.isDirectory
-                                );
-                                if (mergeChild) {
-                                    changeViewDirectory(mergeChild);
-                                } else {
-                                    changeViewDirectory(file);
-                                }
+                                changeViewDirectory(getTargetDirectory(file));
                                 removeMessages();
                             }}
                             onDoubleClick={(e) => {
@@ -64,7 +64,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                             }}
                             onKeyDown={(e) => {
                                 e.preventDefault();
-                                changeViewDirectory(file);
+                                changeViewDirectory(getTargetDirectory(file));
                                 removeMessages();
                             }}
                         >

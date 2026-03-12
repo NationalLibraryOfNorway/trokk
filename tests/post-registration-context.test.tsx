@@ -1,9 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
-import {deleteDirFromProgressState, usePostRegistration} from '../src/context/post-registration-context.tsx';
-import { settings } from '../src/tauri-store/setting-store.ts';
-import { uploadToS3 } from '../src/features/registration/upload-to-s3.tsx';
-import { MaterialType } from '../src/model/registration-enums.ts';
-import { RegistrationFormProps } from '../src/features/registration/registration-form-props.tsx';
+import {deleteDirFromProgressState, usePostRegistration} from '../src/context/post-registration-context';
+import { settings } from '../src/tauri-store/setting-store';
+import { uploadToS3 } from '../src/features/registration/upload-to-s3';
+import { MaterialType } from '../src/model/registration-enums';
+import { RegistrationFormProps } from '../src/features/registration/registration-form-props';
 import { vi, type Mock } from 'vitest';
 import React from 'react';
 import { invoke } from '@tauri-apps/api/core';
@@ -42,15 +42,15 @@ vi.mock('@tauri-apps/api/webviewWindow', () => ({
     getCurrentWebviewWindow: vi.fn().mockReturnValue(null),
 }));
 
-vi.mock('../src/features/registration/upload-to-s3.tsx', () => ({
+vi.mock('../src/features/registration/upload-to-s3', () => ({
     uploadToS3: vi.fn(),
 }));
 
-vi.mock('../src/context/trokk-files-context.tsx', () => ({
+vi.mock('../src/context/trokk-files-context', () => ({
     useTrokkFiles: () => ({ state: { current: { path: '/some/path' } } }),
 }));
 
-vi.mock('../src/context/message-context.tsx', () => ({
+vi.mock('../src/context/message-context', () => ({
     useMessage: () => ({
         handleError: mockHandleError,
         clearError: mockClearError,
@@ -58,13 +58,13 @@ vi.mock('../src/context/message-context.tsx', () => ({
     }),
 }));
 
-vi.mock('../src/context/upload-progress-context.tsx', () => ({
+vi.mock('../src/context/upload-progress-context', () => ({
     useUploadProgress: () => ({
         setAllUploadProgress: vi.fn(),
     }),
 }));
 
-vi.mock('../src/tauri-store/setting-store.ts', () => ({
+vi.mock('../src/tauri-store/setting-store', () => ({
     settings: {
         getAuthResponse: vi.fn(),
     },

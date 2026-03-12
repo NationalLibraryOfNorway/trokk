@@ -15,25 +15,19 @@ import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
 import {TextItemResponse} from '../model/text-input-response.ts';
 import {remove} from '@tauri-apps/plugin-fs';
-import {TransferProgress} from '@/model/transfer-progress.ts';
-
-type UploadProgress = {
-    dir: Record<string, TransferProgress>;
-};
+import {AllTransferProgress} from '@/model/transfer-progress.ts';
 
 export function deleteDirFromProgressState(
-    progress: UploadProgress,
+    progress: AllTransferProgress,
     pushedDir: string
-): UploadProgress {
+): AllTransferProgress {
     const newDir = { ...progress.dir };
 
     delete newDir[pushedDir];
 
     if (pushedDir.endsWith('/merge')) {
-        const parentDir = pushedDir.substring(0, pushedDir.lastIndexOf('/merge'));
-        if (parentDir) {
-            delete newDir[parentDir];
-        }
+        const parentDir = pushedDir.replace(/\/merge$/, '');
+        delete newDir[parentDir];
     }
 
     return {
@@ -82,6 +76,7 @@ async function handleApiResponse(
     pushedDir: string,
     deleteDirFromProgress: () => void,
     removePath: (path: string) => void,
+    setAllUploadProgress: (fn: (progress: AllTransferProgress) => AllTransferProgress) => void,
 ) {
     if (response.status >= 200 && response.status < 300) {
         clearError();
@@ -89,6 +84,17 @@ async function handleApiResponse(
         await remove(pushedDir, {recursive: true});
         removePath(pushedDir);
         deleteDirFromProgress();
+
+        // If pushedDir is a merge folder, also delete parent directory and its progress
+        if (pushedDir.endsWith('/merge')) {
+            const parentDir = pushedDir.replace(/\/merge$/, '');
+            console.debug('Deleting parent directory:', parentDir);
+            await remove(parentDir, {recursive: true});
+            removePath(parentDir);
+            // Remove progress for parentDir
+            setAllUploadProgress(progress => deleteDirFromProgressState(progress, parentDir));
+        }
+
         const items: TextItemResponse[] = await response.json();
         items.forEach(displaySuccessMessage);
     } else {
@@ -171,7 +177,16 @@ export function usePostRegistration() {
                 dispatch({type: 'REMOVE_FOLDER_PATH', payload: path});
             };
 
-            await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress, removePath);
+            await handleApiResponse(
+                response,
+                clearError,
+                displaySuccessMessage,
+                handleError,
+                pushedDir,
+                deleteDirFromProgress,
+                removePath,
+                setAllUploadProgress
+            );
 
         } catch (error) {
             handleError('Nettverksfeil ved lagring av objektet');

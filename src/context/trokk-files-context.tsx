@@ -89,7 +89,6 @@ const setCurrentAndExpandParents = (state: TrokkFilesState, fileTree: FileTree):
 
 const calculateIsEven = (fileTree: FileTree | undefined): boolean => {
     if (!fileTree?.children) {
-        console.log('calculateIsEven: No children, returning true');
         return true; // Default to true if no children
     }
 
