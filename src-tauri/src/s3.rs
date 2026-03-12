@@ -61,7 +61,7 @@ pub(crate) async fn upload_directory(
 			object_id,
 			page_nr,
 			material_type,
-			file_size.clone()
+			file_size,
 		)
 		.await?;
 
@@ -125,7 +125,7 @@ pub(crate) async fn upload_batch_to_s3(
 				batch_id,
 				page_nr,
 				material_type,
-				file_size.clone(),
+				file_size,
 			)
 			.await?;
 			uploaded_count += 1;
