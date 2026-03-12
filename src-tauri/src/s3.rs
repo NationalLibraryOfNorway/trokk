@@ -48,6 +48,11 @@ pub(crate) async fn upload_directory(
 
 	let file_paths = get_file_paths_in_directory(directory_path)?;
 	for (index, file_path) in file_paths.iter().enumerate() {
+		let meta = tokio::fs::metadata(file_path.clone())
+			.await
+			.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
+		let file_size = meta.len() as usize;
+
 		let page_nr = index + 1;
 		put_object(
 			client,
@@ -56,6 +61,7 @@ pub(crate) async fn upload_directory(
 			object_id,
 			page_nr,
 			material_type,
+			file_size.clone()
 		)
 		.await?;
 
@@ -100,7 +106,7 @@ pub(crate) async fn upload_batch_to_s3(
 			let page_nr = file_index + 1;
 			let file_path = PathBuf::from(file_path_str);
 
-			let meta = tokio::fs::metadata(file_path)
+			let meta = tokio::fs::metadata(file_path.clone())
 				.await
 				.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
 			let file_size = meta.len() as usize;

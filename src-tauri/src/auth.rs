@@ -1,5 +1,5 @@
 use reqwest::Client;
-use sentry::{add_breadcrumb, Breadcrumb, Level};
+use sentry::{add_breadcrumb, capture_message, Breadcrumb, Level};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use tauri::Emitter;
@@ -120,12 +120,19 @@ pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>
 		secrets.oidc_tekst_client_id, secrets.oidc_tekst_client_secret
 	);
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("papi".into()),
+		message: Some("Getting access token for Papi".into()),
+		level: Level::Info,
+		..Default::default()
+	});
 	let res = client
 		.post(format!("{}{}", secrets.oidc_tekst_base_url, "/token"))
 		.header("Content-Type", "application/x-www-form-urlencoded")
 		.body(body)
 		.send()
 		.await;
+	capture_message("Finished getting access token for Papi", Level::Info);
 
 	let token_response: TokenResponseWithoutRefresh = serde_json::from_str(&res?.text().await?)?;
 	Ok(token_response.access_token)
@@ -153,8 +160,8 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.expect("Time went backwards")
 		.as_millis();
 
-	// For debugging av treg tokenhenting. Remove when stable.
 	add_breadcrumb(Breadcrumb {
+		category: Some("auth".into()),
 		message: Some("Getting token".into()),
 		level: Level::Info,
 		..Default::default()
@@ -169,6 +176,7 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		serde_json::from_str(&res.unwrap().text().await.unwrap()).unwrap();
 
 	add_breadcrumb(Breadcrumb {
+		category: Some("auth".into()),
 		message: Some("Received token response, requesting user information".into()),
 		level: Level::Info,
 		..Default::default()
@@ -189,11 +197,12 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.send()
 		.await;
 	add_breadcrumb(Breadcrumb {
+		category: Some("auth".into()),
 		message: Some("Received userinfo response".into()),
 		level: Level::Info,
 		..Default::default()
 	});
-	sentry::capture_message(
+	capture_message(
 		"Token creation and userinfo fetched successful",
 		Level::Info,
 	);
