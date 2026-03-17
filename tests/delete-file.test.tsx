@@ -79,4 +79,27 @@ describe('DeleteFile', () => {
         const dialog = await screen.findByText(/Er du sikker/);
         expect(dialog).toBeDefined();
     });
+
+    it('deletes both merge and parent file when path is in merge folder', async () => {
+        const mergePath = '/some/parent/merge/file1.tif';
+        const parentPath = '/some/parent/file1.tif';
+
+        // Update TestWrapper to use mergePath as childPath
+        const MergeTestWrapper = () => {
+            const [delFilePath, setDelFilePath] = useState<string | null>(null);
+            return (
+                <DeleteFile childPath={mergePath} delFilePath={delFilePath} setDelFilePath={setDelFilePath} />
+            );
+        };
+
+        render(<MergeTestWrapper />);
+        fireEvent.click(screen.getByText('x'));
+        fireEvent.click(screen.getByText('Slett'));
+
+        await waitFor(() => {
+            expect(remove).toHaveBeenCalledWith(mergePath);
+            expect(remove).toHaveBeenCalledWith(parentPath);
+        });
+    });
+
 });
