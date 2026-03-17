@@ -21,7 +21,6 @@ export interface DeleteFile {
 const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePath}: DeleteFile) => {
     const {dispatch, state} = useTrokkFiles();
     const {checkedItems, handleCheck} = useSelection();
-    const {columns} = useSelection();
 
     const updateFileTrees = (path: string) => {
         const updatedTree = removeFileFromTree(state.fileTrees, path);
@@ -54,7 +53,8 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
             .filter(Boolean) as FileTree[];
     };
 
-    const handleDelete = async (filePath?: string) => {
+    const handleDelete = async (filePath?: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
         const path = filePath ?? delFilePath;
         if (!path) return;
 
@@ -66,21 +66,36 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
         const previewPath = buildPath('.previews');
         const thumbPath = buildPath('.thumbnails');
 
+        // Check if file is in a merge folder
+        let parentPath: string | null = null;
+        const mergeMatch = path.match(/\/merge\/([^/]+)$/);
+        if (mergeMatch) {
+            parentPath = path.replace('/merge/', '/');
+        }
+
         try {
             // Delete main file + thumbnail (always required)
             await Promise.all([
                 remove(path),
                 remove(thumbPath),
+                parentPath ? remove(parentPath) : Promise.resolve(),
             ]);
 
             // Delete preview if it exists (optional)
             try {
                 await remove(previewPath);
+                if (parentPath) {
+                    const parentPreviewPath = parentPath
+                        .replace(/([^/]+)$/, `.previews/$1`)
+                        .replace(/\.\w+$/, `.webp`);
+                    await remove(parentPreviewPath);
+                }
             } catch {
                 //Ignore if preview doesn't exist
             }
 
             updateFileTrees(path);
+            if (parentPath) updateFileTrees(parentPath);
             setDelFilePath(null);
 
             if (state.current) {
@@ -96,13 +111,6 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
         }
     };
 
-    const getDeleteBtnSize = (columns: number) => {
-        if (columns <= 2) return 'w-10 h-10';
-        if (columns <= 5) return 'w-8 h-8 text-sm px-2';
-        if (columns <= 10) return 'w-6 h-6 text-sm py-1 px-1.5';
-        return 'w-4 h-4';
-    };
-
     return (
         <Dialog open={delFilePath === childPath} onOpenChange={(open) => setDelFilePath(open ? childPath : null)}>
             <DialogContent className={'bg-stone-700 w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -113,7 +121,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 <div className="flex justify-center space-x-2">
                     <DialogClose
                         className="w-24 hover:bg-red-800"
-                        onClick={() => handleDelete()}
+                        onClick={(e) => handleDelete(undefined, e)}
                         onKeyDown={(e) => e.stopPropagation()}
                     >
                         Slett
@@ -127,11 +135,12 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 </div>
             </DialogContent>
             <DialogTrigger
-                className={`bg-black rounded-[200px] flex justify-center
-                 align-middle aspect-square ${getDeleteBtnSize(columns)}`}
+                className={`bg-black/50 rounded-[200px] flex justify-center backdrop-blur-sm text-md hover:bg-black/70 text-white
+                 align-middle aspect-square h-10 text-3xl font-medium`}
                 onKeyDown={(e) => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}
             >
-                ✕
+                x
             </DialogTrigger>
         </Dialog>
     );

@@ -12,6 +12,7 @@ import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
 import StatusOverlay from '@/components/ui/rotation-status-overlay.tsx';
 import React, {forwardRef} from 'react';
+import DeleteFile from '@/features/delete-file/delete-file.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -23,7 +24,7 @@ export interface ThumbnailProps {
 }
 
  const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
-  ({ fileTree, onClick, isChecked, isFocused }, ref) => {
+  ({ fileTree, onClick, isChecked, isFocused, setDelFilePath, delFilePath }, ref) => {
 
     const {state} = useTrokkFiles();
     const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
@@ -154,6 +155,11 @@ export interface ThumbnailProps {
                         >
                             <RotateCw size={16} />
                         </button>
+                        <DeleteFile
+                            childPath={fileTree.path}
+                            setDelFilePath={setDelFilePath}
+                            delFilePath={delFilePath}
+                        />
                     </div>
                 )}
             </div>
