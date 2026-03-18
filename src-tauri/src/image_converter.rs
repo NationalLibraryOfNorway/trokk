@@ -231,6 +231,7 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 	path.set_extension(WEBP_EXTENSION);
 	fs::write(&path, &*encoded_webp)?;
 
+	// Functions that invoke this function must capture its breadcrumbs
 	add_breadcrumb(Breadcrumb {
 		category: Some("convert_image".into()),
 		message: Some("Finished encoding and saving image".into()),
