@@ -2,6 +2,7 @@ use image::ImageReader;
 use image::metadata::Orientation;
 use little_exif::exif_tag::ExifTag;
 use little_exif::metadata::Metadata;
+use sentry::{Breadcrumb, Level, add_breadcrumb, capture_message};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -83,6 +84,17 @@ pub fn convert_directory_to_webp<P: AsRef<Path>>(
 		converted: 0,
 		already_converted: 0,
 	};
+
+	add_breadcrumb(Breadcrumb {
+		category: Some("convert_directory".into()),
+		message: Some(format!(
+			"Converting images to thumbnails. Total images: {}",
+			files.len()
+		)),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	for file in files {
 		if check_if_thumbnail_exists(&file)? {
 			count.already_converted += 1;
@@ -91,6 +103,19 @@ pub fn convert_directory_to_webp<P: AsRef<Path>>(
 			count.converted += 1;
 		}
 	}
+
+	add_breadcrumb(Breadcrumb {
+		category: Some("convert_directory".into()),
+		message: Some(format!(
+			"Done converting images to thumbnails. Converted: {}, already_converted: {}",
+			count.converted, count.already_converted
+		)),
+		level: Level::Info,
+		..Default::default()
+	});
+
+	capture_message("Finished converting images to thumbnails", Level::Info);
+
 	Ok(count)
 }
 
@@ -108,9 +133,26 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		return Ok(path_reference.to_path_buf());
 	}
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("convert_image".into()),
+		message: Some("Converting image to WEBP".into()),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	// Load image
 	let reader = ImageReader::open(path_reference)?.with_guessed_format()?;
 	let mut image: image::DynamicImage = reader.decode()?;
+
+	add_breadcrumb(Breadcrumb {
+		category: Some("convert_image".into()),
+		message: Some(format!(
+			"Transforming original image with size {} bytes",
+			image.as_bytes().len()
+		)),
+		level: Level::Info,
+		..Default::default()
+	});
 
 	// Apply EXIF Orientation (if missing/invalid, do nothing)
 	let orientation = Metadata::new_from_path(path_reference)
@@ -144,6 +186,16 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		image::imageops::FilterType::Nearest,
 	);
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("convert_image".into()),
+		message: Some(format!(
+			"Transformed image to size {} bytes. Encoding image",
+			image.as_bytes().len()
+		)),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	let encoder: Encoder =
 		Encoder::from_image(&image).map_err(|e| ImageConversionError::StrError(e.to_string()))?;
 	let encoded_webp = encoder.encode_simple(false, WEBP_QUALITY)?;
@@ -165,9 +217,26 @@ pub fn convert_to_webp<P: AsRef<Path>>(
 		thread::sleep(Duration::from_millis(500)); // Sleep here a bit so the file watcher can catch up
 	}
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("convert_image".into()),
+		message: Some(format!(
+			"Saving encoded image with size {} bytes",
+			encoded_webp.len()
+		)),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	path.push(filename_original_image);
 	path.set_extension(WEBP_EXTENSION);
 	fs::write(&path, &*encoded_webp)?;
+
+	add_breadcrumb(Breadcrumb {
+		category: Some("convert_image".into()),
+		message: Some("Finished encoding and saving image".into()),
+		level: Level::Info,
+		..Default::default()
+	});
 
 	Ok(path)
 }
@@ -283,6 +352,13 @@ fn rotate_counter_clockwise(current: Orientation) -> Orientation {
 
 /// Regenerates WebP thumbnail and preview files from the rotated original
 fn rerender_webp_files<P: AsRef<Path>>(image_path: P) -> Result<(), ImageConversionError> {
+	add_breadcrumb(Breadcrumb {
+		category: Some("rerender_images".into()),
+		message: Some("Regenerating thumbnail and preview files".into()),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	let path_reference = image_path.as_ref();
 
 	let parent_directory = file_utils::get_parent_directory(image_path.as_ref())
@@ -304,5 +380,11 @@ fn rerender_webp_files<P: AsRef<Path>>(image_path: P) -> Result<(), ImageConvers
 		let _ = fs::remove_file(&preview_path); // Ignore errors; we'll regenerate it.
 	}
 	convert_to_webp(path_reference, true)?; // Preview
+
+	capture_message(
+		"Finished regenerating thumbnail and preview files",
+		Level::Info,
+	);
+
 	Ok(())
 }
