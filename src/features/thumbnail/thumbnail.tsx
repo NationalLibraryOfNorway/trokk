@@ -57,7 +57,7 @@ export interface ThumbnailProps {
     const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
     const hasWebpThumbnail = !!thumbnailUrl;
     const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
-    const rotateBtnClass = `bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+    const rotateBtnClass = `flex justify-center items-center size-10 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
     if (isHiddenDir) return null;
 
@@ -158,19 +158,13 @@ export interface ThumbnailProps {
                         >
                             <RotateCw size={16} />
                         </button>
-                        <button
-                        type="button"
-                        disabled={imageIsRotating}
-                        className={rotateBtnClass}
-                        aria-label="Slett fil"
-                        title="Slett fil"
-                        >
-                            <DeleteFile
-                                childPath={fileTree.path}
-                                setDelFilePath={setDelFilePath}
-                                delFilePath={delFilePath}
-                            />
-                        </button>
+                        <DeleteFile
+                            childPath={fileTree.path}
+                            setDelFilePath={setDelFilePath}
+                            delFilePath={delFilePath}
+                            disabled={imageIsRotating}
+                            btnClassName={rotateBtnClass}
+                        />
                     </div>
                 )}
             </div>

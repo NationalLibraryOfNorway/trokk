@@ -12,14 +12,18 @@ import {remove} from '@tauri-apps/plugin-fs';
 import {FileTree} from '@/model/file-tree.ts';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import {Trash} from 'lucide-react';
+import {basename, dirname, join} from '@tauri-apps/api/path';
+
 
 export interface DeleteFile {
     childPath: string;
     setDelFilePath: (path: string | null) => void;
     delFilePath: string | null;
+    disabled?: boolean;
+    btnClassName?: string;
 }
 
-const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePath}: DeleteFile) => {
+const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePath, disabled, btnClassName}: DeleteFile) => {
     const {dispatch, state} = useTrokkFiles();
     const {checkedItems, handleCheck} = useSelection();
 
@@ -58,36 +62,67 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
         const path = filePath ?? delFilePath;
         if (!path) return;
 
-        const buildPath = (subdir: string, extension = 'webp') =>
-            path
-                .replace(/([^/]+)$/, `${subdir}/$1`)
-                .replace(/\.\w+$/, `.${extension}`);
+        const buildPath = async (targetPath: string, subdir: string, extension = 'webp') => {
+            const dir = await dirname(targetPath);
+            const base = await basename(targetPath);
+            const nameWithoutExt = base.replace(/\.\w+$/, '');
+            const fileName = `${nameWithoutExt}.${extension}`;
+            const targetDir = await join(dir, subdir);
+            return await join(targetDir, fileName);
+        };
 
-        const previewPath = buildPath('.previews');
-        const thumbPath = buildPath('.thumbnails');
-
-        // Check if file is in a merge folder
+        // Check if file is in a merge folder (i.e., path ends with /merge/<filename>)
         let parentPath: string | null = null;
-        const mergeMatch = path.match(/\/merge\/([^/]+)$/);
-        if (mergeMatch) {
-            parentPath = path.replace('/merge/', '/');
+        const parentDir = await dirname(path);
+        const parentDirName = await basename(parentDir);
+        if (parentDirName === 'merge') {
+            const grandParentDir = await dirname(parentDir);
+            const fileBaseName = await basename(path);
+            parentPath = await join(grandParentDir, fileBaseName);
         }
 
+            const previewPath = await buildPath(path, '.previews');
+            const thumbPath = await buildPath(path, '.thumbnails');
+
+            const parentPreviewPath = parentPath
+                         ? parentPath
+                             .replace(/([^/]+)$/, '.previews/$1')
+                             .replace(/\.\w+$/, '.webp')
+                         : null;
+             const parentThumbPath = parentPath
+                 ? parentPath
+                     .replace(/([^/]+)$/, '.thumbnails/$1')
+                     .replace(/\.\w+$/, '.webp')
+                 : null;
+            
         try {
             // Delete main file + thumbnail (always required)
             await Promise.all([
                 remove(path),
                 remove(thumbPath),
-                parentPath ? remove(parentPath) : Promise.resolve(),
             ]);
+
+            // Best-effort deletion of optional artifacts (ignore if they don't exist)
+            const optionalPaths = [
+                previewPath,
+                parentPreviewPath,
+                parentThumbPath,
+            ].filter((p): p is string => Boolean(p));
+
+            await Promise.all(
+                optionalPaths.map(p =>
+                    remove(p).catch(() => {
+                        // Ignore errors for optional artifacts (e.g., missing previews/thumbnails)
+                        return;
+                    }),
+                ),
+            );
 
             // Delete preview if it exists (optional)
             try {
                 await remove(previewPath);
                 if (parentPath) {
-                    const parentPreviewPath = parentPath
-                        .replace(/([^/]+)$/, '.previews/$1')
-                        .replace(/\.\w+$/, '.webp');
+                    const parentPreviewPath = await buildPath(parentPath, '.previews');
                     await remove(parentPreviewPath);
                 }
             } catch {
@@ -120,6 +155,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 </DialogDescription>
                 <div className="flex justify-center space-x-2">
                     <DialogClose
+                        aria-label="Slett"
                         className="w-24 hover:bg-red-800"
                         onClick={() => handleDelete(undefined)}
                         onKeyDown={(e) => e.stopPropagation()}
@@ -127,6 +163,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                         Slett
                     </DialogClose>
                     <DialogClose
+                        aria-label="Avbryt"
                         className="w-24 hover:bg-green-800"
                         onKeyDown={(e) => e.stopPropagation()}
                     >
@@ -136,8 +173,10 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
             </DialogContent>
             <DialogTrigger
                 data-testid="delete-trigger"
-                className={`flex justify-center items-center w-[16px] h-[16px] p-0.5
-                 align-middle font-medium`}
+                disabled={disabled}
+                aria-label="Slett fil"
+                title="Slett fil"
+                className={` ${btnClassName}`}
                 onKeyDown={(e) => e.stopPropagation()}
                 onClick={e => e.stopPropagation()}
             >
