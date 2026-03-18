@@ -11,6 +11,7 @@ import {useSelection} from '@/context/selection-context.tsx';
 import {remove} from '@tauri-apps/plugin-fs';
 import {FileTree} from '@/model/file-tree.ts';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
+import {Trash} from 'lucide-react';
 
 export interface DeleteFile {
     childPath: string;
@@ -53,8 +54,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
             .filter(Boolean) as FileTree[];
     };
 
-    const handleDelete = async (filePath?: string, e?: React.MouseEvent) => {
-        e?.stopPropagation();
+    const handleDelete = async (filePath?: string) => {
         const path = filePath ?? delFilePath;
         if (!path) return;
 
@@ -86,8 +86,8 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 await remove(previewPath);
                 if (parentPath) {
                     const parentPreviewPath = parentPath
-                        .replace(/([^/]+)$/, `.previews/$1`)
-                        .replace(/\.\w+$/, `.webp`);
+                        .replace(/([^/]+)$/, '.previews/$1')
+                        .replace(/\.\w+$/, '.webp');
                     await remove(parentPreviewPath);
                 }
             } catch {
@@ -113,7 +113,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
 
     return (
         <Dialog open={delFilePath === childPath} onOpenChange={(open) => setDelFilePath(open ? childPath : null)}>
-            <DialogContent className={'bg-stone-700 w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent onClick={(e) => e.stopPropagation()} className={'bg-stone-700 w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
                 <DialogTitle>Er du sikker på at du ønsker å slette bildet?</DialogTitle>
                 <DialogDescription className="text-gray-200">
                     Handlingen kan ikke angres.
@@ -121,7 +121,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 <div className="flex justify-center space-x-2">
                     <DialogClose
                         className="w-24 hover:bg-red-800"
-                        onClick={(e) => handleDelete(undefined, e)}
+                        onClick={() => handleDelete(undefined)}
                         onKeyDown={(e) => e.stopPropagation()}
                     >
                         Slett
@@ -135,12 +135,13 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 </div>
             </DialogContent>
             <DialogTrigger
-                className={`bg-black/50 rounded-[200px] flex justify-center backdrop-blur-sm text-md hover:bg-black/70 text-white
-                 align-middle aspect-square h-10 text-3xl font-medium`}
+                data-testid="delete-trigger"
+                className={`flex justify-center items-center w-[16px] h-[16px] p-0.5
+                 align-middle font-medium`}
                 onKeyDown={(e) => e.stopPropagation()}
                 onClick={e => e.stopPropagation()}
             >
-                x
+                <Trash/>
             </DialogTrigger>
         </Dialog>
     );

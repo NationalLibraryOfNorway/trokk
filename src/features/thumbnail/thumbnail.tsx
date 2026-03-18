@@ -134,7 +134,10 @@ export interface ThumbnailProps {
                 {content}
                 <StatusOverlay status={imageStatus} size="small" />
                 {(isSupported || hasWebpThumbnail) && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute p-4 bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                    >
                         <button
                             type="button"
                             onClick={handleRotateCounterClockwise}
@@ -155,11 +158,19 @@ export interface ThumbnailProps {
                         >
                             <RotateCw size={16} />
                         </button>
-                        <DeleteFile
-                            childPath={fileTree.path}
-                            setDelFilePath={setDelFilePath}
-                            delFilePath={delFilePath}
-                        />
+                        <button
+                        type="button"
+                        disabled={imageIsRotating}
+                        className={rotateBtnClass}
+                        aria-label="Slett fil"
+                        title="Slett fil"
+                        >
+                            <DeleteFile
+                                childPath={fileTree.path}
+                                setDelFilePath={setDelFilePath}
+                                delFilePath={delFilePath}
+                            />
+                        </button>
                     </div>
                 )}
             </div>

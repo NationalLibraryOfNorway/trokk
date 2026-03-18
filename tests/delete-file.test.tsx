@@ -27,6 +27,15 @@ const TestWrapper = () => {
     );
 };
 
+function openDeleteDialog() {
+    fireEvent.click(screen.getByTestId('delete-trigger'));
+}
+
+function clickDelete() {
+    fireEvent.click(screen.getByText('Slett'));
+}
+
+
 describe('DeleteFile', () => {
     beforeEach(() => {
         vi.clearAllMocks();
@@ -34,12 +43,12 @@ describe('DeleteFile', () => {
 
     it('renders dialog trigger', () => {
         render(<TestWrapper />);
-        expect(screen.getByText('✕')).toBeDefined();
+        expect(screen.getByTestId('delete-trigger')).toBeDefined();
     });
 
     it('shows dialog content on trigger click', async () => {
         render(<TestWrapper />);
-        fireEvent.click(screen.getByText('✕'));
+        openDeleteDialog()
         expect(await screen.findByText(/Er du sikker/)).toBeDefined();
         expect(screen.getByText('Slett')).toBeDefined();
         expect(screen.getByText('Avbryt')).toBeDefined();
@@ -47,24 +56,22 @@ describe('DeleteFile', () => {
 
     it('calls handleDelete when opening dialog and clicking "slett"', async () => {
         render(<TestWrapper />);
-        fireEvent.click(screen.getByText('✕'));
-        fireEvent.click(screen.getByText('Slett'));
+        openDeleteDialog()
+        clickDelete()
         expect(remove).toHaveBeenCalledWith(testFileName);
     });
 
     it('does not delete when clicking "Avbryt"', async () => {
         render(<TestWrapper />);
-        fireEvent.click(screen.getByText('✕'));
+        openDeleteDialog()
         fireEvent.click(screen.getByText('Avbryt'));
         expect(remove).not.toHaveBeenCalled();
     });
 
     it('closes dialog after deletion', async () => {
         render(<TestWrapper />);
-        fireEvent.click(screen.getByText('✕'));
-
-        const deleteButton = screen.getByText('Slett');
-        fireEvent.click(deleteButton);
+        openDeleteDialog()
+        clickDelete()
 
         await waitFor(() => {
             expect(remove).toHaveBeenCalled();
@@ -73,7 +80,7 @@ describe('DeleteFile', () => {
 
     it('shows correct file name in dialog', async () => {
         render(<TestWrapper />);
-        fireEvent.click(screen.getByText('✕'));
+        openDeleteDialog()
 
         // Dialog should contain information about the file being deleted
         const dialog = await screen.findByText(/Er du sikker/);
@@ -93,8 +100,8 @@ describe('DeleteFile', () => {
         };
 
         render(<MergeTestWrapper />);
-        fireEvent.click(screen.getByText('x'));
-        fireEvent.click(screen.getByText('Slett'));
+        openDeleteDialog()
+        clickDelete()
 
         await waitFor(() => {
             expect(remove).toHaveBeenCalledWith(mergePath);
