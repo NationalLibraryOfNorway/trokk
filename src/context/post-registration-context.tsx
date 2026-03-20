@@ -8,6 +8,7 @@ import {useUploadProgress} from './upload-progress-context.tsx';
 import {useAuth} from './auth-context.tsx';
 import {uploadToS3} from '../features/registration/upload-to-s3.tsx';
 import {useSecrets} from './secret-context.tsx';
+import {useVersion} from './version-context.tsx';
 import {useSelection} from '../context/selection-context.tsx';
 import {uuidv7} from 'uuidv7';
 import {FileTree} from '@/model/file-tree.ts';
@@ -69,6 +70,7 @@ async function handleApiResponse(
 export function usePostRegistration() {
     const {state, dispatch} = useTrokkFiles();
     const {secrets} = useSecrets();
+    const {uploadVersionBlocking} = useVersion();
     const auth = useAuth();
     const {handleError, clearError, displaySuccessMessage} = useMessage();
     const {setAllUploadProgress} = useUploadProgress();
@@ -78,6 +80,11 @@ export function usePostRegistration() {
         machineName: string,
         registration: RegistrationFormProps
     ) {
+        if (uploadVersionBlocking) {
+            handleError('Ny versjon kreves før opplasting. Oppdater appen og prøv igjen.');
+            return Promise.reject('Version blocked');
+        }
+
         const papiPath = secrets?.papiPath;
         const loggedOut = auth?.loggedOut;
 
@@ -86,7 +93,10 @@ export function usePostRegistration() {
         }
         const pushedDir = state.current.path;
         const authResp = await settings.getAuthResponse();
-        if (!authResp || loggedOut) return Promise.reject('Not logged in');
+        if (!authResp || loggedOut) {
+            handleError('Du må logge inn før du kan TRØKKE.');
+            return Promise.reject('Not logged in');
+        }
 
         const batchMap = groupFilesByCheckedItems(
             state.current?.children ?? [],
