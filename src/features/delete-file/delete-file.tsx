@@ -118,17 +118,6 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 ),
             );
 
-            // Delete preview if it exists (optional)
-            try {
-                await remove(previewPath);
-                if (parentPath) {
-                    const parentPreviewPath = await buildPath(parentPath, '.previews');
-                    await remove(parentPreviewPath);
-                }
-            } catch {
-                //Ignore if preview doesn't exist
-            }
-
             updateFileTrees(path);
             if (parentPath) updateFileTrees(parentPath);
             setDelFilePath(null);
