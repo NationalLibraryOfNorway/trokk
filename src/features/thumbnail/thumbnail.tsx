@@ -16,7 +16,7 @@ import DeleteFile from '@/features/delete-file/delete-file.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
-    onClick: () => void;
+    onDoubleClick: () => void;
     isChecked: boolean;
     isFocused: boolean;
     setDelFilePath: (path: string | null) => void;
@@ -24,7 +24,7 @@ export interface ThumbnailProps {
 }
 
  const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
-  ({ fileTree, onClick, isChecked, isFocused, setDelFilePath, delFilePath }, ref) => {
+  ({ fileTree, onDoubleClick, isChecked, isFocused, setDelFilePath, delFilePath }, ref) => {
 
     const {state} = useTrokkFiles();
     const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
@@ -121,13 +121,7 @@ export interface ThumbnailProps {
             tabIndex={0}
             key={fileTree.path}
             className="flex flex-col p-0 items-center bg-stone-900 hover:bg-stone-800 rounded-lg group"
-            onClick={onClick}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onClick();
-                }
-            }}
+            onDoubleClick={onDoubleClick}
             ref={ref}
         >
             <div className="relative w-full">

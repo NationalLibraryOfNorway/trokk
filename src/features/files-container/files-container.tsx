@@ -141,13 +141,14 @@ const FilesContainer: React.FC = () => {
                                                     className="relative space-y-2 py-2 focus-visible:outline-none flex flex-col items-center justify-start"
                                                     tabIndex={currentIndex === index ? 0 : -1}
                                                     onFocus={() => handleIndexChange(index)}
+                                                    onClick={() => handleIndexChange(index)}
                                                 >
                                                     <Thumbnail
                                                         key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
                                                         isChecked={checkedItems.includes(child.path)}
                                                         fileTree={child}
                                                         isFocused={!state.preview && currentIndex === index}
-                                                        onClick={() => setPreviewDialogOpen(true)}
+                                                        onDoubleClick={() => setPreviewDialogOpen(true)}
                                                         setDelFilePath={setDelFilePath}
                                                         delFilePath={delFilePath}
                                                     />

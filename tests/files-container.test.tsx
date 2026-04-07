@@ -110,11 +110,21 @@ describe('FilesContainer', () => {
         expect(screen.getByText('example.jpg')).toBeDefined();
     });
 
-    it('Clicking on thumbnail opens detail image view', () => {
+    it('Single-clicking on thumbnail focuses it without opening detail view', () => {
         renderWithContext();
         const thumbnail = screen.getByAltText('example.jpg');
         act(() => {
             fireEvent.click(thumbnail);
+        })
+        expect(mockHandle.handleIndexChange).toHaveBeenCalled();
+        expect(screen.queryByText('Velg Forside')).toBeNull();
+    });
+
+    it('Double-clicking on thumbnail opens detail image view', () => {
+        renderWithContext();
+        const thumbnail = screen.getByAltText('example.jpg');
+        act(() => {
+            fireEvent.dblClick(thumbnail);
         })
         expect(screen.getByText('Velg Forside')).toBeDefined();
     });
