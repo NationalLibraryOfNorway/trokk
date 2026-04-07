@@ -36,7 +36,7 @@ const FilesContainer: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-    useAutoFocusOnThumbnail({fileRefs, containerRef});
+    useAutoFocusOnThumbnail({fileRefs, containerRef, previewDialogOpen});
     useKeyboardNavigation({
         delFilePath,
         setDelFilePath,
@@ -147,7 +147,7 @@ const FilesContainer: React.FC = () => {
                                                         key={`${child.path}-thumb-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
                                                         isChecked={checkedItems.includes(child.path)}
                                                         fileTree={child}
-                                                        isFocused={!state.preview && currentIndex === index}
+                                                        isFocused={!previewDialogOpen && currentIndex === index}
                                                         onDoubleClick={() => setPreviewDialogOpen(true)}
                                                         setDelFilePath={setDelFilePath}
                                                         delFilePath={delFilePath}
@@ -158,7 +158,7 @@ const FilesContainer: React.FC = () => {
                                                         key={`${child.path}-2-${checkedItems.includes(child.path) ? 'checked' : 'unchecked'}`}
                                                         isChecked={checkedItems.includes(child.path)}
                                                         onChange={() => handleCheck()}
-                                                        isFocused={!state.preview && currentIndex === index}
+                                                        isFocused={!previewDialogOpen && currentIndex === index}
                                                     />
                                                 </div>
                                             )
