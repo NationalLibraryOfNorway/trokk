@@ -72,16 +72,16 @@ vi.mock('@/context/post-registration-context.tsx', () => ({
 
 // Don't mock SelectionProvider - use the real one to allow state updates
 
-let mockUploadVersionBlocking = false;
-let mockUploadVersionMessage: string | null = null;
-const mockCheckUploadVersionGate = vi.fn(async () => false);
-
 vi.mock('@/context/secret-context.tsx', () => ({
     useSecrets: () => ({
         secrets: {papiPath: 'http://mock-papi'}
     }),
     SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
+
+let mockUploadVersionBlocking = false;
+let mockUploadVersionMessage: string | null = null;
+const mockCheckUploadVersionGate = vi.fn(async () => false);
 
 vi.mock('@/context/version-context.tsx', () => ({
     useVersion: () => ({
