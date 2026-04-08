@@ -6,6 +6,7 @@ import {
 	evaluateDesktopVersionGate,
 	fetchLatestDesktopVersion,
 } from '@/lib/version-gate.ts';
+import {getErrorMessage} from '@/lib/utils.ts';
 
 interface VersionContextType {
 	startupVersionStatus: StartupVersionStatus | null;
@@ -32,16 +33,6 @@ const getDesktopVersionUri = () => {
 const getCurrentAppVersion = () => {
 	const value = import.meta.env.VITE_APP_VERSION as string | undefined;
 	return value?.trim() || '0.0.0';
-};
-
-const getErrorMessage = (error: unknown): string => {
-	if (typeof error === 'string') return error;
-	if (error && typeof error === 'object') {
-		const knownError = error as { message?: string; error?: string };
-		if (knownError.message) return knownError.message;
-		if (knownError.error) return knownError.error;
-	}
-	return String(error);
 };
 
 const VERSION_GATE_SENTRY_LABEL = 'frontend_desktop_version_gate';

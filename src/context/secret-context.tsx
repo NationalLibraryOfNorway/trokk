@@ -3,6 +3,7 @@ import {invoke} from '@tauri-apps/api/core';
 import * as Sentry from '@sentry/react';
 import {SecretVariables} from '../model/secret-variables.ts';
 import {useVersion} from './version-context.tsx';
+import {getErrorMessage} from '@/lib/utils.ts';
 
 interface SecretContextType {
     secrets: SecretVariables | null;
@@ -11,16 +12,6 @@ interface SecretContextType {
 }
 
 const SecretContext = createContext<SecretContextType | null>(null);
-
-const getInvokeErrorMessage = (error: unknown): string => {
-    if (typeof error === 'string') return error;
-    if (error && typeof error === 'object') {
-        const invokeError = error as { message?: string; error?: string };
-        if (invokeError.message) return invokeError.message;
-        if (invokeError.error) return invokeError.error;
-    }
-    return String(error);
-};
 
 export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [secrets, setSecrets] = useState<SecretVariables | null>(null);
@@ -47,13 +38,13 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 });
             }).catch((error) => {
                 console.error(error);
-                setFetchSecretsError(getInvokeErrorMessage(error));
+                setFetchSecretsError(getErrorMessage(error));
                 Sentry.captureMessage('Secret fetch failed', {
                     level: 'error',
                     tags: { category: 'external.secrets' },
                     extra: {
                         command: 'get_secret_variables',
-                        error: getInvokeErrorMessage(error),
+                        error: getErrorMessage(error),
                     },
                 });
                 throw error;

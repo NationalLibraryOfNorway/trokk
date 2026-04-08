@@ -14,6 +14,7 @@ import {useSecrets} from '@/context/secret-context.tsx';
 import {useSelection} from '@/context/selection-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
 import {useVersion} from '@/context/version-context.tsx';
+import {getErrorMessage} from '@/lib/utils.ts';
 import {useAuth} from '@/context/auth-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
@@ -100,11 +101,7 @@ const RegistrationForm: React.FC = () => {
                 await postRegistration(hostname, registration);
             } catch (error) {
                 console.error(error);
-                const errorMessage = typeof error === 'string'
-                    ? error
-                    : error instanceof Error
-                        ? error.message
-                        : String(error);
+                const errorMessage = getErrorMessage(error);
                 if (errorMessage === 'Not logged in') {
                     handleError('Du må logge inn før du kan TRØKKE. Starter innlogging...');
                     if (!isLoggingIn) {
