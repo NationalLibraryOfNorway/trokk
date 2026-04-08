@@ -1,18 +1,17 @@
 import React, {RefObject, useEffect} from 'react';
 import {useSelection} from '../context/selection-context.tsx';
-import {useTrokkFiles} from '../context/trokk-files-context.tsx';
 
-export function useAutoFocusOnThumbnail({fileRefs, containerRef}: {
+export function useAutoFocusOnThumbnail({fileRefs, containerRef, previewDialogOpen}: {
     fileRefs: React.MutableRefObject<(HTMLDivElement | null)[]>;
     containerRef?: RefObject<HTMLDivElement>; // now optional
+    previewDialogOpen: boolean;
 }) {
     const {currentIndex} = useSelection();
-    const {state} = useTrokkFiles();
 
     useEffect(() => {
         const currentFileElement = fileRefs.current[currentIndex];
         const container = containerRef?.current ?? document.documentElement;
-        if (!state.preview) {
+        if (!previewDialogOpen) {
             if (currentFileElement && container) {
                 const containerRect = container.getBoundingClientRect();
                 const elementRect = currentFileElement.getBoundingClientRect();
@@ -34,5 +33,5 @@ export function useAutoFocusOnThumbnail({fileRefs, containerRef}: {
         requestAnimationFrame(() => {
             currentFileElement?.focus();
         });
-    }, [currentIndex, state.preview]);
+    }, [currentIndex, previewDialogOpen]);
 }
