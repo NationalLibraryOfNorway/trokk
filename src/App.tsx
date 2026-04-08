@@ -160,33 +160,11 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         );
     }
 
-    if (startupVersionError) {
-        const startupErrorTitle = 'Feil ved oppstart';
-        const startupMessageClass = 'border-destructive bg-destructive text-destructive-foreground';
-
+    const startupError = startupVersionError || fetchSecretsError;
+    if (startupError) {
         return (
             <StartupScreen logoClassName="w-96">
-                <StartupMessageCard title={startupErrorTitle} message={startupVersionError} className={startupMessageClass}>
-                </StartupMessageCard>
-                <div className="flex items-center gap-3">
-                    <Button onClick={handleRetryStartup} disabled={isRetryingStartup}>
-                        {isRetryingStartup ? 'Prøver igjen...' : 'Prøv igjen'}
-                    </Button>
-                    <Button variant="secondary" onClick={handleExit}>
-                        Lukk app
-                    </Button>
-                </div>
-            </StartupScreen>
-        );
-    }
-
-    if (fetchSecretsError) {
-        const startupErrorTitle = 'Feil ved oppstart';
-        const startupMessageClass = 'border-destructive bg-destructive text-destructive-foreground';
-
-        return (
-            <StartupScreen logoClassName="w-96">
-                <StartupMessageCard title={startupErrorTitle} message={fetchSecretsError} className={startupMessageClass}>
+                <StartupMessageCard title="Feil ved oppstart" message={startupError} className="border-destructive bg-destructive text-destructive-foreground">
                 </StartupMessageCard>
                 <div className="flex items-center gap-3">
                     <Button onClick={handleRetryStartup} disabled={isRetryingStartup}>
@@ -235,16 +213,9 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     <StartupSpinner label="Logger inn"/>
                 ) : (
                     <div className="flex items-center gap-3">
-                        {!isStartupBlocking && (
-                            <Button size='lg' onClick={login}>
-                                Logg inn <LogIn/>
-                            </Button>
-                        )}
-                        {startupVersionMessage && isStartupBlocking && (
-                            <Button size='lg' variant="secondary" onClick={handleExit}>
-                                Lukk app
-                            </Button>
-                        )}
+                        <Button size='lg' onClick={login}>
+                            Logg inn <LogIn/>
+                        </Button>
                     </div>
                 )}
             </StartupScreen>
