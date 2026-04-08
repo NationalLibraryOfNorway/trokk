@@ -46,7 +46,7 @@ const getErrorMessage = (error: unknown): string => {
 
 const VERSION_GATE_COMMAND = 'frontend_desktop_version_gate';
 
-export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) => {
+export function VersionProvider({children}: { children: ReactNode }) {
 	const [startupVersionStatus, setStartupVersionStatus] = useState<StartupVersionStatus | null>(null);
 	const [startupVersionMessage, setStartupVersionMessage] = useState<string | null>(null);
 	const [startupVersionError, setStartupVersionError] = useState<string | null>(null);
@@ -202,7 +202,7 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 			{children}
 		</VersionContext.Provider>
 	);
-};
+}
 
 export const useVersion = (): VersionContextType => {
 	const context = useContext(VersionContext);
