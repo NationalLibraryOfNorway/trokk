@@ -157,9 +157,9 @@ export function VersionProvider({children}: { children: ReactNode }) {
 					tags: { category: 'external.version' },
 					extra: { command: VERSION_GATE_COMMAND, error: getErrorMessage(error) },
 				});
-				setUploadVersionBlocking(false);
+				setUploadVersionBlocking(true);
 				setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${getErrorMessage(error)}`);
-				return false;
+				return true;
 			});
 	}, [runVersionGateCheck]);
 
