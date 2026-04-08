@@ -55,12 +55,6 @@ export function VersionProvider({children}: { children: ReactNode }) {
 	const [uploadVersionBlocking, setUploadVersionBlocking] = useState<boolean>(false);
 	const [uploadVersionMessage, setUploadVersionMessage] = useState<string | null>(null);
 
-	const isStartupBlocking =
-		startupVersionStatus === 'MAJOR_BLOCKING' || startupVersionStatus === 'MINOR_BLOCKING';
-	const requiresManualLogin = startupVersionStatus === 'PATCH_AVAILABLE';
-	const canFetchStartupSecrets =
-		hasCheckedStartupVersion && !isCheckingStartupVersion && !startupVersionError && !isStartupBlocking;
-
 	const runVersionGateCheck = useCallback(async (desktopVersionUri: string): Promise<DesktopVersionGateResponse> => {
 		const currentVersion = getCurrentAppVersion();
 		const latestVersion = await fetchLatestDesktopVersion(desktopVersionUri);
@@ -167,30 +161,35 @@ export function VersionProvider({children}: { children: ReactNode }) {
 		void runStartupVersionCheck().finally(() => setIsCheckingStartupVersion(false));
 	}, [runStartupVersionCheck]);
 
-	const value = useMemo(() => ({
+	const value = useMemo(() => {
+		const isStartupBlocking =
+			startupVersionStatus === 'MAJOR_BLOCKING' || startupVersionStatus === 'MINOR_BLOCKING';
+		const requiresManualLogin = startupVersionStatus === 'PATCH_AVAILABLE';
+		const canFetchStartupSecrets =
+			hasCheckedStartupVersion && !isCheckingStartupVersion && !startupVersionError && !isStartupBlocking;
+
+		return {
+			startupVersionStatus,
+			startupVersionMessage,
+			startupVersionError,
+			isCheckingStartupVersion,
+			hasCheckedStartupVersion,
+			isStartupBlocking,
+			requiresManualLogin,
+			uploadVersionBlocking,
+			uploadVersionMessage,
+			retryStartupVersionCheck,
+			checkUploadVersionGate,
+			canFetchStartupSecrets,
+		};
+	}, [
 		startupVersionStatus,
 		startupVersionMessage,
 		startupVersionError,
 		isCheckingStartupVersion,
 		hasCheckedStartupVersion,
-		isStartupBlocking,
-		requiresManualLogin,
 		uploadVersionBlocking,
 		uploadVersionMessage,
-		retryStartupVersionCheck,
-		checkUploadVersionGate,
-		canFetchStartupSecrets,
-	}), [
-		startupVersionStatus,
-		startupVersionMessage,
-		startupVersionError,
-		isCheckingStartupVersion,
-		hasCheckedStartupVersion,
-		isStartupBlocking,
-		requiresManualLogin,
-		uploadVersionBlocking,
-		uploadVersionMessage,
-		canFetchStartupSecrets,
 		retryStartupVersionCheck,
 		checkUploadVersionGate,
 	]);
