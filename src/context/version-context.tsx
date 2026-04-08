@@ -44,7 +44,7 @@ const getErrorMessage = (error: unknown): string => {
 	return String(error);
 };
 
-const VERSION_GATE_COMMAND = 'frontend_desktop_version_gate';
+const VERSION_GATE_SENTRY_LABEL = 'frontend_desktop_version_gate';
 
 export function VersionProvider({children}: { children: ReactNode }) {
 	const [startupVersionStatus, setStartupVersionStatus] = useState<StartupVersionStatus | null>(null);
@@ -83,7 +83,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 		Sentry.captureMessage('Startup version check started', {
 			level: 'info',
 			tags: { category: 'external.version' },
-			extra: { command: VERSION_GATE_COMMAND },
+			extra: { command: VERSION_GATE_SENTRY_LABEL },
 		});
 
 		return runVersionGateCheck(desktopVersionUri)
@@ -91,7 +91,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 				Sentry.captureMessage('Startup version check completed', {
 					level: 'info',
 					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_COMMAND, status: response.status },
+					extra: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
 				});
 				return response;
 			})
@@ -100,7 +100,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 				Sentry.captureMessage('Startup version check failed', {
 					level: 'error',
 					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_COMMAND, error: getErrorMessage(error) },
+					extra: { command: VERSION_GATE_SENTRY_LABEL, error: getErrorMessage(error) },
 				});
 				setStartupVersionStatus(null);
 				setStartupVersionMessage(null);
@@ -126,7 +126,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 		Sentry.captureMessage('Upload version check started', {
 			level: 'info',
 			tags: { category: 'external.version' },
-			extra: { command: VERSION_GATE_COMMAND },
+			extra: { command: VERSION_GATE_SENTRY_LABEL },
 		});
 
 		return runVersionGateCheck(desktopVersionUri)
@@ -134,7 +134,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 				Sentry.captureMessage('Upload version check completed', {
 					level: 'info',
 					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_COMMAND, status: response.status },
+					extra: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
 				});
 				return response;
 			})
@@ -149,7 +149,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 				Sentry.captureMessage('Upload version check failed', {
 					level: 'error',
 					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_COMMAND, error: getErrorMessage(error) },
+					extra: { command: VERSION_GATE_SENTRY_LABEL, error: getErrorMessage(error) },
 				});
 				setUploadVersionBlocking(true);
 				setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${getErrorMessage(error)}`);
