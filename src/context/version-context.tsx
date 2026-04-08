@@ -1,6 +1,6 @@
 import React, {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState} from 'react';
 import * as Sentry from '@sentry/react';
-import {StartupVersionStatus} from '@/model/secret-variables.ts';
+import {StartupVersionStatus} from '@/model/version-status.ts';
 import {
 	DesktopVersionGateResponse,
 	evaluateDesktopVersionGate,

@@ -1,4 +1,4 @@
-import type {StartupVersionStatus} from '@/model/secret-variables.ts';
+import type {StartupVersionStatus} from '@/model/version-status.ts';
 import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 
 export interface DesktopVersionGateResponse {
