@@ -57,8 +57,11 @@ async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
 }
 
 #[cfg(feature = "debug-mock")]
+static MOCK_SECRETS: OnceCell<SecretVariables> = OnceCell::const_new();
+
+#[cfg(feature = "debug-mock")]
+#[tauri::command]
 async fn get_secret_variables() -> Result<&'static SecretVariables, String> {
-	#[tauri::command]
 	MOCK_SECRETS
 		.get_or_try_init(|| async {
 			Ok(SecretVariables {
