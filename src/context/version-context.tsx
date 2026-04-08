@@ -86,42 +86,28 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 			return;
 		}
 
-		Sentry.addBreadcrumb({
-			category: 'external.version',
-			message: 'Startup version check started',
+		Sentry.captureMessage('Startup version check started', {
 			level: 'info',
-			data: {
-				command: VERSION_GATE_COMMAND,
-			},
+			tags: { category: 'external.version' },
+			extra: { command: VERSION_GATE_COMMAND },
 		});
-		Sentry.captureMessage('Startup version check started', 'info');
 
 		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
-				Sentry.addBreadcrumb({
-					category: 'external.version',
-					message: 'Startup version check completed',
+				Sentry.captureMessage('Startup version check completed', {
 					level: 'info',
-					data: {
-						command: VERSION_GATE_COMMAND,
-						status: response.status,
-					},
+					tags: { category: 'external.version' },
+					extra: { command: VERSION_GATE_COMMAND, status: response.status },
 				});
-				Sentry.captureMessage('Startup version check completed', 'info');
 				return response;
 			})
 			.then(applyVersionResponse)
 			.catch((error) => {
-				Sentry.addBreadcrumb({
-					category: 'external.version',
-					message: 'Startup version check failed',
+				Sentry.captureMessage('Startup version check failed', {
 					level: 'error',
-					data: {
-						command: VERSION_GATE_COMMAND,
-						error: getErrorMessage(error),
-					},
+					tags: { category: 'external.version' },
+					extra: { command: VERSION_GATE_COMMAND, error: getErrorMessage(error) },
 				});
-				Sentry.captureMessage('Startup version check failed', 'error');
 				setStartupVersionStatus(null);
 				setStartupVersionMessage(null);
 				setStartupVersionError(`Kunne ikke sjekke versjon ved oppstart. ${getErrorMessage(error)}`);
@@ -145,28 +131,19 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 			return false;
 		}
 
-		Sentry.addBreadcrumb({
-			category: 'external.version',
-			message: 'Upload version check started',
+		Sentry.captureMessage('Upload version check started', {
 			level: 'info',
-			data: {
-				command: VERSION_GATE_COMMAND,
-			},
+			tags: { category: 'external.version' },
+			extra: { command: VERSION_GATE_COMMAND },
 		});
-		Sentry.captureMessage('Upload version check started', 'info');
 
 		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
-				Sentry.addBreadcrumb({
-					category: 'external.version',
-					message: 'Upload version check completed',
+				Sentry.captureMessage('Upload version check completed', {
 					level: 'info',
-					data: {
-						command: VERSION_GATE_COMMAND,
-						status: response.status,
-					},
+					tags: { category: 'external.version' },
+					extra: { command: VERSION_GATE_COMMAND, status: response.status },
 				});
-				Sentry.captureMessage('Upload version check completed', 'info');
 				return response;
 			})
 			.then((response) => {
@@ -177,16 +154,11 @@ export const VersionProvider: React.FC<{ children: ReactNode }> = ({children}) =
 				return isBlockingStatus;
 			})
 			.catch((error) => {
-				Sentry.addBreadcrumb({
-					category: 'external.version',
-					message: 'Upload version check failed',
+				Sentry.captureMessage('Upload version check failed', {
 					level: 'error',
-					data: {
-						command: VERSION_GATE_COMMAND,
-						error: getErrorMessage(error),
-					},
+					tags: { category: 'external.version' },
+					extra: { command: VERSION_GATE_COMMAND, error: getErrorMessage(error) },
 				});
-				Sentry.captureMessage('Upload version check failed', 'error');
 				setUploadVersionBlocking(false);
 				setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${getErrorMessage(error)}`);
 				return false;

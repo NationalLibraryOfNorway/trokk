@@ -30,42 +30,32 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const getSecrets = useCallback(async () => {
         setIsFetchingSecrets(true);
-        Sentry.addBreadcrumb({
-            category: 'external.secrets',
-            message: 'Secret fetch started',
+        Sentry.captureMessage('Secret fetch started', {
             level: 'info',
-            data: {
-                command: 'get_secret_variables',
-            },
+            tags: { category: 'external.secrets' },
+            extra: { command: 'get_secret_variables' },
         });
-        Sentry.captureMessage('Secret fetch started', 'info');
         await invoke<SecretVariables>('get_secret_variables')
             .then((fetchedSecrets) => {
                 const safeSecrets = (fetchedSecrets ?? {}) as SecretVariables;
                 setSecrets(safeSecrets);
                 setFetchSecretsError(null);
-                Sentry.addBreadcrumb({
-                    category: 'external.secrets',
-                    message: 'Secret fetch completed',
+                Sentry.captureMessage('Secret fetch completed', {
                     level: 'info',
-                    data: {
-                        command: 'get_secret_variables',
-                    },
+                    tags: { category: 'external.secrets' },
+                    extra: { command: 'get_secret_variables' },
                 });
-                Sentry.captureMessage('Secret fetch completed', 'info');
             }).catch((error) => {
                 console.error(error);
                 setFetchSecretsError(getInvokeErrorMessage(error));
-                Sentry.addBreadcrumb({
-                    category: 'external.secrets',
-                    message: 'Secret fetch failed',
+                Sentry.captureMessage('Secret fetch failed', {
                     level: 'error',
-                    data: {
+                    tags: { category: 'external.secrets' },
+                    extra: {
                         command: 'get_secret_variables',
                         error: getInvokeErrorMessage(error),
                     },
                 });
-                Sentry.captureMessage('Secret fetch failed', 'error');
                 throw error;
             })
             .finally(() => setIsFetchingSecrets(false));
