@@ -112,14 +112,12 @@ export function VersionProvider({children}: { children: ReactNode }) {
 				setStartupVersionMessage(null);
 				setStartupVersionError(`Kunne ikke sjekke versjon ved oppstart. ${getErrorMessage(error)}`);
 				setHasCheckedStartupVersion(true);
-				throw error;
 			});
 	}, [applyVersionResponse, runVersionGateCheck]);
 
 	const retryStartupVersionCheck = useCallback(async () => {
 		setIsCheckingStartupVersion(true);
 		await runStartupVersionCheck()
-			.catch(() => undefined)
 			.finally(() => setIsCheckingStartupVersion(false));
 	}, [runStartupVersionCheck]);
 
