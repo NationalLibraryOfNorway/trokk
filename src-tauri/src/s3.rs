@@ -186,128 +186,127 @@ async fn put_object(
 	let file_size = meta.len() as usize;
 
 	// Small file, upload in a single PUT request
-    	if file_size <= MULTIPART_PART_SIZE {
-    		//Create the body
-    		let body = ByteStream::from_path(path)
-                .await
-                .map_err(|e| format!("Failed to read file: {e}"))?;
+	if file_size <= MULTIPART_PART_SIZE {
+		//Create the body
+		let body = ByteStream::from_path(path)
+			.await
+			.map_err(|e| format!("Failed to read file: {e}"))?;
 
-            //Send the request
-            client
-                .put_object()
-                .bucket(bucket)
-                .key(&key)
-                .body(body)
-                .send()
-                .await
-                .map_err(|e| format!("Failed to upload file: {e:?}"))?;
-    		Ok(())
-    	} else {
-    		// Large file, use multipart upload
-            multipart_upload(client, bucket, secret_variables, path, &key).await
-        }
-    }
+		//Send the request
+		client
+			.put_object()
+			.bucket(bucket)
+			.key(key)
+			.body(body)
+			.send()
+			.await
+			.map_err(|e| format!("Failed to upload file: {e:?}"))?;
+		Ok(())
+	} else {
+		// Large file, use multipart upload
+		multipart_upload(client, bucket, path, &key).await
+	}
+}
 
-    async fn multipart_upload(
-        client: &Client,
-        bucket: &str,
-        secret_variables: &SecretVariables,
-        path: &PathBuf,
-        key: &str,
-    ) -> Result<(), String> {
-        // Large file, use multipart upload
-        	let init = client
-        		.create_multipart_upload()
-        		.bucket(bucket)
-        		.key(&key)
-        		.send()
-        		.await
-        		.map_err(|e| format!("init multipart failed: {e:?}"))?;
+async fn multipart_upload(
+	client: &Client,
+	bucket: &str,
+	path: &PathBuf,
+	key: &str,
+) -> Result<(), String> {
+	// Large file, use multipart upload
+	let init = client
+		.create_multipart_upload()
+		.bucket(bucket)
+		.key(key)
+		.send()
+		.await
+		.map_err(|e| format!("init multipart failed: {e:?}"))?;
 
-        	let upload_id = init.upload_id().ok_or("missing upload_id")?.to_string();
+	let upload_id = init.upload_id().ok_or("missing upload_id")?.to_string();
 
-        	let file = File::open(path)
-        		.await
-        		.map_err(|e| format!("open failed for {}: {e}", path.display()))?;
+	let file = File::open(path)
+		.await
+		.map_err(|e| format!("open failed for {}: {e}", path.display()))?;
 
-        	let mut reader = BufReader::new(file);
-        	let mut buf = vec![0u8; MULTIPART_PART_SIZE];
-        	let mut part_number: i32 = 1;
-        	let mut completed: Vec<CompletedPart> = Vec::new();
+	let mut reader = BufReader::new(file);
+	let mut buf = vec![0u8; MULTIPART_PART_SIZE];
+	let mut part_number: i32 = 1;
+	let mut completed: Vec<CompletedPart> = Vec::new();
 
-        	loop {
-        		// Fill up to MULTIPART_PART_SIZE
-        		let mut filled = 0usize;
+	loop {
+		// Fill up to MULTIPART_PART_SIZE
+		let mut filled = 0usize;
 
-        		while filled < MULTIPART_PART_SIZE {
-        			let n = reader
-        				.read(&mut buf[filled..])
-        				.await
-        				.map_err(|e| format!("read failed: {e}"))?;
+		while filled < MULTIPART_PART_SIZE {
+			let n = reader
+				.read(&mut buf[filled..])
+				.await
+				.map_err(|e| format!("read failed: {e}"))?;
 
-        			if n == 0 {
-        				break;
-        			}
+			if n == 0 {
+				break;
+			}
 
-        			filled += n;
-        		}
+			filled += n;
+		}
 
-        		if filled == 0 {
-        			break;
-        		}
+		if filled == 0 {
+			break;
+		}
 
-        		let part_stream = ByteStream::from(buf[..filled].to_vec());
+		let part_stream = ByteStream::from(buf[..filled].to_vec());
 
-        		let resp = match client
-        			.upload_part()
-        			.bucket(bucket)
-        			.key(&key)
-        			.upload_id(&upload_id)
-        			.part_number(part_number)
-        			.body(part_stream)
-        			.send()
-        			.await
-        		{
-        			Ok(resp) => resp,
-        			Err(e) => {
-        				// Abort multipart upload on failure
-        				let _ = client
-        					.abort_multipart_upload()
-        					.bucket(bucket)
-        					.key(&key)
-        					.upload_id(&upload_id)
-        					.send()
-        					.await;
-        				return Err(format!("upload_part #{part_number} failed: {e:?}"));
-        			}
-        		};
+		let resp = match client
+			.upload_part()
+			.bucket(bucket)
+			.key(key)
+			.upload_id(&upload_id)
+			.part_number(part_number)
+			.body(part_stream)
+			.send()
+			.await
+		{
+			Ok(resp) => resp,
+			Err(e) => {
+				// Abort multipart upload on failure
+				let _ = client
+					.abort_multipart_upload()
+					.bucket(bucket)
+					.key(key)
+					.upload_id(&upload_id)
+					.send()
+					.await;
+				return Err(format!("upload_part #{part_number} failed: {e:?}"));
+			}
+		};
 
-        		completed.push(
-        			CompletedPart::builder()
-        				.part_number(part_number)
-        				.e_tag(resp.e_tag().unwrap_or_default())
-        				.build(),
-        		);
+		completed.push(
+			CompletedPart::builder()
+				.part_number(part_number)
+				.e_tag(resp.e_tag().unwrap_or_default())
+				.build(),
+		);
 
-        		part_number += 1;
-        	}
+		part_number += 1;
+	}
 
-        	client
-        		.complete_multipart_upload()
-        		.bucket(bucket)
-        		.key(&key)
-        		.upload_id(upload_id)
-        		.multipart_upload(
-        			CompletedMultipartUpload::builder()
-        				.set_parts(Some(completed))
-        				.build(),
-        		)
-        		.send()
-        		.await
-        		.map_err(|e| format!("complete multipart failed: {e:?}"))?;
+	client
+		.complete_multipart_upload()
+		.bucket(bucket)
+		.key(key)
+		.upload_id(upload_id)
+		.multipart_upload(
+			CompletedMultipartUpload::builder()
+				.set_parts(Some(completed))
+				.build(),
+		)
+		.send()
+		.await
+		.map_err(|e| format!("complete multipart failed: {e:?}"))?;
 
-        Ok(())
-    }
+	Ok(())
+}
 
 // Use Tokio's OnceCell to create the S3 client only once
 #[cfg(not(feature = "debug-mock"))]
