@@ -7,6 +7,7 @@ import { Event } from '@tauri-apps/api/event';
 import { AuthenticationResponse } from '../model/authentication-response.ts';
 import { useSecrets } from './secret-context.tsx';
 import {useVersion} from './version-context.tsx';
+import * as Sentry from '@sentry/react';
 
 export interface AuthContextType {
     authResponse: AuthenticationResponse | null;
@@ -63,6 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!secrets?.oidcClientSecret) {
             await getSecrets();
         }
+
         const port = await invoke<number>('log_in');
 
         if (secrets && 'oidcBaseUrl' in secrets) {
@@ -116,7 +118,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Drives the spinner during refresh_token, even without backend events.
             setIsRefreshingToken(true);
             try {
+                Sentry.addBreadcrumb({
+                    category: 'refreshToken',
+                    message: 'Refreshing token for user',
+                    level: 'info',
+                });
                 const res = await invoke<AuthenticationResponse>('refresh_token', {refreshToken: authResponse.tokenResponse.refreshToken });
+                Sentry.captureMessage(
+                    'Token refreshed successfully for user',
+                )
                 await settings.setAuthResponse(res);
             } finally {
                 setIsRefreshingToken(false);

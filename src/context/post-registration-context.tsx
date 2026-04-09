@@ -16,6 +16,7 @@ import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
 import {TextItemResponse} from '../model/text-input-response.ts';
 import {remove} from '@tauri-apps/plugin-fs';
+import * as Sentry from '@sentry/react';
 
 function groupFilesByCheckedItems(
     allFilesInFolder: FileTree[],
@@ -127,6 +128,11 @@ export function usePostRegistration() {
         await body.setVersion();
 
         try {
+            Sentry.addBreadcrumb({
+                category: 'papi',
+                message: 'Creating batch of items in Papi',
+                level: 'info',
+            });
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
                 headers: {
@@ -135,6 +141,7 @@ export function usePostRegistration() {
                 },
                 body: JSON.stringify(body)
             });
+            Sentry.captureMessage('Successfully created batch of items in Papi')
 
             const deleteDirFromProgress = () => setAllUploadProgress(progress => {
                 delete progress.dir[pushedDir];

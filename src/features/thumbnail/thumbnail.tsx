@@ -12,10 +12,11 @@ import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import {useRotation} from '@/context/rotation-context.tsx';
 import StatusOverlay from '@/components/ui/rotation-status-overlay.tsx';
 import React, {forwardRef} from 'react';
+import DeleteFile from '@/features/delete-file/delete-file.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
-    onClick: () => void;
+    onDoubleClick: () => void;
     isChecked: boolean;
     isFocused: boolean;
     setDelFilePath: (path: string | null) => void;
@@ -23,7 +24,7 @@ export interface ThumbnailProps {
 }
 
  const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
-  ({ fileTree, onClick, isChecked, isFocused }, ref) => {
+  ({ fileTree, onDoubleClick, isChecked, isFocused, setDelFilePath, delFilePath }, ref) => {
 
     const {state} = useTrokkFiles();
     const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
@@ -56,7 +57,7 @@ export interface ThumbnailProps {
     const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
     const hasWebpThumbnail = !!thumbnailUrl;
     const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
-    const rotateBtnClass = `bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+    const rotateBtnClass = `flex justify-center items-center size-10 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
     if (isHiddenDir) return null;
 
@@ -120,20 +121,17 @@ export interface ThumbnailProps {
             tabIndex={0}
             key={fileTree.path}
             className="flex flex-col p-0 items-center bg-stone-900 hover:bg-stone-800 rounded-lg group"
-            onClick={onClick}
-            onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    onClick();
-                }
-            }}
+            onDoubleClick={onDoubleClick}
             ref={ref}
         >
             <div className="relative w-full">
                 {content}
                 <StatusOverlay status={imageStatus} size="small" />
                 {(isSupported || hasWebpThumbnail) && (
-                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="absolute p-4 bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                    >
                         <button
                             type="button"
                             onClick={handleRotateCounterClockwise}
@@ -154,6 +152,13 @@ export interface ThumbnailProps {
                         >
                             <RotateCw size={16} />
                         </button>
+                        <DeleteFile
+                            childPath={fileTree.path}
+                            setDelFilePath={setDelFilePath}
+                            delFilePath={delFilePath}
+                            disabled={imageIsRotating}
+                            btnClassName={rotateBtnClass}
+                        />
                     </div>
                 )}
             </div>

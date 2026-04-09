@@ -1,5 +1,5 @@
 use reqwest::Client;
-use sentry::{Breadcrumb, Level, add_breadcrumb};
+use sentry::{Breadcrumb, Level, add_breadcrumb, capture_message};
 use std::borrow::Cow;
 use std::collections::HashMap;
 use tauri::Emitter;
@@ -109,6 +109,7 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 	);
 	create_token(client, body).await
 }
+
 #[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn get_access_token_for_papi() -> Result<String, String> {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
@@ -124,6 +125,13 @@ pub(crate) async fn get_access_token_for_papi_with_secrets(
 		.timeout(Duration::from_secs(15))
 		.build()
 		.map_err(|e| format!("Kunne ikke initialisere HTTP-klient: {e}"))?;
+
+	add_breadcrumb(Breadcrumb {
+		category: Some("papi".into()),
+		message: Some("Getting access token for Papi".into()),
+		level: Level::Info,
+		..Default::default()
+	});
 
 	let response = client
 		.post(format!("{}{}", secrets.oidc_tekst_base_url, "/token"))
@@ -147,6 +155,8 @@ pub(crate) async fn get_access_token_for_papi_with_secrets(
 			}
 		})?;
 
+	capture_message("Finished getting access token for Papi", Level::Info);
+
 	response
 		.text()
 		.await
@@ -160,6 +170,7 @@ pub(crate) fn parse_papi_token_response(body: &str) -> Result<String, String> {
 		serde_json::from_str(body).map_err(|e| format!("Kunne ikke tolke token-respons: {e}"))?;
 	Ok(token_response.access_token)
 }
+
 #[cfg(feature = "debug-mock")]
 async fn create_token(_client: Client, _body: String) -> AuthenticationResponse {
 	AuthenticationResponse {
@@ -182,8 +193,8 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		.expect("Time went backwards")
 		.as_millis();
 
-	// For debugging av treg tokenhenting. Remove when stable.
 	add_breadcrumb(Breadcrumb {
+		category: Some("auth".into()),
 		message: Some("Getting token".into()),
 		level: Level::Info,
 		..Default::default()
@@ -198,11 +209,11 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		serde_json::from_str(&res.unwrap().text().await.unwrap()).unwrap();
 
 	add_breadcrumb(Breadcrumb {
-		message: Some("Received token response".into()),
+		category: Some("auth".into()),
+		message: Some("Received token response, requesting user information".into()),
 		level: Level::Info,
 		..Default::default()
 	});
-	sentry::capture_message("Token creation successful", Level::Info);
 
 	// For easier use in Frontend
 	let expire_info: ExpireInfo = ExpireInfo {
@@ -218,6 +229,16 @@ async fn create_token(client: Client, body: String) -> AuthenticationResponse {
 		)
 		.send()
 		.await;
+	add_breadcrumb(Breadcrumb {
+		category: Some("auth".into()),
+		message: Some("Received userinfo response".into()),
+		level: Level::Info,
+		..Default::default()
+	});
+	capture_message(
+		"Token creation and userinfo fetched successful",
+		Level::Info,
+	);
 	let user_info: UserInfo =
 		serde_json::from_str(&user_response.unwrap().text().await.unwrap()).unwrap();
 
