@@ -29,3 +29,10 @@ src-tauri/gen
 /src-tauri/target/
 
 /out
+
+# Github spec kit (github copilot and sh)
+.github/agents
+.github/prompts
+.github/copilot-instructions.md
+.specify
+specs/

@@ -16,6 +16,8 @@ use aws_sdk_s3::primitives::ByteStream;
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::types::{CompletedMultipartUpload, CompletedPart};
 #[cfg(not(feature = "debug-mock"))]
+use sentry::{Breadcrumb, Level, add_breadcrumb, capture_message};
+#[cfg(not(feature = "debug-mock"))]
 use std::path::Path;
 #[cfg(not(feature = "debug-mock"))]
 use std::path::PathBuf;
@@ -47,6 +49,11 @@ pub(crate) async fn upload_directory(
 
 	let file_paths = get_file_paths_in_directory(directory_path)?;
 	for (index, file_path) in file_paths.iter().enumerate() {
+		let meta = tokio::fs::metadata(file_path.clone())
+			.await
+			.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
+		let file_size = meta.len() as usize;
+
 		let page_nr = index + 1;
 		put_object(
 			client,
@@ -94,6 +101,12 @@ pub(crate) async fn upload_batch_to_s3(
 		.map(|batch| batch.primary.len() + batch.access.len())
 		.sum();
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("s3".into()),
+		message: Some("Started s3 upload".into()),
+		level: Level::Info,
+		..Default::default()
+	});
 	for (batch_id, batch) in batch_map.iter() {
 		let prefixed_batch_id = format!("tekst_{}", batch_id);
 

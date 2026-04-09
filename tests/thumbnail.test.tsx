@@ -33,7 +33,7 @@ vi.mock('../src/util/file-utils.ts', async () => {
 const mockDispatch = vi.fn();
 
 const baseProps = {
-    onClick: vi.fn(),
+    onDoubleClick: vi.fn(),
     isChecked: false,
     isFocused: false,
     setDelFilePath: vi.fn(),

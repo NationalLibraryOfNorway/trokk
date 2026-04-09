@@ -1,5 +1,6 @@
 use gethostname::gethostname;
 use once_cell::sync::Lazy;
+use sentry::{Breadcrumb, Level, add_breadcrumb, capture_message};
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::string::ToString;
@@ -99,6 +100,17 @@ async fn refresh_token(refresh_token: String) -> AuthenticationResponse {
 async fn ensure_all_previews_and_thumbnails(directory_path: String) -> Result<(), String> {
 	let image_files =
 		file_utils::list_image_files(&directory_path, true).map_err(|e| e.to_string())?;
+
+	add_breadcrumb(Breadcrumb {
+		category: Some("ensure_files".into()),
+		message: Some(format!(
+			"Converting images to thumbnails and previews. Total files: {}",
+			image_files.len()
+		)),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	for file_path in image_files {
 		let file_path_str = file_path.to_string_lossy().to_string();
 		if !image_converter::check_if_preview_exists(&file_path_str).unwrap_or(false) {
@@ -108,6 +120,12 @@ async fn ensure_all_previews_and_thumbnails(directory_path: String) -> Result<()
 			image_converter::convert_to_webp(file_path_str, false).ok();
 		}
 	}
+
+	capture_message(
+		"Finished converting images to thumbnails and previews",
+		Level::Info,
+	);
+
 	Ok(())
 }
 
@@ -124,9 +142,22 @@ async fn create_thumbnail_webp(file_path: String) -> Result<(), String> {
 		}
 	}
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("create_thumbnail".into()),
+		message: Some("Creating single thumbnail".into()),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	match image_converter::convert_to_webp(file_path, false) {
-		Ok(_) => Ok(()),
-		Err(e) => Err(e.to_string()),
+		Ok(_) => {
+			capture_message("Finished creating thumbnail", Level::Info);
+			Ok(())
+		}
+		Err(e) => {
+			capture_message("Failed to create thumbnail", Level::Error);
+			Err(e.to_string())
+		}
 	}
 }
 
@@ -143,9 +174,22 @@ async fn create_preview_webp(file_path: String) -> Result<(), String> {
 		}
 	}
 
+	add_breadcrumb(Breadcrumb {
+		category: Some("create_preview".into()),
+		message: Some("Creating single preview image".into()),
+		level: Level::Info,
+		..Default::default()
+	});
+
 	match image_converter::convert_to_webp(file_path, true) {
-		Ok(_) => Ok(()),
-		Err(e) => Err(e.to_string()),
+		Ok(_) => {
+			capture_message("Finished creating preview image", Level::Info);
+			Ok(())
+		}
+		Err(e) => {
+			capture_message("Failed to create preview image", Level::Error);
+			Err(e.to_string())
+		}
 	}
 }
 

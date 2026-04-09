@@ -4,10 +4,8 @@ import {describe, it, expect, vi, beforeEach, type Mock} from 'vitest';
 
 import {useAutoFocusOnThumbnail} from '../src/hooks/use-auto-focus-on-thumbnail';
 import * as selectionContext from '../src/context/selection-context';
-import * as trokkFilesContext from '../src/context/trokk-files-context';
 
 vi.mock('../src/context/selection-context');
-vi.mock('../src/context/trokk-files-context');
 
 describe('useAutoFocusOnThumbnail', () => {
     let fileRefs: MutableRefObject<(HTMLDivElement | null)[]>;
@@ -23,20 +21,14 @@ describe('useAutoFocusOnThumbnail', () => {
         mockScrollTo = vi.fn();
     });
 
-    function setupMocks(currentIndex = 0, preview = false) {
+    function setupMocks(currentIndex = 0) {
         vi.mocked(selectionContext.useSelection).mockReturnValue({
             currentIndex,
         } as unknown as ReturnType<typeof selectionContext.useSelection>);
-
-        vi.mocked(trokkFilesContext.useTrokkFiles).mockReturnValue({
-            state: {
-                preview,
-            },
-        } as unknown as ReturnType<typeof trokkFilesContext.useTrokkFiles>);
     }
 
     it('focuses on the current file element on mount when fully visible', async () => {
-        setupMocks(0, false);
+        setupMocks(0);
 
         const container = document.createElement('div');
         container.scrollTo = mockScrollTo;
@@ -73,7 +65,7 @@ describe('useAutoFocusOnThumbnail', () => {
         fileRefs.current = [fileEl];
         (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = container;
 
-        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef}));
+        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef, previewDialogOpen: false}));
 
         expect(mockScrollTo).not.toHaveBeenCalled();
 
@@ -87,7 +79,7 @@ describe('useAutoFocusOnThumbnail', () => {
 
 
     it('scrolls container if file element is partially out of view', () => {
-        setupMocks(0, false);
+        setupMocks(0);
 
         const container = document.createElement('div');
         container.scrollTop = 50;
@@ -127,7 +119,7 @@ describe('useAutoFocusOnThumbnail', () => {
         fileRefs.current = [fileEl];
         (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = container;
 
-        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef}));
+        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef, previewDialogOpen: false}));
 
         return new Promise<void>((resolve) => {
             requestAnimationFrame(() => {
@@ -142,8 +134,8 @@ describe('useAutoFocusOnThumbnail', () => {
         });
     });
 
-    it('does nothing when state.preview is true', () => {
-        setupMocks(0, true); // preview = true
+    it('does nothing when previewDialogOpen is true', () => {
+        setupMocks(0); // previewDialogOpen will be true
 
         const container = document.createElement('div');
         container.scrollTo = mockScrollTo;
@@ -154,7 +146,7 @@ describe('useAutoFocusOnThumbnail', () => {
         fileRefs.current = [fileEl];
         (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = container;
 
-        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef}));
+        renderHook(() => useAutoFocusOnThumbnail({fileRefs, containerRef, previewDialogOpen: true}));
 
         expect(mockScrollTo).not.toHaveBeenCalled();
         expect(fileEl.focus).not.toHaveBeenCalled();

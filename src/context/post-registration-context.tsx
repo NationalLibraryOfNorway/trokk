@@ -165,6 +165,11 @@ export function usePostRegistration() {
         await body.setVersion();
 
         try {
+            Sentry.addBreadcrumb({
+                category: 'papi',
+                message: 'Creating batch of items in Papi',
+                level: 'info',
+            });
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
                 headers: {
@@ -173,6 +178,7 @@ export function usePostRegistration() {
                 },
                 body: JSON.stringify(body)
             });
+            Sentry.captureMessage('Successfully created batch of items in Papi')
 
             const deleteDirFromProgress = () =>
                 setAllUploadProgress(progress =>

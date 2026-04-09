@@ -110,11 +110,21 @@ describe('FilesContainer', () => {
         expect(screen.getByText('example.jpg')).toBeDefined();
     });
 
-    it('Clicking on thumbnail opens detail image view', () => {
+    it('Single-clicking on thumbnail focuses it without opening detail view', () => {
         renderWithContext();
         const thumbnail = screen.getByAltText('example.jpg');
         act(() => {
             fireEvent.click(thumbnail);
+        })
+        expect(mockHandle.handleIndexChange).toHaveBeenCalled();
+        expect(screen.queryByText('Velg Forside')).toBeNull();
+    });
+
+    it('Double-clicking on thumbnail opens detail image view', () => {
+        renderWithContext();
+        const thumbnail = screen.getByAltText('example.jpg');
+        act(() => {
+            fireEvent.dblClick(thumbnail);
         })
         expect(screen.getByText('Velg Forside')).toBeDefined();
     });
@@ -126,6 +136,42 @@ describe('FilesContainer', () => {
             fireEvent.click(checkboxes[0]);
         })
         expect(mockHandle.handleCheck).toHaveBeenCalled();
+    });
+
+    it('shows blue focus frame on thumbnail when state.preview is truthy but dialog is closed (regression: 002)', () => {
+        // Simulate state where DetailedImageView set state.preview but it wasn't cleared
+        // (the primary close path via DialogContent.onClick doesn't call handleClose)
+        const treeIndex = new Map<string, {name: string; path: string; isDirectory: boolean}>();
+        treeIndex.set('/mock/path/.thumbnails/example.webp', {
+            name: 'example.webp',
+            path: '/mock/path/.thumbnails/example.webp',
+            isDirectory: false,
+        });
+
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: {
+                    children: [{
+                        name: 'example.jpg',
+                        path: '/mock/path/example.jpg',
+                        isDirectory: false,
+                    }],
+                },
+                preview: {
+                    name: 'example.jpg',
+                    path: '/mock/path/example.jpg',
+                    isDirectory: false,
+                },
+                treeIndex,
+            },
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        const img = screen.getByAltText('example.jpg');
+        const frame = img.parentElement;
+        expect(frame?.className).toContain('bg-blue-600');
     });
 
     it('renders empty folder message when selected folder has no children', () => {
