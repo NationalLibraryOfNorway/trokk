@@ -16,6 +16,7 @@ import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
 import {TextItemResponse} from '../model/text-input-response.ts';
 import {remove} from '@tauri-apps/plugin-fs';
 import {AllTransferProgress} from '@/model/transfer-progress.ts';
+import * as Sentry from '@sentry/react';
 
 export function deleteDirFromProgressState(
     progress: AllTransferProgress,
