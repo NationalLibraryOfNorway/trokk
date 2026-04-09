@@ -6,6 +6,8 @@ use crate::file_utils::get_file_paths_in_directory;
 use crate::get_secret_variables;
 use crate::model::BatchRepresentation;
 #[cfg(not(feature = "debug-mock"))]
+use crate::model::PutObjectRequest;
+#[cfg(not(feature = "debug-mock"))]
 use crate::model::{SecretVariables, TransferProgress};
 #[cfg(not(feature = "debug-mock"))]
 use aws_sdk_s3::Client;
@@ -30,6 +32,7 @@ use tokio::{
 	fs::File,
 	io::{AsyncReadExt, BufReader},
 };
+
 const MULTIPART_PART_SIZE: usize = 16 * 1024 * 1024; // 16 MiB (server limit)
 
 #[cfg(not(feature = "debug-mock"))]
@@ -52,19 +55,18 @@ pub(crate) async fn upload_directory(
 		let meta = tokio::fs::metadata(file_path.clone())
 			.await
 			.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
-		let file_size = meta.len() as usize;
 
 		let page_nr = index + 1;
-		put_object(
+		put_object(PutObjectRequest {
 			client,
 			secret_variables,
-			file_path,
+			path: file_path,
 			object_id,
 			page_nr,
 			material_type,
-			file_size,
-			None,
-		)
+			file_size: meta.len() as usize,
+			representation_type: None,
+		})
 		.await?;
 
 		app_window
@@ -119,18 +121,17 @@ pub(crate) async fn upload_batch_to_s3(
 				let meta = tokio::fs::metadata(file_path.clone())
 					.await
 					.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
-				let file_size = meta.len() as usize;
 
-				put_object(
+				put_object(PutObjectRequest {
 					client,
 					secret_variables,
-					&file_path,
-					&prefixed_batch_id,
+					path: &file_path,
+					object_id: &prefixed_batch_id,
 					page_nr,
 					material_type,
-					file_size,
-					Some(rep_type),
-				)
+					file_size: meta.len() as usize,
+					representation_type: Some(rep_type),
+				})
 				.await?;
 
 				uploaded_count += 1;
@@ -158,16 +159,17 @@ pub(crate) async fn upload_batch_to_s3(
 }
 
 #[cfg(not(feature = "debug-mock"))]
-async fn put_object(
-	client: &Client,
-	secret_variables: &SecretVariables,
-	path: &PathBuf,
-	object_id: &str,
-	page_nr: usize,
-	material_type: &str,
-	file_size: usize,
-	representation_type: Option<&str>,
-) -> Result<(), String> {
+async fn put_object(req: PutObjectRequest<'_>) -> Result<(), String> {
+	let PutObjectRequest {
+		client,
+		secret_variables,
+		path,
+		object_id,
+		page_nr,
+		material_type,
+		file_size,
+		representation_type,
+	} = req;
 	let extension = path
 		.extension()
 		.and_then(|ext| ext.to_str())
