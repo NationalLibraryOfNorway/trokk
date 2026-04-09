@@ -62,6 +62,7 @@ pub(crate) async fn upload_directory(
 			object_id,
 			page_nr,
 			material_type,
+			file_size,
 			None,
 		)
 		.await?;
@@ -115,6 +116,11 @@ pub(crate) async fn upload_batch_to_s3(
 				let page_nr = index + 1;
 				let file_path = PathBuf::from(file_path_str);
 
+				let meta = tokio::fs::metadata(file_path.clone())
+					.await
+					.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
+				let file_size = meta.len() as usize;
+
 				put_object(
 					client,
 					secret_variables,
@@ -122,6 +128,7 @@ pub(crate) async fn upload_batch_to_s3(
 					&prefixed_batch_id,
 					page_nr,
 					material_type,
+					file_size,
 					Some(rep_type),
 				)
 				.await?;
@@ -146,7 +153,7 @@ pub(crate) async fn upload_batch_to_s3(
 			}
 		}
 	}
-
+	capture_message("Finished uploading to S3", Level::Info);
 	Ok(uploaded_count)
 }
 
@@ -158,6 +165,7 @@ async fn put_object(
 	object_id: &str,
 	page_nr: usize,
 	material_type: &str,
+	file_size: usize,
 	representation_type: Option<&str>,
 ) -> Result<(), String> {
 	let extension = path
@@ -178,12 +186,6 @@ async fn put_object(
 			material_type, object_id, object_id, page_nr, extension
 		)
 	};
-
-	let meta = tokio::fs::metadata(path)
-		.await
-		.map_err(|e| format!("stat failed for {}: {e}", path.display()))?;
-
-	let file_size = meta.len() as usize;
 
 	// Small file, upload in a single PUT request
 	if file_size <= MULTIPART_PART_SIZE {
