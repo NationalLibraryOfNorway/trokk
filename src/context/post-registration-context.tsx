@@ -47,7 +47,7 @@ export function groupFilesByCheckedItems(
         primary: string[],
         access: string[]
     }>();
-    let objectId: string = '';
+    let objectId: string | null = null;
     for (const file of allFilesInFolder) {
         if (!file) continue;
         if (checkedItems.includes(file.path)) {
@@ -58,12 +58,22 @@ export function groupFilesByCheckedItems(
                     access: []
                 });
         }
+
         if (!objectId) continue;
         const batch = batchMap.get(objectId);
         if (!batch) continue;
-        const primaryPath = file.path.replace('/merge/', '/');
-        batch.access.push(file.path);
-        batch.primary.push(primaryPath);
+
+        const isMergeFile = file.path.includes('/merge/')
+
+        if(isMergeFile){
+            //Merge files goes into access
+            const primaryPath = file.path.replace('/merge/', '/');
+            batch.access.push(file.path);
+            batch.primary.push(primaryPath);
+        } else {
+            //Regular files goes into primary
+            batch.primary.push(file.path)
+        }
     }
     return batchMap;
 }
@@ -75,8 +85,7 @@ async function handleApiResponse(
     handleError: (message: string) => void,
     pushedDir: string,
     deleteDirFromProgress: () => void,
-    removePath: (path: string) => void,
-    setAllUploadProgress: (fn: (progress: AllTransferProgress) => AllTransferProgress) => void,
+    removePath: (path: string) => void
 ) {
     if (response.status >= 200 && response.status < 300) {
         clearError();
@@ -85,14 +94,11 @@ async function handleApiResponse(
         removePath(pushedDir);
         deleteDirFromProgress();
 
-        // If pushedDir is a merge folder, also delete parent directory and its progress
         if (pushedDir.endsWith('/merge')) {
             const parentDir = pushedDir.replace(/\/merge$/, '');
             console.debug('Deleting parent directory:', parentDir);
             await remove(parentDir, {recursive: true});
             removePath(parentDir);
-            // Remove progress for parentDir
-            setAllUploadProgress(progress => deleteDirFromProgressState(progress, parentDir));
         }
 
         const items: TextItemResponse[] = await response.json();
@@ -184,8 +190,7 @@ export function usePostRegistration() {
                 handleError,
                 pushedDir,
                 deleteDirFromProgress,
-                removePath,
-                setAllUploadProgress
+                removePath
             );
 
         } catch (error) {

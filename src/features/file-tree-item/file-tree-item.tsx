@@ -31,13 +31,14 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
         (child) => allUploadProgress.dir[child.path]
     );
 
+    //If the opened directory contains a 'merge' subfolder, use it as the target directory
+    //Otherwise, use the directory itself as the target
     const getTargetDirectory = (file: FileTree): FileTree => {
         const mergeChild = file.children?.find(
             (child) => child.name === 'merge' && child.isDirectory
         );
         return mergeChild || file;
     };
-
 
     return (
         <li key={file.path} className="my-0">
