@@ -3,7 +3,7 @@ import {getVersion} from '@tauri-apps/api/app';
 
 export class BatchTextInputDto {
     batchId: string | null;
-    itemIdToNumberOfPages: Record<string, number>;
+    items: Record<string, number>; // Updated to match new papi version
     materialType: string;
     publicationType: PublicationType;
     username: string;
@@ -16,7 +16,7 @@ export class BatchTextInputDto {
 
     constructor(
         batchId: string | null,
-        itemIdToNumberOfPages: Record<string, number>,
+        items: Record<string, number>,
         materialType: MaterialType,
         username: string,
         font: string,
@@ -25,7 +25,7 @@ export class BatchTextInputDto {
         workName: string
     ) {
         this.batchId = batchId;
-        this.itemIdToNumberOfPages = itemIdToNumberOfPages;
+        this.items = items;
         this.materialType = getMaterialTypeAsKeyString(materialType);
         this.publicationType = this.publicationTypeFromMaterialType(materialType);
         this.username = username;

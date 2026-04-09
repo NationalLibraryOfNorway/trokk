@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AllTransferProgress, TransferProgress } from '../model/transfer-progress';
-import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow';
-import type { Event, UnlistenFn } from '@tauri-apps/api/event'
+import React, {createContext, useContext, useEffect, useState} from 'react';
+import {AllTransferProgress, TransferProgress} from '../model/transfer-progress';
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow';
+import type {Event, UnlistenFn} from '@tauri-apps/api/event'
 
 const appWindow = getCurrentWebviewWindow();
 
@@ -17,13 +17,15 @@ export const UploadProgressProvider: React.FC<{ children: React.ReactNode }> = (
 
     useEffect(() => {
         const unlistenProgress: Promise<UnlistenFn> = appWindow.listen('transfer_progress', (event: Event<TransferProgress>) => {
-            setAllUploadProgress(prevProgress => ({
-                ...prevProgress,
-                dir: {
-                    ...prevProgress.dir,
-                    [event.payload.directory]: event.payload
-                }
-            }));
+            setAllUploadProgress(prevProgress => {
+                return {
+                    ...prevProgress,
+                    dir: {
+                        ...prevProgress.dir,
+                        [event.payload.directory]: event.payload
+                    }
+                };
+            });
         });
 
         return () => {

@@ -1,4 +1,14 @@
+#[cfg(not(feature = "debug-mock"))]
+use aws_sdk_s3::Client;
 use serde::{Deserialize, Serialize};
+#[cfg(not(feature = "debug-mock"))]
+use std::path::PathBuf;
+
+#[derive(Deserialize)]
+pub(crate) struct BatchRepresentation {
+	pub(crate) primary: Vec<String>,
+	pub(crate) access: Vec<String>,
+}
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -136,4 +146,16 @@ pub struct TransferProgress {
 	pub(crate) directory: String,
 	pub(crate) page_nr: usize,
 	pub(crate) total_pages: usize,
+}
+
+#[cfg(not(feature = "debug-mock"))]
+pub struct PutObjectRequest<'a> {
+	pub client: &'a Client,
+	pub secret_variables: &'a SecretVariables,
+	pub path: &'a PathBuf,
+	pub object_id: &'a str,
+	pub page_nr: usize,
+	pub material_type: &'a str,
+	pub file_size: usize,
+	pub representation_type: Option<&'a str>,
 }

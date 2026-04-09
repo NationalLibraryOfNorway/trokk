@@ -9,6 +9,7 @@ use tauri::Window;
 use tokio::sync::OnceCell;
 
 use crate::image_converter::ConversionCount;
+use crate::model::BatchRepresentation;
 #[cfg(not(feature = "debug-mock"))]
 use crate::model::RequiredEnvironmentVariables;
 use crate::model::{AuthenticationResponse, SecretVariables};
@@ -274,7 +275,7 @@ async fn upload_directory_to_s3(
 
 #[tauri::command]
 async fn upload_batch_to_s3(
-	batch_map: HashMap<String, Vec<String>>,
+	batch_map: HashMap<String, BatchRepresentation>,
 	material_type: &str,
 	app_window: tauri::Window,
 ) -> Result<usize, String> {
