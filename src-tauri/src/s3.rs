@@ -93,7 +93,7 @@ pub(crate) async fn upload_batch_to_s3(
 	let secret_variables = get_secret_variables()
 		.await
 		.map_err(|e| format!("Failed to get secret variables: {e}"))?;
-	let client = get_client(secret_variables)
+	let client = get_client(&secret_variables.clone())
 		.await
 		.map_err(|e| format!("Failed to get S3 client: {e}"))?;
 
@@ -113,8 +113,8 @@ pub(crate) async fn upload_batch_to_s3(
 		let prefixed_batch_id = format!("tekst_{}", batch_id);
 
 		for (files, rep_type) in [(&batch.primary, "primary"), (&batch.access, "access")] {
-			for (index, file_path_str) in files.iter().enumerate() {
-				let page_nr = index + 1;
+			for (file_index, file_path_str) in files.iter().enumerate() {
+				let page_nr = file_index + 1;
 				let file_path = PathBuf::from(file_path_str);
 
 				let meta = tokio::fs::metadata(file_path.clone())
