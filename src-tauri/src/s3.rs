@@ -254,7 +254,7 @@ async fn multipart_upload(
 		let part_stream = ByteStream::from(buf[..filled].to_vec());
 
 		// Upload part
-        let bucket = secret_variables.s3_bucket_name.clone();
+		let bucket = secret_variables.s3_bucket_name.clone();
 		let resp = client
 			.upload_part()
 			.bucket(&secret_variables.s3_bucket_name)
