@@ -55,6 +55,7 @@ pub(crate) async fn upload_directory(
 		let meta = tokio::fs::metadata(file_path.clone())
 			.await
 			.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
+		let file_size = meta.len() as usize;
 
 		let page_nr = index + 1;
 		put_object(PutObjectRequest {
@@ -64,7 +65,7 @@ pub(crate) async fn upload_directory(
 			object_id,
 			page_nr,
 			material_type,
-			file_size: meta.len() as usize,
+			file_size,
 			representation_type: None,
 		})
 		.await?;
@@ -92,13 +93,11 @@ pub(crate) async fn upload_batch_to_s3(
 	let secret_variables = get_secret_variables()
 		.await
 		.map_err(|e| format!("Failed to get secret variables: {e}"))?;
-
 	let client = get_client(secret_variables)
 		.await
 		.map_err(|e| format!("Failed to get S3 client: {e}"))?;
 
 	let mut uploaded_count = 0;
-
 	let total_files: usize = batch_map
 		.values()
 		.map(|batch| batch.primary.len() + batch.access.len())
@@ -121,6 +120,7 @@ pub(crate) async fn upload_batch_to_s3(
 				let meta = tokio::fs::metadata(file_path.clone())
 					.await
 					.map_err(|e| format!("stat failed for {}: {e}", file_path.display()))?;
+				let file_size = meta.len() as usize;
 
 				put_object(PutObjectRequest {
 					client,
@@ -129,11 +129,10 @@ pub(crate) async fn upload_batch_to_s3(
 					object_id: &prefixed_batch_id,
 					page_nr,
 					material_type,
-					file_size: meta.len() as usize,
+					file_size,
 					representation_type: Some(rep_type),
 				})
 				.await?;
-
 				uploaded_count += 1;
 
 				let directory = Path::new(file_path_str)
@@ -175,8 +174,6 @@ async fn put_object(req: PutObjectRequest<'_>) -> Result<(), String> {
 		.and_then(|ext| ext.to_str())
 		.ok_or("Missing file extension")?;
 
-	let bucket = &secret_variables.s3_bucket_name;
-
 	let key = if let Some(rep_type) = representation_type {
 		format!(
 			"{}/{}/representations/{}/data/{}_{:0>5}.{}",
@@ -189,50 +186,48 @@ async fn put_object(req: PutObjectRequest<'_>) -> Result<(), String> {
 		)
 	};
 
-	// Small file, upload in a single PUT request
 	if file_size <= MULTIPART_PART_SIZE {
-		//Create the body
+		// Small file, upload in a single PUT request
 		let body = ByteStream::from_path(path)
 			.await
 			.map_err(|e| format!("Failed to read file: {e}"))?;
 
-		//Send the request
 		client
 			.put_object()
-			.bucket(bucket)
+			.bucket(&secret_variables.s3_bucket_name)
 			.key(key)
+			.content_length(file_size as i64)
 			.body(body)
 			.send()
 			.await
+			.inspect_err(|e| eprintln!("Error: {e:?}"))
 			.map_err(|e| format!("Failed to upload file: {e:?}"))?;
+
 		Ok(())
 	} else {
 		// Large file, use multipart upload
-		multipart_upload(client, bucket, path, &key).await
+		multipart_upload(client, secret_variables, path, &key).await
 	}
 }
 
 async fn multipart_upload(
 	client: &Client,
-	bucket: &str,
+	secret_variables: &SecretVariables,
 	path: &PathBuf,
 	key: &str,
 ) -> Result<(), String> {
 	// Large file, use multipart upload
 	let init = client
 		.create_multipart_upload()
-		.bucket(bucket)
+		.bucket(&secret_variables.s3_bucket_name)
 		.key(key)
 		.send()
 		.await
 		.map_err(|e| format!("init multipart failed: {e:?}"))?;
-
 	let upload_id = init.upload_id().ok_or("missing upload_id")?.to_string();
-
 	let file = File::open(path)
 		.await
 		.map_err(|e| format!("open failed for {}: {e}", path.display()))?;
-
 	let mut reader = BufReader::new(file);
 	let mut buf = vec![0u8; MULTIPART_PART_SIZE];
 	let mut part_number: i32 = 1;
@@ -241,49 +236,53 @@ async fn multipart_upload(
 	loop {
 		// Fill up to MULTIPART_PART_SIZE
 		let mut filled = 0usize;
-
 		while filled < MULTIPART_PART_SIZE {
 			let n = reader
 				.read(&mut buf[filled..])
 				.await
 				.map_err(|e| format!("read failed: {e}"))?;
-
 			if n == 0 {
 				break;
 			}
-
 			filled += n;
 		}
-
 		if filled == 0 {
 			break;
 		}
 
+		// Build a ByteStream for this part (exactly the bytes we read)
 		let part_stream = ByteStream::from(buf[..filled].to_vec());
 
-		let resp = match client
+		// Upload part
+        let bucket = secret_variables.s3_bucket_name.clone();
+		let resp = client
 			.upload_part()
-			.bucket(bucket)
+			.bucket(&secret_variables.s3_bucket_name)
 			.key(key)
 			.upload_id(&upload_id)
 			.part_number(part_number)
 			.body(part_stream)
 			.send()
 			.await
-		{
-			Ok(resp) => resp,
-			Err(e) => {
-				// Abort multipart upload on failure
-				let _ = client
-					.abort_multipart_upload()
-					.bucket(bucket)
-					.key(key)
-					.upload_id(&upload_id)
-					.send()
-					.await;
-				return Err(format!("upload_part #{part_number} failed: {e:?}"));
-			}
-		};
+			.map_err(|e| {
+				// Try to abort on failure to avoid leaked multiparts
+				let _task = tokio::spawn({
+					let client = client.clone();
+					let bucket = bucket;
+					let key = key.to_owned();
+					let upload_id = upload_id.clone();
+					async move {
+						let _ = client
+							.abort_multipart_upload()
+							.bucket(bucket)
+							.key(key)
+							.upload_id(upload_id)
+							.send()
+							.await;
+					}
+				});
+				format!("upload_part #{part_number} failed: {e:?}")
+			})?;
 
 		completed.push(
 			CompletedPart::builder()
@@ -291,13 +290,12 @@ async fn multipart_upload(
 				.e_tag(resp.e_tag().unwrap_or_default())
 				.build(),
 		);
-
 		part_number += 1;
 	}
 
 	client
 		.complete_multipart_upload()
-		.bucket(bucket)
+		.bucket(&secret_variables.s3_bucket_name)
 		.key(key)
 		.upload_id(upload_id)
 		.multipart_upload(
