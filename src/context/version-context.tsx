@@ -1,4 +1,4 @@
-import React, {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState} from 'react';
+import {createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState} from 'react';
 import * as Sentry from '@sentry/react';
 import {StartupVersionStatus} from '@/model/version-status.ts';
 import {
@@ -71,14 +71,21 @@ export function VersionProvider({children}: { children: ReactNode }) {
 			return;
 		}
 
-		Sentry.captureMessage('Startup version check started', {
+		Sentry.addBreadcrumb({
+			category: 'external.version',
+			message: 'Startup version check started',
 			level: 'info',
-			tags: { category: 'external.version' },
-			extra: { command: VERSION_GATE_SENTRY_LABEL },
+			data: { command: VERSION_GATE_SENTRY_LABEL },
 		});
 
 		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
+				Sentry.addBreadcrumb({
+					category: 'external.version',
+					message: 'Startup version check completed',
+					level: 'info',
+					data: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
+				});
 				Sentry.captureMessage('Startup version check completed', {
 					level: 'info',
 					tags: { category: 'external.version' },
@@ -114,14 +121,21 @@ export function VersionProvider({children}: { children: ReactNode }) {
 			return false;
 		}
 
-		Sentry.captureMessage('Upload version check started', {
+		Sentry.addBreadcrumb({
+			category: 'external.version',
+			message: 'Upload version check started',
 			level: 'info',
-			tags: { category: 'external.version' },
-			extra: { command: VERSION_GATE_SENTRY_LABEL },
+			data: { command: VERSION_GATE_SENTRY_LABEL },
 		});
 
 		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
+				Sentry.addBreadcrumb({
+					category: 'external.version',
+					message: 'Upload version check completed',
+					level: 'info',
+					data: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
+				});
 				Sentry.captureMessage('Upload version check completed', {
 					level: 'info',
 					tags: { category: 'external.version' },

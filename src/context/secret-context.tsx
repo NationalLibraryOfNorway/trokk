@@ -21,16 +21,23 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const getSecrets = useCallback(async () => {
         setIsFetchingSecrets(true);
-        Sentry.captureMessage('Secret fetch started', {
+        Sentry.addBreadcrumb({
+            category: 'external.secrets',
+            message: 'Secret fetch started',
             level: 'info',
-            tags: { category: 'external.secrets' },
-            extra: { command: 'get_secret_variables' },
+            data: { command: 'get_secret_variables' },
         });
         await invoke<SecretVariables>('get_secret_variables')
             .then((fetchedSecrets) => {
                 const safeSecrets = (fetchedSecrets ?? {}) as SecretVariables;
                 setSecrets(safeSecrets);
                 setFetchSecretsError(null);
+                Sentry.addBreadcrumb({
+                    category: 'external.secrets',
+                    message: 'Secret fetch completed',
+                    level: 'info',
+                    data: { command: 'get_secret_variables' },
+                });
                 Sentry.captureMessage('Secret fetch completed', {
                     level: 'info',
                     tags: { category: 'external.secrets' },
