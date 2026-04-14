@@ -130,12 +130,6 @@ export function VersionProvider({children}: { children: ReactNode }) {
 
 		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
-				Sentry.addBreadcrumb({
-					category: 'external.version',
-					message: 'Upload version check completed',
-					level: 'info',
-					data: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
-				});
 				Sentry.captureMessage('Upload version check completed', {
 					level: 'info',
 					tags: { category: 'external.version' },
