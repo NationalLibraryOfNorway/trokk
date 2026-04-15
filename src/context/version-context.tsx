@@ -71,6 +71,9 @@ export function VersionProvider({children}: { children: ReactNode }) {
 			return;
 		}
 
+		let fetchError: string | undefined;
+		let responseStatus: StartupVersionStatus | undefined;
+
 		Sentry.addBreadcrumb({
 			category: 'external.version',
 			message: 'Startup version check started',
@@ -80,30 +83,36 @@ export function VersionProvider({children}: { children: ReactNode }) {
 
 		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
+				responseStatus = response.status;
 				Sentry.addBreadcrumb({
 					category: 'external.version',
 					message: 'Startup version check completed',
 					level: 'info',
 					data: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
 				});
-				Sentry.captureMessage('Startup version check completed', {
-					level: 'info',
-					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
-				});
 				return response;
 			})
 			.then(applyVersionResponse)
 			.catch((error) => {
-				Sentry.captureMessage('Startup version check failed', {
-					level: 'error',
-					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_SENTRY_LABEL, error: getErrorMessage(error) },
-				});
+				fetchError = getErrorMessage(error);
 				setStartupVersionStatus(null);
 				setStartupVersionMessage(null);
-				setStartupVersionError(`Kunne ikke sjekke versjon ved oppstart. ${getErrorMessage(error)}`);
+				setStartupVersionError(`Kunne ikke sjekke versjon ved oppstart. ${fetchError}`);
 				setHasCheckedStartupVersion(true);
+			})
+			.finally(() => {
+				Sentry.captureMessage(
+					`Startup version check ${fetchError ? 'failed' : 'completed'}`,
+					{
+						level: fetchError ? 'error' : 'info',
+						tags: { category: 'external.version' },
+						extra: {
+							command: VERSION_GATE_SENTRY_LABEL,
+							...(responseStatus && { status: responseStatus }),
+							...(fetchError && { error: fetchError }),
+						},
+					},
+				);
 			});
 	}, [applyVersionResponse, runVersionGateCheck]);
 
@@ -121,6 +130,9 @@ export function VersionProvider({children}: { children: ReactNode }) {
 			return false;
 		}
 
+		let fetchError: string | undefined;
+		let responseStatus: StartupVersionStatus | undefined;
+
 		Sentry.addBreadcrumb({
 			category: 'external.version',
 			message: 'Upload version check started',
@@ -130,11 +142,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 
 		return runVersionGateCheck(desktopVersionUri)
 			.then((response) => {
-				Sentry.captureMessage('Upload version check completed', {
-					level: 'info',
-					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_SENTRY_LABEL, status: response.status },
-				});
+				responseStatus = response.status;
 				return response;
 			})
 			.then((response) => {
@@ -145,14 +153,24 @@ export function VersionProvider({children}: { children: ReactNode }) {
 				return isBlockingStatus;
 			})
 			.catch((error) => {
-				Sentry.captureMessage('Upload version check failed', {
-					level: 'error',
-					tags: { category: 'external.version' },
-					extra: { command: VERSION_GATE_SENTRY_LABEL, error: getErrorMessage(error) },
-				});
+				fetchError = getErrorMessage(error);
 				setUploadVersionBlocking(true);
-				setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${getErrorMessage(error)}`);
+				setUploadVersionMessage(`Kunne ikke sjekke versjon akkurat nå. ${fetchError}`);
 				return true;
+			})
+			.finally(() => {
+				Sentry.captureMessage(
+					`Upload version check ${fetchError ? 'failed' : 'completed'}`,
+					{
+						level: fetchError ? 'error' : 'info',
+						tags: { category: 'external.version' },
+						extra: {
+							command: VERSION_GATE_SENTRY_LABEL,
+							...(responseStatus && { status: responseStatus }),
+							...(fetchError && { error: fetchError }),
+						},
+					},
+				);
 			});
 	}, [runVersionGateCheck]);
 

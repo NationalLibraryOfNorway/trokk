@@ -21,6 +21,8 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     const getSecrets = useCallback(async () => {
         setIsFetchingSecrets(true);
+        let fetchError: string | undefined;
+
         Sentry.addBreadcrumb({
             category: 'external.secrets',
             message: 'Secret fetch started',
@@ -32,31 +34,26 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
                 const safeSecrets = (fetchedSecrets ?? {}) as SecretVariables;
                 setSecrets(safeSecrets);
                 setFetchSecretsError(null);
-                Sentry.addBreadcrumb({
-                    category: 'external.secrets',
-                    message: 'Secret fetch completed',
-                    level: 'info',
-                    data: { command: 'get_secret_variables' },
-                });
-                Sentry.captureMessage('Secret fetch completed', {
-                    level: 'info',
-                    tags: { category: 'external.secrets' },
-                    extra: { command: 'get_secret_variables' },
-                });
             }).catch((error) => {
                 console.error(error);
-                setFetchSecretsError(getErrorMessage(error));
-                Sentry.captureMessage('Secret fetch failed', {
-                    level: 'error',
-                    tags: { category: 'external.secrets' },
-                    extra: {
-                        command: 'get_secret_variables',
-                        error: getErrorMessage(error),
-                    },
-                });
+                fetchError = getErrorMessage(error);
+                setFetchSecretsError(fetchError);
                 throw error;
             })
-            .finally(() => setIsFetchingSecrets(false));
+            .finally(() => {
+                setIsFetchingSecrets(false);
+                Sentry.captureMessage(
+                    `Secret fetch ${fetchError ? 'failed' : 'completed'}`,
+                    {
+                        level: fetchError ? 'error' : 'info',
+                        tags: { category: 'external.secrets' },
+                        extra: {
+                            command: 'get_secret_variables',
+                            ...(fetchError && { error: fetchError }),
+                        },
+                    },
+                );
+            });
     }, []);
 
     useEffect(() => {
