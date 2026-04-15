@@ -508,6 +508,12 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
             const newCurrent = wasViewingDeletedFolder
                 ? undefined
                 : (state.current?.path ? newTreeIndex.get(state.current.path) : undefined);
+            const previewInDeletedFolder =
+                !!state.preview?.path &&
+                (state.preview.path === pathToRemove ||
+                    state.preview.path.startsWith(`${pathToRemove}/`) ||
+                    state.preview.path.startsWith(`${pathToRemove}\\`));
+            const newPreview = previewInDeletedFolder ? undefined : state.preview;
 
             const isEven = calculateIsEven(newCurrent);
 
@@ -515,6 +521,7 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
                 ...newState,
                 treeIndex: newTreeIndex,
                 current: newCurrent,
+                preview: newPreview,
                 isEven
             };
         }
