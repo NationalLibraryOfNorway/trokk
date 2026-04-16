@@ -34,6 +34,7 @@ pkgs.mkShell {
     gobject-introspection
     cargo
     cargo-tauri
+    rustfmt
     nodejs
     curl
     wget
