@@ -155,19 +155,23 @@ const RegistrationForm: React.FC = () => {
     }, [allUploadProgress]);
 
     const setBarWidthFromProgress = (progress: AllTransferProgress) => {
-        if (!state.current?.path || !progress.dir[state.current?.path]) {
+        const currentPath = state.current?.path;
+        if (!currentPath) {
             setBarWidth(0);
             return;
         }
-        const currentProgress = progress.dir[state.current.path];
-        if (currentProgress) {
-            setBarWidth((currentProgress.pageNr / currentProgress.totalPages) * 100);
+        // If the progress key is for the parent, add/alias it for the subfolder
+        const parentKey = Object.keys(progress.dir).find(key => currentPath.startsWith(key));
+        if (parentKey && !progress.dir[currentPath]) {
+            progress.dir[currentPath] = progress.dir[parentKey];
         }
-        if (barWidth === 100) {
-            const usedPath = state.current.path;
-            setIsSubmitting(false);
-            setTimeout(() => delete progress.dir[usedPath], 5000);
+        const currentProgress = progress.dir[currentPath];
+        if (!currentProgress) {
+            setBarWidth(0);
+            return;
         }
+        const width = (currentProgress.pageNr / currentProgress.totalPages) * 100;
+        setBarWidth(width);
     };
 
     return (

@@ -16,25 +16,65 @@ import {fetch as tauriFetch} from '@tauri-apps/plugin-http';
 import {BatchTextInputDto} from '../model/batch-text-input-dto.ts';
 import {TextItemResponse} from '../model/text-input-response.ts';
 import {remove} from '@tauri-apps/plugin-fs';
+import {AllTransferProgress} from '@/model/transfer-progress.ts';
 import * as Sentry from '@sentry/react';
 
-function groupFilesByCheckedItems(
+export function deleteDirFromProgressState(
+    progress: AllTransferProgress,
+    pushedDir: string
+): AllTransferProgress {
+    const newDir = { ...progress.dir };
+
+    delete newDir[pushedDir];
+
+    if (pushedDir.endsWith('/merge')) {
+        const parentDir = pushedDir.replace(/\/merge$/, '');
+        delete newDir[parentDir];
+    }
+
+    return {
+        ...progress,
+        dir: newDir
+    };
+}
+
+export function groupFilesByCheckedItems(
     allFilesInFolder: FileTree[],
     checkedItems: string[]
-): Map<string, string[]> {
-    const batchMap = new Map<string, string[]>();
-    let objectId: string = '';
-
+): Map<string, {
+    primary: string[],
+    access: string[]
+}> {
+    const batchMap = new Map<string, {
+        primary: string[],
+        access: string[]
+    }>();
+    let objectId: string | null = null;
     for (const file of allFilesInFolder) {
         if (!file) continue;
         if (checkedItems.includes(file.path)) {
             objectId = uuidv7().toString();
             batchMap.set(
-                objectId,
-                [file.path]
-            )
+                objectId, {
+                    primary: [],
+                    access: []
+                });
+        }
+
+        if (!objectId) continue;
+        const batch = batchMap.get(objectId);
+        if (!batch) continue;
+
+        const isMergeFile = file.path.includes('/merge/')
+
+        if(isMergeFile){
+            //Merge files goes into access
+            const primaryPath = file.path.replace('/merge/', '/');
+            batch.access.push(file.path);
+            batch.primary.push(primaryPath);
         } else {
-            if (batchMap.get(objectId) !== undefined) batchMap.get(objectId)!.push(file.path);
+            //Regular files goes into primary
+            batch.primary.push(file.path)
         }
     }
     return batchMap;
@@ -47,7 +87,7 @@ async function handleApiResponse(
     handleError: (message: string) => void,
     pushedDir: string,
     deleteDirFromProgress: () => void,
-    removePath: (path: string) => void,
+    removePath: (path: string) => void
 ) {
     if (response.status >= 200 && response.status < 300) {
         clearError();
@@ -55,6 +95,14 @@ async function handleApiResponse(
         await remove(pushedDir, {recursive: true});
         removePath(pushedDir);
         deleteDirFromProgress();
+
+        if (pushedDir.endsWith('/merge')) {
+            const parentDir = pushedDir.replace(/\/merge$/, '');
+            console.debug('Deleting parent directory:', parentDir);
+            await remove(parentDir, {recursive: true});
+            removePath(parentDir);
+        }
+
         const items: TextItemResponse[] = await response.json();
         items.forEach(displaySuccessMessage);
     } else {
@@ -108,11 +156,11 @@ export function usePostRegistration() {
             handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.', undefined, error);
             return Promise.reject(error);
         });
-
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
-        for (const [batchId, pages] of batchMap.entries()) {
-            itemIdToCountOfItems.set(batchId, pages.length);
+        for (const [itemId, pages] of batchMap.entries()) {
+            const totalItems = pages.access.length;
+            itemIdToCountOfItems.set(itemId, totalItems);
         }
 
         const body = new BatchTextInputDto(
@@ -143,16 +191,24 @@ export function usePostRegistration() {
             });
             Sentry.captureMessage('Successfully created batch of items in Papi')
 
-            const deleteDirFromProgress = () => setAllUploadProgress(progress => {
-                delete progress.dir[pushedDir];
-                return progress;
-            });
+            const deleteDirFromProgress = () =>
+                setAllUploadProgress(progress =>
+                    deleteDirFromProgressState(progress, pushedDir)
+                );
 
             const removePath = (path: string) => {
-                dispatch({ type: 'REMOVE_FOLDER_PATH', payload: path });
+                dispatch({type: 'REMOVE_FOLDER_PATH', payload: path});
             };
 
-            await handleApiResponse(response, clearError, displaySuccessMessage, handleError, pushedDir, deleteDirFromProgress, removePath);
+            await handleApiResponse(
+                response,
+                clearError,
+                displaySuccessMessage,
+                handleError,
+                pushedDir,
+                deleteDirFromProgress,
+                removePath
+            );
 
         } catch (error) {
             handleError('Nettverksfeil ved lagring av objektet');
