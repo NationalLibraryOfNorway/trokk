@@ -153,9 +153,11 @@ export function usePostRegistration() {
             itemIdToCountOfItems.set(itemId, totalItems);
         }
 
+        const itemsArray = Array.from(itemIdToCountOfItems.entries()).map(([itemId, pages]) => ({ itemId, pages }));
+
         const body = new BatchTextInputDto(
             checkedItems.length > 1 ? uuidv7().toString() : null, //Adding batchId only for multiple objects
-            Object.fromEntries(itemIdToCountOfItems),
+            itemsArray,
             registration.materialType,
             authResp.userInfo.name,
             registration.font,
