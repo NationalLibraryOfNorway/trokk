@@ -29,7 +29,7 @@ image = { version = "0.25.9", default-features = false, features = ["jpeg", "png
 webp = { version = "0.3.1", default-features = false, features = ["img"] }
 little_exif = "0.6.23"
 thiserror = "2.0.18"
-vaultrs = { version = "0.7.4", default-features = false, features = ["rustls"] }
+vaultrs = { version = "0.8.0", default-features = false, features = ["rustls"] }
 vaultrs-login = "0.2.3"
 tokio = { version = "1.49.0", default-features = false, features = ["rt-multi-thread", "sync", "fs", "io-util"] }
 # AWS versjon er syncet mot tokio for å unngå dupliserte avhengigheter og forlenget compile-tid
