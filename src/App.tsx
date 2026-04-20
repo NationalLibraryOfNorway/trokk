@@ -70,6 +70,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const [isRetryingStartup, setIsRetryingStartup] = useState(false);
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
+    const isMaximizedRef = useRef(false);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const startupWarningMessageClass = 'border-yellow-600 bg-yellow-950/40 text-yellow-100';
     useToolbarOffset(toolbarRef);
@@ -134,7 +135,13 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
         const updateMaximized = async () => {
             const maximized = await appWindow.isMaximized();
-            setIsMaximized(maximized);
+            // Only update state (and trigger a re-render) when the value actually
+            // changes. On macOS, a re-render causes a layout shift that fires
+            // another onResized event, creating an infinite feedback loop.
+            if (maximized !== isMaximizedRef.current) {
+                isMaximizedRef.current = maximized;
+                setIsMaximized(maximized);
+            }
         };
 
         const setupListeners = async () => {
