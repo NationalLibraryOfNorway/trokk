@@ -124,19 +124,27 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             .finally(() => setIsRetryingStartup(false));
     };
 
-    // Listen for window maximize/unmaximize events
+    // Listen for window maximize/unmaximize events.
+    // On macOS, smooth window animations fire many rapid resize events. Without
+    // debouncing, each event spawns an async IPC call to isMaximized() that floods
+    // the Tauri bridge and causes the UI to freeze indefinitely.
     React.useEffect(() => {
         const appWindow = getCurrentWindow();
+        let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+        const updateMaximized = async () => {
+            const maximized = await appWindow.isMaximized();
+            setIsMaximized(maximized);
+        };
 
         const setupListeners = async () => {
             // Check initial state
-            const maximized = await appWindow.isMaximized();
-            setIsMaximized(maximized);
+            await updateMaximized();
 
-            // Listen for resize events
-            const unlistenResize = await appWindow.onResized(async () => {
-                const maximized = await appWindow.isMaximized();
-                setIsMaximized(maximized);
+            // Debounce resize events to avoid flooding the IPC bridge on macOS
+            const unlistenResize = await appWindow.onResized(() => {
+                if (debounceTimer !== undefined) clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(updateMaximized, 100);
             });
 
             return unlistenResize;
@@ -148,6 +156,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         });
 
         return () => {
+            if (debounceTimer !== undefined) clearTimeout(debounceTimer);
             if (unlisten) unlisten();
         };
     }, []);
