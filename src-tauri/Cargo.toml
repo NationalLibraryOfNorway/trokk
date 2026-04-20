@@ -10,10 +10,10 @@ edition = "2024"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "2.5.5", features = [] }
+tauri-build = { version = "2.5.6", features = [] }
 
 [dependencies]
-tauri = { version = "2.10.2", features = ["protocol-asset", "tray-icon", "test", "devtools"], optional = false }
+tauri = { version = "2.10.3", features = ["protocol-asset", "tray-icon", "test", "devtools"], optional = false }
 tauri-plugin-store = "2.4.2"
 tauri-plugin-fs = { version = "2.4.5", features = ["watch"] }
 tauri-plugin-oauth = "2.0.0"
