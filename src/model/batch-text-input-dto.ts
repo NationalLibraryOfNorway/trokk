@@ -1,9 +1,14 @@
 import {getMaterialTypeAsKeyString, MaterialType, PublicationType} from './registration-enums.ts';
 import {getVersion} from '@tauri-apps/api/app';
 
+interface ItemPagesDto {
+    itemId: string;
+    pages: number;
+}
+
 export class BatchTextInputDto {
     batchId: string | null;
-    items: Record<string, number>; // Updated to match new papi version
+    items: ItemPagesDto[];
     materialType: string;
     publicationType: PublicationType;
     username: string;
@@ -16,7 +21,7 @@ export class BatchTextInputDto {
 
     constructor(
         batchId: string | null,
-        items: Record<string, number>,
+        items: ItemPagesDto[],
         materialType: MaterialType,
         username: string,
         font: string,
