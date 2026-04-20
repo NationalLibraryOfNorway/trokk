@@ -109,6 +109,18 @@ pub(crate) async fn upload_batch_to_s3(
 		level: Level::Info,
 		..Default::default()
 	});
+
+	let progress_directory_string = if !batch_map.values().next().unwrap().access.is_empty() {
+		&batch_map.values().next().unwrap().access[0]
+	} else {
+		&batch_map.values().next().unwrap().primary[0]
+	};
+
+	let progress_directory = Path::new(progress_directory_string)
+		.parent()
+		.map(|p| p.to_string_lossy().to_string())
+		.unwrap_or_default();
+
 	for (batch_id, batch) in batch_map.iter() {
 		let prefixed_batch_id = format!("tekst_{}", batch_id);
 
@@ -135,16 +147,11 @@ pub(crate) async fn upload_batch_to_s3(
 				.await?;
 				uploaded_count += 1;
 
-				let directory = Path::new(file_path_str)
-					.parent()
-					.map(|p| p.to_string_lossy().to_string())
-					.unwrap_or_default();
-
 				app_window
 					.emit(
 						"transfer_progress",
 						TransferProgress {
-							directory,
+							directory: progress_directory.clone(),
 							page_nr: uploaded_count,
 							total_pages: total_files,
 						},

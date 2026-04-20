@@ -8,14 +8,14 @@ use tauri_plugin_oauth::{OauthConfig, start_with_config};
 use url::Url;
 
 #[cfg(not(feature = "debug-mock"))]
-use std::error::Error;
+use std::time::Duration;
 #[cfg(not(feature = "debug-mock"))]
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::get_secret_variables;
-#[cfg(not(feature = "debug-mock"))]
-use crate::model::TokenResponseWithoutRefresh;
 use crate::model::{AuthenticationResponse, ExpireInfo, TokenResponse, UserInfo};
+#[cfg(not(feature = "debug-mock"))]
+use crate::model::{SecretVariables, TokenResponseWithoutRefresh};
 
 pub(crate) fn log_in_with_server_redirect(window: Window) -> Result<u16, String> {
 	start_with_config(
@@ -111,14 +111,20 @@ pub(crate) async fn refresh_token(refresh_token: String) -> AuthenticationRespon
 }
 
 #[cfg(not(feature = "debug-mock"))]
-pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>> {
+pub(crate) async fn get_access_token_for_papi() -> Result<String, String> {
 	// Secrets already fetched from frontend, so unwrap is safe as it is in the OnceCell cache
 	let secrets = get_secret_variables().await.unwrap();
-	let client = Client::new();
-	let body = format!(
-		"client_id={}&client_secret={}&grant_type=client_credentials",
-		secrets.oidc_tekst_client_id, secrets.oidc_tekst_client_secret
-	);
+	get_access_token_for_papi_with_secrets(secrets).await
+}
+
+#[cfg(not(feature = "debug-mock"))]
+pub(crate) async fn get_access_token_for_papi_with_secrets(
+	secrets: &SecretVariables,
+) -> Result<String, String> {
+	let client = Client::builder()
+		.timeout(Duration::from_secs(15))
+		.build()
+		.map_err(|e| format!("Kunne ikke initialisere HTTP-klient: {e}"))?;
 
 	add_breadcrumb(Breadcrumb {
 		category: Some("papi".into()),
@@ -126,15 +132,42 @@ pub(crate) async fn get_access_token_for_papi() -> Result<String, Box<dyn Error>
 		level: Level::Info,
 		..Default::default()
 	});
-	let res = client
+
+	let response = client
 		.post(format!("{}{}", secrets.oidc_tekst_base_url, "/token"))
 		.header("Content-Type", "application/x-www-form-urlencoded")
-		.body(body)
+		.body(format!(
+			"client_id={}&client_secret={}&grant_type=client_credentials",
+			secrets.oidc_tekst_client_id, secrets.oidc_tekst_client_secret
+		))
 		.send()
-		.await;
+		.await
+		.map_err(|e| format!("Kunne ikke hente autentiseringstoken: {e}"))
+		.and_then(|response| {
+			let status = response.status();
+			if status.is_success() {
+				Ok(response)
+			} else {
+				Err(format!(
+					"Kunne ikke hente autentiseringstoken. Status: {}",
+					status
+				))
+			}
+		})?;
+
 	capture_message("Finished getting access token for Papi", Level::Info);
 
-	let token_response: TokenResponseWithoutRefresh = serde_json::from_str(&res?.text().await?)?;
+	response
+		.text()
+		.await
+		.map_err(|e| format!("Kunne ikke lese token-respons: {e}"))
+		.and_then(|body| parse_papi_token_response(&body))
+}
+
+#[cfg(not(feature = "debug-mock"))]
+pub(crate) fn parse_papi_token_response(body: &str) -> Result<String, String> {
+	let token_response: TokenResponseWithoutRefresh =
+		serde_json::from_str(body).map_err(|e| format!("Kunne ikke tolke token-respons: {e}"))?;
 	Ok(token_response.access_token)
 }
 

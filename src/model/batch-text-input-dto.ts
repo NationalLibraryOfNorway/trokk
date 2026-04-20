@@ -8,7 +8,7 @@ interface ItemPagesDto {
 
 export class BatchTextInputDto {
     batchId: string | null;
-    items: ItemPagesDto[]; // Updated to match new papi version
+    items: ItemPagesDto[];
     materialType: string;
     publicationType: PublicationType;
     username: string;

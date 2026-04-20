@@ -12,6 +12,13 @@ vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: vi.fn(),
 }));
 
+vi.mock('../src/context/version-context.tsx', () => ({
+    useVersion: () => ({
+        canFetchStartupSecrets: true,
+    }),
+    VersionProvider: ({children}: { children: unknown }) => <>{children}</>,
+}));
+
 vi.mock('@tauri-apps/api/core', () => ({
     convertFileSrc: (path: string) => `mock-src/${path}`,
     invoke: vi.fn().mockResolvedValue(undefined),
@@ -210,4 +217,3 @@ describe('Thumbnail Rotation Feature', () => {
         expect(clockwiseBtn).toBeTruthy();
     });
 });
-
