@@ -47,6 +47,7 @@ jobs:
           secrets: |
             secret/v1/application/k8s/tekst/data/artifactory * | ART_ ;
             secret/v1/application/k8s/tekst/data/${{ env.VAULT_ENVIRONMENT }} * | TROKK_ ;
+            secret/v1/application/k8s/tekst/data/s3-cache * | S3_CACHE_ ;
 
       # Git fix for Windows, workaround for permission issues regarding self-hosted runners
       - name: Windows; Git fix
@@ -117,8 +118,8 @@ jobs:
       - name: Windows; setup CMAke
         with:
           s3-bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
-          s3-access-key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
-          s3-secret-key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          s3-access-key: ${{ steps.import-secrets.outputs.S3_CACHE_ACCESS_KEY }}
+          s3-secret-key: ${{ steps.import-secrets.outputs.S3_CACHE_SECRET_KEY }}
           s3-host: ${{ secrets.S3_NB_CACHE_HOST }}
         if: ${{ matrix.windows }}
         uses: ./.github/actions/setup-cmake
@@ -151,8 +152,8 @@ jobs:
         continue-on-error: true
         with:
           s3-bucket: ${{ secrets.S3_NB_CACHE_BUCKET }}
-          s3-access-key: ${{ secrets.S3_NB_CACHE_ACCESS_KEY }}
-          s3-secret-key: ${{ secrets.S3_NB_CACHE_SECRET_KEY }}
+          s3-access-key: ${{ steps.import-secrets.outputs.S3_CACHE_ACCESS_KEY }}
+          s3-secret-key: ${{ steps.import-secrets.outputs.S3_CACHE_SECRET_KEY }}
           s3-host: ${{ secrets.S3_NB_CACHE_HOST }}
         uses: ./.github/actions/setup-sccache
 
@@ -259,20 +260,20 @@ jobs:
         if: ${{ matrix.linux && success() }}
         working-directory: ./src-tauri/target/release/bundle
         run: |
-            set -euo pipefail
-
-            # filter to upload only DEB and AppImage files
-            echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
-            | sed -e 's#\\#/#g' -e 's#//#/#g' \
-            | jq -r '.[] | select(test("\\.(deb|appimage|rpm)$"; "i"))' \
-            | sed -n -e 's#^.*bundle/##p' \
-            | while IFS= read -r relpath; do
-                [ -n "$relpath" ] || continue
-                echo "Uploading: $relpath"
-                jf rt u \
-                    --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
-                    --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
-                    --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
-                    "$relpath" \
-                    "generic/trokk/${{ github.ref_name }}/"
-                done
+          set -euo pipefail
+          
+          # filter to upload only DEB and AppImage files
+          echo '${{ steps.tauri_build.outputs.artifactPaths }}' \
+          | sed -e 's#\\#/#g' -e 's#//#/#g' \
+          | jq -r '.[] | select(test("\\.(deb|appimage|rpm)$"; "i"))' \
+          | sed -n -e 's#^.*bundle/##p' \
+          | while IFS= read -r relpath; do
+              [ -n "$relpath" ] || continue
+              echo "Uploading: $relpath"
+              jf rt u \
+                  --url '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_URL }}' \
+                  --user '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_USER }}' \
+                  --password '${{ steps.import-secrets.outputs.ART_ARTIFACTORY_PASSWORD }}' \
+                  "$relpath" \
+                  "generic/trokk/${{ github.ref_name }}/"
+              done
