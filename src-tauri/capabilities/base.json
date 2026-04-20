@@ -20,7 +20,9 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "**/*" }
+        {
+          "path": "**/*"
+        }
       ]
     },
     "core:default",
@@ -55,6 +57,7 @@
           "url": "https://*.nb.no/*"
         }
       ]
-    }
+    },
+    "http:default"
   ]
 }
