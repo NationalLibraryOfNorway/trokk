@@ -29,7 +29,8 @@ class SettingStore {
     async init(): Promise<void> {
         if (this.store == undefined) {
             return await load('.settings.json', {
-                autoSave: true
+                autoSave: true,
+                defaults: {}
             }).then(store => {
                 this.store = store;
                 this.store.get('scannerPath').then(path => {
