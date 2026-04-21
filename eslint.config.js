@@ -16,7 +16,10 @@ export default [
       'src-tauri/**/*',
       'dist/**/*',
       'node_modules/**/*',
-      'src/components/ui/**/*'
+      'src/components/ui/**/*',
+      'target/**/*',
+      '.devbox/**/*',
+      'Trøkk.AppDir/**/*'
     ]
   },
   {

@@ -58,7 +58,7 @@ describe('version-gate', () => {
 			text: async () => '"1.2.3"',
 		} as Response);
 
-		const latest = await fetchLatestDesktopVersion('https://example.com/version/');
+		const latest = await fetchLatestDesktopVersion('https://example.com/version/Tr%C3%B8kk');
 		expect(latest).toBe('1.2.3');
 		expect(tauriFetchMock).toHaveBeenCalledWith('https://example.com/version/Tr%C3%B8kk');
 	});

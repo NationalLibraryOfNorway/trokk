@@ -43,10 +43,10 @@ export function VersionProvider({children}: { children: ReactNode }) {
 	const [uploadVersionMessage, setUploadVersionMessage] = useState<string | null>(null);
 	const {secrets} = useSecrets()
 
-	const getDesktopVersionUri = () => {
+	const getDesktopVersionUri = useCallback(() => {
 		if (!secrets?.papiPath) return null;
-		return secrets.papiPath.trim() + '/v2/desktop/version/Trøkk';
-	};
+		return secrets.papiPath.trim() + '/v2/desktop/version/Tr%C3%B8kk'; // URI encoded "Trøkk"
+	}, [secrets]);
 
 	const runVersionGateCheck = useCallback(async (desktopVersionUri: string): Promise<DesktopVersionGateResponse> => {
 		const currentVersion = getCurrentAppVersion();
@@ -116,7 +116,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 					},
 				);
 			});
-	}, [applyVersionResponse, runVersionGateCheck]);
+	}, [applyVersionResponse, runVersionGateCheck, getDesktopVersionUri]);
 
 	const retryStartupVersionCheck = useCallback(async () => {
 		setIsCheckingStartupVersion(true);
@@ -174,7 +174,7 @@ export function VersionProvider({children}: { children: ReactNode }) {
 					},
 				);
 			});
-	}, [runVersionGateCheck]);
+	}, [runVersionGateCheck, getDesktopVersionUri]);
 
 	useEffect(() => {
 		if (!secrets) return;

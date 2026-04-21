@@ -7,7 +7,7 @@ import {remove} from '@tauri-apps/plugin-fs';
 const testFileName = '/some/parent/merge/file1.tif';
 
 vi.mock('@tauri-apps/plugin-fs', () => ({
-    remove: vi.fn(),
+    remove: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../src/context/selection-context.tsx', () => ({
