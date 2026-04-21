@@ -55,6 +55,7 @@ const mockTrokkFilesState = {
     treeIndex: new Map(),
     current: undefined,
     preview: createMockFileTree('preview.webp', '/preview/path.webp'),
+    isEven: true,
 };
 
 const baseProps = {

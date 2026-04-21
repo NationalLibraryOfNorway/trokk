@@ -43,6 +43,7 @@ const mockTrokkFilesState = {
     treeIndex: new Map(),
     current: undefined,
     preview: undefined,
+    isEven: true,
 };
 
 function createMockFileTree(name: string, path: string): FileTree {
