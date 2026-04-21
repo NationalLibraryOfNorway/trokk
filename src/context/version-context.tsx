@@ -7,6 +7,7 @@ import {
 	fetchLatestDesktopVersion,
 } from '@/lib/version-gate.ts';
 import {getErrorMessage} from '@/lib/utils.ts';
+import {useSecrets} from '@/context/secret-context.tsx';
 
 interface VersionContextType {
 	startupVersionStatus: StartupVersionStatus | null;
@@ -20,15 +21,10 @@ interface VersionContextType {
 	uploadVersionMessage: string | null;
 	retryStartupVersionCheck: () => Promise<void>;
 	checkUploadVersionGate: () => Promise<boolean>;
-	canFetchStartupSecrets: boolean;
 }
 
 const VersionContext = createContext<VersionContextType | null>(null);
 
-const getDesktopVersionUri = () => {
-	const value = import.meta.env.VITE_PAPI_API_DESKTOP_VERSION_URI as string | undefined;
-	return value?.trim() || null;
-};
 
 const getCurrentAppVersion = () => {
 	const value = import.meta.env.VITE_APP_VERSION as string | undefined;
@@ -41,10 +37,16 @@ export function VersionProvider({children}: { children: ReactNode }) {
 	const [startupVersionStatus, setStartupVersionStatus] = useState<StartupVersionStatus | null>(null);
 	const [startupVersionMessage, setStartupVersionMessage] = useState<string | null>(null);
 	const [startupVersionError, setStartupVersionError] = useState<string | null>(null);
-	const [isCheckingStartupVersion, setIsCheckingStartupVersion] = useState<boolean>(true);
+	const [isCheckingStartupVersion, setIsCheckingStartupVersion] = useState<boolean>(false);
 	const [hasCheckedStartupVersion, setHasCheckedStartupVersion] = useState<boolean>(false);
 	const [uploadVersionBlocking, setUploadVersionBlocking] = useState<boolean>(false);
 	const [uploadVersionMessage, setUploadVersionMessage] = useState<string | null>(null);
+	const {secrets} = useSecrets()
+
+	const getDesktopVersionUri = () => {
+		if (!secrets?.papiPath) return null;
+		return secrets.papiPath.trim() + '/v2/desktop/version/Trøkk';
+	};
 
 	const runVersionGateCheck = useCallback(async (desktopVersionUri: string): Promise<DesktopVersionGateResponse> => {
 		const currentVersion = getCurrentAppVersion();
@@ -175,15 +177,15 @@ export function VersionProvider({children}: { children: ReactNode }) {
 	}, [runVersionGateCheck]);
 
 	useEffect(() => {
+		if (!secrets) return;
+		setIsCheckingStartupVersion(true);
 		void runStartupVersionCheck().finally(() => setIsCheckingStartupVersion(false));
-	}, [runStartupVersionCheck]);
+	}, [secrets, runStartupVersionCheck]);
 
 	const value = useMemo(() => {
 		const isStartupBlocking =
 			startupVersionStatus === 'MAJOR_BLOCKING' || startupVersionStatus === 'MINOR_BLOCKING';
 		const requiresManualLogin = startupVersionStatus === 'PATCH_AVAILABLE';
-		const canFetchStartupSecrets =
-			hasCheckedStartupVersion && !isCheckingStartupVersion && !startupVersionError && !isStartupBlocking;
 
 		return {
 			startupVersionStatus,
@@ -197,7 +199,6 @@ export function VersionProvider({children}: { children: ReactNode }) {
 			uploadVersionMessage,
 			retryStartupVersionCheck,
 			checkUploadVersionGate,
-			canFetchStartupSecrets,
 		};
 	}, [
 		startupVersionStatus,
