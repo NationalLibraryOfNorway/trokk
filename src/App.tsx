@@ -70,7 +70,6 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const [isRetryingStartup, setIsRetryingStartup] = useState(false);
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
-    const isMaximizedRef = useRef(false);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const startupWarningMessageClass = 'border-yellow-600 bg-yellow-950/40 text-yellow-100';
     useToolbarOffset(toolbarRef);
@@ -125,46 +124,30 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             .finally(() => setIsRetryingStartup(false));
     };
 
-    // Listen for window maximize/unmaximize events.
-    // On macOS, smooth window animations fire many rapid resize events. Without
-    // debouncing, each event spawns an async IPC call to isMaximized() that floods
-    // the Tauri bridge and causes the UI to freeze indefinitely.
+    // Track window maximize state via dedicated maximize/unmaximize events.
+    // Avoids polling isMaximized() on every resize event, which floods the
+    // Tauri IPC bridge with async calls and causes the UI to freeze on macOS.
     React.useEffect(() => {
         const appWindow = getCurrentWindow();
-        let debounceTimer: ReturnType<typeof setTimeout> | undefined;
-
-        const updateMaximized = async () => {
-            const maximized = await appWindow.isMaximized();
-            // Only update state (and trigger a re-render) when the value actually
-            // changes. On macOS, a re-render causes a layout shift that fires
-            // another onResized event, creating an infinite feedback loop.
-            if (maximized !== isMaximizedRef.current) {
-                isMaximizedRef.current = maximized;
-                setIsMaximized(maximized);
-            }
-        };
+        let unlisten1: (() => void) | undefined;
+        let unlisten2: (() => void) | undefined;
 
         const setupListeners = async () => {
-            // Check initial state
-            await updateMaximized();
+            // Check initial state once only
+            setIsMaximized(await appWindow.isMaximized());
 
-            // Debounce resize events to avoid flooding the IPC bridge on macOS
-            const unlistenResize = await appWindow.onResized(() => {
-                if (debounceTimer !== undefined) clearTimeout(debounceTimer);
-                debounceTimer = setTimeout(updateMaximized, 100);
+            // Listen for exact maximize/unmaximize events — no polling
+            unlisten1 = await appWindow.listen('tauri://maximize', () => {
+                setIsMaximized(true);
             });
-
-            return unlistenResize;
+            unlisten2 = await appWindow.listen('tauri://unmaximize', () => {
+                setIsMaximized(false);
+            });
         };
-
-        let unlisten: (() => void) | undefined;
-        setupListeners().then(fn => {
-            unlisten = fn;
-        });
-
+        setupListeners();
         return () => {
-            if (debounceTimer !== undefined) clearTimeout(debounceTimer);
-            if (unlisten) unlisten();
+            unlisten1?.();
+            unlisten2?.();
         };
     }, []);
 
