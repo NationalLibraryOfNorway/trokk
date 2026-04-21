@@ -1,9 +1,20 @@
+use std::fs::OpenOptions;
+use std::io::Write;
 use tauri::menu::MenuBuilder;
 use tauri::{
 	Manager, Runtime,
 	menu::MenuItem,
 	tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
+
+/// TEMP diagnostic. Appends a line to `%TEMP%/trokk-tray.log` (Windows) or
+/// `$TMPDIR/trokk-tray.log` otherwise. Remove once the tray bug is diagnosed.
+fn tray_log(msg: &str) {
+	let path = std::env::temp_dir().join("trokk-tray.log");
+	if let Ok(mut f) = OpenOptions::new().create(true).append(true).open(&path) {
+		let _ = writeln!(f, "{msg}");
+	}
+}
 
 pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 	let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
@@ -16,7 +27,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 		.item(&quit_i)
 		.build()?;
 
-	let _ = TrayIconBuilder::with_id("tray")
+	let result = TrayIconBuilder::with_id("tray")
 		.icon(app.default_window_icon().unwrap().clone())
 		.menu(&menu)
 		.show_menu_on_left_click(false)
@@ -38,8 +49,8 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 			}
 		})
 		.on_tray_icon_event(|tray, event| {
-			// Right-click is handled natively by the tray-icon crate to pop the
-			// menu — do NOT handle it here or the default popup can be suppressed.
+			tray_log(&format!("event: {event:?}"));
+
 			if let TrayIconEvent::Click {
 				button: MouseButton::Left,
 				button_state: MouseButtonState::Up,
@@ -56,5 +67,11 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 		.tooltip("Trøkk")
 		.build(app);
 
+	tray_log(&format!(
+		"create_tray: pid={} result={}",
+		std::process::id(),
+		if result.is_ok() { "ok" } else { "err" }
+	));
+	let _ = result;
 	Ok(())
 }
