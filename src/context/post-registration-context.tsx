@@ -152,10 +152,6 @@ export function usePostRegistration() {
             checkedItems
         );
 
-        const accessToken = await invoke('get_papi_access_token').catch(error => {
-            handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.', undefined, error);
-            return Promise.reject(error);
-        });
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
         for (const [itemId, pages] of batchMap.entries()) {
@@ -182,6 +178,10 @@ export function usePostRegistration() {
                 category: 'papi',
                 message: 'Creating batch of items in Papi',
                 level: 'info',
+            });
+            const accessToken = await invoke('get_papi_access_token').catch(error => {
+                handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.', undefined, error);
+                return Promise.reject(error);
             });
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
