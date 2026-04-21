@@ -12,9 +12,7 @@ vi.mock('../src/context/trokk-files-context.tsx', () => ({
 }));
 
 vi.mock('../src/context/version-context.tsx', () => ({
-    useVersion: () => ({
-        canFetchStartupSecrets: true,
-    }),
+    useVersion: () => ({}),
     VersionProvider: ({children}: { children: unknown }) => <>{children}</>,
 }));
 
@@ -53,6 +51,7 @@ const mockTrokkFilesState = {
     treeIndex: new Map(),
     current: undefined,
     preview: undefined,
+    isEven: true,
 };
 
 function createMockFileTree(name: string, path: string): FileTree {

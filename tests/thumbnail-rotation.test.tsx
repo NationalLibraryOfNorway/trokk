@@ -13,9 +13,7 @@ vi.mock('../src/context/trokk-files-context.tsx', () => ({
 }));
 
 vi.mock('../src/context/version-context.tsx', () => ({
-    useVersion: () => ({
-        canFetchStartupSecrets: true,
-    }),
+    useVersion: () => ({}),
     VersionProvider: ({children}: { children: unknown }) => <>{children}</>,
 }));
 
@@ -45,6 +43,7 @@ const mockTrokkFilesState = {
     treeIndex: new Map(),
     current: undefined,
     preview: undefined,
+    isEven: true,
 };
 
 function createMockFileTree(name: string, path: string): FileTree {
@@ -64,7 +63,7 @@ function createMockFileTree(name: string, path: string): FileTree {
 }
 
 const baseProps = {
-    onClick: vi.fn(),
+    onDoubleClick: vi.fn(),
     isChecked: false,
     isFocused: false,
     setDelFilePath: vi.fn(),
@@ -133,13 +132,17 @@ describe('Thumbnail Rotation Feature', () => {
         expect(clockwiseBtn).toBeNull();
     });
 
-    it('prevents click propagation when clicking rotation buttons', async () => {
+    it('stops click propagation to parent when clicking rotation buttons', async () => {
         const fileTree = createMockFileTree('test.jpg', '/path/test.jpg');
-        const mockOnClick = vi.fn();
+        const parentOnClick = vi.fn();
         let container: HTMLElement;
 
         await act(async () => {
-            ({container} = render(componentWithContext(fileTree, {...baseProps, onClick: mockOnClick})));
+            ({container} = render(
+                <div onClick={parentOnClick}>
+                    {componentWithContext(fileTree, baseProps)}
+                </div>
+            ));
         });
 
         const clockwiseBtn = container!.querySelector('[aria-label="Roter med klokken"]');
@@ -149,7 +152,8 @@ describe('Thumbnail Rotation Feature', () => {
             fireEvent.click(clockwiseBtn);
         });
 
-        expect(mockOnClick).not.toHaveBeenCalled();
+        // Rotation button's stopPropagation should prevent the parent's click handler from firing.
+        expect(parentOnClick).not.toHaveBeenCalled();
     });
 
     it('disables rotation buttons while rotation is in progress', async () => {

@@ -113,7 +113,7 @@ export function evaluateDesktopVersionGate(
 export async function fetchLatestDesktopVersion(
 	desktopVersionBaseUri: string,
 ): Promise<string> {
-	const desktopVersionUri = `${desktopVersionBaseUri.trim().replace(/\/+$/, '')}/Tr%C3%B8kk`;
+	const desktopVersionUri = `${desktopVersionBaseUri.trim().replace(/\/+$/, '')}`;
 
     const raw = await tauriFetch(desktopVersionUri).then((res) => {
 		if (!res.ok) {
