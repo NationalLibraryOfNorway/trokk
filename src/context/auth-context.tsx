@@ -143,7 +143,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         refreshIntervalId.current = window.setInterval(async () => {
             await refreshAccessToken();
-        }, authResponse.tokenResponse.expiresIn * 1000 - 10000);
+        }, authResponse.tokenResponse.refreshExpiresIn * 1000 - 10000);
     };
 
     const canRefresh = async () => {
