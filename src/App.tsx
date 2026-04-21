@@ -21,6 +21,7 @@ import {Button} from '@/components/ui/button.tsx';
 import {Dialog, DialogContent, DialogTrigger} from '@/components/ui/dialog.tsx';
 import {useToolbarOffset} from '@/hooks/use-toolbar-offset';
 import {StartupMessageCard, StartupScreen, StartupSpinner} from '@/components/startup/startup-screen.tsx';
+import ErrorModal from '@/features/error-log/error-modal.tsx';
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -36,13 +37,16 @@ function App() {
             <SecretProvider>
                 <AuthProvider>
                     <SettingProvider>
-                        <main className="h-screen w-screen flex flex-col overflow-hidden">
-                            <Content
-                                openSettings={openSettings}
-                                setOpenSettings={setOpenSettings}
-                            />
-                        </main>
-
+                        <TransferLogProvider>
+                            <MessageProvider>
+                                <main className="h-screen w-screen flex flex-col overflow-hidden">
+                                    <Content
+                                        openSettings={openSettings}
+                                        setOpenSettings={setOpenSettings}
+                                    />
+                                </main>
+                            </MessageProvider>
+                        </TransferLogProvider>
                     </SettingProvider>
                 </AuthProvider>
             </SecretProvider>
@@ -246,6 +250,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     return (
         <div className="relative flex-1 w-full flex flex-col overflow-hidden min-h-0">
+            <ErrorModal />
             <div data-tauri-drag-region ref={toolbarRef}
                 className="flex flex-row py-2 px-3 w-full bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
@@ -317,11 +322,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     <SelectionProvider>
                         <RotationProvider>
                             <UploadProgressProvider>
-                                <TransferLogProvider>
-                                    <MessageProvider>
-                                        <MainLayout/>
-                                    </MessageProvider>
-                                </TransferLogProvider>
+                                <MainLayout/>
                             </UploadProgressProvider>
                         </RotationProvider>
                     </SelectionProvider>
