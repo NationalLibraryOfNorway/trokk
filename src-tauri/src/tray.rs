@@ -20,31 +20,35 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 		.icon(app.default_window_icon().unwrap().clone())
 		.menu(&menu)
 		.show_menu_on_left_click(false)
-		.on_menu_event(move |app, event| match event.id.as_ref() {
-			"quit" => {
-				app.exit(0);
+		.on_menu_event(|app, event| {
+			let Some(window) = app.get_webview_window("main") else {
+				return;
+			};
+			match event.id.as_ref() {
+				"quit" => app.exit(0),
+				"hide" => {
+					let _ = window.hide();
+				}
+				"open" => {
+					let _ = window.show();
+					let _ = window.unminimize();
+					let _ = window.set_focus();
+				}
+				_ => {}
 			}
-			"hide" => {
-				let window = app.get_webview_window("main").unwrap();
-				window.hide().unwrap()
-			}
-			"open" => {
-				let window = app.get_webview_window("main").unwrap();
-				window.show().unwrap();
-			}
-			// Add more events here
-			_ => {}
 		})
 		.on_tray_icon_event(|tray, event| {
+			// Right-click is handled natively by the tray-icon crate to pop the
+			// menu — do NOT handle it here or the default popup can be suppressed.
 			if let TrayIconEvent::Click {
 				button: MouseButton::Left,
 				button_state: MouseButtonState::Up,
 				..
 			} = event
 			{
-				let app = tray.app_handle();
-				if let Some(window) = app.get_webview_window("main") {
+				if let Some(window) = tray.app_handle().get_webview_window("main") {
 					let _ = window.show();
+					let _ = window.unminimize();
 					let _ = window.set_focus();
 				}
 			}
