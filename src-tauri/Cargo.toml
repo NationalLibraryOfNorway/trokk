@@ -37,9 +37,6 @@ aws-sdk-s3 = { version = "1.119.0", default-features = false, features = ["rustl
 tauri-plugin-dialog = "2.6.0"
 tauri-plugin-process = "2.3.1"
 tauri-plugin-window-state = "2.4.1"
-# Only used for temporary diagnostic of Windows tray click routing.
-# Must match the version Tauri 2.10.3 pulls in transitively.
-tray-icon = "=0.21.3"
 
 [dev-dependencies]
 tempfile = "3.26.0"
@@ -56,3 +53,9 @@ crate-type = ["staticlib", "cdylib", "lib"]
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-single-instance = "2"
+
+# TEMP: test a local fix for the Win11 overflow-flyout click bug
+# (https://github.com/tauri-apps/tray-icon — issue draft in docs/tray-icon-issue-draft.md).
+# Remove once the fix lands upstream and Tauri bumps its tray-icon dep.
+[patch.crates-io]
+tray-icon = { git = "https://github.com/Sindrir/tray-icon.git", rev = "3747ed8e9832cf34aa9b114d6c1f71eaa3952324" }

@@ -310,23 +310,8 @@ pub fn run() {
 	tauri::Builder::default()
 		// Must be the first plugin registered. On a second launch, focus the existing
 		// window instead of spawning a new process (and a new tray icon).
-		.plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
-			use std::fs::OpenOptions;
-			use std::io::Write;
+		.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
 			use tauri::Manager;
-			// TEMP diagnostic mirror of tray.rs tray_log
-			if let Ok(mut f) = OpenOptions::new()
-				.create(true)
-				.append(true)
-				.open(std::env::temp_dir().join("trokk-tray.log"))
-			{
-				let _ = writeln!(
-					f,
-					"single_instance callback: pid={} args={:?}",
-					std::process::id(),
-					args
-				);
-			}
 			if let Some(window) = app.get_webview_window("main") {
 				let _ = window.unminimize();
 				let _ = window.show();
