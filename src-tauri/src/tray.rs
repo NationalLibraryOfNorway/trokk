@@ -1,8 +1,8 @@
 use tauri::menu::MenuBuilder;
 use tauri::{
-	menu::MenuItem, tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-	Manager,
-	Runtime,
+	Manager, Runtime,
+	menu::MenuItem,
+	tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
 };
 
 pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
@@ -45,13 +45,11 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 				button: MouseButton::Left,
 				button_state: MouseButtonState::Up,
 				..
-			} = event
+			} = event && let Some(window) = tray.app_handle().get_webview_window("main")
 			{
-				if let Some(window) = tray.app_handle().get_webview_window("main") {
-					let _ = window.show();
-					let _ = window.unminimize();
-					let _ = window.set_focus();
-				}
+				let _ = window.show();
+				let _ = window.unminimize();
+				let _ = window.set_focus();
 			}
 		})
 		.tooltip("Trøkk")
