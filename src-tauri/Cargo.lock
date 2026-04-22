@@ -5860,7 +5860,7 @@ dependencies = [
 [[package]]
 name = "tray-icon"
 version = "0.21.3"
-source = "git+https://github.com/Sindrir/tray-icon.git?rev=3747ed8e9832cf34aa9b114d6c1f71eaa3952324#3747ed8e9832cf34aa9b114d6c1f71eaa3952324"
+source = "git+https://github.com/Sindrir/tray-icon.git?rev=f350e34f70b21c919611cb7b584f0b9c68f568da#f350e34f70b21c919611cb7b584f0b9c68f568da"
 dependencies = [
  "crossbeam-channel",
  "dirs",

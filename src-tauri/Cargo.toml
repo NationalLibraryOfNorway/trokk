@@ -58,4 +58,4 @@ tauri-plugin-single-instance = "2"
 # (https://github.com/tauri-apps/tray-icon — issue draft in docs/tray-icon-issue-draft.md).
 # Remove once the fix lands upstream and Tauri bumps its tray-icon dep.
 [patch.crates-io]
-tray-icon = { git = "https://github.com/Sindrir/tray-icon.git", rev = "8dc18c82229447a70008530a72f3fe0a0e0f4ff1" }
+tray-icon = { git = "https://github.com/Sindrir/tray-icon.git", rev = "f350e34f70b21c919611cb7b584f0b9c68f568da" }
