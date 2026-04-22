@@ -308,12 +308,16 @@ async fn set_image_size_fractions(
 pub fn run() {
 	tauri::async_runtime::set(tokio::runtime::Handle::current());
 	tauri::Builder::default()
-		/*.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-			let _ = app
-				.get_webview_window("main")
-				.expect("no main window")
-				.set_focus();
-		}))*/
+		// Must be the first plugin registered. On a second launch, focus the existing
+		// window instead of spawning a new process (and a new tray icon).
+		.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+			use tauri::Manager;
+			if let Some(window) = app.get_webview_window("main") {
+				let _ = window.unminimize();
+				let _ = window.show();
+				let _ = window.set_focus();
+			}
+		}))
 		.plugin(tauri_plugin_window_state::Builder::default().build())
 		.plugin(tauri_plugin_store::Builder::new().build())
 		.plugin(tauri_plugin_http::init())
