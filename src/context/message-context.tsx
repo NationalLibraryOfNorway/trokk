@@ -117,6 +117,8 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
 
     const dismissErrorModal = () => {
         setIsErrorModalOpen(false);
+        setErrorMessage(null);
+        setCurrentError(null);
     };
 
     const clearActiveError = () => {

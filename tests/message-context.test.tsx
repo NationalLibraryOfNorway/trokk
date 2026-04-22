@@ -238,8 +238,22 @@ describe('MessageProvider (Vitest)', () => {
         fireEvent.click(screen.getByText('Dismiss Modal'));
 
         expect(screen.getByTestId('modal-open').textContent).toBe('false');
-        expect(screen.getByTestId('current-error').textContent).toContain('"source":"backend"');
+        expect(screen.getByTestId('current-error').textContent).toBe('null');
+        expect(screen.getByTestId('error').textContent).toBe('');
         expect(screen.getByTestId('error-log-entries').textContent).toContain('"source":"backend"');
+    });
+
+    it('reopens the live modal when a newer error replaces one that was already dismissed', () => {
+        renderWithContext();
+
+        fireEvent.click(screen.getByText('Trigger Backend Error'));
+        fireEvent.click(screen.getByText('Dismiss Modal'));
+        expect(screen.getByTestId('modal-open').textContent).toBe('false');
+
+        fireEvent.click(screen.getByText('Trigger Replacement Error'));
+
+        expect(screen.getByTestId('modal-open').textContent).toBe('true');
+        expect(screen.getByTestId('current-error').textContent).toContain('"userMessage":"Ny backend-feil (Feilkode 409)"');
     });
 
     it('keeps only the 100 newest retained error log entries', () => {

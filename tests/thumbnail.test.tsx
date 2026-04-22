@@ -11,6 +11,12 @@ vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: vi.fn(),
 }));
 
+vi.mock('../src/context/message-context.tsx', () => ({
+    useMessage: () => ({
+        handleBackendError: vi.fn(),
+    }),
+}));
+
 vi.mock('../src/context/version-context.tsx', () => ({
     useVersion: () => ({
         canFetchStartupSecrets: true,
