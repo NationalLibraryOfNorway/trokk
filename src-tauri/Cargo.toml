@@ -37,6 +37,9 @@ aws-sdk-s3 = { version = "1.119.0", default-features = false, features = ["rustl
 tauri-plugin-dialog = "2.6.0"
 tauri-plugin-process = "2.3.1"
 tauri-plugin-window-state = "2.4.1"
+# Only used for temporary diagnostic of Windows tray click routing.
+# Must match the version Tauri 2.10.3 pulls in transitively.
+tray-icon = "=0.21.3"
 
 [dev-dependencies]
 tempfile = "3.26.0"

@@ -17,6 +17,26 @@ fn tray_log(msg: &str) {
 }
 
 pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
+	// TEMP diagnostic: install a raw tray-icon handler BEFORE Tauri does (Tauri
+	// sets its own in Builder::build, which on this machine hasn't run yet at
+	// plugin/setup time on Windows? This lets us see whether events reach
+	// tray-icon at all, independent of Tauri's event-loop plumbing.
+	//
+	// NOTE: tray-icon's handler is a OnceCell — only the FIRST `set_event_handler`
+	// call wins. If Tauri already registered theirs (during Builder::build, which
+	// happens before .setup()), our call will be a no-op and this section is
+	// harmless. If it *wasn't* set yet, we take over. Either way the log tells us.
+	{
+		use std::sync::atomic::{AtomicBool, Ordering};
+		static INSTALLED: AtomicBool = AtomicBool::new(false);
+		if !INSTALLED.swap(true, Ordering::SeqCst) {
+			tray_icon::TrayIconEvent::set_event_handler(Some(|e: tray_icon::TrayIconEvent| {
+				tray_log(&format!("RAW tray-icon event: {e:?}"));
+			}));
+			tray_log("RAW tray-icon handler install attempted");
+		}
+	}
+
 	let open_i = MenuItem::with_id(app, "open", "Open", true, None::<&str>)?;
 	let hide_i = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
 	let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -32,6 +52,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 		.menu(&menu)
 		.show_menu_on_left_click(false)
 		.on_menu_event(|app, event| {
+			tray_log(&format!("tauri menu event: {:?}", event.id));
 			let Some(window) = app.get_webview_window("main") else {
 				return;
 			};
@@ -49,8 +70,7 @@ pub fn create_tray<R: Runtime>(app: &tauri::AppHandle<R>) -> tauri::Result<()> {
 			}
 		})
 		.on_tray_icon_event(|tray, event| {
-			tray_log(&format!("event: {event:?}"));
-
+			tray_log(&format!("tauri tray event: {event:?}"));
 			if let TrayIconEvent::Click {
 				button: MouseButton::Left,
 				button_state: MouseButtonState::Up,
