@@ -114,4 +114,40 @@ describe('SettingsForm error log', () => {
             expect(screen.queryByRole('dialog')).toBeNull();
         });
     });
+
+    it('shows retained utility failure entries in the troubleshooting log without extra detail affordances', async () => {
+        mockGetErrorLogEntries.mockResolvedValue([
+            {
+                id: 'utility-new',
+                occurredAt: '2026-04-23T12:00:00.000Z',
+                userMessage: 'Kunne ikke lukke vinduet.',
+                source: 'frontend',
+                logs: [],
+            },
+            {
+                id: 'utility-old',
+                occurredAt: '2026-04-23T10:00:00.000Z',
+                userMessage: 'Kunne ikke kopiere mappestien.',
+                source: 'frontend',
+                logs: [],
+            },
+        ] as StoredError[]);
+
+        renderSettingsForm();
+
+        fireEvent.click(screen.getByRole('button', {name: /Se feillogg/i}));
+
+        const dialog = await screen.findByRole('dialog');
+        const listPanel = within(dialog).getByRole('heading', {name: /Siste feil/i}).closest('div')!;
+        const detailHeading = within(dialog).getByRole('heading', {name: /Valgt feil/i});
+        const detailPanel = detailHeading.parentElement?.parentElement as HTMLElement;
+
+        await waitFor(() => {
+            expect(within(listPanel).getByText(/Kunne ikke lukke vinduet\./i)).toBeDefined();
+            expect(within(listPanel).getByText(/Kunne ikke kopiere mappestien\./i)).toBeDefined();
+        });
+
+        expect(within(detailPanel).getByText(/^Kunne ikke lukke vinduet\.$/i)).toBeDefined();
+        expect(within(detailPanel).getByText(/Ingen avanserte detaljer lagret/i)).toBeDefined();
+    });
 });

@@ -43,6 +43,7 @@ const TestComponent = () => {
         errorLogEntries,
         isErrorModalOpen,
         handleError,
+        handleFrontendError,
         handleBackendError,
         clearError,
         dismissErrorModal,
@@ -58,6 +59,30 @@ const TestComponent = () => {
                 onClick={() => handleError('Ekstra info fra objekt', 400, '[object Object]')}
             >
                 Trigger Objectish Error
+            </button>
+            <button
+                onClick={() =>
+                    handleFrontendError({
+                        message: 'Kunne ikke kopiere mappestien.',
+                        fallbackMessage: 'Kunne ikke kopiere mappestien.',
+                        detail: 'Clipboard denied',
+                        stackTrace: 'Clipboard stack',
+                        logs: ['clipboard log'],
+                    })
+                }
+            >
+                Trigger Frontend Structured Error
+            </button>
+            <button
+                onClick={() =>
+                    handleFrontendError({
+                        message: 'Kunne ikke lukke vinduet.',
+                        fallbackMessage: 'Kunne ikke lukke vinduet.',
+                        detail: 'Window close denied',
+                    })
+                }
+            >
+                Trigger Frontend Replacement Error
             </button>
             <button
                 onClick={() =>
@@ -176,6 +201,19 @@ describe('MessageProvider (Vitest)', () => {
         expect(screen.getByTestId('current-error').textContent).toContain('"detail":"[object Object]"');
     });
 
+    it('stores structured frontend errors without adding legacy TRØKK wording', () => {
+        renderWithContext();
+
+        fireEvent.click(screen.getByText('Trigger Frontend Structured Error'));
+
+        expect(screen.getByTestId('error').textContent).toBe('Kunne ikke kopiere mappestien.');
+        expect(screen.getByTestId('current-error').textContent).toContain('"source":"frontend"');
+        expect(screen.getByTestId('current-error').textContent).toContain('"detail":"Clipboard denied"');
+        expect(screen.getByTestId('current-error').textContent).toContain('"stackTrace":"Clipboard stack"');
+        expect(screen.getByTestId('current-error').textContent).toContain('"logs":["clipboard log"]');
+        expect(screen.getByTestId('error').textContent).not.toContain('Kunne ikke TRØKKE dette videre');
+    });
+
     it('stores structured backend errors and normalizes diagnostics', () => {
         renderWithContext();
 
@@ -254,6 +292,24 @@ describe('MessageProvider (Vitest)', () => {
 
         expect(screen.getByTestId('modal-open').textContent).toBe('true');
         expect(screen.getByTestId('current-error').textContent).toContain('"userMessage":"Ny backend-feil (Feilkode 409)"');
+    });
+
+    it('replaces a dismissed structured frontend error with the latest utility failure while retaining history', () => {
+        renderWithContext();
+
+        fireEvent.click(screen.getByText('Trigger Frontend Structured Error'));
+        fireEvent.click(screen.getByText('Dismiss Modal'));
+
+        expect(screen.getByTestId('modal-open').textContent).toBe('false');
+        expect(screen.getByTestId('error-log-entries').textContent).toContain('Kunne ikke kopiere mappestien.');
+
+        fireEvent.click(screen.getByText('Trigger Frontend Replacement Error'));
+
+        expect(screen.getByTestId('modal-open').textContent).toBe('true');
+        expect(screen.getByTestId('error').textContent).toBe('Kunne ikke lukke vinduet.');
+        expect(screen.getByTestId('current-error').textContent).toContain('Kunne ikke lukke vinduet.');
+        expect(screen.getByTestId('error-log-entries').textContent).toContain('Kunne ikke kopiere mappestien.');
+        expect(screen.getByTestId('error-log-entries').textContent).toContain('Kunne ikke lukke vinduet.');
     });
 
     it('keeps only the 100 newest retained error log entries', () => {

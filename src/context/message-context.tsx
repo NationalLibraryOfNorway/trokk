@@ -13,6 +13,15 @@ export type BackendErrorInput = {
     logs?: string[];
 };
 
+export type FrontendErrorInput = {
+    message?: string;
+    fallbackMessage: string;
+    code?: string | number;
+    detail?: string;
+    stackTrace?: string;
+    logs?: string[];
+};
+
 type MessageContextType = {
     errorMessage: string | null;
     successMessage: string | null;
@@ -20,6 +29,7 @@ type MessageContextType = {
     errorLogEntries: StoredError[];
     isErrorModalOpen: boolean;
     handleError: (extra_text?: string, code?: string | number, error?: string) => void;
+    handleFrontendError: (input: FrontendErrorInput) => void;
     handleBackendError: (input: BackendErrorInput) => void;
     dismissErrorModal: () => void;
     removeMessages: () => void;
@@ -73,6 +83,29 @@ const normalizeLogs = (logs?: string[]): string[] => {
 
 const formatReadableMessage = (message: string, code?: string | number): string => {
     return code ? `${message} (Feilkode ${code})` : message;
+};
+
+const buildStructuredError = (
+    input: FrontendErrorInput | BackendErrorInput,
+    source: 'frontend' | 'backend'
+): Omit<StoredError, 'id' | 'occurredAt'> => {
+    const baseMessage = normalizeText(input.message) ?? normalizeText(input.fallbackMessage) ?? 'Ukjent feil';
+    const readableMessage = formatReadableMessage(baseMessage, input.code);
+
+    console.error(readableMessage, {
+        detail: input.detail,
+        stackTrace: input.stackTrace,
+        logs: input.logs,
+    });
+
+    return {
+        userMessage: readableMessage,
+        code: input.code,
+        detail: normalizeText(input.detail),
+        stackTrace: normalizeText(input.stackTrace),
+        logs: normalizeLogs(input.logs),
+        source,
+    };
 };
 
 export const MessageProvider = ({ children }: { children: ReactNode }) => {
@@ -143,24 +176,12 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
+    const handleFrontendError = (input: FrontendErrorInput) => {
+        setActiveError(buildStructuredError(input, 'frontend'));
+    };
+
     const handleBackendError = (input: BackendErrorInput) => {
-        const baseMessage = normalizeText(input.message) ?? normalizeText(input.fallbackMessage) ?? 'Ukjent feil';
-        const readableMessage = formatReadableMessage(baseMessage, input.code);
-
-        console.error(readableMessage, {
-            detail: input.detail,
-            stackTrace: input.stackTrace,
-            logs: input.logs,
-        });
-
-        setActiveError({
-            userMessage: readableMessage,
-            code: input.code,
-            detail: normalizeText(input.detail),
-            stackTrace: normalizeText(input.stackTrace),
-            logs: normalizeLogs(input.logs),
-            source: 'backend',
-        });
+        setActiveError(buildStructuredError(input, 'backend'));
     };
 
     const handleSuccessMessage = (message: string) => {
@@ -199,6 +220,7 @@ export const MessageProvider = ({ children }: { children: ReactNode }) => {
             errorLogEntries,
             isErrorModalOpen,
             handleError,
+            handleFrontendError,
             handleBackendError,
             dismissErrorModal,
             handleSuccessMessage,

@@ -15,8 +15,11 @@ export default [
     ignores: [
       'src-tauri/**/*',
       'dist/**/*',
+      'build/**/*',
+      'coverage/**/*',
       'node_modules/**/*',
-      'src/components/ui/**/*'
+      'src/components/ui/**/*',
+      '**/*.min.js'
     ]
   },
   {

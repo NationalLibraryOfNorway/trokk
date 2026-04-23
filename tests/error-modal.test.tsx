@@ -24,11 +24,24 @@ vi.mock('../src/tauri-store/setting-store.ts', () => ({
 }));
 
 const Harness = () => {
-    const {handleError, handleBackendError} = useMessage();
+    const {handleError, handleFrontendError, handleBackendError} = useMessage();
 
     return (
         <div>
             <button onClick={() => handleError('Frontend-feil uten detaljer')}>Trigger Frontend Error</button>
+            <button
+                onClick={() =>
+                    handleFrontendError({
+                        message: 'Kunne ikke kopiere mappestien.',
+                        fallbackMessage: 'Kunne ikke kopiere mappestien.',
+                        detail: 'Clipboard denied',
+                        stackTrace: 'Clipboard stack',
+                        logs: ['clipboard log'],
+                    })
+                }
+            >
+                Trigger Structured Frontend Error
+            </button>
             <button
                 onClick={() =>
                     handleBackendError({
@@ -99,6 +112,26 @@ describe('ErrorModal', () => {
         expect(screen.getByText(/Detaljlinje/i)).toBeDefined();
         expect(screen.getByText(/Stack trace/i)).toBeDefined();
         expect(screen.getByText(/logg 1/i)).toBeDefined();
+    });
+
+    it('shows frontend source metadata and reveals structured frontend diagnostics on demand', async () => {
+        renderErrorModal();
+
+        fireEvent.click(screen.getByText('Trigger Structured Frontend Error'));
+
+        await waitFor(() => {
+            expect(screen.getByRole('dialog')).toBeDefined();
+            expect(screen.getByText(/Kunne ikke kopiere mappestien\./i)).toBeDefined();
+            expect(screen.getByText(/Kilde: Frontend/i)).toBeDefined();
+        });
+
+        expect(screen.queryByText(/Clipboard denied/i)).toBeNull();
+
+        fireEvent.click(screen.getByRole('button', {name: /Vis detaljer/i}));
+
+        expect(screen.getByText(/Clipboard denied/i)).toBeDefined();
+        expect(screen.getByText(/Clipboard stack/i)).toBeDefined();
+        expect(screen.getByText(/clipboard log/i)).toBeDefined();
     });
 
     it('does not show a details action when no advanced diagnostics exist', async () => {
