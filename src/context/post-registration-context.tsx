@@ -245,6 +245,7 @@ export function usePostRegistration() {
             });
             return;
         }
+
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
         for (const [itemId, pages] of batchMap.entries()) {

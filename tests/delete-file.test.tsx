@@ -17,7 +17,7 @@ const mockCaptureException = vi.fn();
 const mockAddBreadcrumb = vi.fn();
 
 vi.mock('@tauri-apps/plugin-fs', () => ({
-    remove: vi.fn(),
+    remove: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../src/context/selection-context.tsx', () => ({

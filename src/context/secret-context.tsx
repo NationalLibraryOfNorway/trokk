@@ -2,7 +2,6 @@ import React, {createContext, ReactNode, useCallback, useContext, useEffect, use
 import {invoke} from '@tauri-apps/api/core';
 import * as Sentry from '@sentry/react';
 import {SecretVariables} from '../model/secret-variables.ts';
-import {useVersion} from './version-context.tsx';
 import {getErrorMessage} from '@/lib/utils.ts';
 
 interface SecretContextType {
@@ -17,7 +16,6 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     const [secrets, setSecrets] = useState<SecretVariables | null>(null);
     const [fetchSecretsError, setFetchSecretsError] = useState<string | null>(null);
     const [isFetchingSecrets, setIsFetchingSecrets] = useState<boolean>(false);
-    const {canFetchStartupSecrets} = useVersion();
 
     const getSecrets = useCallback(async () => {
         setIsFetchingSecrets(true);
@@ -61,7 +59,7 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
         // Run on next tick so tests can render without immediate async state updates.
         Promise.resolve()
-            .then(() => (mounted && canFetchStartupSecrets && !secrets && !isFetchingSecrets ? getSecrets() : undefined))
+            .then(() => (mounted && !secrets && !isFetchingSecrets ? getSecrets() : undefined))
             .catch(() => {
                 // getSecrets already sets error state; ignore here.
             });
@@ -69,7 +67,7 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return () => {
             mounted = false;
         };
-    }, [canFetchStartupSecrets, secrets, isFetchingSecrets, getSecrets]);
+    }, [secrets, isFetchingSecrets, getSecrets]);
 
     return (
         <SecretContext.Provider value={{

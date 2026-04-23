@@ -28,6 +28,7 @@ vi.mock('../src/context/auth-context.tsx', () => ({
 
 vi.mock('../src/context/secret-context.tsx', () => ({
     useSecrets: () => ({
+        secrets: {papiPath: 'https://papi.example.test'},
         getSecrets: vi.fn().mockResolvedValue(undefined),
     }),
     SecretProvider: ({children}: {children: React.ReactNode}) => <>{children}</>,

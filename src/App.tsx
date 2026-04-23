@@ -1,18 +1,17 @@
 import React, {useRef, useState} from 'react';
-import {FolderOpen, User, X, Expand, Minimize, Minus, LogIn, LogOut, Settings} from 'lucide-react';
+import {Expand, FolderOpen, LogIn, LogOut, Minimize, Minus, Settings, User, X} from 'lucide-react';
 import './App.css';
 import {AuthProvider, useAuth} from './context/auth-context.tsx';
 import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
 import MainLayout from './components/layouts/main-layout.tsx';
 import SettingsForm from './features/settings/settings.tsx';
 import {UploadProgressProvider} from './context/upload-progress-context.tsx';
-import {SecretProvider} from './context/secret-context.tsx';
+import {SecretProvider, useSecrets} from './context/secret-context.tsx';
 import {SettingProvider, useSettings} from './context/setting-context.tsx';
 import {MessageProvider} from './context/message-context.tsx';
 import {TransferLogProvider} from './context/transfer-log-context.tsx';
 import {SelectionProvider} from './context/selection-context.tsx';
 import {RotationProvider} from './context/rotation-context.tsx';
-import {useSecrets} from './context/secret-context.tsx';
 import {useVersion, VersionProvider} from './context/version-context.tsx';
 import {getCurrentWindow} from '@tauri-apps/api/window';
 import WindowControlButton from './components/ui/window-control-button.tsx';
@@ -35,8 +34,8 @@ function App() {
     const [openSettings, setOpenSettings] = useState<boolean>(false);
 
     return (
-        <VersionProvider>
-            <SecretProvider>
+        <SecretProvider>
+            <VersionProvider>
                 <AuthProvider>
                     <SettingProvider>
                         <TransferLogProvider>
@@ -51,8 +50,8 @@ function App() {
                         </TransferLogProvider>
                     </SettingProvider>
                 </AuthProvider>
-            </SecretProvider>
-        </VersionProvider>
+            </VersionProvider>
+        </SecretProvider>
     );
 }
 
@@ -64,7 +63,7 @@ interface ContentProps {
 const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout} = useAuth();
     const {scannerPath} = useSettings();
-    const {getSecrets} = useSecrets();
+    const {secrets, getSecrets} = useSecrets();
     const {handleFrontendError} = useMessage();
     const {
         startupVersionMessage,
@@ -176,9 +175,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     const handleRetryStartup = async () => {
         setIsRetryingStartup(true);
-        await (startupVersionError || !hasCheckedStartupVersion
-            ? retryStartupVersionCheck()
-            : getSecrets())
+        // Secrets must load before version check can run, so retry secrets first
+        // whenever they are missing or errored.
+        const retry = fetchSecretsError || !secrets
+            ? getSecrets()
+            : (startupVersionError || !hasCheckedStartupVersion
+                ? retryStartupVersionCheck()
+                : getSecrets());
+        await retry
             .catch(() => undefined)
             .finally(() => setIsRetryingStartup(false));
     };
@@ -234,6 +238,15 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                         Lukk app
                     </Button>
                 </div>
+            </StartupScreen>
+        );
+    }
+
+    // Secrets are required before version check can run; show spinner while loading.
+    if (!secrets) {
+        return (
+            <StartupScreen>
+                <StartupSpinner label="Laster konfigurasjon"/>
             </StartupScreen>
         );
     }

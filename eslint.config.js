@@ -19,6 +19,9 @@ export default [
       'coverage/**/*',
       'node_modules/**/*',
       'src/components/ui/**/*',
+      'target/**/*',
+      '.devbox/**/*',
+      'Trøkk.AppDir/**/*',
       '**/*.min.js'
     ]
   },
