@@ -11,8 +11,11 @@ import {useSelection} from '@/context/selection-context.tsx';
 import {remove} from '@tauri-apps/plugin-fs';
 import {FileTree} from '@/model/file-tree.ts';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
+import {useMessage} from '@/context/message-context.tsx';
 import {Trash} from 'lucide-react';
 import {basename, dirname, join} from '@tauri-apps/api/path';
+import * as Sentry from '@sentry/react';
+import {getErrorMessage} from '@/lib/utils.ts';
 
 
 export interface DeleteFile {
@@ -26,6 +29,22 @@ export interface DeleteFile {
 const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePath, disabled, btnClassName}: DeleteFile) => {
     const {dispatch, state} = useTrokkFiles();
     const {checkedItems, handleCheck} = useSelection();
+    const {handleBackendError} = useMessage();
+
+    const isMissingPathError = (error: unknown): boolean => {
+        const message = getErrorMessage(error).toLowerCase();
+        return message.includes('not found') || message.includes('no such file') || message.includes('finnes ikke');
+    };
+
+    const getDeleteErrorDiagnostics = (error: unknown) => {
+        const stackTrace = error instanceof Error ? error.stack : undefined;
+
+        return {
+            detail: getErrorMessage(error),
+            stackTrace,
+            logs: stackTrace ? [stackTrace] : [],
+        };
+    };
 
     const updateFileTrees = (path: string) => {
         const updatedTree = removeFileFromTree(state.fileTrees, path);
@@ -96,6 +115,12 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                  : null;
             
         try {
+            Sentry.addBreadcrumb({
+                category: 'delete-file',
+                message: 'Attempting to delete confirmed file selection',
+                level: 'info',
+            });
+
             // Delete main file + thumbnail (always required)
             await Promise.all([
                 remove(path),
@@ -110,12 +135,15 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
             ].filter((p): p is string => Boolean(p));
 
             await Promise.all(
-                optionalPaths.map(p =>
-                    remove(p).catch(() => {
-                        // Ignore errors for optional artifacts (e.g., missing previews/thumbnails)
-                        return;
-                    }),
-                ),
+                optionalPaths.map(async (optionalPath) => {
+                    try {
+                        await remove(optionalPath);
+                    } catch (error) {
+                        if (!isMissingPathError(error)) {
+                            throw error;
+                        }
+                    }
+                }),
             );
 
             updateFileTrees(path);
@@ -130,8 +158,17 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
             if (checkedItems && checkedItems.includes(path)) {
                 handleCheck();
             }
-        } catch (e) {
-            console.error('Failed to delete file:', e);
+        } catch (error) {
+            const diagnostics = getDeleteErrorDiagnostics(error);
+            Sentry.captureException(error);
+            console.error('Failed to delete file:', error);
+            handleBackendError({
+                message: 'Kunne ikke slette bildet.',
+                fallbackMessage: 'Kunne ikke slette bildet.',
+                detail: diagnostics.detail,
+                stackTrace: diagnostics.stackTrace,
+                logs: diagnostics.logs,
+            });
         }
     };
 
@@ -143,14 +180,19 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                     Handlingen kan ikke angres.
                 </DialogDescription>
                 <div className="flex justify-center space-x-2">
-                    <DialogClose
+                    <button
+                        type="button"
                         aria-label="Slett"
                         className="w-24 hover:bg-red-800"
-                        onClick={() => handleDelete(undefined)}
+                        onClick={() => {
+                            const targetPath = delFilePath ?? childPath;
+                            setDelFilePath(null);
+                            void handleDelete(targetPath);
+                        }}
                         onKeyDown={(e) => e.stopPropagation()}
                     >
                         Slett
-                    </DialogClose>
+                    </button>
                     <DialogClose
                         aria-label="Avbryt"
                         className="w-24 hover:bg-green-800"

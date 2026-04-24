@@ -14,8 +14,10 @@ import { groupFilesByCheckedItems } from '../src/context/post-registration-conte
 import { TransferProgress } from '@/model/transfer-progress';
 
 const mockHandleError = vi.fn();
+const mockHandleBackendError = vi.fn();
 const mockClearError = vi.fn();
 const mockDisplaySuccessMessage = vi.fn();
+const mockTrokkDispatch = vi.fn();
 let mockUploadVersionBlocking = false;
 
 vi.mock('@tauri-apps/api/app', () => ({
@@ -57,12 +59,16 @@ vi.mock('../src/features/registration/upload-to-s3', () => ({
 }));
 
 vi.mock('../src/context/trokk-files-context', () => ({
-    useTrokkFiles: () => ({ state: { current: { path: '/some/path' } } }),
+    useTrokkFiles: () => ({
+        state: { current: { path: '/some/path' } },
+        dispatch: mockTrokkDispatch,
+    }),
 }));
 
 vi.mock('../src/context/message-context', () => ({
     useMessage: () => ({
         handleError: mockHandleError,
+        handleBackendError: mockHandleBackendError,
         clearError: mockClearError,
         displaySuccessMessage: mockDisplaySuccessMessage,
     }),
@@ -139,7 +145,8 @@ describe('usePostRegistration', () => {
 
         global.fetch = vi.fn().mockResolvedValue({
             ok: true,
-            json: () => Promise.resolve({ id: '123' }),
+            status: 200,
+            json: () => Promise.resolve([{ id: '123' }]),
         }) as Mock;
 
         const { result } = renderHook(() => usePostRegistration(), { wrapper });
@@ -186,10 +193,26 @@ describe('usePostRegistration', () => {
 
     it('handles different API error statuses correctly', async () => {
         const errorCases = [
-            { status: 401, message: 'Not logged in or token expired', statusText: 'Unauthorized' },
-            { status: 403, message: 'No access to register this object', statusText: 'Forbidden' },
-            { status: 409, message: 'Object already exists', statusText: 'Conflict' },
-            { status: 500, message: 'Server error while saving object', statusText: 'Internal Server Error' },
+            {
+                status: 401,
+                message: 'Kunne ikke lagre objektet fordi innloggingen ikke lenger er gyldig.',
+                statusText: 'Unauthorized',
+            },
+            {
+                status: 403,
+                message: 'Kunne ikke lagre objektet fordi du ikke har tilgang.',
+                statusText: 'Forbidden',
+            },
+            {
+                status: 409,
+                message: 'Kunne ikke lagre objektet fordi objektet allerede finnes.',
+                statusText: 'Conflict',
+            },
+            {
+                status: 500,
+                message: 'Kunne ikke lagre objektet på grunn av en serverfeil.',
+                statusText: 'Internal Server Error',
+            },
         ];
 
         for (const { status, message, statusText } of errorCases) {
@@ -199,7 +222,7 @@ describe('usePostRegistration', () => {
                 ok: false,
                 status,
                 statusText,
-                json: () => Promise.resolve({ message: statusText }),
+                json: () => Promise.resolve({ message: statusText, status }),
             }) as Mock;
 
             const { result } = renderHook(() => usePostRegistration(), { wrapper });
@@ -208,10 +231,85 @@ describe('usePostRegistration', () => {
                 await result.current.postRegistration('TestMachine', registration);
             });
 
-            expect(mockHandleError).toHaveBeenCalledWith(expect.stringContaining(message));
+            expect(mockHandleBackendError).toHaveBeenCalledWith(expect.objectContaining({
+                message,
+                fallbackMessage: 'Kunne ikke lagre objektet.',
+                code: status,
+                detail: JSON.stringify({ message: statusText, status }),
+            }));
 
             vi.clearAllMocks();
         }
+    });
+
+    it('handles access token fetch failure as a backend-aware save error', async () => {
+        mockCommonSetup();
+        (invoke as Mock).mockImplementation((cmd: string) => {
+            if (cmd === 'get_papi_access_token') {
+                return Promise.reject(new Error('token expired'));
+            }
+            return Promise.resolve();
+        });
+
+        const { result } = renderHook(() => usePostRegistration(), { wrapper });
+
+        await act(async () => {
+            await result.current.postRegistration('TestMachine', registration);
+        });
+
+        expect(uploadToS3).not.toHaveBeenCalled();
+        expect(mockHandleBackendError).toHaveBeenCalledWith(expect.objectContaining({
+            message: 'Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.',
+            fallbackMessage: 'Kunne ikke lagre objektet i databasen.',
+            detail: 'token expired',
+        }));
+    });
+
+    it('handles network save failure with backend diagnostics', async () => {
+        mockCommonSetup();
+        global.fetch = vi.fn().mockRejectedValue(new Error('nettverket er nede')) as Mock;
+
+        const { result } = renderHook(() => usePostRegistration(), { wrapper });
+
+        await act(async () => {
+            await result.current.postRegistration('TestMachine', registration);
+        });
+
+        expect(mockHandleBackendError).toHaveBeenCalledWith(expect.objectContaining({
+            message: 'Nettverksfeil ved lagring av objektet.',
+            fallbackMessage: 'Kunne ikke lagre objektet.',
+            detail: 'nettverket er nede',
+        }));
+    });
+
+    it('clears a previous save error when a retry succeeds', async () => {
+        mockCommonSetup();
+        global.fetch = vi.fn()
+            .mockRejectedValueOnce(new Error('midlertidig nettverksfeil'))
+            .mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve([{ id: '123' }]),
+            }) as Mock;
+
+        const { result } = renderHook(() => usePostRegistration(), { wrapper });
+
+        await act(async () => {
+            await result.current.postRegistration('TestMachine', registration);
+        });
+
+        expect(mockHandleBackendError).toHaveBeenCalledTimes(1);
+
+        mockHandleBackendError.mockClear();
+        mockClearError.mockClear();
+        mockDisplaySuccessMessage.mockClear();
+
+        await act(async () => {
+            await result.current.postRegistration('TestMachine', registration);
+        });
+
+        expect(mockHandleBackendError).not.toHaveBeenCalled();
+        expect(mockClearError).toHaveBeenCalledTimes(1);
+        expect(mockDisplaySuccessMessage).toHaveBeenCalledTimes(1);
     });
 
     it('groupFilesByCheckedItems returns a batchMap in correct format', async () => {

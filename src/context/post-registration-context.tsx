@@ -18,6 +18,7 @@ import {TextItemResponse} from '../model/text-input-response.ts';
 import {remove} from '@tauri-apps/plugin-fs';
 import {AllTransferProgress} from '@/model/transfer-progress.ts';
 import * as Sentry from '@sentry/react';
+import {getErrorMessage} from '@/lib/utils.ts';
 
 export function deleteDirFromProgressState(
     progress: AllTransferProgress,
@@ -80,16 +81,91 @@ export function groupFilesByCheckedItems(
     return batchMap;
 }
 
+type BackendDiagnostics = {
+    detail?: string;
+    stackTrace?: string;
+    logs?: string[];
+};
+
+const API_ERROR_MESSAGES: Record<number, string> = {
+    401: 'Kunne ikke lagre objektet fordi innloggingen ikke lenger er gyldig.',
+    403: 'Kunne ikke lagre objektet fordi du ikke har tilgang.',
+    409: 'Kunne ikke lagre objektet fordi objektet allerede finnes.',
+    500: 'Kunne ikke lagre objektet på grunn av en serverfeil.',
+};
+
+const stringifyDiagnostic = (value: unknown): string | undefined => {
+    if (value == null) {
+        return undefined;
+    }
+
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    try {
+        return JSON.stringify(value);
+    } catch {
+        return getErrorMessage(value);
+    }
+};
+
+const getErrorDiagnostics = (error: unknown): BackendDiagnostics => {
+    const logs = error instanceof Error && error.stack ? [error.stack] : [];
+
+    return {
+        detail: getErrorMessage(error),
+        stackTrace: error instanceof Error ? error.stack : undefined,
+        logs,
+    };
+};
+
+const getApiErrorDiagnostics = async (response: Response): Promise<BackendDiagnostics> => {
+    const logs: string[] = [];
+
+    if (response.statusText) {
+        logs.push(`statusText=${response.statusText}`);
+    }
+
+    try {
+        const payload = await response.json();
+        const payloadText = stringifyDiagnostic(payload);
+        if (payloadText) {
+            logs.push(payloadText);
+            return {
+                detail: payloadText,
+                logs,
+            };
+        }
+    } catch {
+        // Ignore parse failures and fall back to status text.
+    }
+
+    return {
+        detail: response.statusText || `HTTP ${response.status}`,
+        logs,
+    };
+};
+
 async function handleApiResponse(
     response: Response,
     clearError: () => void,
     displaySuccessMessage: (item: TextItemResponse) => void,
-    handleError: (message: string) => void,
+    handleBackendError: (input: {
+        message?: string;
+        fallbackMessage: string;
+        code?: string | number;
+        detail?: string;
+        stackTrace?: string;
+        logs?: string[];
+    }) => void,
     pushedDir: string,
     deleteDirFromProgress: () => void,
     removePath: (path: string) => void
 ) {
-    if (response.status >= 200 && response.status < 300) {
+    const isSuccessfulResponse = response.ok || (response.status >= 200 && response.status < 300);
+
+    if (isSuccessfulResponse) {
         clearError();
         console.debug('Deleting directory:', pushedDir);
         await remove(pushedDir, {recursive: true});
@@ -106,13 +182,15 @@ async function handleApiResponse(
         const items: TextItemResponse[] = await response.json();
         items.forEach(displaySuccessMessage);
     } else {
-        const messages: Record<number, string> = {
-            401: 'Not logged in or token expired',
-            403: 'No access to register this object',
-            409: 'Object already exists',
-            500: 'Server error while saving object'
-        };
-        handleError(messages[response.status] || 'Unknown error: ' + response.status);
+        const diagnostics = await getApiErrorDiagnostics(response);
+        handleBackendError({
+            message: API_ERROR_MESSAGES[response.status] ?? 'Kunne ikke lagre objektet.',
+            fallbackMessage: 'Kunne ikke lagre objektet.',
+            code: response.status,
+            detail: diagnostics.detail,
+            stackTrace: diagnostics.stackTrace,
+            logs: diagnostics.logs,
+        });
     }
 }
 
@@ -121,7 +199,7 @@ export function usePostRegistration() {
     const {secrets} = useSecrets();
     const {uploadVersionBlocking} = useVersion();
     const auth = useAuth();
-    const {handleError, clearError, displaySuccessMessage} = useMessage();
+    const {handleError, handleBackendError, clearError, displaySuccessMessage} = useMessage();
     const {setAllUploadProgress} = useUploadProgress();
     const {checkedItems} = useSelection();
 
@@ -152,6 +230,22 @@ export function usePostRegistration() {
             checkedItems
         );
 
+        let accessToken: string;
+
+        try {
+            accessToken = await invoke('get_papi_access_token');
+        } catch (error) {
+            const diagnostics = getErrorDiagnostics(error);
+            handleBackendError({
+                message: 'Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.',
+                fallbackMessage: 'Kunne ikke lagre objektet i databasen.',
+                detail: diagnostics.detail,
+                stackTrace: diagnostics.stackTrace,
+                logs: diagnostics.logs,
+            });
+            return;
+        }
+
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
         for (const [itemId, pages] of batchMap.entries()) {
@@ -179,10 +273,6 @@ export function usePostRegistration() {
                 message: 'Creating batch of items in Papi',
                 level: 'info',
             });
-            const accessToken = await invoke('get_papi_access_token').catch(error => {
-                handleError('Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.', undefined, error);
-                return Promise.reject(error);
-            });
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',
                 headers: {
@@ -206,14 +296,21 @@ export function usePostRegistration() {
                 response,
                 clearError,
                 displaySuccessMessage,
-                handleError,
+                handleBackendError,
                 pushedDir,
                 deleteDirFromProgress,
                 removePath
             );
 
         } catch (error) {
-            handleError('Nettverksfeil ved lagring av objektet');
+            const diagnostics = getErrorDiagnostics(error);
+            handleBackendError({
+                message: 'Nettverksfeil ved lagring av objektet.',
+                fallbackMessage: 'Kunne ikke lagre objektet.',
+                detail: diagnostics.detail,
+                stackTrace: diagnostics.stackTrace,
+                logs: diagnostics.logs,
+            });
             console.error(error);
         }
     }

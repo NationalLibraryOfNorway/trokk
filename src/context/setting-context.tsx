@@ -2,6 +2,11 @@ import React, { createContext, ReactNode, useContext, useEffect, useRef, useStat
 import { settings } from '../tauri-store/setting-store.ts';
 import { getVersion } from '@tauri-apps/api/app';
 import {invoke} from '@tauri-apps/api/core';
+import {
+    defaultWorkspacePaneSizes,
+    normalizeWorkspacePaneSizes,
+    type WorkspacePaneSizes,
+} from '@/util/workspace-pane-layout.ts';
 
 interface SettingContextType {
     scannerPath: string;
@@ -9,10 +14,12 @@ interface SettingContextType {
     textSize: number;
     thumbnailSizeFraction: number;
     previewSizeFraction: number;
+    workspacePaneSizes: WorkspacePaneSizes;
     setScannerPathSetting: (path: string) => void;
     setTextSize: (size: number) => void;
     setThumbnailSizeFraction: (fraction: number) => void;
     setPreviewSizeFraction: (fraction: number) => void;
+    setWorkspacePaneSizes: (sizes: WorkspacePaneSizes) => void;
 }
 
 const SettingContext = createContext<SettingContextType | null>(null);
@@ -22,6 +29,7 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [textSize, setTextSizeState] = useState<number>(100);
     const [thumbnailSizeFraction, setThumbnailSizeFractionState] = useState<number>(8);
     const [previewSizeFraction, setPreviewSizeFractionState] = useState<number>(4);
+    const [workspacePaneSizes, setWorkspacePaneSizesState] = useState<WorkspacePaneSizes>(defaultWorkspacePaneSizes);
     const version = useRef<string>('');
     const initialized = useRef<boolean>(false);
 
@@ -33,8 +41,10 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
             setTextSizeState(storedTextSize);
             const storedThumbnailFraction = await settings.getThumbnailSizeFraction();
             const storedPreviewFraction = await settings.getPreviewSizeFraction();
+            const storedWorkspacePaneSizes = await settings.getWorkspacePaneSizes();
             setThumbnailSizeFractionState(storedThumbnailFraction);
             setPreviewSizeFractionState(storedPreviewFraction);
+            setWorkspacePaneSizesState(storedWorkspacePaneSizes);
             version.current = await getVersion();
             initialized.current = true;
 
@@ -91,6 +101,13 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
         });
     }
 
+    function setWorkspacePaneSizes(sizes: WorkspacePaneSizes) {
+        const normalizedSizes = normalizeWorkspacePaneSizes(sizes);
+        void settings.setWorkspacePaneSizes(normalizedSizes).then(() => {
+            setWorkspacePaneSizesState(normalizedSizes);
+        });
+    }
+
     return (
         <SettingContext.Provider value={{
             scannerPath,
@@ -98,10 +115,12 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
             textSize,
             thumbnailSizeFraction,
             previewSizeFraction,
+            workspacePaneSizes,
             setScannerPathSetting,
             setTextSize,
             setThumbnailSizeFraction,
-            setPreviewSizeFraction
+            setPreviewSizeFraction,
+            setWorkspacePaneSizes
         }}>
             {children}
         </SettingContext.Provider>

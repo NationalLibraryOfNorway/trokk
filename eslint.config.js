@@ -15,11 +15,14 @@ export default [
     ignores: [
       'src-tauri/**/*',
       'dist/**/*',
+      'build/**/*',
+      'coverage/**/*',
       'node_modules/**/*',
       'src/components/ui/**/*',
       'target/**/*',
       '.devbox/**/*',
-      'Trøkk.AppDir/**/*'
+      'Trøkk.AppDir/**/*',
+      '**/*.min.js'
     ]
   },
   {

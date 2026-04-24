@@ -13,6 +13,12 @@ vi.mock('../src/context/trokk-files-context', () => {
     }
 });
 
+vi.mock('../src/context/message-context.tsx', () => ({
+    useMessage: () => ({
+        handleBackendError: vi.fn(),
+    }),
+}));
+
 vi.mock('@tauri-apps/api/core', () => ({
         convertFileSrc: vi.fn((src: string) => `mocked://${src}`),
         invoke: vi.fn().mockResolvedValue(undefined),
@@ -183,6 +189,12 @@ describe('FilesContainer', () => {
         renderWithContext();
 
         expect(screen.queryByText(/Ingen filer i mappen/i)).not.toBeNull();
+    });
+
+    it('does not create a pane-owned overflow-auto scroller inside the file grid content area', () => {
+        renderWithContext();
+
+        expect(document.querySelector('.overflow-auto')).toBeNull();
     });
 })
 ;
