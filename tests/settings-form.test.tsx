@@ -18,8 +18,10 @@ vi.mock('@/context/setting-context.tsx', () => ({
         setTextSize: vi.fn(),
         thumbnailSizeFraction: 8,
         previewSizeFraction: 4,
+        workspacePaneSizes: [22, 48, 30],
         setThumbnailSizeFraction: vi.fn(),
         setPreviewSizeFraction: vi.fn(),
+        setWorkspacePaneSizes: vi.fn(),
     }),
 }));
 

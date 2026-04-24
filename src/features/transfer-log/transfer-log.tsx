@@ -32,7 +32,7 @@ const TransferLog: React.FC = () => {
         : null;
 
     return (
-        <div className="p-4 w-full max-w-full">
+        <div className="h-full w-full max-w-full p-4">
             <h2 className="text-xl font-bold mb-4 text-stone-100">Overføringslogg</h2>
             <div className="w-full overflow-x-auto">
                 <table className="w-full bg-stone-800 border border-stone-700">
