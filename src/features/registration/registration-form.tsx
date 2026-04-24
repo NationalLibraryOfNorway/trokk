@@ -110,6 +110,8 @@ const RegistrationForm: React.FC = () => {
                             handleError('Kunne ikke starte innlogging.', undefined, String(loginError));
                         });
                     }
+                } else if (errorMessage === 'Version blocked') {
+                    return;
                 } else {
                     handleError('Kunne ikke starte opplasting.', undefined, errorMessage);
                 }
@@ -280,15 +282,6 @@ const RegistrationForm: React.FC = () => {
             </div>
 
             {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
-            {errorMessage && (
-                <div className="mt-4">
-                    {errorMessage.split('\n').map((line, idx) => (
-                        <span key={idx} className="text-red-600 block">
-                            {line}
-                        </span>
-                    ))}
-                </div>
-            )}
         </form>
     );
 };
