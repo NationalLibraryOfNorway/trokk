@@ -14,6 +14,7 @@ const mockRemove = vi.mocked(remove);
 const mockGetErrorLogEntries = vi.fn<() => Promise<StoredError[]>>();
 const mockSetErrorLogEntries = vi.fn<(entries: StoredError[]) => Promise<void>>();
 const mockCaptureException = vi.fn();
+const mockCaptureMessage = vi.fn();
 const mockAddBreadcrumb = vi.fn();
 
 vi.mock('@tauri-apps/plugin-fs', () => ({
@@ -44,6 +45,7 @@ vi.mock('../src/tauri-store/setting-store.ts', () => ({
 
 vi.mock('@sentry/react', () => ({
     captureException: (error: unknown) => mockCaptureException(error),
+    captureMessage: (message: string) => mockCaptureMessage(message),
     addBreadcrumb: (breadcrumb: unknown) => mockAddBreadcrumb(breadcrumb),
 }));
 
@@ -165,6 +167,7 @@ describe('DeleteFile', () => {
 
         expect(screen.queryByText(/Noe gikk galt/i)).toBeNull();
         expect(screen.getByTestId('error-log-count').textContent).toBe('0');
+        expect(mockCaptureMessage).toHaveBeenCalledWith('Successfully deleted confirmed file selection');
     });
 
     it('keeps merge cleanup behavior on successful delete', async () => {
@@ -197,6 +200,7 @@ describe('DeleteFile', () => {
         expect(screen.getByTestId('modal-open').textContent).toBe('true');
         expect(screen.getByTestId('delete-trigger')).toBeDefined();
         expect(mockCaptureException).toHaveBeenCalledTimes(1);
+        expect(mockCaptureMessage).not.toHaveBeenCalled();
     });
 
     it('reveals delete diagnostics only on demand for a confirmed delete failure', async () => {

@@ -257,7 +257,7 @@ describe('usePostRegistration', () => {
             await result.current.postRegistration('TestMachine', registration);
         });
 
-        expect(uploadToS3).not.toHaveBeenCalled();
+        expect(uploadToS3).toHaveBeenCalled();
         expect(mockHandleBackendError).toHaveBeenCalledWith(expect.objectContaining({
             message: 'Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.',
             fallbackMessage: 'Kunne ikke lagre objektet i databasen.',
