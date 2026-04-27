@@ -12,7 +12,7 @@ import {FileTree} from '../model/file-tree';
 import {invoke} from '@tauri-apps/api/core';
 import {ConversionResult} from '../model/thumbnail';
 import {documentDir, sep} from '@tauri-apps/api/path';
-import {isImage} from '../util/file-utils.ts';
+import {getFolderImageSummary, isImage} from '../util/file-utils.ts';
 
 export interface TrokkFilesState {
     basePath: string;
@@ -88,18 +88,7 @@ const setCurrentAndExpandParents = (state: TrokkFilesState, fileTree: FileTree):
 };
 
 const calculateIsEven = (fileTree: FileTree | undefined): boolean => {
-    if (!fileTree?.children) {
-        return true; // Default to true if no children
-    }
-
-    // Count only files, excluding directories and hidden folders
-    const fileCount = fileTree.children.filter(child =>
-        !child.isDirectory &&
-        !child.name.startsWith('.thumbnails') &&
-        !child.name.startsWith('.previews')
-    ).length;
-
-    return fileCount % 2 === 0;
+    return getFolderImageSummary(fileTree).isEven;
 };
 
 const createThumbnailsFromDirectory = async (directoryPath: string) => {

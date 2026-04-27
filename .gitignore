@@ -24,11 +24,14 @@ dist-ssr
 .iml
 
 .env
+.env*
 src-tauri/gen
 /target
 /src-tauri/target/
 
 /out
+/build
+/coverage
 
 # AI-related files and directories
 .github/agents

@@ -4,6 +4,7 @@ import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-cont
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
 import {RotationProvider} from '../src/context/rotation-context';
 import {beforeAll, beforeEach, describe, expect, it, Mock, vi} from 'vitest';
+import {FileTree} from '../src/model/file-tree';
 
 vi.mock('../src/context/trokk-files-context', () => {
     return {
@@ -182,13 +183,40 @@ describe('FilesContainer', () => {
 
     it('renders empty folder message when selected folder has no children', () => {
         (useTrokkFiles as Mock).mockReturnValue({
-            state: {current: {name: 'Empty', path: '/empty', children: []}},
+            state: {current: {name: 'Empty', path: '/empty', children: []}, fileTrees: [], isEven: true},
             dispatch: vi.fn(),
         });
 
         renderWithContext();
 
         expect(screen.queryByText(/Ingen filer i mappen/i)).not.toBeNull();
+    });
+
+    it('renders breadcrumbs for the active folder and does not show the odd warning banner', () => {
+        const selectedFolder = new FileTree('Mappe', true, false, false, '/root/Serie/Mappe', false, [
+            new FileTree('example.jpg', false, true, false, '/root/Serie/Mappe/example.jpg'),
+        ]);
+        const parentFolder = new FileTree('Serie', true, false, false, '/root/Serie', true, [selectedFolder]);
+        const rootFolder = new FileTree('root', true, false, false, '/root', true, [parentFolder]);
+
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: selectedFolder,
+                fileTrees: [rootFolder],
+                preview: undefined,
+                treeIndex: new Map<string, {name: string; path: string; isDirectory: boolean}>(),
+                isEven: false,
+            },
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        expect(screen.getByRole('navigation', {name: /arbeidsmappe/i})).toBeDefined();
+        expect(screen.getByText('root')).toBeDefined();
+        expect(screen.getByText('Serie')).toBeDefined();
+        expect(screen.getByText('Mappe')).toBeDefined();
+        expect(screen.queryByText(/OBS! Det er et oddetall av filer i denne mappen/i)).toBeNull();
     });
 
     it('does not create a pane-owned overflow-auto scroller inside the file grid content area', () => {

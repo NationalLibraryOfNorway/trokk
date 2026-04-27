@@ -1,4 +1,4 @@
-import {FileTree} from '../model/file-tree.ts';
+import {FileTree, findFileTreeAncestry} from '../model/file-tree.ts';
 import {TrokkFilesState} from '../context/trokk-files-context.tsx';
 import {sep} from '@tauri-apps/api/path';
 import {convertFileSrc} from '@tauri-apps/api/core';
@@ -12,6 +12,84 @@ export const formatFileNames = (fileName?: string): string => {
     if (fileName.endsWith('.webp')) return fileName.replace('.webp', '.tif')
     return fileName
 }
+
+const HIDDEN_SUPPORT_FOLDERS = ['.thumbnails', '.previews'];
+
+const isHiddenSupportEntry = (fileTree: FileTree): boolean =>
+    HIDDEN_SUPPORT_FOLDERS.some((prefix) => fileTree.name.startsWith(prefix));
+
+export const getWorkingDirectory = (fileTree: FileTree | undefined): FileTree | undefined => {
+    if (!fileTree) {
+        return undefined;
+    }
+
+    const mergeChild = fileTree.children?.find(
+        (child) => child.isDirectory && child.name === 'merge'
+    );
+
+    return mergeChild ?? fileTree;
+};
+
+export const getWorkingImageChildren = (fileTree: FileTree | undefined): FileTree[] => {
+    const targetDirectory = getWorkingDirectory(fileTree);
+
+    return targetDirectory?.children?.filter((child) =>
+        !child.isDirectory &&
+        !isHiddenSupportEntry(child) &&
+        isImage(child.path)
+    ) ?? [];
+};
+
+export type FolderImageStatus = 'none' | 'odd' | 'ready';
+
+export interface FolderImageSummary {
+    targetFolder: FileTree | undefined;
+    imageCount: number;
+    isEven: boolean;
+    showsPill: boolean;
+    status: FolderImageStatus;
+}
+
+export const getFolderImageSummary = (fileTree: FileTree | undefined): FolderImageSummary => {
+    const targetFolder = getWorkingDirectory(fileTree);
+    const imageCount = getWorkingImageChildren(fileTree).length;
+
+    if (imageCount === 0) {
+        return {
+            targetFolder,
+            imageCount,
+            isEven: true,
+            showsPill: false,
+            status: 'none',
+        };
+    }
+
+    const isEven = imageCount % 2 === 0;
+
+    return {
+        targetFolder,
+        imageCount,
+        isEven,
+        showsPill: true,
+        status: isEven ? 'ready' : 'odd',
+    };
+};
+
+export interface BreadcrumbSegment {
+    path: string;
+    label: string;
+    isCurrent: boolean;
+}
+
+export const getBreadcrumbSegments = (fileTrees: FileTree[], currentPath?: string): BreadcrumbSegment[] => {
+    const ancestry = findFileTreeAncestry(fileTrees, currentPath);
+
+    return ancestry.map((node, index) => ({
+        path: node.path,
+        label: formatFileNames(node.name),
+        isCurrent: index === ancestry.length - 1,
+    }));
+};
 
 /*  Thumbnail directories are generated where '.tif' files are located.
  *  Used to find corresponding '.webp' thumbnail for a tif, for example:
