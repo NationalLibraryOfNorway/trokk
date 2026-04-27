@@ -13,6 +13,12 @@ vi.mock('../src/context/trokk-files-context', () => {
     }
 });
 
+vi.mock('../src/context/message-context.tsx', () => ({
+    useMessage: () => ({
+        handleBackendError: vi.fn(),
+    }),
+}));
+
 vi.mock('@tauri-apps/api/core', () => ({
         convertFileSrc: vi.fn((src: string) => `mocked://${src}`),
         invoke: vi.fn().mockResolvedValue(undefined),

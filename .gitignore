@@ -30,9 +30,11 @@ src-tauri/gen
 
 /out
 
-# Github spec kit (github copilot and sh)
+# AI-related files and directories
 .github/agents
 .github/prompts
 .github/copilot-instructions.md
 .specify
 specs/
+.agents/
+.codex

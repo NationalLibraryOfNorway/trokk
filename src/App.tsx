@@ -20,6 +20,9 @@ import {Button} from '@/components/ui/button.tsx';
 import {Dialog, DialogContent, DialogTrigger} from '@/components/ui/dialog.tsx';
 import {useToolbarOffset} from '@/hooks/use-toolbar-offset';
 import {StartupMessageCard, StartupScreen, StartupSpinner} from '@/components/startup/startup-screen.tsx';
+import ErrorModal from '@/features/error-log/error-modal.tsx';
+import {useMessage} from '@/context/message-context.tsx';
+import {getErrorDiagnostics} from '@/lib/utils.ts';
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -35,13 +38,16 @@ function App() {
             <VersionProvider>
                 <AuthProvider>
                     <SettingProvider>
-                        <main className="h-screen w-screen flex flex-col overflow-hidden">
-                            <Content
-                                openSettings={openSettings}
-                                setOpenSettings={setOpenSettings}
-                            />
-                        </main>
-
+                        <TransferLogProvider>
+                            <MessageProvider>
+                                <main className="h-screen w-screen flex flex-col overflow-hidden">
+                                    <Content
+                                        openSettings={openSettings}
+                                        setOpenSettings={setOpenSettings}
+                                    />
+                                </main>
+                            </MessageProvider>
+                        </TransferLogProvider>
                     </SettingProvider>
                 </AuthProvider>
             </VersionProvider>
@@ -58,6 +64,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const {authResponse, loggedOut, isLoggingIn, isRefreshingToken, fetchSecretsError, login, logout} = useAuth();
     const {scannerPath} = useSettings();
     const {secrets, getSecrets} = useSecrets();
+    const {handleFrontendError} = useMessage();
     const {
         startupVersionMessage,
         startupVersionError,
@@ -70,19 +77,40 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const [showCopiedTooltip, setShowCopiedTooltip] = useState(false);
     const [isMaximized, setIsMaximized] = useState(false);
     const toolbarRef = useRef<HTMLDivElement>(null);
+    const copiedTooltipTimeoutRef = useRef<number | null>(null);
     const startupWarningMessageClass = 'border-yellow-600 bg-yellow-950/40 text-yellow-100';
     useToolbarOffset(toolbarRef);
 
     // Enable keyboard shortcuts for text size control
     useTextSizeShortcuts();
 
+    const clearCopiedTooltip = () => {
+        if (copiedTooltipTimeoutRef.current !== null) {
+            window.clearTimeout(copiedTooltipTimeoutRef.current);
+            copiedTooltipTimeoutRef.current = null;
+        }
+        setShowCopiedTooltip(false);
+    };
+
     const copyPathToClipboard = async () => {
         try {
             await navigator.clipboard.writeText(scannerPath);
+            clearCopiedTooltip();
             setShowCopiedTooltip(true);
-            setTimeout(() => setShowCopiedTooltip(false), 2000);
+            copiedTooltipTimeoutRef.current = window.setTimeout(() => {
+                setShowCopiedTooltip(false);
+                copiedTooltipTimeoutRef.current = null;
+            }, 2000);
         } catch (err) {
-            console.error('Failed to copy path to clipboard:', err);
+            clearCopiedTooltip();
+            const diagnostics = getErrorDiagnostics(err);
+            handleFrontendError({
+                message: 'Kunne ikke kopiere mappestien.',
+                fallbackMessage: 'Kunne ikke kopiere mappestien.',
+                detail: diagnostics.detail,
+                stackTrace: diagnostics.stackTrace,
+                logs: diagnostics.logs,
+            });
         }
     };
 
@@ -91,7 +119,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             const appWindow = getCurrentWindow();
             await appWindow.minimize();
         } catch (error) {
-            console.error('Failed to minimize window:', error);
+            const diagnostics = getErrorDiagnostics(error);
+            handleFrontendError({
+                message: 'Kunne ikke minimere vinduet.',
+                fallbackMessage: 'Kunne ikke minimere vinduet.',
+                detail: diagnostics.detail,
+                stackTrace: diagnostics.stackTrace,
+                logs: diagnostics.logs,
+            });
         }
     };
 
@@ -101,7 +136,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             await appWindow.toggleMaximize();
             setIsMaximized(!isMaximized);
         } catch (error) {
-            console.error('Failed to toggle maximize window:', error);
+            const diagnostics = getErrorDiagnostics(error);
+            handleFrontendError({
+                message: 'Kunne ikke endre vindusstørrelsen.',
+                fallbackMessage: 'Kunne ikke endre vindusstørrelsen.',
+                detail: diagnostics.detail,
+                stackTrace: diagnostics.stackTrace,
+                logs: diagnostics.logs,
+            });
         }
     };
 
@@ -110,7 +152,14 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             const appWindow = getCurrentWindow();
             await appWindow.close();
         } catch (error) {
-            console.error('Failed to close window:', error);
+            const diagnostics = getErrorDiagnostics(error);
+            handleFrontendError({
+                message: 'Kunne ikke lukke vinduet.',
+                fallbackMessage: 'Kunne ikke lukke vinduet.',
+                detail: diagnostics.detail,
+                stackTrace: diagnostics.stackTrace,
+                logs: diagnostics.logs,
+            });
         }
     };
 
@@ -153,6 +202,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
         return () => {
             if (unlisten) unlisten();
+            clearCopiedTooltip();
         };
     }, []);
 
@@ -259,6 +309,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
 
     return (
         <div className="relative flex-1 w-full flex flex-col overflow-hidden min-h-0">
+            <ErrorModal />
             <div data-tauri-drag-region ref={toolbarRef}
                 className="flex flex-row py-2 px-3 w-full bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
@@ -330,11 +381,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                     <SelectionProvider>
                         <RotationProvider>
                             <UploadProgressProvider>
-                                <TransferLogProvider>
-                                    <MessageProvider>
-                                        <MainLayout/>
-                                    </MessageProvider>
-                                </TransferLogProvider>
+                                <MainLayout/>
                             </UploadProgressProvider>
                         </RotationProvider>
                     </SelectionProvider>
