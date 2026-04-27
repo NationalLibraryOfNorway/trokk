@@ -18,7 +18,7 @@ import {TextItemResponse} from '../model/text-input-response.ts';
 import {remove} from '@tauri-apps/plugin-fs';
 import {AllTransferProgress} from '@/model/transfer-progress.ts';
 import * as Sentry from '@sentry/react';
-import {getErrorMessage} from '@/lib/utils.ts';
+import {getErrorDiagnostics, getErrorMessage, type ErrorDiagnostics} from '@/lib/utils.ts';
 
 export function deleteDirFromProgressState(
     progress: AllTransferProgress,
@@ -81,12 +81,6 @@ export function groupFilesByCheckedItems(
     return batchMap;
 }
 
-type BackendDiagnostics = {
-    detail?: string;
-    stackTrace?: string;
-    logs?: string[];
-};
-
 const API_ERROR_MESSAGES: Record<number, string> = {
     401: 'Kunne ikke lagre objektet fordi innloggingen ikke lenger er gyldig.',
     403: 'Kunne ikke lagre objektet fordi du ikke har tilgang.',
@@ -110,17 +104,7 @@ const stringifyDiagnostic = (value: unknown): string | undefined => {
     }
 };
 
-const getErrorDiagnostics = (error: unknown): BackendDiagnostics => {
-    const logs = error instanceof Error && error.stack ? [error.stack] : [];
-
-    return {
-        detail: getErrorMessage(error),
-        stackTrace: error instanceof Error ? error.stack : undefined,
-        logs,
-    };
-};
-
-const getApiErrorDiagnostics = async (response: Response): Promise<BackendDiagnostics> => {
+const getApiErrorDiagnostics = async (response: Response): Promise<ErrorDiagnostics> => {
     const logs: string[] = [];
 
     if (response.statusText) {
@@ -230,22 +214,6 @@ export function usePostRegistration() {
             checkedItems
         );
 
-        let accessToken: string;
-
-        try {
-            accessToken = await invoke('get_papi_access_token');
-        } catch (error) {
-            const diagnostics = getErrorDiagnostics(error);
-            handleBackendError({
-                message: 'Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.',
-                fallbackMessage: 'Kunne ikke lagre objektet i databasen.',
-                detail: diagnostics.detail,
-                stackTrace: diagnostics.stackTrace,
-                logs: diagnostics.logs,
-            });
-            return;
-        }
-
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
         for (const [itemId, pages] of batchMap.entries()) {
@@ -272,6 +240,17 @@ export function usePostRegistration() {
                 category: 'papi',
                 message: 'Creating batch of items in Papi',
                 level: 'info',
+            });
+            const accessToken = await invoke('get_papi_access_token').catch(error => {
+                const diagnostics = getErrorDiagnostics(error);
+                handleBackendError({
+                    message: 'Kunne ikke hente tilgangsnøkkel for å lagre objektet i databasen.',
+                    fallbackMessage: 'Kunne ikke lagre objektet i databasen.',
+                    detail: diagnostics.detail,
+                    stackTrace: diagnostics.stackTrace,
+                    logs: diagnostics.logs,
+                });
+                return Promise.reject(error);
             });
             const response = await tauriFetch(`${papiPath}/v2/item/batch`, {
                 method: 'POST',

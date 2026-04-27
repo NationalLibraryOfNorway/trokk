@@ -22,7 +22,7 @@ import {useToolbarOffset} from '@/hooks/use-toolbar-offset';
 import {StartupMessageCard, StartupScreen, StartupSpinner} from '@/components/startup/startup-screen.tsx';
 import ErrorModal from '@/features/error-log/error-modal.tsx';
 import {useMessage} from '@/context/message-context.tsx';
-import {getErrorMessage} from '@/lib/utils.ts';
+import {getErrorDiagnostics} from '@/lib/utils.ts';
 
 function App() {
     // TODO figure out what is making that "Unhandled Promise Rejection: window not found" error
@@ -92,16 +92,6 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         setShowCopiedTooltip(false);
     };
 
-    const getUtilityErrorDiagnostics = (error: unknown) => {
-        const stackTrace = error instanceof Error ? error.stack : undefined;
-
-        return {
-            detail: getErrorMessage(error),
-            stackTrace,
-            logs: stackTrace ? [stackTrace] : [],
-        };
-    };
-
     const copyPathToClipboard = async () => {
         try {
             await navigator.clipboard.writeText(scannerPath);
@@ -113,7 +103,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             }, 2000);
         } catch (err) {
             clearCopiedTooltip();
-            const diagnostics = getUtilityErrorDiagnostics(err);
+            const diagnostics = getErrorDiagnostics(err);
             handleFrontendError({
                 message: 'Kunne ikke kopiere mappestien.',
                 fallbackMessage: 'Kunne ikke kopiere mappestien.',
@@ -129,7 +119,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             const appWindow = getCurrentWindow();
             await appWindow.minimize();
         } catch (error) {
-            const diagnostics = getUtilityErrorDiagnostics(error);
+            const diagnostics = getErrorDiagnostics(error);
             handleFrontendError({
                 message: 'Kunne ikke minimere vinduet.',
                 fallbackMessage: 'Kunne ikke minimere vinduet.',
@@ -146,7 +136,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             await appWindow.toggleMaximize();
             setIsMaximized(!isMaximized);
         } catch (error) {
-            const diagnostics = getUtilityErrorDiagnostics(error);
+            const diagnostics = getErrorDiagnostics(error);
             handleFrontendError({
                 message: 'Kunne ikke endre vindusstørrelsen.',
                 fallbackMessage: 'Kunne ikke endre vindusstørrelsen.',
@@ -162,7 +152,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
             const appWindow = getCurrentWindow();
             await appWindow.close();
         } catch (error) {
-            const diagnostics = getUtilityErrorDiagnostics(error);
+            const diagnostics = getErrorDiagnostics(error);
             handleFrontendError({
                 message: 'Kunne ikke lukke vinduet.',
                 fallbackMessage: 'Kunne ikke lukke vinduet.',

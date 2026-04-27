@@ -226,7 +226,6 @@ class SettingStore {
             console.error('Error setting workspace pane sizes:', error);
         }
     }
-
     async getErrorLogEntries(): Promise<StoredError[]> {
         await this.ensureStore();
 

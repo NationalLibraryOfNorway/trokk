@@ -15,7 +15,7 @@ import {useMessage} from '@/context/message-context.tsx';
 import {Trash} from 'lucide-react';
 import {basename, dirname, join} from '@tauri-apps/api/path';
 import * as Sentry from '@sentry/react';
-import {getErrorMessage} from '@/lib/utils.ts';
+import {getErrorDiagnostics, getErrorMessage} from '@/lib/utils.ts';
 
 
 export interface DeleteFile {
@@ -34,16 +34,6 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
     const isMissingPathError = (error: unknown): boolean => {
         const message = getErrorMessage(error).toLowerCase();
         return message.includes('not found') || message.includes('no such file') || message.includes('finnes ikke');
-    };
-
-    const getDeleteErrorDiagnostics = (error: unknown) => {
-        const stackTrace = error instanceof Error ? error.stack : undefined;
-
-        return {
-            detail: getErrorMessage(error),
-            stackTrace,
-            logs: stackTrace ? [stackTrace] : [],
-        };
     };
 
     const updateFileTrees = (path: string) => {
@@ -158,8 +148,9 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
             if (checkedItems && checkedItems.includes(path)) {
                 handleCheck();
             }
+            Sentry.captureMessage('Successfully deleted confirmed file selection');
         } catch (error) {
-            const diagnostics = getDeleteErrorDiagnostics(error);
+            const diagnostics = getErrorDiagnostics(error);
             Sentry.captureException(error);
             console.error('Failed to delete file:', error);
             handleBackendError({
