@@ -38,7 +38,7 @@ const FileTreeComponent: React.FC = () => {
     };
 
     return (
-        <div className="w-full min-w-0 px-2 py-4">
+        <div className="w-full min-w-0 overflow-hidden px-2 py-4">
             <ul>
                 {state.fileTrees
                     .filter((file) => file.isDirectory)

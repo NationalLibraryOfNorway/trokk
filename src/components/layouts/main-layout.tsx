@@ -55,8 +55,8 @@ const MainLayout: React.FC = () => {
                 minSize={minimumWorkspacePaneSizes[0]}
                 className="bg-stone-800"
             >
-                <section aria-label="Filnavigasjon" className="h-full min-h-0">
-                    <ScrollArea className="h-full w-full">
+                <section aria-label="Filnavigasjon" className="h-full min-h-0 overflow-hidden">
+                    <ScrollArea className="h-full w-full [&>div>div]:!block [&>div>div]:!min-w-0" type="scroll">
                         <FileTree />
                     </ScrollArea>
                 </section>

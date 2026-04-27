@@ -45,9 +45,9 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
         : 'bg-emerald-950 text-emerald-200 ring-emerald-900/80';
 
     return (
-        <li key={file.path} className="my-0">
+        <li key={file.path}>
             <div className="flex items-center min-w-0">
-                <span className="mr-2 cursor-pointer mb-0.5 shrink-0" onClick={() => toggleFolderExpand(file)}>
+                <span className="mr-2 cursor-pointer my-1 shrink-0" onClick={() => toggleFolderExpand(file)}>
                     {!file.opened ? (
                         <ChevronRight size="16" className="text-stone-500"/>
                     ) : (
@@ -83,7 +83,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                             {calculateProgress(allUploadProgress.dir[file.path])}
                         </span>
                     )}
-                    <span className="min-w-0 flex-1 truncate whitespace-nowrap">
+                    <span className="min-w-0 m-1 flex-1 truncate whitespace-nowrap">
                         {formatFileNames(file.name)}
                     </span>
                     {summary.showsPill && (
@@ -97,7 +97,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 </span>
             </div>
             {file.opened && visibleChildFolders.length > 0 && (
-                <ul className="pl-10 relative before:content-[''] before:absolute before:-ml-8 before:top-0 before:bottom-0 before:w-px before:bg-stone-600">
+                <ul className="pl-10 min-w-0 relative before:content-[''] before:absolute before:-ml-8 before:top-0 before:bottom-0 before:w-px before:bg-stone-600">
                     {visibleChildFolders.map((child) => (
                         <FileTreeItem
                             key={child.path}
