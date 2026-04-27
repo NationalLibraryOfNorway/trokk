@@ -251,7 +251,7 @@ const RegistrationForm: React.FC = () => {
                 <Button
                     disabled={disabled || isSubmitting || isAnyImageRotating || uploadVersionBlocking}
                     type='submit'
-                    className="w-full flex items-center justify-center"
+                    className="pt-3 w-full flex items-center justify-center font-bold bg-amber-600 hover:bg-amber-500"
                 >
                     {isSubmitting ? (
                         <LoaderCircle size={24} className='animate-spin' />
