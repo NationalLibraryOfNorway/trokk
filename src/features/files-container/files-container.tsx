@@ -151,6 +151,7 @@ const FilesContainer: React.FC = () => {
                                                         onDoubleClick={() => setPreviewDialogOpen(true)}
                                                         setDelFilePath={setDelFilePath}
                                                         delFilePath={delFilePath}
+                                                        isDisabled={state.isSubmitting}
                                                     />
                                                     <Checkbox
                                                         aria-label={'Velg forside'}
@@ -159,6 +160,7 @@ const FilesContainer: React.FC = () => {
                                                         isChecked={checkedItems.includes(child.path)}
                                                         onChange={() => handleCheck()}
                                                         isFocused={!previewDialogOpen && currentIndex === index}
+                                                        isDisabled={state.isSubmitting}
                                                     />
                                                 </div>
                                             )

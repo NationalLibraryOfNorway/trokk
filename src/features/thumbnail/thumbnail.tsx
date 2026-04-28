@@ -19,154 +19,158 @@ export interface ThumbnailProps {
     onDoubleClick: () => void;
     isChecked: boolean;
     isFocused: boolean;
+    isDisabled: boolean;
     setDelFilePath: (path: string | null) => void;
     delFilePath: string | null;
 }
 
- const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
-  ({ fileTree, onDoubleClick, isChecked, isFocused, setDelFilePath, delFilePath }, ref) => {
+const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
+    ({ fileTree, onDoubleClick, isChecked, isFocused, isDisabled, setDelFilePath, delFilePath }, ref) => {
+        const {state} = useTrokkFiles();
+        const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
 
-    const {state} = useTrokkFiles();
-    const {rotateImage, getImageStatus, getFileCacheBuster} = useRotation();
+        const imageStatus = getImageStatus(fileTree.path);
+        const imageIsRotating = imageStatus === 'rotating';
 
-    const imageStatus = getImageStatus(fileTree.path);
-    const imageIsRotating = imageStatus === 'rotating';
+        // Get thumbnail file for cache busting
+        const thumbnailFile = getThumbnailFromTree(fileTree, state);
+        const thumbnailPath = thumbnailFile?.path || fileTree.path;
+        const thumbnailCacheBuster = getFileCacheBuster(thumbnailPath);
 
-    // Get thumbnail file for cache busting
-    const thumbnailFile = getThumbnailFromTree(fileTree, state);
-    const thumbnailPath = thumbnailFile?.path || fileTree.path;
-    const thumbnailCacheBuster = getFileCacheBuster(thumbnailPath);
+        const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
+            if (str.length <= frontLen + backLen) return str;
+            return str.slice(0, frontLen) + '...' + str.slice(str.length - backLen);
+        };
 
-    const truncateMiddle = (str: string, frontLen: number, backLen: number) => {
-        if (str.length <= frontLen + backLen) return str;
-        return str.slice(0, frontLen) + '...' + str.slice(str.length - backLen);
-    };
+        const handleRotateClockwise = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            rotateImage(fileTree.path, 'clockwise');
+        };
 
-    const handleRotateClockwise = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        rotateImage(fileTree.path, 'clockwise');
-    };
+        const handleRotateCounterClockwise = (e: React.MouseEvent) => {
+            e.stopPropagation();
+            rotateImage(fileTree.path, 'counterclockwise');
+        };
 
-    const handleRotateCounterClockwise = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        rotateImage(fileTree.path, 'counterclockwise');
-    };
+        const fileName = truncateMiddle(formatFileNames(fileTree.name), 7, 10);
+        const isSupported = supportedFileTypes.includes(getFileExtension(fileTree?.path));
+        const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
+        const hasWebpThumbnail = !!thumbnailUrl;
+        const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
+        const rotateBtnClass = `flex justify-center items-center size-10 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
-    const fileName = truncateMiddle(formatFileNames(fileTree.name), 7, 10);
-    const isSupported = supportedFileTypes.includes(getFileExtension(fileTree?.path));
-    const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
-    const hasWebpThumbnail = !!thumbnailUrl;
-    const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
-    const rotateBtnClass = `flex justify-center items-center size-10 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+        if (isHiddenDir) return null;
 
-    if (isHiddenDir) return null;
+        const checkedBorder = 'bg-amber-400';
+        const focusedBorder = 'bg-blue-600';
 
-    const checkedBorder = 'bg-amber-400';
-    const focusedBorder = 'bg-blue-600';
+        let frameClass = 'w-full rounded-t-lg p-2 relative z-0';
 
-    let frameClass = 'w-full rounded-t-lg p-2 relative z-0';
+        const imageClass = 'w-full object-contain rounded-[calc(theme(borderRadius.lg)-0.5rem)] relative z-10 transform-gpu will-change-transform';
 
-    const imageClass = 'w-full object-contain rounded-[calc(theme(borderRadius.lg)-0.5rem)] relative z-10 transform-gpu will-change-transform';
+        const checkedGradientOverlay =
+            ' before:content-[""] before:absolute before:inset-0 before:rounded-t-lg before:z-[5] before:pointer-events-none before:transition-opacity' +
+            ' before:bg-gradient-to-br before:from-amber-400 before:from-[0%] before:via-amber-400 before:via-[60%] before:to-blue-600 before:to-[75%]';
 
-    const checkedGradientOverlay =
-        ' before:content-[""] before:absolute before:inset-0 before:rounded-t-lg before:z-[5] before:pointer-events-none before:transition-opacity' +
-        ' before:bg-gradient-to-br before:from-amber-400 before:from-[0%] before:via-amber-400 before:via-[60%] before:to-blue-600 before:to-[75%]';
+        if (isChecked) {
+            frameClass += ` ${checkedBorder} before:opacity-0` + checkedGradientOverlay;
+            frameClass += ' active:bg-transparent active:before:opacity-100';
+            if (isFocused)  frameClass += ' bg-transparent before:opacity-100';
+        } else if (isFocused && !isDisabled) {
+            frameClass += ` ${focusedBorder}`;
+        } else {
+            frameClass += 'bg-transparent';
+        }
 
-    if (isChecked) {
-        frameClass += ` ${checkedBorder} before:opacity-0` + checkedGradientOverlay;
-        frameClass += ' active:bg-transparent active:before:opacity-100';
-        if (isFocused)  frameClass += ' bg-transparent before:opacity-100';
-    } else if (isFocused) {
-        frameClass += ` ${focusedBorder}`;
-    } else {
-        frameClass += 'bg-transparent';
-    }
+        if (isDisabled) {
+            frameClass += ' opacity-30 cursor-default';
+        }
 
-    let content: React.ReactNode;
-    if (hasWebpThumbnail) {
-        const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
-        content = (
-            <div className="flex items-center justify-center w-full">
-                <div className={frameClass}>
-                    <img
-                        key={`${thumbnailPath}-${thumbnailCacheBuster}`}
-                        className={imageClass}
-                        src={srcUrl}
-                        alt={fileTree.name} />
-                </div>
-            </div>
-        );
-    } else if (isSupported) {
-        // Fallback to original file if no WebP thumbnail exists
-        const fileCacheBuster = getFileCacheBuster(fileTree.path);
-        const srcUrl = `${convertFileSrc(fileTree.path)}?v=${fileCacheBuster}`;
-        content = (
-            <div className="flex items-center justify-center w-full">
-                <div className={frameClass}>
-                    <img
-                        key={`${fileTree.path}-${fileCacheBuster}`}
-                        className={imageClass}
-                        src={srcUrl}
-                        alt={fileTree.name} />
-                </div>
-            </div>
-        );
-    } else {
-        content = <File size="96" className='mx-auto mt-1' color="gray"/>;
-    }
-
-    return (
-        <div
-            role="button"
-            tabIndex={0}
-            key={fileTree.path}
-            className="flex flex-col p-0 items-center bg-stone-900 hover:bg-stone-800 rounded-lg group"
-            onDoubleClick={onDoubleClick}
-            ref={ref}
-        >
-            <div className="relative w-full">
-                {content}
-                <StatusOverlay status={imageStatus} size="small" />
-                {(isSupported || hasWebpThumbnail) && (
-                    <div
-                        onClick={(e) => e.stopPropagation()}
-                        className="absolute p-4 bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
-                    >
-                        <button
-                            type="button"
-                            onClick={handleRotateCounterClockwise}
-                            disabled={imageIsRotating}
-                            className={rotateBtnClass}
-                            aria-label="Roter mot klokken"
-                            title="Roter mot klokken"
-                        >
-                            <RotateCcw size={16} />
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleRotateClockwise}
-                            disabled={imageIsRotating}
-                            className={rotateBtnClass}
-                            aria-label="Roter med klokken"
-                            title="Roter med klokken"
-                        >
-                            <RotateCw size={16} />
-                        </button>
-                        <DeleteFile
-                            childPath={fileTree.path}
-                            setDelFilePath={setDelFilePath}
-                            delFilePath={delFilePath}
-                            disabled={imageIsRotating}
-                            btnClassName={rotateBtnClass}
-                        />
+        let content: React.ReactNode;
+        if (hasWebpThumbnail) {
+            const srcUrl = `${thumbnailUrl}?v=${thumbnailCacheBuster}`;
+            content = (
+                <div className="flex items-center justify-center w-full">
+                    <div className={frameClass}>
+                        <img
+                            key={`${thumbnailPath}-${thumbnailCacheBuster}`}
+                            className={imageClass}
+                            src={srcUrl}
+                            alt={fileTree.name} />
                     </div>
-                )}
+                </div>
+            );
+        } else if (isSupported) {
+            // Fallback to original file if no WebP thumbnail exists
+            const fileCacheBuster = getFileCacheBuster(fileTree.path);
+            const srcUrl = `${convertFileSrc(fileTree.path)}?v=${fileCacheBuster}`;
+            content = (
+                <div className="flex items-center justify-center w-full">
+                    <div className={frameClass}>
+                        <img
+                            key={`${fileTree.path}-${fileCacheBuster}`}
+                            className={imageClass}
+                            src={srcUrl}
+                            alt={fileTree.name} />
+                    </div>
+                </div>
+            );
+        } else {
+            content = <File size="96" className='mx-auto mt-1' color="gray"/>;
+        }
+
+        return (
+            <div
+                role="button"
+                tabIndex={0}
+                key={fileTree.path}
+                className={`flex flex-col p-0 items-center bg-stone-900 rounded-lg group ${!isDisabled ? 'hover:bg-stone-800' : ''}`}
+                onDoubleClick={!isDisabled ? onDoubleClick : undefined}
+                ref={ref}
+            >
+                <div className="relative w-full">
+                    {content}
+                    <StatusOverlay status={imageStatus} size="small" />
+                    {((isSupported || hasWebpThumbnail) && !isDisabled) && (
+                        <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="absolute p-4 bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                        >
+                            <button
+                                type="button"
+                                onClick={handleRotateCounterClockwise}
+                                disabled={imageIsRotating}
+                                className={rotateBtnClass}
+                                aria-label="Roter mot klokken"
+                                title="Roter mot klokken"
+                            >
+                                <RotateCcw size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleRotateClockwise}
+                                disabled={imageIsRotating}
+                                className={rotateBtnClass}
+                                aria-label="Roter med klokken"
+                                title="Roter med klokken"
+                            >
+                                <RotateCw size={16} />
+                            </button>
+                            <DeleteFile
+                                childPath={fileTree.path}
+                                setDelFilePath={setDelFilePath}
+                                delFilePath={delFilePath}
+                                disabled={imageIsRotating}
+                                btnClassName={rotateBtnClass}
+                            />
+                        </div>
+                    )}
+                </div>
+                <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-amber-400' : ''} ${isDisabled ? 'opacity-30 cursor-default' : ''}`}>
+                    {fileName}
+                </i>
             </div>
-            <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-amber-400' : ''}`}>
-                {fileName}
-            </i>
-        </div>
-    );
-  });
+        );
+    });
 Thumbnail.displayName = 'Thumbnail';
 export default Thumbnail;

@@ -47,6 +47,7 @@ const baseProps = {
     onDoubleClick: vi.fn(),
     isChecked: false,
     isFocused: false,
+    isDisabled: false,
     setDelFilePath: vi.fn(),
     delFilePath: null,
 };
@@ -58,6 +59,7 @@ const mockTrokkFilesState = {
     current: undefined,
     preview: undefined,
     isEven: true,
+    isSubmitting: false,
 };
 
 function createMockFileTree(name: string, path: string): FileTree {
@@ -143,4 +145,22 @@ describe('Thumbnail', () => {
         expect(rotateCounterClockwiseBtn).toBeDefined();
     });
 
+    it('does not show rotation buttons on hover when disabled', async () => {
+        const disabledProps = {...baseProps, isDisabled: true};
+        const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
+        await act(async () => {
+            render(componentWithContext(fileTree, disabledProps));
+        });
+
+        let renderResult: ReturnType<typeof render> = render(componentWithContext(fileTree, disabledProps));
+        await act(async () => {
+            renderResult = render(componentWithContext(fileTree, disabledProps));
+        });
+
+        const rotateClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter med klokken"]');
+        const rotateCounterClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter mot klokken"]');
+
+        expect(rotateClockwiseBtn).toBeNull();
+        expect(rotateCounterClockwiseBtn).toBeNull();
+    });
 });

@@ -50,6 +50,7 @@ const mockTrokkFilesState = {
     current: undefined,
     preview: undefined,
     isEven: true,
+    isSubmitting: false,
 };
 
 function createMockFileTree(name: string, path: string): FileTree {
@@ -74,6 +75,7 @@ const baseProps = {
     isFocused: false,
     setDelFilePath: vi.fn(),
     delFilePath: null,
+    isDisabled: false,
 };
 
 const componentWithContext = (fileTree: FileTree, props: typeof baseProps) => {
