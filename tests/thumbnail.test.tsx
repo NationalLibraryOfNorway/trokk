@@ -47,6 +47,7 @@ const baseProps = {
     onDoubleClick: vi.fn(),
     isChecked: false,
     isFocused: false,
+    isDisabled: false,
     setDelFilePath: vi.fn(),
     delFilePath: null,
 };
@@ -58,6 +59,7 @@ const mockTrokkFilesState = {
     current: undefined,
     preview: undefined,
     isEven: true,
+    isSubmitting: false,
 };
 
 function createMockFileTree(name: string, path: string): FileTree {
@@ -130,11 +132,9 @@ describe('Thumbnail', () => {
     it('shows rotation buttons on hover for supported images', async () => {
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
 
-        // Initialize to satisfy TS definite assignment, then overwrite inside act.
-        let renderResult: ReturnType<typeof render> = render(componentWithContext(fileTree, baseProps));
-        await act(async () => {
-            renderResult = render(componentWithContext(fileTree, baseProps));
-        });
+        const renderResult = await act(async () =>
+            render(componentWithContext(fileTree, baseProps))
+        );
 
         const rotateClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter med klokken"]');
         const rotateCounterClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter mot klokken"]');
@@ -143,4 +143,18 @@ describe('Thumbnail', () => {
         expect(rotateCounterClockwiseBtn).toBeDefined();
     });
 
+    it('does not show rotation buttons on hover when disabled', async () => {
+        const disabledProps = {...baseProps, isDisabled: true};
+        const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
+
+        const renderResult = await act(async () =>
+            render(componentWithContext(fileTree, disabledProps))
+        );
+
+        const rotateClockwiseBtn = renderResult?.container.querySelector('[aria-label="Roter med klokken"]');
+        const rotateCounterClockwiseBtn = renderResult?.container.querySelector('[aria-label="Roter mot klokken"]');
+
+        expect(rotateClockwiseBtn).toBeNull();
+        expect(rotateCounterClockwiseBtn).toBeNull();
+    });
 });
