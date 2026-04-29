@@ -44,17 +44,17 @@ describe('FileTreeItem folder summaries', () => {
     });
 
     it('does not show a pill for folders without workable images', () => {
-        const folder = createFolder('Tom mappe', '/scanner/tom', [
+        const folder = createFolder('tom', '/scanner/tom', [
             createFolder('under', '/scanner/tom/under'),
         ]);
 
         renderItem(folder);
 
-        expect(screen.queryByLabelText('Antall bilder i Tom mappe: 0')).toBeNull();
+        expect(screen.queryByLabelText('Antall bilder i tom: 0')).toBeNull();
     });
 
     it('shows a red odd-count pill for folders with an odd number of images', () => {
-        const folder = createFolder('Odd', '/scanner/odd', [
+        const folder = createFolder('odd', '/scanner/odd', [
             createFile('001.tif', '/scanner/odd/001.tif'),
             createFile('002.tif', '/scanner/odd/002.tif'),
             createFile('003.tif', '/scanner/odd/003.tif'),
@@ -62,20 +62,20 @@ describe('FileTreeItem folder summaries', () => {
 
         renderItem(folder);
 
-        const pill = screen.getByLabelText('Antall bilder i Odd: 3');
+        const pill = screen.getByLabelText('Antall bilder i odd: 3');
         expect(pill.textContent).toBe('3');
         expect(pill.className).toContain('bg-red-950');
     });
 
     it('shows a green ready pill for folders with a non-zero even number of images', () => {
-        const folder = createFolder('Klar', '/scanner/klar', [
+        const folder = createFolder('klar', '/scanner/klar', [
             createFile('001.tif', '/scanner/klar/001.tif'),
             createFile('002.tif', '/scanner/klar/002.tif'),
         ]);
 
         renderItem(folder);
 
-        const pill = screen.getByLabelText('Antall bilder i Klar: 2');
+        const pill = screen.getByLabelText('Antall bilder i klar: 2');
         expect(pill.textContent).toBe('2');
         expect(pill.className).toContain('bg-emerald-950');
     });
@@ -86,29 +86,29 @@ describe('FileTreeItem folder summaries', () => {
             createFile('002.tif', '/scanner/batch/merge/002.tif'),
             createFile('003.tif', '/scanner/batch/merge/003.tif'),
         ]);
-        const folder = createFolder('Batch A', '/scanner/batch', [
+        const folder = createFolder('batch', '/scanner/batch', [
             createFile('ignored.tif', '/scanner/batch/ignored.tif'),
             mergeFolder,
         ]);
 
         renderItem(folder);
 
-        fireEvent.click(screen.getByText('Batch A'));
+        fireEvent.click(screen.getByText('batch'));
 
-        expect(screen.getByLabelText('Antall bilder i Batch A: 3').textContent).toBe('3');
+        expect(screen.getByLabelText('Antall bilder i batch: 3').textContent).toBe('3');
         expect(mockChangeViewDirectory).toHaveBeenCalledWith(mergeFolder);
         expect(mockRemoveMessages).toHaveBeenCalled();
     });
 
     it('keeps the pill visible and truncates the folder name on one line', () => {
-        const folder = createFolder('En veldig lang mappenavnstreng', '/scanner/lang', [
-            createFile('001.tif', '/scanner/lang/001.tif'),
+        const folder = createFolder('en_veldig_lang_mappenavnstreng', '/scanner/en_veldig_lang_mappenavnstreng', [
+            createFile('001.tif', '/scanner/en_veldig_lang_mappenavnstreng/001.tif'),
         ]);
 
         renderItem(folder);
 
-        const label = screen.getByText('En veldig lang mappenavnstreng');
-        const pill = screen.getByLabelText('Antall bilder i En veldig lang mappenavnstreng: 1');
+        const label = screen.getByText('en_veldig_lang_mappenavnstreng');
+        const pill = screen.getByLabelText('Antall bilder i en_veldig_lang_mappenavnstreng: 1');
 
         expect(label.className).toContain('truncate');
         expect(label.className).toContain('whitespace-nowrap');
@@ -116,7 +116,7 @@ describe('FileTreeItem folder summaries', () => {
     });
 
     it('does not show an empty-subfolder indicator when an expanded folder has no child folders', () => {
-        const folder = createFolder('Bladnode', '/scanner/bladnode', [
+        const folder = createFolder('bladnode', '/scanner/bladnode', [
             createFile('001.tif', '/scanner/bladnode/001.tif'),
         ]);
         folder.opened = true;
