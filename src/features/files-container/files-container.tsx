@@ -70,7 +70,7 @@ const FilesContainer: React.FC = () => {
                 </DialogContent>
             </Dialog>
 
-            <div className="flex flex-col flex-1 min-h-0"
+            <div className="flex min-h-full flex-col"
                  onClick={() => {
                      if (previewDialogOpen) {
                          setPreviewDialogOpen(false)
@@ -101,8 +101,7 @@ const FilesContainer: React.FC = () => {
                         <p className="font-semibold mx-auto">OBS! Det er et oddetall av filer i denne mappen</p>
                     </div>
                 )}
-                {/* Scroll area */}
-                <div className="flex-1 min-h-0 overflow-auto">
+                <div className="flex-1">
                     <div
                         ref={containerRef}
                         className="grid gap-4 p-4 focus-visible:outline-none focus:ring-0"

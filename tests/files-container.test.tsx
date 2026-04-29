@@ -190,5 +190,11 @@ describe('FilesContainer', () => {
 
         expect(screen.queryByText(/Ingen filer i mappen/i)).not.toBeNull();
     });
+
+    it('does not create a pane-owned overflow-auto scroller inside the file grid content area', () => {
+        renderWithContext();
+
+        expect(document.querySelector('.overflow-auto')).toBeNull();
+    });
 })
 ;
