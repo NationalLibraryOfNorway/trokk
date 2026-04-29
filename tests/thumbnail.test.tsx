@@ -148,17 +148,14 @@ describe('Thumbnail', () => {
     it('does not show rotation buttons on hover when disabled', async () => {
         const disabledProps = {...baseProps, isDisabled: true};
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
-        await act(async () => {
-            render(componentWithContext(fileTree, disabledProps));
-        });
 
-        let renderResult: ReturnType<typeof render> = render(componentWithContext(fileTree, disabledProps));
+        let renderResult: ReturnType<typeof render> | undefined;
         await act(async () => {
             renderResult = render(componentWithContext(fileTree, disabledProps));
         });
 
-        const rotateClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter med klokken"]');
-        const rotateCounterClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter mot klokken"]');
+        const rotateClockwiseBtn = renderResult?.container.querySelector('[aria-label="Roter med klokken"]');
+        const rotateCounterClockwiseBtn = renderResult?.container.querySelector('[aria-label="Roter mot klokken"]');
 
         expect(rotateClockwiseBtn).toBeNull();
         expect(rotateCounterClockwiseBtn).toBeNull();

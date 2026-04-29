@@ -10,7 +10,7 @@ export interface CheckboxProps {
 
 const Checkbox: React.FC<CheckboxProps> = ({ isChecked, onChange, isFocused, isDisabled }) => {
     return (
-        <label className={`inline-flex items-center space-x-2 + ${!isDisabled ? 'cursor-pointer' : ''}`}>
+        <label className={`inline-flex items-center space-x-2 ${!isDisabled ? 'cursor-pointer' : ''}`}>
             <input
                 type="checkbox"
                 checked={isChecked}
