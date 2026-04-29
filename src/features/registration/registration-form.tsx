@@ -269,7 +269,7 @@ const RegistrationForm: React.FC = () => {
 
             <div className="mt-2 w-full h-full flex flex-col relative">
                 <div className="flex items-center gap-2">
-                    <Field className="w-full max-w-sm">
+                    <Field className="w-full">
                         <FieldLabel htmlFor="progress-upload">
                             <span>Fremdrift</span>
                             <span className="ml-auto">{barWidth.toFixed(0)}%</span>

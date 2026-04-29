@@ -2,6 +2,12 @@ import {load, Store} from '@tauri-apps/plugin-store';
 import {AuthenticationResponse} from '../model/authentication-response.ts';
 import {documentDir, sep} from '@tauri-apps/api/path';
 import {StoredError, truncateErrorLogEntries} from '@/model/error-log-entry.ts';
+import {
+    areWorkspacePaneSizesEqual,
+    defaultWorkspacePaneSizes,
+    normalizeWorkspacePaneSizes,
+    type WorkspacePaneSizes,
+} from '@/util/workspace-pane-layout.ts';
 
 const defaultScannerPath = await documentDir() + sep() + 'trokk' + sep() + 'files';
 const defaultThumbnailSizeFraction = 8;
@@ -190,6 +196,36 @@ class SettingStore {
         }
     }
 
+    async getWorkspacePaneSizes(): Promise<WorkspacePaneSizes> {
+        await this.ensureStore();
+        const sizes = await this.store!.get<number[]>('workspacePaneSizes')
+            .catch(error => {
+                console.error('Error getting workspace pane sizes:', error);
+                return defaultWorkspacePaneSizes;
+            });
+
+        const normalizedSizes = normalizeWorkspacePaneSizes(sizes ?? defaultWorkspacePaneSizes);
+        if (!Array.isArray(sizes) || !areWorkspacePaneSizesEqual(normalizedSizes, sizes)) {
+            await this.setWorkspacePaneSizes(normalizedSizes);
+        }
+
+        return normalizedSizes;
+    }
+
+    async setWorkspacePaneSizes(sizes: WorkspacePaneSizes): Promise<void> {
+        await this.ensureStore();
+        const normalizedSizes = normalizeWorkspacePaneSizes(sizes);
+
+        try {
+            await this.store!.set('workspacePaneSizes', normalizedSizes).then(async () => {
+                await this.store!.save();
+            }).catch(error => {
+                console.error('Error setting workspace pane sizes:', error);
+            });
+        } catch (error) {
+            console.error('Error setting workspace pane sizes:', error);
+        }
+    }
     async getErrorLogEntries(): Promise<StoredError[]> {
         await this.ensureStore();
 
