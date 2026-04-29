@@ -36,7 +36,7 @@ const FilesContainer: React.FC = () => {
         !child.name.startsWith('.thumbnails') &&
         !child.name.startsWith('.previews')
     ) || [];
-    const breadcrumbSegments = getBreadcrumbSegments(state.fileTrees, state.current?.path);
+    const breadcrumbSegments = getBreadcrumbSegments(state.basePath, state.current?.path);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -87,15 +87,15 @@ const FilesContainer: React.FC = () => {
                             <Folder size="16" className="shrink-0"/>
                             <nav aria-label="Arbeidsmappe" className="flex min-w-0 items-center gap-1 overflow-hidden">
                                 {breadcrumbSegments.map((segment, index) => (
-                                    <React.Fragment key={segment.path}>
+                                    <React.Fragment key={segment}>
                                         {index > 0 && <ChevronRight size="14" className="shrink-0 text-stone-500"/>}
                                         <span
                                             className={cn(
                                                 'truncate whitespace-nowrap',
-                                                segment.isCurrent ? 'font-semibold text-stone-100' : 'text-stone-400'
+                                                index == breadcrumbSegments.length - 1 ? 'font-semibold text-stone-100' : 'text-stone-400'
                                             )}
                                         >
-                                            {segment.label}
+                                            {segment}
                                         </span>
                                     </React.Fragment>
                                 ))}

@@ -1,4 +1,4 @@
-import {FileTree, findFileTreeAncestry} from '../model/file-tree.ts';
+import {FileTree} from '../model/file-tree.ts';
 import {TrokkFilesState} from '../context/trokk-files-context.tsx';
 import {sep} from '@tauri-apps/api/path';
 import {convertFileSrc} from '@tauri-apps/api/core';
@@ -75,20 +75,10 @@ export const getFolderImageSummary = (fileTree: FileTree | undefined): FolderIma
     };
 };
 
-export interface BreadcrumbSegment {
-    path: string;
-    label: string;
-    isCurrent: boolean;
-}
-
-export const getBreadcrumbSegments = (fileTrees: FileTree[], currentPath?: string): BreadcrumbSegment[] => {
-    const ancestry = findFileTreeAncestry(fileTrees, currentPath);
-
-    return ancestry.map((node, index) => ({
-        path: node.path,
-        label: formatFileNames(node.name),
-        isCurrent: index === ancestry.length - 1,
-    }));
+export const getBreadcrumbSegments = (basePath: string, currentPath?: string): string[] => {
+    if(currentPath === null) return [];
+    const path = currentPath?.substring(basePath.length) || '';
+    return path.split(sep()).filter(Boolean);
 };
 
 /*  Thumbnail directories are generated where '.tif' files are located.
