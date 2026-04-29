@@ -132,11 +132,9 @@ describe('Thumbnail', () => {
     it('shows rotation buttons on hover for supported images', async () => {
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
 
-        // Initialize to satisfy TS definite assignment, then overwrite inside act.
-        let renderResult: ReturnType<typeof render> = render(componentWithContext(fileTree, baseProps));
-        await act(async () => {
-            renderResult = render(componentWithContext(fileTree, baseProps));
-        });
+        const renderResult = await act(async () =>
+            render(componentWithContext(fileTree, baseProps))
+        );
 
         const rotateClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter med klokken"]');
         const rotateCounterClockwiseBtn = renderResult.container.querySelector('[aria-label="Roter mot klokken"]');
@@ -149,10 +147,9 @@ describe('Thumbnail', () => {
         const disabledProps = {...baseProps, isDisabled: true};
         const fileTree = createMockFileTree('example.jpg', '/mock/path/example.jpg');
 
-        let renderResult: ReturnType<typeof render> | undefined;
-        await act(async () => {
-            renderResult = render(componentWithContext(fileTree, disabledProps));
-        });
+        const renderResult = await act(async () =>
+            render(componentWithContext(fileTree, disabledProps))
+        );
 
         const rotateClockwiseBtn = renderResult?.container.querySelector('[aria-label="Roter med klokken"]');
         const rotateCounterClockwiseBtn = renderResult?.container.querySelector('[aria-label="Roter mot klokken"]');
