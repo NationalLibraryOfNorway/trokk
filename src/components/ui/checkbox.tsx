@@ -5,22 +5,24 @@ export interface CheckboxProps {
     isChecked: boolean;
     onChange: (checked: boolean) => void;
     isFocused: boolean;
+    isDisabled: boolean;
 }
 
-const Checkbox: React.FC<CheckboxProps> = ({ isChecked, onChange, isFocused }) => {
+const Checkbox: React.FC<CheckboxProps> = ({ isChecked, onChange, isFocused, isDisabled }) => {
     return (
-        <label className="inline-flex items-center space-x-2 cursor-pointer">
+        <label className={`inline-flex items-center space-x-2 ${!isDisabled ? 'cursor-pointer' : ''}`}>
             <input
                 type="checkbox"
                 checked={isChecked}
                 onChange={(e) => onChange(e.target.checked)}
                 className="peer sr-only"
+                disabled={isDisabled}
             />
             <div className={cn(
                 'w-8 h-8 border-2 rounded flex items-center justify-center',
                     'peer-checked:bg-amber-400',
-                    'hover:bg-stone-400/30 hover:peer-checked:bg-amber-300',
-                    isFocused ? 'border-blue-500' : isChecked ? 'border-amber-400' : 'border-stone-400',
+                    isDisabled ? 'opacity-30' : 'hover:bg-stone-400/30 hover:peer-checked:bg-amber-300',
+                    isFocused && !isDisabled ? 'border-blue-500' : isChecked ? 'border-amber-400' : 'border-stone-400',
                 )}
             >
                 {isChecked && (
