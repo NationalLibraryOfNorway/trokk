@@ -89,7 +89,8 @@ vi.mock('@/context/post-registration-context.tsx', () => ({
 
 vi.mock('@/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: () => ({
-        state: mockTrokkState
+        state: mockTrokkState,
+        dispatch: vi.fn(),
     })
 }));
 

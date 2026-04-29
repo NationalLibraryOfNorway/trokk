@@ -92,6 +92,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                 isChecked={isChecked}
                                 onChange={() => handleCheck()}
                                 isFocused={false}
+                                isDisabled={false}
                             />
                         </div>
                         <p className="text-center text-lg text-stone-200">Viser

@@ -23,7 +23,7 @@ import {Field, FieldLabel} from '@/components/ui/field.tsx';
 import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 
 const RegistrationForm: React.FC = () => {
-    const {state} = useTrokkFiles();
+    const {state, dispatch} = useTrokkFiles();
     const {allUploadProgress, setAllUploadProgress} = useUploadProgress();
     const {secrets} = useSecrets();
     const {uploadVersionBlocking, uploadVersionMessage, checkUploadVersionGate} = useVersion();
@@ -35,8 +35,6 @@ const RegistrationForm: React.FC = () => {
     const [barWidth, setBarWidth] = useState(0);
     const appWindow = getCurrentWebviewWindow();
     const isAnyImageRotating = hasAnyRotating();
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [disabled, setDisabled] = useState(false);
     const {
         register,
@@ -95,7 +93,7 @@ const RegistrationForm: React.FC = () => {
                 setDisabled(false);
                 return;
             }
-            setIsSubmitting(true);
+            dispatch({type: 'SET_IS_SUBMITTING', payload: true});
             setDisabled(true);
             try {
                 const hostname = await invoke<string>('get_hostname');
@@ -117,7 +115,7 @@ const RegistrationForm: React.FC = () => {
                     handleError('Kunne ikke starte opplasting.', undefined, errorMessage);
                 }
             } finally {
-                setIsSubmitting(false);
+                dispatch({type: 'SET_IS_SUBMITTING', payload: false});
                 // If folder is still selected after submit attempt, allow retry.
                 setDisabled(state.current?.path === undefined);
             }
@@ -138,11 +136,11 @@ const RegistrationForm: React.FC = () => {
             const currentUploadProgress = state.current?.path && allUploadProgress?.dir?.[state.current.path];
             if (currentUploadProgress) {
                 setBarWidthFromProgress(allUploadProgress);
-                setIsSubmitting(true);
+                dispatch({type: 'SET_IS_SUBMITTING', payload: true});
                 setDisabled(true);
             } else {
                 setBarWidth(0);
-                setIsSubmitting(false);
+                dispatch({type: 'SET_IS_SUBMITTING', payload: false});
                 setDisabled(false);
                 resetField('materialType');
                 resetField('font');
@@ -250,11 +248,11 @@ const RegistrationForm: React.FC = () => {
             </p>
             <div className={`flex ${disabled || isAnyImageRotating ? 'opacity-30' : ''}`}>
                 <Button
-                    disabled={disabled || isSubmitting || isAnyImageRotating || uploadVersionBlocking}
+                    disabled={disabled || state.isSubmitting || isAnyImageRotating || uploadVersionBlocking}
                     type='submit'
                     className="pt-3 w-full flex items-center justify-center font-bold bg-amber-600 hover:bg-amber-500"
                 >
-                    {isSubmitting ? (
+                    {state.isSubmitting ? (
                         <LoaderCircle size={24} className='animate-spin' />
                     ) : (
                         errorMessage ? 'Forsøk TRØKK på nytt!' : 'TRØKK!'
