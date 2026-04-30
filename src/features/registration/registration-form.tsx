@@ -252,7 +252,7 @@ const RegistrationForm: React.FC = () => {
                     type='submit'
                     className="pt-3 w-full flex items-center justify-center font-bold bg-amber-600 hover:bg-amber-500"
                 >
-                    {state.isSubmitting ? (
+                    {(state.isSubmitting && barWidth < 100 ) ? (
                         <LoaderCircle size={24} className='animate-spin' />
                     ) : (
                         errorMessage ? 'Forsøk TRØKK på nytt!' : 'TRØKK!'
