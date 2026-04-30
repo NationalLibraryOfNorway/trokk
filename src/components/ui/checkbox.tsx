@@ -20,9 +20,9 @@ const Checkbox: React.FC<CheckboxProps> = ({ isChecked, onChange, isFocused, isD
             />
             <div className={cn(
                 'w-8 h-8 border-2 rounded flex items-center justify-center',
-                    'peer-checked:bg-amber-400',
-                    isDisabled ? 'opacity-30' : 'hover:bg-stone-400/30 hover:peer-checked:bg-amber-300',
-                    isFocused && !isDisabled ? 'border-blue-500' : isChecked ? 'border-amber-400' : 'border-stone-400',
+                    'peer-checked:bg-primary',
+                    isDisabled ? 'opacity-30' : 'hover:bg-muted/30 hover:peer-checked:bg-primary/80',
+                    isFocused && !isDisabled ? 'border-selected' : isChecked ? 'border-primary' : 'border-border',
                 )}
             >
                 {isChecked && (
