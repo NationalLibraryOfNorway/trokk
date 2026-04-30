@@ -140,6 +140,30 @@ class SettingStore {
         }
     }
 
+    async getTheme(): Promise<'dark' | 'light' | 'system'> {
+        await this.ensureStore();
+        const theme = await this.store!.get<string>('theme')
+            .catch(error => {
+                console.error('Error getting theme:', error);
+                return 'dark';
+            });
+        if (theme === 'light' || theme === 'system') return theme;
+        return 'dark';
+    }
+
+    async setTheme(theme: 'dark' | 'light' | 'system'): Promise<void> {
+        await this.ensureStore();
+        try {
+            await this.store!.set('theme', theme).then(async () => {
+                await this.store!.save();
+            }).catch(error => {
+                console.error('Error setting theme:', error);
+            });
+        } catch (error) {
+            console.error('Error setting theme:', error);
+        }
+    }
+
     async getThumbnailSizeFraction(): Promise<number> {
         await this.ensureStore();
         const fraction = await this.store!.get<number>('thumbnailSizeFraction')
