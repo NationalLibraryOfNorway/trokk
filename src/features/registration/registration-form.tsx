@@ -178,17 +178,17 @@ const RegistrationForm: React.FC = () => {
     return (
         <form className="flex flex-col w-full max-w-full px-4 py-4" onSubmit={handleSubmit(onSubmit)}>
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label className="text-stone-100">Materialtype</label>
+                <label className="text-foreground">Materialtype</label>
                 <select
                     {...register('materialType')}
                     style={{color: '#000000'}}
-                    className={'bg-amber-600'}
+                    className={'bg-primary text-primary-foreground'}
                 >
                     {Object.values(MaterialType).map((type) => (
                         <option
                             key={type}
                             value={type}
-                            className="bg-stone-800 text-amber-500 hover:bg-amber-600 hover:text-stone-900"
+                            className="bg-card text-primary hover:bg-primary hover:text-primary-foreground"
                         >
                             {type}
                         </option>
@@ -197,13 +197,13 @@ const RegistrationForm: React.FC = () => {
             </div>
 
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label className="text-stone-100 mb-2">Skrifttype</label>
+                <label className="text-foreground mb-2">Skrifttype</label>
                 <div className="flex flex-row flex-wrap gap-4">
                     <label className="flex items-center gap-2">
                         <input
                             type='radio'
                             {...register('font')}
-                            className="accent-amber-400"
+                            className="accent-primary"
                             value={'ANTIQUA'}
                         />
                         Antiqua
@@ -212,7 +212,7 @@ const RegistrationForm: React.FC = () => {
                         <input
                             type='radio'
                             {...register('font')}
-                            className="accent-amber-400"
+                            className="accent-primary"
                             value={'FRAKTUR'}
                         />
                         Fraktur
@@ -221,13 +221,13 @@ const RegistrationForm: React.FC = () => {
             </div>
 
             <div className={`flex flex-col mb-4 ${disabled ? 'opacity-30' : ''}`}>
-                <label className="text-stone-100 mb-2">Språk</label>
+                <label className="text-foreground mb-2">Språk</label>
                 <div className="flex flex-row flex-wrap gap-4">
                     <label className="flex items-center gap-2">
                         <input
                             type='radio'
                             {...register('language')}
-                            className="accent-amber-400"
+                            className="accent-primary"
                             value={'NOB'}
                         />
                         Norsk
@@ -236,7 +236,7 @@ const RegistrationForm: React.FC = () => {
                         <input
                             type='radio'
                             {...register('language')}
-                            className="accent-amber-400"
+                            className="accent-primary"
                             value={'SME'}
                         />
                         Samisk
@@ -250,7 +250,7 @@ const RegistrationForm: React.FC = () => {
                 <Button
                     disabled={disabled || state.isSubmitting || isAnyImageRotating || uploadVersionBlocking}
                     type='submit'
-                    className="pt-3 w-full flex items-center justify-center font-bold bg-amber-600 hover:bg-amber-500"
+                    className="pt-3 w-full flex items-center justify-center font-bold bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                     {(state.isSubmitting && barWidth < 100 ) ? (
                         <LoaderCircle size={24} className='animate-spin' />
@@ -260,10 +260,10 @@ const RegistrationForm: React.FC = () => {
                 </Button>
             </div>
             {isAnyImageRotating && (
-                <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
+                <p className="text-primary text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
             )}
             {uploadVersionMessage && (
-                <Alert className={`my-5 ${uploadVersionBlocking ? 'text-red-500 border-red-500 bg-red-500/10' : 'text-blue-500 border-blue-500 bg-blue-500/10'}`}>
+                <Alert className={`my-5 ${uploadVersionBlocking ? 'text-destructive border-destructive bg-destructive/10' : 'text-info border-info bg-info/10'}`}>
                     { uploadVersionBlocking ? <CircleAlertIcon color="#ef4444" /> : <InfoIcon color="#3b82f6" /> }
                     <AlertTitle className="font-bold">Oppdatering tilgjengelig</AlertTitle>
                     <AlertDescription>
@@ -279,12 +279,12 @@ const RegistrationForm: React.FC = () => {
                             <span>Fremdrift</span>
                             <span className="ml-auto">{barWidth.toFixed(0)}%</span>
                         </FieldLabel>
-                        <Progress value={barWidth} className="[&>div]:bg-amber-600 bg-stone-900"/>
+                        <Progress value={barWidth} className="[&>div]:bg-primary bg-card"/>
                     </Field>
                 </div>
             </div>
 
-            {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
+            {successMessage && <p className="text-success mt-4">{successMessage}</p>}
         </form>
     );
 };

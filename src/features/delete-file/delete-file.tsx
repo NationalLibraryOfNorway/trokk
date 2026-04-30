@@ -165,16 +165,16 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
 
     return (
         <Dialog open={delFilePath === childPath} onOpenChange={(open) => setDelFilePath(open ? childPath : null)}>
-            <DialogContent onClick={(e) => e.stopPropagation()} className={'bg-stone-700 w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent onClick={(e) => e.stopPropagation()} className={'bg-card w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
                 <DialogTitle>Er du sikker på at du ønsker å slette bildet?</DialogTitle>
-                <DialogDescription className="text-gray-200">
+                <DialogDescription className="text-muted-foreground">
                     Handlingen kan ikke angres.
                 </DialogDescription>
                 <div className="flex justify-center space-x-2">
                     <button
                         type="button"
                         aria-label="Slett"
-                        className="w-24 hover:bg-red-800"
+                        className="w-24 hover:bg-destructive hover:text-destructive-foreground"
                         onClick={() => {
                             const targetPath = delFilePath ?? childPath;
                             setDelFilePath(null);
@@ -186,7 +186,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                     </button>
                     <DialogClose
                         aria-label="Avbryt"
-                        className="w-24 hover:bg-green-800"
+                        className="w-24 hover:bg-success hover:text-success-foreground"
                         onKeyDown={(e) => e.stopPropagation()}
                     >
                         Avbryt

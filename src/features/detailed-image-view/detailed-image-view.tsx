@@ -74,8 +74,8 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                 <button
                     className={`h-20 px-6 ml-4 rounded self-center ${
                         currentIndex > 0
-                            ? 'bg-stone-300 hover:bg-stone-400 shadow-none text-stone-600'
-                            : 'bg-stone-600 text-stone-700 cursor-not-allowed opacity-50'
+                            ? 'bg-secondary hover:bg-accent shadow-none text-secondary-foreground'
+                            : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
                     }`}
                     onClick={(e) => {
                         e.stopPropagation();
@@ -87,7 +87,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                 <div className="px-6" onClick={(e) => e.stopPropagation()}>
                     <div className="flex flex-col justify-center pt-4">
                         <div className="flex flex-row items-start space-x-2 justify-center">
-                            <p className="text-stone-100 font-bold text-3xl ml-10 ">{isChecked ? 'Forside valgt' : 'Velg forside'}</p>
+                            <p className="text-foreground font-bold text-3xl ml-10 ">{isChecked ? 'Forside valgt' : 'Velg forside'}</p>
                             <Checkbox
                                 isChecked={isChecked}
                                 onChange={() => handleCheck()}
@@ -95,11 +95,11 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                                 isDisabled={false}
                             />
                         </div>
-                        <p className="text-center text-lg text-stone-200">Viser
+                        <p className="text-center text-lg text-muted-foreground">Viser
                             bilde {currentIndex + 1} av {totalImagesInFolder}</p>
                     </div>
                     <div
-                        className={`relative group mt-4 mb-10 border-2 mx-auto flex items-center justify-center ${isChecked ? 'border-4 border-amber-400' : 'border-gray-300'}`}
+                        className={`relative group mt-4 mb-10 border-2 mx-auto flex items-center justify-center ${isChecked ? 'border-4 border-primary' : 'border-border'}`}
                         style={{
                             maxWidth: 'calc(100vw - 400px)',
                             maxHeight: 'calc(100vh - 250px)',
@@ -140,7 +140,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                         )}
 
                         {hasError && (
-                            <div className="absolute inset-0 flex items-center bg-stone-900 justify-center z-[6]">
+                            <div className="absolute inset-0 flex items-center bg-card justify-center z-[6]">
                                 <p className="text-white text-sm px-4 text-center">
                                     <LoaderCircle className="animate-spin mx-auto mb-2" />
                                     Genererer forhåndsvisning…
@@ -180,8 +180,8 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                 <button
                     className={`h-20 px-6 mr-4 rounded self-center ${
                         currentIndex < totalImagesInFolder - 1
-                            ? 'bg-stone-300 hover:bg-stone-400 shadow-none text-stone-600'
-                            : 'bg-stone-600 text-stone-700 cursor-not-allowed opacity-50'
+                            ? 'bg-secondary hover:bg-accent shadow-none text-secondary-foreground'
+                            : 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
                     }`}
                     onClick={(e) => {
                         e.stopPropagation();
