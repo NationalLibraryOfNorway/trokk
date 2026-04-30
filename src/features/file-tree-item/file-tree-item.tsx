@@ -28,7 +28,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
     const selected = file.path === currentPath || getWorkingDirectory(file)?.path === currentPath;
 
     const getSelectedDirectoryHighlight = (): string => {
-        return selected ? 'bg-blue-500 text-white' : 'hover:bg-stone-700';
+        return selected ? 'bg-selected text-selected-foreground' : 'hover:bg-accent';
     };
 
     //Avoids having two progress percentages when merge folder is open
@@ -41,17 +41,17 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
     }
 
     const pillClassName = summary.status === 'odd'
-        ? 'bg-red-950 text-red-200 ring-red-900/80'
-        : 'bg-emerald-950 text-emerald-200 ring-emerald-900/80';
+        ? 'bg-destructive/20 text-destructive ring-destructive/30'
+        : 'bg-success/20 text-success ring-success/30';
 
     return (
         <li key={file.path}>
             <div className="flex items-center min-w-0">
                 <span className="mr-2 cursor-pointer my-1 shrink-0" onClick={() => toggleFolderExpand(file)}>
                     {!file.opened ? (
-                        <ChevronRight size="16" className="text-stone-500"/>
+                        <ChevronRight size="16" className="text-muted-foreground"/>
                     ) : (
-                        <ChevronDown size="16" className="text-stone-500"/>
+                        <ChevronDown size="16" className="text-muted-foreground"/>
                     )}
                 </span>
                 <span
@@ -77,7 +77,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                         <Folder size="16" className="mb-1 shrink-0"/>
                     )}
                     {allUploadProgress.dir[file.path] && !hasChildProgress && (
-                        <span className="flex items-center pr-1 text-amber-400 shrink-0">
+                        <span className="flex items-center pr-1 text-primary shrink-0">
                             <Upload className="mb-1" size="16"/>
                             &nbsp;
                             {calculateProgress(allUploadProgress.dir[file.path])}
@@ -97,7 +97,7 @@ const FileTreeItem: React.FC<FileTreeItemProps> = ({
                 </span>
             </div>
             {file.opened && visibleChildFolders.length > 0 && (
-                <ul className="pl-10 min-w-0 relative before:content-[''] before:absolute before:-ml-8 before:top-0 before:bottom-0 before:w-px before:bg-stone-600">
+                <ul className="pl-10 min-w-0 relative before:content-[''] before:absolute before:-ml-8 before:top-0 before:bottom-0 before:w-px before:bg-border">
                     {visibleChildFolders.map((child) => (
                         <FileTreeItem
                             key={child.path}

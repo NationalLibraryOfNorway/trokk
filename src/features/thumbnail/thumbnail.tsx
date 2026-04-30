@@ -61,8 +61,8 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
 
         if (isHiddenDir) return null;
 
-        const checkedBorder = 'bg-amber-400';
-        const focusedBorder = 'bg-blue-600';
+        const checkedBorder = 'bg-primary';
+        const focusedBorder = 'bg-selected';
 
         let frameClass = 'w-full rounded-t-lg p-2 relative z-0';
 
@@ -70,7 +70,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
 
         const checkedGradientOverlay =
             ' before:content-[""] before:absolute before:inset-0 before:rounded-t-lg before:z-[5] before:pointer-events-none before:transition-opacity' +
-            ' before:bg-gradient-to-br before:from-amber-400 before:from-[0%] before:via-amber-400 before:via-[60%] before:to-blue-600 before:to-[75%]';
+            ' before:bg-gradient-to-br before:from-primary before:from-[0%] before:via-primary before:via-[60%] before:to-selected before:to-[75%]';
 
         if (isChecked) {
             frameClass += ` ${checkedBorder} before:opacity-0` + checkedGradientOverlay;
@@ -124,7 +124,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                 role="button"
                 tabIndex={0}
                 key={fileTree.path}
-                className={`flex flex-col p-0 items-center bg-stone-900 rounded-lg group ${!isDisabled ? 'hover:bg-stone-800' : ''}`}
+                className={`flex flex-col p-0 items-center bg-card rounded-lg group ${!isDisabled ? 'hover:bg-accent' : ''}`}
                 onDoubleClick={!isDisabled ? onDoubleClick : undefined}
                 ref={ref}
             >
@@ -166,7 +166,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                         </div>
                     )}
                 </div>
-                <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-amber-400' : ''} ${isDisabled ? 'opacity-30 cursor-default' : ''}`}>
+                <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-primary' : ''} ${isDisabled ? 'opacity-30 cursor-default' : ''}`}>
                     {fileName}
                 </i>
             </div>
