@@ -30,7 +30,7 @@ html, body {
 
         /* Muted/disabled */
         --muted: 60 5% 91%;                /* stone-200 */
-        --muted-foreground: 25 5% 45%;     /* stone-500 */
+        --muted-foreground: 25 5% 43%;     /* stone-500 */
 
         /* Accent/highlights */
         --accent: 60 5% 85%;               /* stone-300 */
@@ -46,11 +46,11 @@ html, body {
         --ring: 38 92% 50%;                /* amber */
 
         /* Semantic tokens */
-        --warning: 38 92% 50%;             /* amber-500 */
+        --warning: 38 92% 35%;             /* amber-700 */
         --warning-foreground: 25 5% 11%;
         --success: 142 72% 29%;            /* green-700 */
         --success-foreground: 0 0% 98%;
-        --info: 221 83% 53%;               /* blue-500 */
+        --info: 199 89% 48%;               /* sky/cyan */
         --info-foreground: 0 0% 98%;
         --selected: 221 83% 53%;           /* blue-500 */
         --selected-foreground: 0 0% 98%;
@@ -106,7 +106,7 @@ html, body {
         --accent-foreground: 0 0% 98%;
 
         /* Destructive/errors */
-        --destructive: 0 67% 33%;          /* red-800 */
+        --destructive: 0 72% 51%;          /* red-800 */
         --destructive-foreground: 0 0% 98%;
 
         /* Borders */
@@ -118,7 +118,7 @@ html, body {
         --warning: 38 92% 50%;             /* amber-500 */
         --warning-foreground: 25 5% 11%;
         --success: 142 69% 45%;            /* green-500ish, visible on dark */
-        --success-foreground: 0 0% 98%;
+        --success-foreground: 25 5% 11%;
         --info: 221 83% 65%;               /* blue-400ish, lighter for dark bg */
         --info-foreground: 0 0% 98%;
         --selected: 221 83% 53%;           /* blue-500 */
