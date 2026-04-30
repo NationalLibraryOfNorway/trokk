@@ -18,8 +18,9 @@ import {getErrorMessage} from '@/lib/utils.ts';
 import {useAuth} from '@/context/auth-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
-import {LoaderCircle} from 'lucide-react';
+import {CircleAlertIcon, InfoIcon, LoaderCircle} from 'lucide-react';
 import {Field, FieldLabel} from '@/components/ui/field.tsx';
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 
 const RegistrationForm: React.FC = () => {
     const {state, dispatch} = useTrokkFiles();
@@ -249,9 +250,9 @@ const RegistrationForm: React.FC = () => {
                 <Button
                     disabled={disabled || state.isSubmitting || isAnyImageRotating || uploadVersionBlocking}
                     type='submit'
-                    className="w-full flex items-center justify-center"
+                    className="pt-3 w-full flex items-center justify-center font-bold bg-amber-600 hover:bg-amber-500"
                 >
-                    {state.isSubmitting ? (
+                    {(state.isSubmitting && barWidth < 100 ) ? (
                         <LoaderCircle size={24} className='animate-spin' />
                     ) : (
                         errorMessage ? 'Forsøk TRØKK på nytt!' : 'TRØKK!'
@@ -262,9 +263,13 @@ const RegistrationForm: React.FC = () => {
                 <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
             )}
             {uploadVersionMessage && (
-                <p className={`text-sm mt-2 ${uploadVersionBlocking ? 'text-red-500' : 'text-amber-500'}`}>
-                    {uploadVersionMessage}
-                </p>
+                <Alert className={`my-5 ${uploadVersionBlocking ? 'text-red-500 border-red-500 bg-red-500/10' : 'text-blue-500 border-blue-500 bg-blue-500/10'}`}>
+                    { uploadVersionBlocking ? <CircleAlertIcon color="#ef4444" /> : <InfoIcon color="#3b82f6" /> }
+                    <AlertTitle className="font-bold">Oppdatering tilgjengelig</AlertTitle>
+                    <AlertDescription>
+                        {uploadVersionMessage}
+                    </AlertDescription>
+                </Alert>
             )}
 
             <div className="mt-2 w-full h-full flex flex-col relative">

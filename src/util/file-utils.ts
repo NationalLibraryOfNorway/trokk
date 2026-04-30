@@ -13,6 +13,74 @@ export const formatFileNames = (fileName?: string): string => {
     return fileName
 }
 
+const HIDDEN_SUPPORT_FOLDERS = ['.thumbnails', '.previews'];
+
+const isHiddenSupportEntry = (fileTree: FileTree): boolean =>
+    HIDDEN_SUPPORT_FOLDERS.some((prefix) => fileTree.name.startsWith(prefix));
+
+export const getWorkingDirectory = (fileTree: FileTree | undefined): FileTree | undefined => {
+    if (!fileTree) {
+        return undefined;
+    }
+
+    const mergeChild = fileTree.children?.find(
+        (child) => child.isDirectory && child.name === 'merge'
+    );
+
+    return mergeChild ?? fileTree;
+};
+
+export const getWorkingImageChildren = (fileTree: FileTree | undefined): FileTree[] => {
+    const targetDirectory = getWorkingDirectory(fileTree);
+
+    return targetDirectory?.children?.filter((child) =>
+        !child.isDirectory &&
+        !isHiddenSupportEntry(child) &&
+        isImage(child.path)
+    ) ?? [];
+};
+
+export type FolderImageStatus = 'none' | 'odd' | 'ready';
+
+export interface FolderImageSummary {
+    targetFolder: FileTree | undefined;
+    imageCount: number;
+    isEven: boolean;
+    showsPill: boolean;
+    status: FolderImageStatus;
+}
+
+export const getFolderImageSummary = (fileTree: FileTree | undefined): FolderImageSummary => {
+    const targetFolder = getWorkingDirectory(fileTree);
+    const imageCount = getWorkingImageChildren(fileTree).length;
+
+    if (imageCount === 0) {
+        return {
+            targetFolder,
+            imageCount,
+            isEven: true,
+            showsPill: false,
+            status: 'none',
+        };
+    }
+
+    const isEven = imageCount % 2 === 0;
+
+    return {
+        targetFolder,
+        imageCount,
+        isEven,
+        showsPill: true,
+        status: isEven ? 'ready' : 'odd',
+    };
+};
+
+export const getBreadcrumbSegments = (basePath: string, currentPath?: string): string[] => {
+    if(currentPath === null) return [];
+    const path = currentPath?.substring(basePath.length) || '';
+    return path.split(sep()).filter(Boolean);
+};
+
 /*  Thumbnail directories are generated where '.tif' files are located.
  *  Used to find corresponding '.webp' thumbnail for a tif, for example:
  *

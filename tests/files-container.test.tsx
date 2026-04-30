@@ -4,6 +4,7 @@ import {TrokkFilesProvider, useTrokkFiles} from '../src/context/trokk-files-cont
 import {SelectionProvider, useSelection} from '../src/context/selection-context';
 import {RotationProvider} from '../src/context/rotation-context';
 import {beforeAll, beforeEach, describe, expect, it, Mock, vi} from 'vitest';
+import {FileTree} from '../src/model/file-tree';
 
 vi.mock('../src/context/trokk-files-context', () => {
     return {
@@ -182,13 +183,37 @@ describe('FilesContainer', () => {
 
     it('renders empty folder message when selected folder has no children', () => {
         (useTrokkFiles as Mock).mockReturnValue({
-            state: {current: {name: 'Empty', path: '/empty', children: []}},
+            state: {current: {name: 'Empty', path: '/empty/path', children: []}, fileTrees: [], isEven: true, basePath: '/empty'},
             dispatch: vi.fn(),
         });
 
         renderWithContext();
 
         expect(screen.queryByText(/Ingen filer i mappen/i)).not.toBeNull();
+    });
+
+    it('renders breadcrumbs for the active folder', () => {
+        const selectedFolder = new FileTree('Mappe', true, false, false, '/root/Serie/Mappe', false, [
+            new FileTree('example.jpg', false, true, false, '/root/Serie/Mappe/example.jpg'),
+        ]);
+        const parentFolder = new FileTree('Serie', true, false, false, '/root/Serie', true, [selectedFolder]);
+
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: selectedFolder,
+                fileTrees: [parentFolder],
+                preview: undefined,
+                treeIndex: new Map<string, {name: string; path: string; isDirectory: boolean}>(),
+                isEven: false,
+                basePath: '/root',
+            },
+            dispatch: vi.fn(),
+        });
+        renderWithContext();
+
+        expect(screen.queryByText(/root/)).toBeNull();
+        expect(screen.queryByText(/Serie/)).not.toBeNull();
+        expect(screen.queryByText(/Mappe/)).not.toBeNull();
     });
 
     it('does not create a pane-owned overflow-auto scroller inside the file grid content area', () => {

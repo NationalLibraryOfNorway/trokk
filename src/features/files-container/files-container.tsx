@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {Folder} from 'lucide-react';
+import {ChevronRight, Folder} from 'lucide-react';
 import {useTrokkFiles} from '@/context/trokk-files-context.tsx';
 import Thumbnail from '@/features/thumbnail/thumbnail.tsx';
 import Checkbox from '@/components/ui/checkbox.tsx';
@@ -15,6 +15,7 @@ import {
 import {useKeyboardNavigation} from '@/hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 import {cn} from '@/lib/utils.ts';
+import {getBreadcrumbSegments} from '@/util/file-utils.ts';
 
 const FilesContainer: React.FC = () => {
     const [delFilePath, setDelFilePath] = useState<string | null>(null);
@@ -31,7 +32,11 @@ const FilesContainer: React.FC = () => {
     } = useSelection();
 
     const files = state.current?.children?.filter(child => !child.isDirectory) || [];
-    const isEven = state.isEven;
+    const visibleChildren = state.current?.children?.filter(child =>
+        !child.name.startsWith('.thumbnails') &&
+        !child.name.startsWith('.previews')
+    ) || [];
+    const breadcrumbSegments = getBreadcrumbSegments(state.basePath, state.current?.path);
 
     const containerRef = useRef<HTMLDivElement>(null);
     const fileRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -76,29 +81,45 @@ const FilesContainer: React.FC = () => {
                          setPreviewDialogOpen(false)
                      }
                  }}>
-                {state.current && state.current.children?.length !== 0 && (
-                    <div className="p-4 border-b border-stone-600 flex items-center gap-4 flex-shrink-0">
-                        <p className="font-semibold">
-                            {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
-                        </p>
-                        <label htmlFor="columns" className="text-sm font-medium text-gray-300 ml-auto ">
-                            Bilder per rad: {columns}
-                        </label>
-                        <input
-                            id="columns"
-                            type="range"
-                            min={1}
-                            max={10}
-                            value={columns}
-                            onChange={(e) => setColumns(Number(e.target.value))}
-                            className="w-full max-w-[150px] mb-1 h-2 bg-stone-500 rounded-lg appearance-none cursor-pointer px-0"
-                        />
-                    </div>
-                )}
-                {state.current?.children && !isEven && (
-                    <div
-                        className="py-3 bg-red-900 flex items-center flex-shrink-0 w-full">
-                        <p className="font-semibold mx-auto">OBS! Det er et oddetall av filer i denne mappen</p>
+                {state.current && (
+                    <div className="border-b border-stone-600 px-4 py-3 flex flex-col gap-3 flex-shrink-0">
+                        <div className="flex min-w-0 items-center gap-2 text-sm text-stone-300">
+                            <Folder size="16" className="shrink-0"/>
+                            <nav aria-label="Arbeidsmappe" className="flex min-w-0 items-center gap-1 overflow-hidden">
+                                {breadcrumbSegments.map((segment, index) => (
+                                    <React.Fragment key={segment}>
+                                        {index > 0 && <ChevronRight size="14" className="shrink-0 text-stone-500"/>}
+                                        <span
+                                            className={cn(
+                                                'truncate whitespace-nowrap',
+                                                index == breadcrumbSegments.length - 1 ? 'font-semibold text-stone-100' : 'text-stone-400'
+                                            )}
+                                        >
+                                            {segment}
+                                        </span>
+                                    </React.Fragment>
+                                ))}
+                            </nav>
+                        </div>
+                        {visibleChildren.length !== 0 && (
+                            <div className="flex items-center gap-4">
+                                <p className="font-semibold">
+                                    {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
+                                </p>
+                                <label htmlFor="columns" className="text-sm font-medium text-gray-300 ml-auto ">
+                                    Bilder per rad: {columns}
+                                </label>
+                                <input
+                                    id="columns"
+                                    type="range"
+                                    min={1}
+                                    max={10}
+                                    value={columns}
+                                    onChange={(e) => setColumns(Number(e.target.value))}
+                                    className="w-full max-w-[150px] mb-1 h-2 bg-stone-500 rounded-lg appearance-none cursor-pointer px-0"
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
                 <div className="flex-1">
@@ -111,13 +132,9 @@ const FilesContainer: React.FC = () => {
                     >
                         {state.current && state.current.children ? (
                             <>
-                                {state.current.children.length !== 0 ? (
+                                {visibleChildren.length !== 0 ? (
 
-                                    state.current.children
-                                        .filter(child =>
-                                            !child.name.startsWith('.thumbnails') &&
-                                            !child.name.startsWith('.previews')
-                                        )
+                                    visibleChildren
                                         .map((child, index) =>
                                             child.isDirectory ? (
                                                 <button
