@@ -18,11 +18,12 @@ import {getErrorMessage} from '@/lib/utils.ts';
 import {useAuth} from '@/context/auth-context.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Progress} from '@/components/ui/progress.tsx';
-import {LoaderCircle} from 'lucide-react';
+import {CircleAlertIcon, InfoIcon, LoaderCircle} from 'lucide-react';
 import {Field, FieldLabel} from '@/components/ui/field.tsx';
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 
 const RegistrationForm: React.FC = () => {
-    const {state} = useTrokkFiles();
+    const {state, dispatch} = useTrokkFiles();
     const {allUploadProgress, setAllUploadProgress} = useUploadProgress();
     const {secrets} = useSecrets();
     const {uploadVersionBlocking, uploadVersionMessage, checkUploadVersionGate} = useVersion();
@@ -34,8 +35,6 @@ const RegistrationForm: React.FC = () => {
     const [barWidth, setBarWidth] = useState(0);
     const appWindow = getCurrentWebviewWindow();
     const isAnyImageRotating = hasAnyRotating();
-
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [disabled, setDisabled] = useState(false);
     const {
         register,
@@ -94,7 +93,7 @@ const RegistrationForm: React.FC = () => {
                 setDisabled(false);
                 return;
             }
-            setIsSubmitting(true);
+            dispatch({type: 'SET_IS_SUBMITTING', payload: true});
             setDisabled(true);
             try {
                 const hostname = await invoke<string>('get_hostname');
@@ -110,11 +109,13 @@ const RegistrationForm: React.FC = () => {
                             handleError('Kunne ikke starte innlogging.', undefined, String(loginError));
                         });
                     }
+                } else if (errorMessage === 'Version blocked') {
+                    return;
                 } else {
                     handleError('Kunne ikke starte opplasting.', undefined, errorMessage);
                 }
             } finally {
-                setIsSubmitting(false);
+                dispatch({type: 'SET_IS_SUBMITTING', payload: false});
                 // If folder is still selected after submit attempt, allow retry.
                 setDisabled(state.current?.path === undefined);
             }
@@ -135,11 +136,11 @@ const RegistrationForm: React.FC = () => {
             const currentUploadProgress = state.current?.path && allUploadProgress?.dir?.[state.current.path];
             if (currentUploadProgress) {
                 setBarWidthFromProgress(allUploadProgress);
-                setIsSubmitting(true);
+                dispatch({type: 'SET_IS_SUBMITTING', payload: true});
                 setDisabled(true);
             } else {
                 setBarWidth(0);
-                setIsSubmitting(false);
+                dispatch({type: 'SET_IS_SUBMITTING', payload: false});
                 setDisabled(false);
                 resetField('materialType');
                 resetField('font');
@@ -247,11 +248,11 @@ const RegistrationForm: React.FC = () => {
             </p>
             <div className={`flex ${disabled || isAnyImageRotating ? 'opacity-30' : ''}`}>
                 <Button
-                    disabled={disabled || isSubmitting || isAnyImageRotating || uploadVersionBlocking}
+                    disabled={disabled || state.isSubmitting || isAnyImageRotating || uploadVersionBlocking}
                     type='submit'
-                    className="w-full flex items-center justify-center"
+                    className="pt-3 w-full flex items-center justify-center font-bold bg-amber-600 hover:bg-amber-500"
                 >
-                    {isSubmitting ? (
+                    {(state.isSubmitting && barWidth < 100 ) ? (
                         <LoaderCircle size={24} className='animate-spin' />
                     ) : (
                         errorMessage ? 'Forsøk TRØKK på nytt!' : 'TRØKK!'
@@ -262,14 +263,18 @@ const RegistrationForm: React.FC = () => {
                 <p className="text-amber-500 text-sm mt-2">Venter på at bilderotasjon fullføres...</p>
             )}
             {uploadVersionMessage && (
-                <p className={`text-sm mt-2 ${uploadVersionBlocking ? 'text-red-500' : 'text-amber-500'}`}>
-                    {uploadVersionMessage}
-                </p>
+                <Alert className={`my-5 ${uploadVersionBlocking ? 'text-red-500 border-red-500 bg-red-500/10' : 'text-blue-500 border-blue-500 bg-blue-500/10'}`}>
+                    { uploadVersionBlocking ? <CircleAlertIcon color="#ef4444" /> : <InfoIcon color="#3b82f6" /> }
+                    <AlertTitle className="font-bold">Oppdatering tilgjengelig</AlertTitle>
+                    <AlertDescription>
+                        {uploadVersionMessage}
+                    </AlertDescription>
+                </Alert>
             )}
 
             <div className="mt-2 w-full h-full flex flex-col relative">
                 <div className="flex items-center gap-2">
-                    <Field className="w-full max-w-sm">
+                    <Field className="w-full">
                         <FieldLabel htmlFor="progress-upload">
                             <span>Fremdrift</span>
                             <span className="ml-auto">{barWidth.toFixed(0)}%</span>
@@ -280,15 +285,6 @@ const RegistrationForm: React.FC = () => {
             </div>
 
             {successMessage && <p className="text-green-600 mt-4">{successMessage}</p>}
-            {errorMessage && (
-                <div className="mt-4">
-                    {errorMessage.split('\n').map((line, idx) => (
-                        <span key={idx} className="text-red-600 block">
-                            {line}
-                        </span>
-                    ))}
-                </div>
-            )}
         </form>
     );
 };

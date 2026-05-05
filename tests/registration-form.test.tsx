@@ -1,14 +1,15 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {cleanup, render, screen, waitFor} from '@testing-library/react';
+import {cleanup, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import RegistrationForm from '../src/features/registration/registration-form';
 import {UploadProgressProvider} from '../src/context/upload-progress-context';
 import {TransferLogProvider} from '../src/context/transfer-log-context';
-import {SecretProvider} from '../src/context/secret-context';
-import {SelectionProvider, useSelection} from '../src/context/selection-context';
+import {SecretProvider} from '@/context/secret-context.tsx';
+import {SelectionProvider, useSelection} from '@/context/selection-context.tsx';
 import {RotationProvider} from '../src/context/rotation-context';
-import {AuthProvider} from '../src/context/auth-context';
+import {AuthProvider} from '@/context/auth-context.tsx';
 import {useEffect} from 'react';
-import {MessageProvider} from '../src/context/message-context';
+import {MessageProvider} from '@/context/message-context.tsx';
+import ErrorModal from '@/features/error-log/error-modal.tsx';
 
 vi.mock('@tauri-apps/api/core', () => ({
     invoke: vi.fn().mockResolvedValue({ oidcBaseUrl: 'http://mock-url' }),
@@ -38,7 +39,9 @@ vi.mock('uuidv7', () => ({
 vi.mock('@/tauri-store/setting-store.ts', () => ({
     settings: {
         getAuthResponse: vi.fn(() => Promise.resolve({userInfo: {name: 'Test User'}})),
-        getScannerPath: vi.fn(() => Promise.resolve('/scanner'))
+        getScannerPath: vi.fn(() => Promise.resolve('/scanner')),
+        getErrorLogEntries: vi.fn(() => Promise.resolve([])),
+        setErrorLogEntries: vi.fn(() => Promise.resolve()),
     }
 }));
 
@@ -53,6 +56,20 @@ vi.mock('@tauri-apps/api/path', async (importOriginal) => {
 
 let mockLoggedOut = false;
 let mockIsLoggingIn = false;
+let mockCurrentPath: string | undefined = '/mock/path';
+const mockSecrets = {papiPath: 'http://mock-papi'};
+const mockUploadProgressState = { dir: {} as Record<string, unknown> };
+const mockTrokkState: {
+    current: {
+        path: string;
+        name: string;
+    } | undefined;
+} = {
+    current: {
+        path: '/mock/path',
+        name: 'Test File',
+    }
+};
 const mockLogin = vi.fn();
 const mockAuthResponse = {tokenResponse: {accessToken: 'token'}};
 vi.mock('@/context/auth-context.tsx', () => ({
@@ -70,11 +87,18 @@ vi.mock('@/context/post-registration-context.tsx', () => ({
     usePostRegistration: () => ({ postRegistration: mockPostRegistration })
 }));
 
+vi.mock('@/context/trokk-files-context.tsx', () => ({
+    useTrokkFiles: () => ({
+        state: mockTrokkState,
+        dispatch: vi.fn(),
+    })
+}));
+
 // Don't mock SelectionProvider - use the real one to allow state updates
 
 vi.mock('@/context/secret-context.tsx', () => ({
     useSecrets: () => ({
-        secrets: {papiPath: 'http://mock-papi'}
+        secrets: mockSecrets
     }),
     SecretProvider: ({children}: { children: React.ReactNode }) => <>{children}</>
 }));
@@ -100,9 +124,8 @@ vi.mock('@/context/transfer-log-context.tsx', () => ({
 vi.mock('../src/context/upload-progress-context', () => ({
     UploadProgressProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
     useUploadProgress: () => ({
-        progress: 0,
-        setProgress: vi.fn(),
-        dir: { '/mock/path': {} },
+        allUploadProgress: mockUploadProgressState,
+        setAllUploadProgress: vi.fn(),
     }),
 }));
 
@@ -134,6 +157,7 @@ function RegistrationFormWrapper({ checkedItems }: { checkedItems: string[] }) {
                 <TransferLogProvider>
                     <UploadProgressProvider>
                         <MessageProvider>
+                            <ErrorModal />
                             <RotationProvider>
                                 <SelectionProvider>
                                     <SetSelection checkedItems={checkedItems} />
@@ -152,8 +176,14 @@ function SetSelection({ checkedItems }: { checkedItems: string[] }) {
     const { setCheckedItems } = useSelection();
 
     useEffect(() => {
-        setCheckedItems(checkedItems);
-    }, [checkedItems]);
+        const timeoutId = window.setTimeout(() => {
+            setCheckedItems(checkedItems);
+        }, 0);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [checkedItems, setCheckedItems]);
 
     return null;
 }
@@ -166,6 +196,14 @@ describe('RegistrationForm', () => {
         mockUploadVersionMessage = null;
         mockLoggedOut = false;
         mockIsLoggingIn = false;
+        mockCurrentPath = '/mock/path';
+        mockTrokkState.current = {
+            path: mockCurrentPath,
+            name: 'Test File',
+        };
+        mockPostRegistration.mockReset();
+        mockLogin.mockReset();
+        mockCheckUploadVersionGate.mockResolvedValue(false);
     });
 
     it('renders without crashing', async () => {
@@ -179,16 +217,8 @@ describe('RegistrationForm', () => {
     });
 
     it('disables submit button when state.current.path is undefined', async () => {
-        vi.doMock('@/context/trokk-files-context.tsx', () => ({
-            useTrokkFiles: () => ({
-                state: {
-                    current: {
-                        path: undefined,
-                        name: 'Test File'
-                    }
-                }
-            })
-        }));
+        mockCurrentPath = undefined;
+        mockTrokkState.current = undefined;
 
         render(<RegistrationFormWrapper checkedItems={['id1']} />);
         await waitFor(() => {
@@ -223,6 +253,107 @@ describe('RegistrationForm', () => {
             expect(button.hasAttribute('disabled')).toBe(true);
             expect(screen.getByText(/Oppdater appen før du kan TRØKKE/i)).toBeDefined();
         });
+    });
+
+    it('shows a shared blocking error when submitting without selected fronts', async () => {
+        render(<RegistrationFormWrapper checkedItems={[]} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /TRØKK!/i }));
+
+        await waitFor(() => {
+            expect(screen.getByRole('dialog')).toBeDefined();
+            expect(screen.getByText(/Velg forsider før du kan gå videre!/i)).toBeDefined();
+        });
+        expect(mockPostRegistration).not.toHaveBeenCalled();
+        expect(within(screen.getByText(/Materialtype/i).closest('form')!).queryByText(/Velg forsider før du kan gå videre!/i)).toBeNull();
+    });
+
+    it('shows a shared blocking error and starts login when submitting while logged out', async () => {
+        mockLoggedOut = true;
+        mockLogin.mockResolvedValue(undefined);
+
+        render(<RegistrationFormWrapper checkedItems={['id1']} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/1 forside valgt/i)).toBeDefined();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /TRØKK!/i }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/Du må logge inn før du kan TRØKKE\. Starter innlogging/i)).toBeDefined();
+        });
+        expect(mockLogin).toHaveBeenCalledTimes(1);
+        expect(mockPostRegistration).not.toHaveBeenCalled();
+    });
+
+    it('replaces the login-required message with a more specific shared error when login start fails', async () => {
+        mockLoggedOut = true;
+        mockLogin.mockRejectedValueOnce(new Error('innlogging feilet'));
+
+        render(<RegistrationFormWrapper checkedItems={['id1']} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/1 forside valgt/i)).toBeDefined();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /TRØKK!/i }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/Kunne ikke starte innlogging\./i)).toBeDefined();
+        });
+        expect(screen.queryByText(/Du må logge inn før du kan TRØKKE\. Starter innlogging/i)).toBeNull();
+    });
+
+    it('shows a shared upload-start error when the submit path cannot continue into registration processing', async () => {
+        mockPostRegistration.mockRejectedValueOnce(new Error('opplasting feilet'));
+
+        render(<RegistrationFormWrapper checkedItems={['id1']} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/1 forside valgt/i)).toBeDefined();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /TRØKK!/i }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/Kunne ikke starte opplasting\./i)).toBeDefined();
+        });
+    });
+
+    it('clears a previous blocking error when the user corrects selection and retries the flow', async () => {
+        const {rerender} = render(<RegistrationFormWrapper checkedItems={[]} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /TRØKK!/i }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/Velg forsider før du kan gå videre!/i)).toBeDefined();
+        });
+
+        rerender(<RegistrationFormWrapper checkedItems={['id1']} />);
+
+        await waitFor(() => {
+            expect(screen.queryByRole('dialog')).toBeNull();
+        });
+    });
+
+    it('keeps the existing inline version-gate message out of the shared error area', async () => {
+        mockUploadVersionMessage = 'Ny delversjon er tilgjengelig. Oppdater appen før du kan TRØKKE.';
+        mockCheckUploadVersionGate.mockResolvedValueOnce(true);
+
+        render(<RegistrationFormWrapper checkedItems={['id1']} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/1 forside valgt/i)).toBeDefined();
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: /TRØKK!/i }));
+
+        await waitFor(() => {
+            expect(screen.getByText(/Oppdater appen før du kan TRØKKE/i)).toBeDefined();
+        });
+        expect(screen.queryByText(/Kunne ikke TRØKKE dette videre\./i)).toBeNull();
+        expect(mockPostRegistration).not.toHaveBeenCalled();
     });
 
 });

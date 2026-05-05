@@ -14,3 +14,19 @@ export function getErrorMessage(error: unknown): string {
   }
   return String(error);
 }
+
+export type ErrorDiagnostics = {
+  detail?: string;
+  stackTrace?: string;
+  logs?: string[];
+}
+
+export function getErrorDiagnostics(error: unknown): ErrorDiagnostics {
+  const stackTrace = error instanceof Error ? error.stack : undefined;
+
+  return {
+    detail: getErrorMessage(error),
+    stackTrace,
+    logs: stackTrace ? [stackTrace] : [],
+  };
+}

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useTrokkFiles } from '@/context/trokk-files-context';
 import { FileTree } from '@/model/file-tree';
 import FileTreeItem from '../file-tree-item/file-tree-item.tsx';
+import { getWorkingDirectory } from '@/util/file-utils.ts';
 
 const FileTreeComponent: React.FC = () => {
     const { state, dispatch } = useTrokkFiles();
@@ -9,7 +10,7 @@ const FileTreeComponent: React.FC = () => {
     useEffect(() => {
         for (const child of state.fileTrees) {
             if (child.isDirectory) {
-                changeViewDirectory(child);
+                changeViewDirectory(getWorkingDirectory(child) ?? child);
                 break;
             }
         }
@@ -37,9 +38,11 @@ const FileTreeComponent: React.FC = () => {
     };
 
     return (
-        <div className="h-[calc(96vh)] overflow-y-scroll w-full mt-4 mx-2">
+        <div className="w-full min-w-0 overflow-hidden px-2 py-4">
             <ul>
-                {state.fileTrees.length > 0 && state.fileTrees.map((file) => (
+                {state.fileTrees
+                    .filter((file) => file.isDirectory)
+                    .map((file) => (
                     <FileTreeItem
                         key={file.path}
                         file={file}

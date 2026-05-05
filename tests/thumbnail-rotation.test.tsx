@@ -12,6 +12,12 @@ vi.mock('../src/context/trokk-files-context.tsx', () => ({
     useTrokkFiles: vi.fn(),
 }));
 
+vi.mock('../src/context/message-context.tsx', () => ({
+    useMessage: () => ({
+        handleBackendError: vi.fn(),
+    }),
+}));
+
 vi.mock('../src/context/version-context.tsx', () => ({
     useVersion: () => ({}),
     VersionProvider: ({children}: { children: unknown }) => <>{children}</>,
@@ -44,6 +50,7 @@ const mockTrokkFilesState = {
     current: undefined,
     preview: undefined,
     isEven: true,
+    isSubmitting: false,
 };
 
 function createMockFileTree(name: string, path: string): FileTree {
@@ -68,6 +75,7 @@ const baseProps = {
     isFocused: false,
     setDelFilePath: vi.fn(),
     delFilePath: null,
+    isDisabled: false,
 };
 
 const componentWithContext = (fileTree: FileTree, props: typeof baseProps) => {

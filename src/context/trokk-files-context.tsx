@@ -12,7 +12,7 @@ import {FileTree} from '../model/file-tree';
 import {invoke} from '@tauri-apps/api/core';
 import {ConversionResult} from '../model/thumbnail';
 import {documentDir, sep} from '@tauri-apps/api/path';
-import {isImage} from '../util/file-utils.ts';
+import {getFolderImageSummary, isImage} from '../util/file-utils.ts';
 
 export interface TrokkFilesState {
     basePath: string;
@@ -21,6 +21,7 @@ export interface TrokkFilesState {
     current: FileTree | undefined;
     preview: FileTree | undefined;
     isEven: boolean;
+    isSubmitting: boolean;
 }
 
 interface InitializeState {
@@ -44,8 +45,8 @@ type TrokkFilesAction =
     | { type: 'SET_CURRENT_AND_EXPAND_PARENTS'; payload: FileTree }
     | { type: 'REMOVE_FOLDER_PATH'; payload: string }
     | { type: 'RESET' }
-    | { type: 'UPDATE_STORE' }
     | { type: 'UPDATE_PREVIEW'; payload: FileTree | undefined }
+    | { type: 'SET_IS_SUBMITTING'; payload: boolean}
 
 const initialState: TrokkFilesState = {
     basePath: await documentDir(),
@@ -53,7 +54,8 @@ const initialState: TrokkFilesState = {
     treeIndex: new Map<string, FileTree>(),
     current: undefined,
     preview: undefined,
-    isEven: true
+    isEven: true,
+    isSubmitting: false,
 };
 
 export const TrokkFilesContext = createContext<{
@@ -88,18 +90,7 @@ const setCurrentAndExpandParents = (state: TrokkFilesState, fileTree: FileTree):
 };
 
 const calculateIsEven = (fileTree: FileTree | undefined): boolean => {
-    if (!fileTree?.children) {
-        return true; // Default to true if no children
-    }
-
-    // Count only files, excluding directories and hidden folders
-    const fileCount = fileTree.children.filter(child =>
-        !child.isDirectory &&
-        !child.name.startsWith('.thumbnails') &&
-        !child.name.startsWith('.previews')
-    ).length;
-
-    return fileCount % 2 === 0;
+    return getFolderImageSummary(fileTree).isEven;
 };
 
 const createThumbnailsFromDirectory = async (directoryPath: string) => {
@@ -526,13 +517,13 @@ const trokkFilesReducer = (state: TrokkFilesState, action: TrokkFilesAction): Tr
         }
         case 'RESET':
             return initialState;
-        case 'UPDATE_STORE':
-            return {...state};
         case 'UPDATE_PREVIEW':
             if (action.payload?.path) {
                 void createPreview(action.payload.path);
             }
             return {...state, preview: action.payload};
+        case 'SET_IS_SUBMITTING':
+            return {...state, isSubmitting: action.payload};
         default:
             return state;
     }

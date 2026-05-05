@@ -8,6 +8,8 @@ import {Separator} from '@/components/ui/separator.tsx';
 import {Button} from '@/components/ui/button.tsx';
 import {Input} from '@/components/ui/input.tsx';
 import {Slider} from '@/components/ui/slider.tsx';
+import {useMessage} from '@/context/message-context.tsx';
+import ErrorLogModal from '@/features/error-log/error-log-modal.tsx';
 
 interface SettingsFormProps {
     setOpen: (open: boolean) => void;
@@ -31,6 +33,8 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [isSavingSizeFractions, setIsSavingSizeFractions] = useState<boolean>(false);
     const [sizeFractionsStatus, setSizeFractionsStatus] = useState<string | undefined>(undefined);
+    const [isErrorLogOpen, setIsErrorLogOpen] = useState(false);
+    const {errorLogEntries} = useMessage();
 
     const [scannerPathEdit, setScannerPathEdit] = useState<string>(scannerPath);
     const [thumbnailSizeEdit, setThumbnailSizeEdit] = useState<number>(thumbnailSizeFraction);
@@ -249,7 +253,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                     Ved endring av disse størrelsene slettes alle eksisterende forhåndsvisninger og miniatyrbilder automatisk.
             </span>
 
-            <div className="flex mb-2 mt-10 items-center">
+            <div className="flex mb-2 mt-10 items-center gap-2">
                 <label className="w-40">Feilsøking</label>
                 <Button
                     type="button"
@@ -259,12 +263,25 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 >
                     {isDeleting ? 'Sletter...' : 'Slett alle forhåndsvisninger'}
                 </Button>
+                <Button
+                    type="button"
+                    variant="secondary"
+                    className="bg-stone-700 hover:bg-stone-600"
+                    onClick={() => setIsErrorLogOpen(true)}
+                >
+                    Se feillogg
+                </Button>
                 {deletePreviewsStatus && (
                     <p className={`ml-2 ${deletePreviewsStatus.startsWith('Feil') ? 'text-red-500' : deletePreviewsStatus.startsWith('Slettet') ? 'text-green-500' : 'text-yellow-500'}`}>
                         {deletePreviewsStatus}
                     </p>
                 )}
             </div>
+            <ErrorLogModal
+                entries={errorLogEntries}
+                open={isErrorLogOpen}
+                onOpenChange={setIsErrorLogOpen}
+            />
         </form>
     );
 };

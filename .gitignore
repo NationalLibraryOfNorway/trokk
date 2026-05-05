@@ -24,15 +24,20 @@ dist-ssr
 .iml
 
 .env
+.env*
 src-tauri/gen
 /target
 /src-tauri/target/
 
 /out
+/build
+/coverage
 
-# Github spec kit (github copilot and sh)
+# AI-related files and directories
 .github/agents
 .github/prompts
 .github/copilot-instructions.md
 .specify
 specs/
+.agents/
+.codex
