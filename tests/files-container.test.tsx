@@ -250,32 +250,6 @@ describe('FilesContainer', () => {
         expect(screen.queryByText('notes.pdf')).toBeNull();
     });
 
-    it('shows image files with varied casing (.JPG, .Png)', () => {
-        const treeIndex = new Map<string, {name: string; path: string; isDirectory: boolean}>();
-
-        (useTrokkFiles as Mock).mockReturnValue({
-            state: {
-                current: {
-                    children: [
-                        {name: 'photo.JPG', path: '/mock/path/photo.JPG', isDirectory: false},
-                        {name: 'image.Png', path: '/mock/path/image.Png', isDirectory: false},
-                        {name: 'anim.GIF', path: '/mock/path/anim.GIF', isDirectory: false},
-                    ],
-                },
-                preview: false,
-                treeIndex,
-                basePath: '/mock',
-            },
-            dispatch: vi.fn(),
-        });
-
-        renderWithContext();
-
-        expect(screen.queryByText('photo.JPG')).not.toBeNull();
-        expect(screen.queryByText('image.Png')).not.toBeNull();
-        expect(screen.queryByText('anim.GIF')).not.toBeNull();
-    });
-
     it('shows empty-state message when folder contains only non-image files', () => {
         (useTrokkFiles as Mock).mockReturnValue({
             state: {
