@@ -9,7 +9,7 @@ export const getFileExtension = (path?: string) => path?.split('.')?.pop() || ''
 
 export const isSupportedImageFile = (fileName: string): boolean => {
     const ext = getFileExtension(fileName).toLowerCase();
-    return ext !== '' && supportedFileTypes.includes(ext);
+    return isImage(fileName.toLowerCase()) || (ext === 'gif');
 };
 
 export const formatFileNames = (fileName?: string): string => {
