@@ -7,11 +7,6 @@ export const supportedFileTypes = ['jpeg', 'jpg', 'png', 'gif', 'webp'];
 
 export const getFileExtension = (path?: string) => path?.split('.')?.pop() || '';
 
-export const isSupportedImageFile = (fileName: string): boolean => {
-    const ext = getFileExtension(fileName).toLowerCase();
-    return isImage(fileName.toLowerCase()) || (ext === 'gif');
-};
-
 export const formatFileNames = (fileName?: string): string => {
     if (!fileName) return ''
     if (fileName.endsWith('.webp')) return fileName.replace('.webp', '.tif')
