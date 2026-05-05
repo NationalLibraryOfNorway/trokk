@@ -221,5 +221,139 @@ describe('FilesContainer', () => {
 
         expect(document.querySelector('.overflow-auto')).toBeNull();
     });
+
+    it('hides non-image files from the grid', () => {
+        const treeIndex = new Map<string, {name: string; path: string; isDirectory: boolean}>();
+
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: {
+                    children: [
+                        {name: 'photo.jpg', path: '/mock/path/photo.jpg', isDirectory: false},
+                        {name: '.DS_Store', path: '/mock/path/.DS_Store', isDirectory: false},
+                        {name: 'logfil.txt', path: '/mock/path/logfil.txt', isDirectory: false},
+                        {name: 'notes.pdf', path: '/mock/path/notes.pdf', isDirectory: false},
+                    ],
+                },
+                preview: false,
+                treeIndex,
+                basePath: '/mock',
+            },
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        expect(screen.queryByText('photo.jpg')).not.toBeNull();
+        expect(screen.queryByText('.DS_Store')).toBeNull();
+        expect(screen.queryByText('logfil.txt')).toBeNull();
+        expect(screen.queryByText('notes.pdf')).toBeNull();
+    });
+
+    it('shows image files with varied casing (.JPG, .Png)', () => {
+        const treeIndex = new Map<string, {name: string; path: string; isDirectory: boolean}>();
+
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: {
+                    children: [
+                        {name: 'photo.JPG', path: '/mock/path/photo.JPG', isDirectory: false},
+                        {name: 'image.Png', path: '/mock/path/image.Png', isDirectory: false},
+                        {name: 'anim.GIF', path: '/mock/path/anim.GIF', isDirectory: false},
+                    ],
+                },
+                preview: false,
+                treeIndex,
+                basePath: '/mock',
+            },
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        expect(screen.queryByText('photo.JPG')).not.toBeNull();
+        expect(screen.queryByText('image.Png')).not.toBeNull();
+        expect(screen.queryByText('anim.GIF')).not.toBeNull();
+    });
+
+    it('shows empty-state message when folder contains only non-image files', () => {
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: {
+                    name: 'Folder',
+                    path: '/mock/path/Folder',
+                    children: [
+                        {name: '.DS_Store', path: '/mock/path/Folder/.DS_Store', isDirectory: false},
+                        {name: 'logfil.txt', path: '/mock/path/Folder/logfil.txt', isDirectory: false},
+                    ],
+                },
+                preview: false,
+                treeIndex: new Map(),
+                basePath: '/mock',
+            },
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        expect(screen.queryByText(/Ingen filer i mappen/i)).not.toBeNull();
+    });
+
+    it('still renders subdirectories as folder buttons alongside image filtering', () => {
+        const treeIndex = new Map<string, {name: string; path: string; isDirectory: boolean}>();
+
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: {
+                    children: [
+                        {name: 'subfolder', path: '/mock/path/subfolder', isDirectory: true, children: []},
+                        {name: 'photo.jpg', path: '/mock/path/photo.jpg', isDirectory: false},
+                        {name: 'readme.txt', path: '/mock/path/readme.txt', isDirectory: false},
+                    ],
+                },
+                preview: false,
+                treeIndex,
+                basePath: '/mock',
+            },
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        expect(screen.queryByText('subfolder')).not.toBeNull();
+        expect(screen.queryByText('photo.jpg')).not.toBeNull();
+        expect(screen.queryByText('readme.txt')).toBeNull();
+    });
+
+    it('selection counter reflects filtered image files only', () => {
+        const treeIndex = new Map<string, {name: string; path: string; isDirectory: boolean}>();
+
+        (useSelection as Mock).mockReturnValue({
+            ...mockHandle,
+            checkedItems: ['/mock/path/photo1.jpg', '/mock/path/photo2.png'],
+        });
+
+        (useTrokkFiles as Mock).mockReturnValue({
+            state: {
+                current: {
+                    children: [
+                        {name: 'photo1.jpg', path: '/mock/path/photo1.jpg', isDirectory: false},
+                        {name: 'photo2.png', path: '/mock/path/photo2.png', isDirectory: false},
+                        {name: 'photo3.gif', path: '/mock/path/photo3.gif', isDirectory: false},
+                        {name: '.DS_Store', path: '/mock/path/.DS_Store', isDirectory: false},
+                        {name: 'logfil.txt', path: '/mock/path/logfil.txt', isDirectory: false},
+                    ],
+                },
+                preview: false,
+                treeIndex,
+                basePath: '/mock',
+            },
+            dispatch: vi.fn(),
+        });
+
+        renderWithContext();
+
+        expect(screen.queryByText('2 forsider valgt')).not.toBeNull();
+    });
 })
 ;

@@ -15,7 +15,7 @@ import {
 import {useKeyboardNavigation} from '@/hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 import {cn} from '@/lib/utils.ts';
-import {getBreadcrumbSegments} from '@/util/file-utils.ts';
+import {getBreadcrumbSegments, isSupportedImageFile} from '@/util/file-utils.ts';
 
 const FilesContainer: React.FC = () => {
     const [delFilePath, setDelFilePath] = useState<string | null>(null);
@@ -31,10 +31,11 @@ const FilesContainer: React.FC = () => {
         setColumns,
     } = useSelection();
 
-    const files = state.current?.children?.filter(child => !child.isDirectory) || [];
+    const files = state.current?.children?.filter(child => !child.isDirectory && isSupportedImageFile(child.name)) || [];
     const visibleChildren = state.current?.children?.filter(child =>
         !child.name.startsWith('.thumbnails') &&
-        !child.name.startsWith('.previews')
+        !child.name.startsWith('.previews') &&
+        (child.isDirectory || isSupportedImageFile(child.name))
     ) || [];
     const breadcrumbSegments = getBreadcrumbSegments(state.basePath, state.current?.path);
 
