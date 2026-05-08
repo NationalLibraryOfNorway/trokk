@@ -319,7 +319,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                         {showCopiedTooltip
                             ? <Check size="32" className="ms-2 text-success"/>
                             : <FolderOpen size="32" className="ms-2"/>}
-                        <span className="mt-1 me-2 relative group hidden md:inline">
+                        <span className="me-2 relative group hidden md:inline">
                             {scannerPath}
                         </span>
                     </Button>

@@ -12,6 +12,9 @@ const config = {
     ],
     theme: {
     	extend: {
+            fontFamily: {
+                sans: ['Inter', 'Avenir', 'Helvetica', 'Arial', 'sans-serif'],
+            },
     		colors: {
     			background: 'hsl(var(--background))',
     			foreground: 'hsl(var(--foreground))',
