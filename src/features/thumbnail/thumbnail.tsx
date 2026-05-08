@@ -57,7 +57,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
         const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
         const hasWebpThumbnail = !!thumbnailUrl;
         const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
-        const rotateBtnClass = `flex justify-center items-center size-10 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+        const rotateBtnClass = `flex justify-center items-center size-10 bg-foreground/50 hover:bg-foreground/70 text-background p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
         if (isHiddenDir) return null;
 
@@ -116,7 +116,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                 </div>
             );
         } else {
-            content = <File size="96" className='mx-auto mt-1' color="gray"/>;
+            content = <File size="96" className='mx-auto mt-1 text-muted-foreground'/>;
         }
 
         return (

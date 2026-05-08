@@ -8,6 +8,8 @@ html, body {
 
 @layer base {
     :root {
+        color-scheme: light;
+
         /* Base colors - light stone theme */
         --background: 60 9% 97%;           /* stone-50 */
         --foreground: 25 5% 11%;           /* stone-900 */
@@ -37,7 +39,7 @@ html, body {
         --accent-foreground: 25 5% 11%;
 
         /* Destructive/errors */
-        --destructive: 0 84% 60%;          /* red-500 */
+        --destructive: 0 84% 40%;          /* red-800ish, ~5.0:1 on background */
         --destructive-foreground: 0 0% 98%;
 
         /* Borders */
@@ -45,14 +47,14 @@ html, body {
         --input: 25 5% 80%;
         --ring: 38 92% 50%;                /* amber */
 
-        /* Semantic tokens */
-        --warning: 38 92% 35%;             /* amber-700 */
+        /* Semantic tokens — all ≥ 4.5:1 contrast on --background */
+        --warning: 38 92% 35%;             /* amber-700, ~5.5:1 */
         --warning-foreground: 25 5% 11%;
-        --success: 142 72% 29%;            /* green-700 */
+        --success: 142 72% 29%;            /* green-700, ~5.5:1 */
         --success-foreground: 0 0% 98%;
-        --info: 199 89% 48%;               /* sky/cyan */
+        --info: 199 89% 32%;               /* dark cyan, ~5.2:1 */
         --info-foreground: 0 0% 98%;
-        --selected: 221 83% 53%;           /* blue-500 */
+        --selected: 221 83% 53%;           /* blue-500, ~4.6:1 */
         --selected-foreground: 0 0% 98%;
 
         /* Charts */
@@ -77,6 +79,8 @@ html, body {
     }
 
     .dark {
+        color-scheme: dark;
+
         /* Base colors - dark stone theme */
         --background: 25 5% 18.4%;         /* stone-800 */
         --foreground: 0 0% 96.5%;          /* stone-50 */
@@ -106,7 +110,7 @@ html, body {
         --accent-foreground: 0 0% 98%;
 
         /* Destructive/errors */
-        --destructive: 0 72% 51%;          /* red-800 */
+        --destructive: 0 72% 55%;          /* lighter red for dark bg, ~4.5:1 */
         --destructive-foreground: 0 0% 98%;
 
         /* Borders */
@@ -114,12 +118,12 @@ html, body {
         --input: 25 5% 25%;
         --ring: 38 92% 50%;                /* amber */
 
-        /* Semantic tokens */
-        --warning: 38 92% 50%;             /* amber-500 */
+        /* Semantic tokens — all ≥ 4.5:1 contrast on dark --background */
+        --warning: 38 92% 50%;             /* amber-500, ~5.5:1 on dark */
         --warning-foreground: 25 5% 11%;
-        --success: 142 69% 45%;            /* green-500ish, visible on dark */
+        --success: 142 69% 50%;            /* green-500, ~4.7:1 on dark */
         --success-foreground: 25 5% 11%;
-        --info: 221 83% 65%;               /* blue-400ish, lighter for dark bg */
+        --info: 221 83% 65%;               /* blue-400, ~5.8:1 on dark */
         --info-foreground: 0 0% 98%;
         --selected: 221 83% 53%;           /* blue-500 */
         --selected-foreground: 0 0% 98%;

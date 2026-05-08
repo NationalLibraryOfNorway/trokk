@@ -44,17 +44,23 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
             systemThemeListenerRef.current = null;
         }
 
+        // Mirror to localStorage for FOUC-free startup
+        localStorage.setItem('theme', t);
+
         if (t === 'system') {
             const mq = window.matchMedia('(prefers-color-scheme: dark)');
             const apply = (dark: boolean) => {
                 document.documentElement.classList.toggle('dark', dark);
+                document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
             };
             apply(mq.matches);
             const handler = (e: MediaQueryListEvent) => apply(e.matches);
             mq.addEventListener('change', handler);
             systemThemeListenerRef.current = () => mq.removeEventListener('change', handler);
         } else {
-            document.documentElement.classList.toggle('dark', t === 'dark');
+            const dark = t === 'dark';
+            document.documentElement.classList.toggle('dark', dark);
+            document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
         }
     };
 

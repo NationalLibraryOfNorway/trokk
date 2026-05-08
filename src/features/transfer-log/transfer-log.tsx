@@ -33,24 +33,24 @@ const TransferLog: React.FC = () => {
 
     return (
         <div className="h-full w-full max-w-full p-4">
-            <h2 className="text-xl font-bold mb-4 text-stone-100">Overføringslogg</h2>
+            <h2 className="text-xl font-bold mb-4 text-foreground">Overføringslogg</h2>
             <div className="w-full overflow-x-auto">
-                <table className="w-full bg-stone-800 border border-stone-700">
+                <table className="w-full bg-card border border-border">
                     <thead>
                     <tr className="border-b">
-                        <th className="px-4 py-2 text-stone-100 text-left">Tid</th>
-                        <th className="px-4 py-2 text-stone-100">ID</th>
-                        <th className="px-4 py-2 text-stone-100 text-right">Sider</th>
+                        <th className="px-4 py-2 text-foreground text-left">Tid</th>
+                        <th className="px-4 py-2 text-foreground">ID</th>
+                        <th className="px-4 py-2 text-foreground text-right">Sider</th>
                     </tr>
                     </thead>
                     <tbody>
                     {logs.map((log: TransferLogItem, index: number) => (
-                        <tr key={index} className={`hover:bg-stone-700 border-b ${
-        log.timestamp.getTime() === latestTimestamp ? 'bg-green-800/50 font-bold' : ''}`}>
-                            <td className="px-4 py-2 text-stone-100 whitespace-nowrap">{log.timestamp.toTimeString().slice(0, 8)}</td>
+                        <tr key={index} className={`hover:bg-muted border-b ${
+        log.timestamp.getTime() === latestTimestamp ? 'bg-success/20 font-bold' : ''}`}>
+                            <td className="px-4 py-2 text-foreground whitespace-nowrap">{log.timestamp.toTimeString().slice(0, 8)}</td>
                             <td
                                 data-state={copiedIndex === index ? 'copied' : 'idle'}
-                                className="px-4 py-2 text-stone-100 cursor-pointer relative flex justify-center"
+                                className="px-4 py-2 text-foreground cursor-pointer relative flex justify-center"
                                 onClick={() => copyToClipboard(log.uuid, index)}
                                 title="Klikk for å kopiere"
                             >
@@ -60,7 +60,7 @@ const TransferLog: React.FC = () => {
                                     <ClipboardCopy/>
                                 )}
                             </td>
-                            <td className="px-4 py-2 text-stone-100 text-right whitespace-nowrap">{log.pages}</td>
+                            <td className="px-4 py-2 text-foreground text-right whitespace-nowrap">{log.pages}</td>
                         </tr>
                     ))}
                     </tbody>

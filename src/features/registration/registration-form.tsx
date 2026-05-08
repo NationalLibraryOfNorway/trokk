@@ -181,14 +181,13 @@ const RegistrationForm: React.FC = () => {
                 <label className="text-foreground">Materialtype</label>
                 <select
                     {...register('materialType')}
-                    style={{color: '#000000'}}
-                    className={'bg-primary text-primary-foreground'}
+                    className={'bg-card text-card-foreground border border-border rounded px-2 py-1'}
                 >
                     {Object.values(MaterialType).map((type) => (
                         <option
                             key={type}
                             value={type}
-                            className="bg-card text-primary hover:bg-primary hover:text-primary-foreground"
+                            className="bg-card text-card-foreground"
                         >
                             {type}
                         </option>
@@ -264,7 +263,7 @@ const RegistrationForm: React.FC = () => {
             )}
             {uploadVersionMessage && (
                 <Alert className={`my-5 ${uploadVersionBlocking ? 'text-destructive border-destructive bg-destructive/10' : 'text-info border-info bg-info/10'}`}>
-                    { uploadVersionBlocking ? <CircleAlertIcon color="#ef4444" /> : <InfoIcon color="#3b82f6" /> }
+                    { uploadVersionBlocking ? <CircleAlertIcon className="text-destructive" /> : <InfoIcon className="text-info" /> }
                     <AlertTitle className="font-bold">Oppdatering tilgjengelig</AlertTitle>
                     <AlertDescription>
                         {uploadVersionMessage}

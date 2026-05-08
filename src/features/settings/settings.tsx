@@ -235,28 +235,28 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             <div className="flex mb-2 items-center">
                 <label htmlFor="thumbnailSizeFraction" className="w-40">Miniatyrbilder</label>
                 <div className='flex flex-row gap-2 w-full px-6'>
-                    <span className='text-muted'>Minst</span>
+                    <span className='text-muted-foreground'>Minst</span>
                     <Slider
                         onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
                         min={1}
                         max={16}
                         step={1}
                     />
-                    <span className='text-muted'>Størst</span>
+                    <span className='text-muted-foreground'>Størst</span>
                 </div>
             </div>
 
             <div className="flex mb-2 items-center">
                 <label htmlFor="previewSizeFraction" className="w-40">Forhåndsvisninger</label>
                 <div className='flex flex-row gap-2 w-full px-6'>
-                    <span className='text-muted'>Minst</span>
+                    <span className='text-muted-foreground'>Minst</span>
                     <Slider
                         onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
                         min={1}
                         max={16}
                         step={1}
                     />
-                    <span className='text-muted'>Størst</span>
+                    <span className='text-muted-foreground'>Størst</span>
                 </div>
             </div>
 
@@ -286,16 +286,15 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 <label className="w-40">Feilsøking</label>
                 <Button
                     type="button"
+                    variant="secondary"
                     onClick={handleDeleteAllPreviews}
                     disabled={isDeleting || !scannerPath}
-                    className='bg-secondary hover:bg-accent'
                 >
                     {isDeleting ? 'Sletter...' : 'Slett alle forhåndsvisninger'}
                 </Button>
                 <Button
                     type="button"
                     variant="secondary"
-                    className="bg-secondary hover:bg-accent"
                     onClick={() => setIsErrorLogOpen(true)}
                 >
                     Se feillogg
