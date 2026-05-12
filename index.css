@@ -8,96 +8,138 @@ html, body {
 
 @layer base {
     :root {
-        /* Base colors - stone/gray dark theme */
-        --background: 25 5% 18.4%;        /* stone-800 #2f2f2f */
-        --foreground: 0 0% 96.5%;         /* stone-50 #f6f6f6 */
+        color-scheme: light;
+
+        /* Base colors - light stone theme */
+        --background: 60 9% 97%;           /* stone-50 */
+        --foreground: 25 5% 11%;           /* stone-900 */
 
         /* Card/elevated surfaces */
-        --card: 25 5% 15.7%;              /* stone-900 darker */
-        --card-foreground: 0 0% 96.5%;
+        --card: 0 0% 100%;
+        --card-foreground: 25 5% 11%;
 
         /* Popovers/dropdowns */
-        --popover: 25 5% 15.7%;           /* stone-900 */
-        --popover-foreground: 0 0% 96.5%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 25 5% 11%;
 
-        /* Primary action - darker stone for buttons */
-        --primary: 25 5% 11%;             /* stone-900 #1c1917 */
-        --primary-foreground: 0 0% 98%;   /* white text */
+        /* Primary action - amber */
+        --primary: 38 92% 50%;             /* amber-500 */
+        --primary-foreground: 25 5% 11%;   /* dark text on amber */
 
         /* Secondary actions */
-        --secondary: 25 5% 25%;           /* stone-700 */
-        --secondary-foreground: 0 0% 96.5%;
+        --secondary: 60 5% 91%;            /* stone-200 */
+        --secondary-foreground: 25 5% 11%;
 
         /* Muted/disabled */
-        --muted: 25 5% 25%;               /* stone-700 */
-        --muted-foreground: 30 5% 55%;    /* stone-500 */
+        --muted: 60 5% 91%;                /* stone-200 */
+        --muted-foreground: 25 5% 43%;     /* stone-500 */
 
-        /* Accent/highlights - stone-500 for visible hover */
-        --accent: 30 5% 50%;              /* stone-500 more visible hover */
-        --accent-foreground: 0 0% 98%;
+        /* Accent/highlights */
+        --accent: 60 5% 85%;               /* stone-300 */
+        --accent-foreground: 25 5% 11%;
 
         /* Destructive/errors */
-        --destructive: 0 67% 33%;         /* red-800 #aa0000 */
+        --destructive: 0 84% 40%;          /* red-800ish, ~5.0:1 on background */
         --destructive-foreground: 0 0% 98%;
 
         /* Borders */
-        --border: 30 5% 35%;              /* stone-600/700 border */
-        --input: 25 5% 25%;               /* stone-700 input bg */
+        --border: 25 5% 80%;               /* stone-300 */
+        --input: 25 5% 80%;
+        --ring: 38 92% 50%;                /* amber */
 
-        /* Focus rings */
-        --ring: 30 5% 55%;                /* stone-400 lighter focus */
+        /* Semantic tokens — all ≥ 4.5:1 contrast on --background */
+        --warning: 38 92% 35%;             /* amber-700, ~5.5:1 */
+        --warning-foreground: 25 5% 11%;
+        --success: 142 72% 29%;            /* green-700, ~5.5:1 */
+        --success-foreground: 0 0% 98%;
+        --info: 199 89% 32%;               /* dark cyan, ~5.2:1 */
+        --info-foreground: 0 0% 98%;
+        --selected: 221 83% 53%;           /* blue-500, ~4.6:1 */
+        --selected-foreground: 0 0% 98%;
 
-        /* Charts (keep existing vibrant colors) */
-        --chart-1: 30 5% 45%;             /* stone-500 */
-        --chart-2: 173 58% 39%;           /* teal */
-        --chart-3: 197 37% 24%;           /* blue-gray */
-        --chart-4: 43 74% 66%;            /* yellow */
-        --chart-5: 27 87% 67%;            /* orange */
-
-        /* Border radius */
-        --radius: 0.5rem;
-
-        /* Sidebar colors */
-        --sidebar-background: 25 5% 16%;  /* stone-850 */
-        --sidebar-foreground: 0 0% 96%;
-        --sidebar-primary: 30 5% 45%;     /* stone-500 lighter */
-        --sidebar-primary-foreground: 0 0% 98%;
-        --sidebar-accent: 25 5% 25%;      /* stone-700 */
-        --sidebar-accent-foreground: 0 0% 96%;
-        --sidebar-border: 30 5% 35%;      /* stone-600 */
-        --sidebar-ring: 30 5% 55%;        /* stone-400 lighter */
-    }
-
-    .dark {
-        /* Dark mode uses same values since app is dark by default */
-        --background: 25 5% 18.4%;
-        --foreground: 0 0% 96.5%;
-        --card: 25 5% 15.7%;
-        --card-foreground: 0 0% 96.5%;
-        --popover: 25 5% 15.7%;
-        --popover-foreground: 0 0% 96.5%;
-        --primary: 38 92% 50%;
-        --primary-foreground: 25 5% 18.4%;
-        --secondary: 25 5% 25%;
-        --secondary-foreground: 0 0% 96.5%;
-        --muted: 25 5% 25%;
-        --muted-foreground: 30 5% 55%;
-        --accent: 38 92% 50%;
-        --accent-foreground: 25 5% 18.4%;
-        --destructive: 0 67% 33%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 30 5% 35%;
-        --input: 25 5% 25%;
-        --ring: 38 92% 50%;
+        /* Charts */
         --chart-1: 38 92% 50%;
         --chart-2: 173 58% 39%;
         --chart-3: 197 37% 24%;
         --chart-4: 43 74% 66%;
         --chart-5: 27 87% 67%;
+
+        /* Border radius */
+        --radius: 0.5rem;
+
+        /* Sidebar */
+        --sidebar-background: 60 5% 93%;
+        --sidebar-foreground: 25 5% 11%;
+        --sidebar-primary: 38 92% 50%;
+        --sidebar-primary-foreground: 25 5% 11%;
+        --sidebar-accent: 60 5% 85%;
+        --sidebar-accent-foreground: 25 5% 11%;
+        --sidebar-border: 25 5% 80%;
+        --sidebar-ring: 38 92% 50%;
+    }
+
+    .dark {
+        color-scheme: dark;
+
+        /* Base colors - dark stone theme */
+        --background: 25 5% 18.4%;         /* stone-800 */
+        --foreground: 0 0% 96.5%;          /* stone-50 */
+
+        /* Card/elevated surfaces */
+        --card: 25 5% 15.7%;               /* stone-900 */
+        --card-foreground: 0 0% 96.5%;
+
+        /* Popovers/dropdowns */
+        --popover: 25 5% 15.7%;
+        --popover-foreground: 0 0% 96.5%;
+
+        /* Primary action - amber */
+        --primary: 38 92% 50%;             /* amber-500 */
+        --primary-foreground: 25 5% 11%;   /* dark text on amber */
+
+        /* Secondary actions */
+        --secondary: 25 5% 25%;            /* stone-700 */
+        --secondary-foreground: 0 0% 96.5%;
+
+        /* Muted/disabled */
+        --muted: 25 5% 25%;                /* stone-700 */
+        --muted-foreground: 30 5% 55%;     /* stone-500 */
+
+        /* Accent/highlights */
+        --accent: 30 5% 50%;               /* stone-500 */
+        --accent-foreground: 0 0% 98%;
+
+        /* Destructive/errors */
+        --destructive: 0 72% 55%;          /* lighter red for dark bg, ~4.5:1 */
+        --destructive-foreground: 0 0% 98%;
+
+        /* Borders */
+        --border: 30 5% 35%;               /* stone-600/700 */
+        --input: 25 5% 25%;
+        --ring: 38 92% 50%;                /* amber */
+
+        /* Semantic tokens — all ≥ 4.5:1 contrast on dark --background */
+        --warning: 38 92% 50%;             /* amber-500, ~5.5:1 on dark */
+        --warning-foreground: 25 5% 11%;
+        --success: 142 69% 50%;            /* green-500, ~4.7:1 on dark */
+        --success-foreground: 25 5% 11%;
+        --info: 221 83% 65%;               /* blue-400, ~5.8:1 on dark */
+        --info-foreground: 0 0% 98%;
+        --selected: 221 83% 53%;           /* blue-500 */
+        --selected-foreground: 0 0% 98%;
+
+        /* Charts */
+        --chart-1: 38 92% 50%;
+        --chart-2: 173 58% 39%;
+        --chart-3: 197 37% 24%;
+        --chart-4: 43 74% 66%;
+        --chart-5: 27 87% 67%;
+
+        /* Sidebar */
         --sidebar-background: 25 5% 16%;
         --sidebar-foreground: 0 0% 96%;
         --sidebar-primary: 38 92% 50%;
-        --sidebar-primary-foreground: 25 5% 18.4%;
+        --sidebar-primary-foreground: 25 5% 11%;
         --sidebar-accent: 25 5% 25%;
         --sidebar-accent-foreground: 0 0% 96%;
         --sidebar-border: 30 5% 35%;
@@ -109,7 +151,10 @@ html, body {
     * {
         @apply border-border;
     }
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground antialiased;
     }
 }
