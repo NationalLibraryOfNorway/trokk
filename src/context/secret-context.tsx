@@ -58,8 +58,9 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         let mounted = true;
 
         // Run on next tick so tests can render without immediate async state updates.
+        // Guard against retrying when an error has already occurred to prevent infinite loops.
         Promise.resolve()
-            .then(() => (mounted && !secrets && !isFetchingSecrets ? getSecrets() : undefined))
+            .then(() => (mounted && !secrets && !isFetchingSecrets && !fetchSecretsError ? getSecrets() : undefined))
             .catch(() => {
                 // getSecrets already sets error state; ignore here.
             });
@@ -67,7 +68,7 @@ export const SecretProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         return () => {
             mounted = false;
         };
-    }, [secrets, isFetchingSecrets, getSecrets]);
+    }, [secrets, isFetchingSecrets, fetchSecretsError, getSecrets]);
 
     return (
         <SecretContext.Provider value={{
