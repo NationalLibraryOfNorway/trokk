@@ -9,6 +9,8 @@ import {
     type WorkspacePaneSizes,
 } from '@/util/workspace-pane-layout.ts';
 
+export type Theme = 'dark' | 'light' | 'system';
+
 const defaultScannerPath = await documentDir() + sep() + 'trokk' + sep() + 'files';
 const defaultThumbnailSizeFraction = 8;
 const defaultPreviewSizeFraction = 4;
@@ -140,7 +142,7 @@ class SettingStore {
         }
     }
 
-    async getTheme(): Promise<'dark' | 'light' | 'system'> {
+    async getTheme(): Promise<Theme> {
         await this.ensureStore();
         const theme = await this.store!.get<string>('theme')
             .catch(error => {
@@ -151,7 +153,7 @@ class SettingStore {
         return 'dark';
     }
 
-    async setTheme(theme: 'dark' | 'light' | 'system'): Promise<void> {
+    async setTheme(theme: Theme): Promise<void> {
         await this.ensureStore();
         try {
             await this.store!.set('theme', theme).then(async () => {

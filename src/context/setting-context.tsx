@@ -1,5 +1,5 @@
 import React, { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import { settings } from '../tauri-store/setting-store.ts';
+import { settings, type Theme } from '../tauri-store/setting-store.ts';
 import { getVersion } from '@tauri-apps/api/app';
 import {invoke} from '@tauri-apps/api/core';
 import {
@@ -20,8 +20,8 @@ interface SettingContextType {
     setThumbnailSizeFraction: (fraction: number) => void;
     setPreviewSizeFraction: (fraction: number) => void;
     setWorkspacePaneSizes: (sizes: WorkspacePaneSizes) => void;
-    theme: 'dark' | 'light' | 'system';
-    setTheme: (theme: 'dark' | 'light' | 'system') => void;
+    theme: Theme;
+    setTheme: (theme: Theme) => void;
 }
 
 const SettingContext = createContext<SettingContextType | null>(null);
@@ -32,12 +32,12 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
     const [thumbnailSizeFraction, setThumbnailSizeFractionState] = useState<number>(8);
     const [previewSizeFraction, setPreviewSizeFractionState] = useState<number>(4);
     const [workspacePaneSizes, setWorkspacePaneSizesState] = useState<WorkspacePaneSizes>(defaultWorkspacePaneSizes);
-    const [theme, setThemeState] = useState<'dark' | 'light' | 'system'>('dark');
+    const [theme, setThemeState] = useState<Theme>('dark');
     const systemThemeListenerRef = useRef<(() => void) | null>(null);
     const version = useRef<string>('');
     const initialized = useRef<boolean>(false);
 
-    const applyTheme = (t: 'dark' | 'light' | 'system') => {
+    const applyTheme = (theme: Theme) => {
         // Clean up any existing system theme listener
         if (systemThemeListenerRef.current) {
             systemThemeListenerRef.current();
@@ -45,9 +45,9 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
         }
 
         // Mirror to localStorage for FOUC-free startup
-        localStorage.setItem('theme', t);
+        localStorage.setItem('theme', theme);
 
-        if (t === 'system') {
+        if (theme === 'system') {
             const mq = window.matchMedia('(prefers-color-scheme: dark)');
             const apply = (dark: boolean) => {
                 document.documentElement.classList.toggle('dark', dark);
@@ -58,7 +58,7 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
             mq.addEventListener('change', handler);
             systemThemeListenerRef.current = () => mq.removeEventListener('change', handler);
         } else {
-            const dark = t === 'dark';
+            const dark = theme === 'dark';
             document.documentElement.classList.toggle('dark', dark);
             document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
         }
@@ -135,10 +135,10 @@ export const SettingProvider: React.FC<{ children: ReactNode }> = ({ children })
         });
     }
 
-    function setTheme(t: 'dark' | 'light' | 'system') {
-        void settings.setTheme(t).then(() => {
-            setThemeState(t);
-            applyTheme(t);
+    function setTheme(theme: Theme) {
+        void settings.setTheme(theme).then(() => {
+            setThemeState(theme);
+            applyTheme(theme);
         });
     }
 
