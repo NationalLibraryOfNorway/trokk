@@ -9,9 +9,9 @@ vi.mock('../src/context/trokk-files-context');
 
 const keypressDelay = 100;
 const mockChildren = [
-    {isDirectory: false, path: '/test/file1'},
-    {isDirectory: false, path: '/test/file2'},
-    {isDirectory: false, path: '/test/file3'},
+    {isDirectory: false, path: '/test/file1.tif', name: 'file1.tif'},
+    {isDirectory: false, path: '/test/file2.tif', name: 'file2.tif'},
+    {isDirectory: false, path: '/test/file3.tif', name: 'file3.tif'},
 ];
 
 interface TestComponentProps {
