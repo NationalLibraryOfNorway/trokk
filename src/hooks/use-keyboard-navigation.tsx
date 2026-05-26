@@ -2,6 +2,7 @@ import {useEffect, useRef} from 'react';
 import {useSelection} from '../context/selection-context.tsx';
 import {FileTree} from '../model/file-tree.ts';
 import {useTrokkFiles} from '../context/trokk-files-context.tsx';
+import { isImage } from '@/util/file-utils.ts';
 
 type KeyboardNavigationProps = {
     delFilePath: string | null;
@@ -34,7 +35,7 @@ export function useKeyboardNavigation(
     const {state} = useTrokkFiles();
 
     const files: FileTree[] =
-        state.current?.children?.filter(child => !child.isDirectory) || [];
+        state.current?.children?.filter(child => !child.isDirectory && !isImage(child.name)) || [];
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
