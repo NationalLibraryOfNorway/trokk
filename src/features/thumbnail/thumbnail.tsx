@@ -13,6 +13,7 @@ import {useRotation} from '@/context/rotation-context.tsx';
 import StatusOverlay from '@/components/ui/rotation-status-overlay.tsx';
 import React, {forwardRef} from 'react';
 import DeleteFile from '@/features/delete-file/delete-file.tsx';
+import {Button} from '@/components/ui/button.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -57,7 +58,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
         const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
         const hasWebpThumbnail = !!thumbnailUrl;
         const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
-        const rotateBtnClass = `flex justify-center items-center size-10 bg-overlay/50 hover:bg-overlay/70 text-overlay-foreground p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+        const rotateBtnClass = `${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
         if (isHiddenDir) return null;
 
@@ -134,10 +135,11 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                     {((isSupported || hasWebpThumbnail) && !isDisabled) && (
                         <div
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute p-4 bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                            className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-row gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-20"
                         >
-                            <button
-                                type="button"
+                            <Button
+                                variant='outline'
+                                size='icon'
                                 onClick={handleRotateCounterClockwise}
                                 disabled={imageIsRotating}
                                 className={rotateBtnClass}
@@ -145,9 +147,10 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                                 title="Roter mot klokken"
                             >
                                 <RotateCcw size={16} />
-                            </button>
-                            <button
-                                type="button"
+                            </Button>
+                            <Button
+                                variant='outline'
+                                size='icon'
                                 onClick={handleRotateClockwise}
                                 disabled={imageIsRotating}
                                 className={rotateBtnClass}
@@ -155,7 +158,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                                 title="Roter med klokken"
                             >
                                 <RotateCw size={16} />
-                            </button>
+                            </Button>
                             <DeleteFile
                                 childPath={fileTree.path}
                                 setDelFilePath={setDelFilePath}

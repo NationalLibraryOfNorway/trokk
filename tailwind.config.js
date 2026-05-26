@@ -62,10 +62,6 @@ const config = {
                     DEFAULT: 'hsl(var(--selected))',
                     foreground: 'hsl(var(--selected-foreground))',
                 },
-                overlay: {
-                    DEFAULT: 'hsl(var(--overlay))',
-                    foreground: 'hsl(var(--overlay-foreground))',
-                },
     			border: 'hsl(var(--border))',
                 input: 'hsl(var(--input))',
                 ring: 'hsl(var(--ring))',

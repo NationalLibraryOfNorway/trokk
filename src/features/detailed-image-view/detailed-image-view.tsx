@@ -8,6 +8,7 @@ import {useRotation} from '@/context/rotation-context.tsx';
 import StatusOverlay from '@/components/ui/rotation-status-overlay.tsx';
 import {sep} from '@tauri-apps/api/path';
 import {convertFileSrc, invoke} from '@tauri-apps/api/core';
+import {Button} from '@/components/ui/button.tsx';
 
 export interface DetailedImageViewProps {
     image: FileTree;
@@ -27,8 +28,6 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
     const imageIsRotating = imageStatus === 'rotating';
 
     const rotationCacheBuster = getFileCacheBuster(image.path);
-
-    const rotateBtnClass = `bg-overlay/50 hover:bg-overlay/70 text-overlay-foreground p-3 rounded-full backdrop-blur-sm transition-all relative group/btn ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
     const previewWebpPath = useMemo(() => {
         const baseNoExt = image.path.replace(/\.[^/.]+$/, '');
@@ -134,7 +133,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
 
                         {/* Reload spinner overlay */}
                         {isLoading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-overlay/20 backdrop-blur-[1px] z-[6]">
+                            <div className="absolute inset-0 flex items-center justify-center z-[6]">
                                 <LoaderCircle size={50} className="animate-spin mb-40" />
                             </div>
                         )}
@@ -149,31 +148,33 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
                         )}
 
                         <StatusOverlay status={imageStatus} size="large" />
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-row gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
+                        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex flex-row gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                                size={'icon'}
+                                variant={'outline'}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     rotateCounterClockwise();
                                 }}
                                 disabled={imageIsRotating}
-                                className={rotateBtnClass}
                                 aria-label="Roter mot klokken"
                                 title="Roter mot klokken"
                             >
                                 <RotateCcw size={24} className={imageIsRotating ? 'animate-spin' : ''} />
-                            </button>
-                            <button
+                            </Button>
+                            <Button
+                                size={'icon'}
+                                variant={'outline'}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     rotateClockwise();
                                 }}
                                 disabled={imageIsRotating}
-                                className={rotateBtnClass}
                                 aria-label="Roter med klokken"
                                 title="Roter med klokken"
                             >
                                 <RotateCw size={24} className={imageIsRotating ? 'animate-spin' : ''} />
-                            </button>
+                            </Button>
                         </div>
                     </div>
                 </div>

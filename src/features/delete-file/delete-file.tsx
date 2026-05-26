@@ -16,6 +16,7 @@ import {Trash} from 'lucide-react';
 import {basename, dirname, join} from '@tauri-apps/api/path';
 import * as Sentry from '@sentry/react';
 import {getErrorDiagnostics, getErrorMessage} from '@/lib/utils.ts';
+import {Button} from '@/components/ui/button.tsx';
 
 
 export interface DeleteFile {
@@ -103,7 +104,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                      .replace(/([^/]+)$/, '.thumbnails/$1')
                      .replace(/\.\w+$/, '.webp')
                  : null;
-            
+
         try {
             Sentry.addBreadcrumb({
                 category: 'delete-file',
@@ -171,8 +172,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                     Handlingen kan ikke angres.
                 </DialogDescription>
                 <div className="flex justify-center space-x-2">
-                    <button
-                        type="button"
+                    <Button
                         aria-label="Slett"
                         className="w-24 hover:bg-destructive hover:text-destructive-foreground"
                         onClick={() => {
@@ -183,13 +183,16 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                         onKeyDown={(e) => e.stopPropagation()}
                     >
                         Slett
-                    </button>
+                    </Button>
                     <DialogClose
                         aria-label="Avbryt"
                         className="w-24 hover:bg-success hover:text-success-foreground"
                         onKeyDown={(e) => e.stopPropagation()}
+                        asChild
                     >
-                        Avbryt
+                        <Button>
+                            Avbryt
+                        </Button>
                     </DialogClose>
                 </div>
             </DialogContent>
@@ -201,8 +204,14 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 className={` ${btnClassName}`}
                 onKeyDown={(e) => e.stopPropagation()}
                 onClick={e => e.stopPropagation()}
+                asChild
             >
-                <Trash/>
+                <Button
+                    variant='outline'
+                    size='icon'
+                >
+                    <Trash/>
+                </Button>
             </DialogTrigger>
         </Dialog>
     );
