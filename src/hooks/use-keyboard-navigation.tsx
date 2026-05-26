@@ -35,7 +35,7 @@ export function useKeyboardNavigation(
     const {state} = useTrokkFiles();
 
     const files: FileTree[] =
-        state.current?.children?.filter(child => !child.isDirectory && !isImage(child.name)) || [];
+        state.current?.children?.filter(child => !child.isDirectory && isImage(child.name)) || [];
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
