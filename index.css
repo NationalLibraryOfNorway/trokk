@@ -57,6 +57,11 @@ html, body {
         --selected: 221 83% 53%;           /* blue-500, ~4.6:1 */
         --selected-foreground: 0 0% 98%;
 
+        /* Overlays over images — intentionally dark in both themes so text
+           and icons stay readable regardless of the underlying image. */
+        --overlay: 25 5% 11%;
+        --overlay-foreground: 0 0% 98%;
+
         /* Charts */
         --chart-1: 38 92% 50%;
         --chart-2: 173 58% 39%;
@@ -127,6 +132,10 @@ html, body {
         --info-foreground: 0 0% 98%;
         --selected: 221 83% 53%;           /* blue-500 */
         --selected-foreground: 0 0% 98%;
+
+        /* Overlays — same as light mode; always dark for image readability. */
+        --overlay: 25 5% 11%;
+        --overlay-foreground: 0 0% 98%;
 
         /* Charts */
         --chart-1: 38 92% 50%;

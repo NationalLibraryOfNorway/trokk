@@ -56,7 +56,7 @@ export default function StatusOverlay({status, size = 'medium', customText}: Sta
     };
 
     return (
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-foreground/70 text-background rounded-lg backdrop-blur-sm flex items-center gap-2 z-[5] ${sizeClasses[size]}`}>
+        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-overlay/70 text-overlay-foreground rounded-lg backdrop-blur-sm flex items-center gap-2 z-[5] ${sizeClasses[size]}`}>
             <Icon
                 size={iconSizes[size]}
                 className={config.spinAnimation ? 'animate-spin' : ''}

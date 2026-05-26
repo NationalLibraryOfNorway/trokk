@@ -28,7 +28,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
 
     const rotationCacheBuster = getFileCacheBuster(image.path);
 
-    const rotateBtnClass = `bg-foreground/50 hover:bg-foreground/70 text-background p-3 rounded-full backdrop-blur-sm transition-all relative group/btn ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+    const rotateBtnClass = `bg-overlay/50 hover:bg-overlay/70 text-overlay-foreground p-3 rounded-full backdrop-blur-sm transition-all relative group/btn ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
     const previewWebpPath = useMemo(() => {
         const baseNoExt = image.path.replace(/\.[^/.]+$/, '');
@@ -134,7 +134,7 @@ export default function DetailedImageView({ image, totalImagesInFolder}: Detaile
 
                         {/* Reload spinner overlay */}
                         {isLoading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-foreground/20 backdrop-blur-[1px] z-[6]">
+                            <div className="absolute inset-0 flex items-center justify-center bg-overlay/20 backdrop-blur-[1px] z-[6]">
                                 <LoaderCircle size={50} className="animate-spin mb-40" />
                             </div>
                         )}

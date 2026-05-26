@@ -57,7 +57,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
         const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
         const hasWebpThumbnail = !!thumbnailUrl;
         const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
-        const rotateBtnClass = `flex justify-center items-center size-10 bg-foreground/50 hover:bg-foreground/70 text-background p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+        const rotateBtnClass = `flex justify-center items-center size-10 bg-overlay/50 hover:bg-overlay/70 text-overlay-foreground p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
         if (isHiddenDir) return null;
 
