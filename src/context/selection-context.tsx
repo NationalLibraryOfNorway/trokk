@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { FileTree } from '../model/file-tree';
 import { useTrokkFiles } from './trokk-files-context.tsx';
+import {getWorkingImageChildren} from '@/util/file-utils.ts';
 
 export interface SelectionContextProps {
     currentIndex: number;
@@ -53,7 +54,7 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const focusTargetRef = useRef<HTMLElement | null>(null);
 
     const files: FileTree[] = useMemo(
-        () => state.current?.children?.filter(child => !child.isDirectory) || [],
+        () => getWorkingImageChildren(state.current),
         [state.current]
     );
 
