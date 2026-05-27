@@ -34,6 +34,18 @@ pub(crate) async fn fetch_secrets_from_vault() -> Result<SecretVariables, Client
 			.unwrap(),
 	)?;
 
+	// vault.nb.no is an internal host and must not be routed through the corporate
+	// HTTP(S) proxy. On Windows reqwest picks up the proxy from the environment, and
+	// the proxy refuses the CONNECT tunnel to the internal host ("tunnel error:
+	// unsuccessful"), which surfaces as a failed secret fetch (TT-2283). Rebuild the
+	// underlying HTTP client with proxies disabled, keeping the rustls backend (which
+	// verifies against the OS/Windows certificate store via rustls-platform-verifier).
+	client.http.http = reqwest::ClientBuilder::new()
+		.tls_backend_rustls()
+		.no_proxy()
+		.build()
+		.expect("failed to build Vault HTTP client");
+
 	// Login using AppRole method
 	let role_id = String::from(ENVIRONMENT_VARIABLES.vault_role_id);
 	let secret_id = String::from(ENVIRONMENT_VARIABLES.vault_secret_id);

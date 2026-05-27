@@ -157,4 +157,19 @@ html, body {
     body {
         @apply bg-background text-foreground antialiased;
     }
+
+    /* Hide native scrollbar on Radix ScrollArea Viewport. Radix injects this
+       rule at runtime via an inline <style> element, but our CSP (style-src
+       falls back to 'self', no 'unsafe-inline'/nonce/hash for React-rendered
+       inline styles) blocks it in WebView2. The failure is invisible on
+       Mac/Linux (overlay scrollbars) but shows as a permanent classic
+       scrollbar on Windows. Applying the same rule from this stylesheet (loaded
+       via <link>, allowed by 'self') restores the intended behaviour. */
+    [data-radix-scroll-area-viewport] {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    [data-radix-scroll-area-viewport]::-webkit-scrollbar {
+        display: none;
+    }
 }
