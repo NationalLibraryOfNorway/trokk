@@ -178,7 +178,7 @@ describe('FilesContainer', () => {
 
         const img = screen.getByAltText('example.jpg');
         const frame = img.parentElement;
-        expect(frame?.className).toContain('bg-blue-600');
+        expect(frame?.className).toContain('bg-selected');
     });
 
     it('renders empty folder message when selected folder has no children', () => {

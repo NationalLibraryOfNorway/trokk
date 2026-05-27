@@ -24,6 +24,10 @@ This file is for coding agents. Keep it short, current, and task-oriented.
 - No new persisted storage required; pane sizes can remain session-local for this feature (009-three-pane-layout)
 - TypeScript 5.x, React 18, Vite 7; Rust 2024 backend present but unchanged for this feature + Existing local shadcn-style UI primitives, new shadcn `Resizable` wrapper built on `react-resizable-panels`, new shadcn `ScrollArea` wrapper built on `@radix-ui/react-scroll-area`, existing `SettingProvider` and `settings` store abstraction, existing Lucide icons, existing feature components for file tree, files grid, registration form, and transfer log (009-three-pane-layout)
 - Existing local Tauri settings store in `src/tauri-store/setting-store.ts`, surfaced through `src/context/setting-context.tsx`, extended with persisted pane-width values and clamping on restore (009-three-pane-layout)
+- TypeScript 5 (strict mode), React 18 + React, Radix UI, Tailwind CSS, Vite, Tauri 2 (011-filter-image-files)
+- N/A (no storage changes) (011-filter-image-files)
+- TypeScript 5 (strict mode), React 18 + Tailwind CSS, Radix UI, Vite 7, Tauri 2, `tailwindcss-animate` (012-tailwind-theming)
+- Tauri plugin-store (`.settings.json`) for theme persistence (012-tailwind-theming)
 
 ## Recent Changes
 - 007-implement-p2-errors: Added TypeScript 5.x, React 18, Vite 7; Rust 2024 backend present but unchanged for this feature + React context providers, existing `MessageProvider` structured error model, `@tauri-apps/plugin-fs`, existing Radix dialog primitives, `@sentry/react` frontend instrumentation, existing retained error-log UI

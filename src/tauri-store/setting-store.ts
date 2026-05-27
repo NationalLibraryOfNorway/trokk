@@ -9,6 +9,8 @@ import {
     type WorkspacePaneSizes,
 } from '@/util/workspace-pane-layout.ts';
 
+export type Theme = 'dark' | 'light' | 'system';
+
 const defaultScannerPath = await documentDir() + sep() + 'trokk' + sep() + 'files';
 const defaultThumbnailSizeFraction = 8;
 const defaultPreviewSizeFraction = 4;
@@ -137,6 +139,30 @@ class SettingStore {
             });
         } catch (error) {
             console.error('Error setting text size:', error);
+        }
+    }
+
+    async getTheme(): Promise<Theme> {
+        await this.ensureStore();
+        const theme = await this.store!.get<string>('theme')
+            .catch(error => {
+                console.error('Error getting theme:', error);
+                return 'dark';
+            });
+        if (theme === 'light' || theme === 'system') return theme;
+        return 'dark';
+    }
+
+    async setTheme(theme: Theme): Promise<void> {
+        await this.ensureStore();
+        try {
+            await this.store!.set('theme', theme).then(async () => {
+                await this.store!.save();
+            }).catch(error => {
+                console.error('Error setting theme:', error);
+            });
+        } catch (error) {
+            console.error('Error setting theme:', error);
         }
     }
 

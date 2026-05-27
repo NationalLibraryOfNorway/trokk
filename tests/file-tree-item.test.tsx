@@ -64,7 +64,7 @@ describe('FileTreeItem folder summaries', () => {
 
         const pill = screen.getByLabelText('Antall bilder i odd: 3');
         expect(pill.textContent).toBe('3');
-        expect(pill.className).toContain('bg-red-950');
+        expect(pill.className).toContain('bg-destructive/20');
     });
 
     it('shows a green ready pill for folders with a non-zero even number of images', () => {
@@ -77,7 +77,7 @@ describe('FileTreeItem folder summaries', () => {
 
         const pill = screen.getByLabelText('Antall bilder i klar: 2');
         expect(pill.textContent).toBe('2');
-        expect(pill.className).toContain('bg-emerald-950');
+        expect(pill.className).toContain('bg-success/20');
     });
 
     it('counts merge-folder images and opens the resolved target directory when clicked', () => {
