@@ -217,7 +217,9 @@ export function usePostRegistration() {
         await uploadToS3(registration, batchMap);
         const itemIdToCountOfItems = new Map<string, number>();
         for (const [itemId, pages] of batchMap.entries()) {
-            const totalItems = pages.access.length;
+            const totalItems = pages.access.length > 0
+                ? pages.access.length
+                : pages.primary.length;
             itemIdToCountOfItems.set(itemId, totalItems);
         }
 

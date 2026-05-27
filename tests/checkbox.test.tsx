@@ -2,7 +2,7 @@ import { render, fireEvent } from '@testing-library/react';
 import Checkbox from '../src/components/ui/checkbox';
 
 describe('Checkbox component', () => {
-    it('renders with amber color when checked is true', () => {
+    it('renders with primary color when checked is true', () => {
         const { container } = render(
             <Checkbox isChecked={true} onChange={() => {}} isFocused={false} isDisabled={false} />
         );
@@ -11,8 +11,8 @@ describe('Checkbox component', () => {
         const visualBox = input?.nextSibling as HTMLElement;
 
         expect(visualBox).not.toBeNull();
-        expect(visualBox.className.includes('bg-amber-400')).toBe(true);
-        expect(visualBox.className.includes('border-amber-400')).toBe(true);
+        expect(visualBox.className.includes('bg-primary')).toBe(true);
+        expect(visualBox.className.includes('border-primary')).toBe(true);
     });
 
     it('calls onChange when checkbox is clicked', () => {

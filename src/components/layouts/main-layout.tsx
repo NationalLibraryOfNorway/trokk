@@ -53,7 +53,7 @@ const MainLayout: React.FC = () => {
                 id={paneKeys[0]}
                 defaultSize={lastPersistedPaneSizes.current[0]}
                 minSize={minimumWorkspacePaneSizes[0]}
-                className="bg-stone-800"
+                className="bg-card"
             >
                 <section aria-label="Filnavigasjon" className="h-full min-h-0 overflow-hidden">
                     <ScrollArea className="h-full w-full [&>div>div]:!block [&>div>div]:!min-w-0" type="scroll">
@@ -68,7 +68,7 @@ const MainLayout: React.FC = () => {
                 id={paneKeys[1]}
                 defaultSize={lastPersistedPaneSizes.current[1]}
                 minSize={minimumWorkspacePaneSizes[1]}
-                className="bg-stone-950"
+                className="bg-background"
             >
                 <section aria-label="Arbeidsflate" className="h-full min-h-0">
                     <ScrollArea className="h-full w-full">
@@ -83,10 +83,10 @@ const MainLayout: React.FC = () => {
                 id={paneKeys[2]}
                 defaultSize={lastPersistedPaneSizes.current[2]}
                 minSize={minimumWorkspacePaneSizes[2]}
-                className="bg-stone-800"
+                className="bg-card"
             >
                 <section aria-label="Arbeidsverktøy" className="flex h-full min-h-0 flex-col overflow-hidden">
-                    <div className="shrink-0 border-b border-stone-700/80">
+                    <div className="shrink-0 border-b border-border">
                         <RegistrationForm />
                     </div>
                     <div className="min-h-0 flex-1">

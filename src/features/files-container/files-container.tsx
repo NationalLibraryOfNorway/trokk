@@ -15,7 +15,7 @@ import {
 import {useKeyboardNavigation} from '@/hooks/use-keyboard-navigation.tsx';
 import {VisuallyHidden} from '@radix-ui/react-visually-hidden';
 import {cn} from '@/lib/utils.ts';
-import {getBreadcrumbSegments} from '@/util/file-utils.ts';
+import {getBreadcrumbSegments, isImage} from '@/util/file-utils.ts';
 
 const FilesContainer: React.FC = () => {
     const [delFilePath, setDelFilePath] = useState<string | null>(null);
@@ -31,10 +31,11 @@ const FilesContainer: React.FC = () => {
         setColumns,
     } = useSelection();
 
-    const files = state.current?.children?.filter(child => !child.isDirectory) || [];
+    const files = state.current?.children?.filter(child => !child.isDirectory && isImage(child.name)) || [];
     const visibleChildren = state.current?.children?.filter(child =>
         !child.name.startsWith('.thumbnails') &&
-        !child.name.startsWith('.previews')
+        !child.name.startsWith('.previews') &&
+        (child.isDirectory || isImage(child.name))
     ) || [];
     const breadcrumbSegments = getBreadcrumbSegments(state.basePath, state.current?.path);
 
@@ -57,7 +58,7 @@ const FilesContainer: React.FC = () => {
 
                     aria-describedby="Forstørret visning av valgt bilde"
                     className={cn(
-                        'bg-stone-900/80 backdrop-blur-lg',
+                        'bg-card/80 backdrop-blur-lg',
                         'fixed left-1/2 -translate-x-1/2',
                         '-translate-y-1/2',
                         'top-[calc(var(--toolbar-h)+(100dvh-var(--toolbar-h))/2)]',
@@ -82,17 +83,17 @@ const FilesContainer: React.FC = () => {
                      }
                  }}>
                 {state.current && (
-                    <div className="border-b border-stone-600 px-4 py-3 flex flex-col gap-3 flex-shrink-0">
-                        <div className="flex min-w-0 items-center gap-2 text-sm text-stone-300">
+                    <div className="border-b border-border px-4 py-3 flex flex-col gap-3 flex-shrink-0">
+                        <div className="flex min-w-0 items-center gap-2 text-sm text-muted-foreground">
                             <Folder size="16" className="shrink-0"/>
                             <nav aria-label="Arbeidsmappe" className="flex min-w-0 items-center gap-1 overflow-hidden">
                                 {breadcrumbSegments.map((segment, index) => (
                                     <React.Fragment key={segment}>
-                                        {index > 0 && <ChevronRight size="14" className="shrink-0 text-stone-500"/>}
+                                        {index > 0 && <ChevronRight size="14" className="shrink-0 text-muted-foreground"/>}
                                         <span
                                             className={cn(
                                                 'truncate whitespace-nowrap',
-                                                index == breadcrumbSegments.length - 1 ? 'font-semibold text-stone-100' : 'text-stone-400'
+                                                index == breadcrumbSegments.length - 1 ? 'font-semibold text-foreground' : 'text-muted-foreground'
                                             )}
                                         >
                                             {segment}
@@ -106,7 +107,7 @@ const FilesContainer: React.FC = () => {
                                 <p className="font-semibold">
                                     {checkedItems.length} forside{checkedItems.length !== 1 ? 'r' : ''} valgt
                                 </p>
-                                <label htmlFor="columns" className="text-sm font-medium text-gray-300 ml-auto ">
+                                <label htmlFor="columns" className="text-sm font-medium text-muted-foreground ml-auto ">
                                     Bilder per rad: {columns}
                                 </label>
                                 <input
@@ -116,7 +117,7 @@ const FilesContainer: React.FC = () => {
                                     max={10}
                                     value={columns}
                                     onChange={(e) => setColumns(Number(e.target.value))}
-                                    className="w-full max-w-[150px] mb-1 h-2 bg-stone-500 rounded-lg appearance-none cursor-pointer px-0"
+                                    className="w-full max-w-[150px] mb-1 h-2 bg-muted rounded-lg appearance-none cursor-pointer px-0"
                                 />
                             </div>
                         )}
@@ -145,7 +146,7 @@ const FilesContainer: React.FC = () => {
                                                             payload: child,
                                                         })
                                                     }
-                                                    className="flex flex-col items-center justify-center bg-stone-900 hover:bg-stone-800 rounded-lg p-4"
+                                                    className="flex flex-col items-center justify-center bg-card hover:bg-accent rounded-lg p-4"
                                                 >
                                                     <Folder size="96"/>
                                                     <i>{child.name}</i>

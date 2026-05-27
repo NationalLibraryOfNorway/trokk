@@ -13,6 +13,7 @@ import {useRotation} from '@/context/rotation-context.tsx';
 import StatusOverlay from '@/components/ui/rotation-status-overlay.tsx';
 import React, {forwardRef} from 'react';
 import DeleteFile from '@/features/delete-file/delete-file.tsx';
+import {Button} from '@/components/ui/button.tsx';
 
 export interface ThumbnailProps {
     fileTree: FileTree;
@@ -57,12 +58,12 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
         const thumbnailUrl = getThumbnailURIFromTree(fileTree, state);
         const hasWebpThumbnail = !!thumbnailUrl;
         const isHiddenDir = fileTree.name === '.thumbnails' || fileTree.name === '.previews';
-        const rotateBtnClass = `flex justify-center items-center size-10 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full backdrop-blur-sm transition-all ${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
+        const rotateBtnClass = `${imageIsRotating ? 'opacity-50 cursor-not-allowed' : ''}`
 
         if (isHiddenDir) return null;
 
-        const checkedBorder = 'bg-amber-400';
-        const focusedBorder = 'bg-blue-600';
+        const checkedBorder = 'bg-primary';
+        const focusedBorder = 'bg-selected';
 
         let frameClass = 'w-full rounded-t-lg p-2 relative z-0';
 
@@ -70,7 +71,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
 
         const checkedGradientOverlay =
             ' before:content-[""] before:absolute before:inset-0 before:rounded-t-lg before:z-[5] before:pointer-events-none before:transition-opacity' +
-            ' before:bg-gradient-to-br before:from-amber-400 before:from-[0%] before:via-amber-400 before:via-[60%] before:to-blue-600 before:to-[75%]';
+            ' before:bg-gradient-to-br before:from-primary before:from-[0%] before:via-primary before:via-[60%] before:to-selected before:to-[75%]';
 
         if (isChecked) {
             frameClass += ` ${checkedBorder} before:opacity-0` + checkedGradientOverlay;
@@ -116,7 +117,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                 </div>
             );
         } else {
-            content = <File size="96" className='mx-auto mt-1' color="gray"/>;
+            content = <File size="96" className='mx-auto mt-1 text-muted-foreground'/>;
         }
 
         return (
@@ -124,7 +125,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                 role="button"
                 tabIndex={0}
                 key={fileTree.path}
-                className={`flex flex-col p-0 items-center bg-stone-900 rounded-lg group ${!isDisabled ? 'hover:bg-stone-800' : ''}`}
+                className={`flex flex-col p-0 items-center bg-card rounded-lg group ${!isDisabled ? 'hover:bg-accent' : ''}`}
                 onDoubleClick={!isDisabled ? onDoubleClick : undefined}
                 ref={ref}
             >
@@ -134,10 +135,11 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                     {((isSupported || hasWebpThumbnail) && !isDisabled) && (
                         <div
                             onClick={(e) => e.stopPropagation()}
-                            className="absolute p-4 bottom-4 left-1/2 -translate-x-1/2 flex flex-row gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                            className="absolute bottom-5 left-1/2 -translate-x-1/2 flex flex-row gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-20"
                         >
-                            <button
-                                type="button"
+                            <Button
+                                variant='outline'
+                                size='icon'
                                 onClick={handleRotateCounterClockwise}
                                 disabled={imageIsRotating}
                                 className={rotateBtnClass}
@@ -145,9 +147,10 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                                 title="Roter mot klokken"
                             >
                                 <RotateCcw size={16} />
-                            </button>
-                            <button
-                                type="button"
+                            </Button>
+                            <Button
+                                variant='outline'
+                                size='icon'
                                 onClick={handleRotateClockwise}
                                 disabled={imageIsRotating}
                                 className={rotateBtnClass}
@@ -155,7 +158,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                                 title="Roter med klokken"
                             >
                                 <RotateCw size={16} />
-                            </button>
+                            </Button>
                             <DeleteFile
                                 childPath={fileTree.path}
                                 setDelFilePath={setDelFilePath}
@@ -166,7 +169,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                         </div>
                     )}
                 </div>
-                <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-amber-400' : ''} ${isDisabled ? 'opacity-30 cursor-default' : ''}`}>
+                <i className={`flex content-center justify-center p-1 mx-1 w-full text-md ${isChecked ? 'text-primary' : ''} ${isDisabled ? 'opacity-30 cursor-default' : ''}`}>
                     {fileName}
                 </i>
             </div>

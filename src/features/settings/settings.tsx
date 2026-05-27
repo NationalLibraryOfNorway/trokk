@@ -22,6 +22,8 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
         version,
         textSize,
         setTextSize,
+        theme,
+        setTheme,
         thumbnailSizeFraction,
         previewSizeFraction,
         setThumbnailSizeFraction,
@@ -187,6 +189,33 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             </div>
 
             <div className="flex mb-7 items-center">
+                <label className="w-32">Fargetema</label>
+                <div className="ml-2 flex items-center gap-2">
+                    <Button
+                        type="button"
+                        variant={theme === 'dark' ? 'default' : 'outline'}
+                        onClick={() => setTheme('dark')}
+                    >
+                        Mørkt
+                    </Button>
+                    <Button
+                        type="button"
+                        variant={theme === 'light' ? 'default' : 'outline'}
+                        onClick={() => setTheme('light')}
+                    >
+                        Lyst
+                    </Button>
+                    <Button
+                        type="button"
+                        variant={theme === 'system' ? 'default' : 'outline'}
+                        onClick={() => setTheme('system')}
+                    >
+                        System
+                    </Button>
+                </div>
+            </div>
+
+            <div className="flex mb-7 items-center">
                 <label htmlFor="scannerPath" className="w-32">Skanner kilde</label>
                 <button type="button" onClick={pickScannerPath} className="ml-2">Velg mappe</button>
                 <Input
@@ -197,8 +226,8 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                     className="ml-2 w-80"
                 />
                 <Button variant='secondary' type="button" onClick={() => saveScannerPath(scannerPathEdit)} className="ml-2">Lagre</Button>
-                {scanPathError && <p className="text-red-500 ml-2">{scanPathError}</p>}
-                {scanPathSuccess && <p className="text-green-500 ml-2">{scanPathSuccess}</p>}
+                {scanPathError && <p className="text-destructive ml-2">{scanPathError}</p>}
+                {scanPathSuccess && <p className="text-success ml-2">{scanPathSuccess}</p>}
             </div>
 
             <label htmlFor="thumbnailSizeFraction" className="w-32">Bildekvalitet</label>
@@ -206,28 +235,28 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
             <div className="flex mb-2 items-center">
                 <label htmlFor="thumbnailSizeFraction" className="w-40">Miniatyrbilder</label>
                 <div className='flex flex-row gap-2 w-full px-6'>
-                    <span className='text-muted'>Minst</span>
+                    <span className='text-muted-foreground'>Minst</span>
                     <Slider
                         onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
                         min={1}
                         max={16}
                         step={1}
                     />
-                    <span className='text-muted'>Størst</span>
+                    <span className='text-muted-foreground'>Størst</span>
                 </div>
             </div>
 
             <div className="flex mb-2 items-center">
                 <label htmlFor="previewSizeFraction" className="w-40">Forhåndsvisninger</label>
                 <div className='flex flex-row gap-2 w-full px-6'>
-                    <span className='text-muted'>Minst</span>
+                    <span className='text-muted-foreground'>Minst</span>
                     <Slider
                         onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
                         min={1}
                         max={16}
                         step={1}
                     />
-                    <span className='text-muted'>Størst</span>
+                    <span className='text-muted-foreground'>Størst</span>
                 </div>
             </div>
 
@@ -243,7 +272,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 </Button>
 
                 {sizeFractionsStatus && (
-                    <p className={`ml-2 ${sizeFractionsStatus.startsWith('Feil') ? 'text-red-500' : 'text-green-500'}`}>
+                    <p className={`ml-2 ${sizeFractionsStatus.startsWith('Feil') ? 'text-destructive' : 'text-success'}`}>
                         {sizeFractionsStatus}
                     </p>
                 )}
@@ -257,22 +286,21 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 <label className="w-40">Feilsøking</label>
                 <Button
                     type="button"
+                    variant="secondary"
                     onClick={handleDeleteAllPreviews}
                     disabled={isDeleting || !scannerPath}
-                    className='bg-stone-700 hover:bg-stone-600'
                 >
                     {isDeleting ? 'Sletter...' : 'Slett alle forhåndsvisninger'}
                 </Button>
                 <Button
                     type="button"
                     variant="secondary"
-                    className="bg-stone-700 hover:bg-stone-600"
                     onClick={() => setIsErrorLogOpen(true)}
                 >
                     Se feillogg
                 </Button>
                 {deletePreviewsStatus && (
-                    <p className={`ml-2 ${deletePreviewsStatus.startsWith('Feil') ? 'text-red-500' : deletePreviewsStatus.startsWith('Slettet') ? 'text-green-500' : 'text-yellow-500'}`}>
+                    <p className={`ml-2 ${deletePreviewsStatus.startsWith('Feil') ? 'text-destructive' : deletePreviewsStatus.startsWith('Slettet') ? 'text-success' : 'text-warning'}`}>
                         {deletePreviewsStatus}
                     </p>
                 )}
