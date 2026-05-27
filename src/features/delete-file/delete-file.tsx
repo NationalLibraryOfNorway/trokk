@@ -16,6 +16,7 @@ import {Trash} from 'lucide-react';
 import {basename, dirname, join} from '@tauri-apps/api/path';
 import * as Sentry from '@sentry/react';
 import {getErrorDiagnostics, getErrorMessage} from '@/lib/utils.ts';
+import {Button} from '@/components/ui/button.tsx';
 
 
 export interface DeleteFile {
@@ -103,7 +104,7 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                      .replace(/([^/]+)$/, '.thumbnails/$1')
                      .replace(/\.\w+$/, '.webp')
                  : null;
-            
+
         try {
             Sentry.addBreadcrumb({
                 category: 'delete-file',
@@ -165,16 +166,15 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
 
     return (
         <Dialog open={delFilePath === childPath} onOpenChange={(open) => setDelFilePath(open ? childPath : null)}>
-            <DialogContent onClick={(e) => e.stopPropagation()} className={'bg-stone-700 w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
+            <DialogContent onClick={(e) => e.stopPropagation()} className={'bg-card w-3/12 min-w-[400px]'} onCloseAutoFocus={(e) => e.preventDefault()}>
                 <DialogTitle>Er du sikker på at du ønsker å slette bildet?</DialogTitle>
-                <DialogDescription className="text-gray-200">
+                <DialogDescription className="text-muted-foreground">
                     Handlingen kan ikke angres.
                 </DialogDescription>
                 <div className="flex justify-center space-x-2">
-                    <button
-                        type="button"
+                    <Button
                         aria-label="Slett"
-                        className="w-24 hover:bg-red-800"
+                        className="w-24 hover:bg-destructive hover:text-destructive-foreground"
                         onClick={() => {
                             const targetPath = delFilePath ?? childPath;
                             setDelFilePath(null);
@@ -183,13 +183,16 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                         onKeyDown={(e) => e.stopPropagation()}
                     >
                         Slett
-                    </button>
+                    </Button>
                     <DialogClose
                         aria-label="Avbryt"
-                        className="w-24 hover:bg-green-800"
+                        className="w-24 hover:bg-success hover:text-success-foreground"
                         onKeyDown={(e) => e.stopPropagation()}
+                        asChild
                     >
-                        Avbryt
+                        <Button>
+                            Avbryt
+                        </Button>
                     </DialogClose>
                 </div>
             </DialogContent>
@@ -201,8 +204,14 @@ const DeleteFile: React.FC<DeleteFile> = ({childPath, setDelFilePath, delFilePat
                 className={` ${btnClassName}`}
                 onKeyDown={(e) => e.stopPropagation()}
                 onClick={e => e.stopPropagation()}
+                asChild
             >
-                <Trash/>
+                <Button
+                    variant='outline'
+                    size='icon'
+                >
+                    <Trash/>
+                </Button>
             </DialogTrigger>
         </Dialog>
     );

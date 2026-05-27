@@ -1,5 +1,5 @@
 import React, {useRef, useState} from 'react';
-import {Expand, FolderOpen, LogIn, LogOut, Minimize, Minus, Settings, User, X} from 'lucide-react';
+import {Check, Expand, FolderOpen, LogIn, LogOut, Minimize, Minus, Settings, User, X} from 'lucide-react';
 import './App.css';
 import {AuthProvider, useAuth} from './context/auth-context.tsx';
 import {TrokkFilesProvider} from './context/trokk-files-context.tsx';
@@ -78,7 +78,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
     const [isMaximized, setIsMaximized] = useState(false);
     const toolbarRef = useRef<HTMLDivElement>(null);
     const copiedTooltipTimeoutRef = useRef<number | null>(null);
-    const startupWarningMessageClass = 'border-yellow-600 bg-yellow-950/40 text-yellow-100';
+    const startupWarningMessageClass = 'border-warning bg-warning/10 text-warning-foreground';
     useToolbarOffset(toolbarRef);
 
     // Enable keyboard shortcuts for text size control
@@ -311,23 +311,19 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
         <div className="relative flex-1 w-full flex flex-col overflow-hidden min-h-0">
             <ErrorModal />
             <div data-tauri-drag-region ref={toolbarRef}
-                className="flex flex-row py-2 px-3 w-full bg-stone-700 border-2 border-stone-800 items-center justify-between shrink-0">
+                className="flex flex-row py-2 px-3 w-full bg-secondary border-2 border-border items-center justify-between shrink-0">
                 <div className="flex-shrink-0">
                     <Button onClick={copyPathToClipboard}
-                            className="hover:bg-stone-600 p-0 bg-stone-700 border-0 shadow-none flex"
-                            title="Klikk for å kopiere">
-                        <FolderOpen size="32" className="ms-2"/>
-                        <span className="mt-1 me-2 relative group hidden md:inline">
+                            variant="ghost"
+                            title="Klikk for å kopiere mappestien">
+                        {showCopiedTooltip
+                            ? <Check size="32" className="ms-2 text-success"/>
+                            : <FolderOpen size="32" className="ms-2"/>}
+                        <span className="me-2 relative group hidden md:inline">
                             {scannerPath}
                         </span>
                     </Button>
                 </div>
-                {showCopiedTooltip && (
-                    <span
-                        className="absolute left-0 top-full mt-1 ml-4 px-2 py-2 bg-stone-800 text-white text-sm rounded whitespace-nowrap z-50 shadow-lg">
-                                Mappesti kopiert til utklippstavle
-                            </span>
-                )}
                 <div data-tauri-drag-region className="text-4xl cursor-default overflow-hidden">
                     <img data-tauri-drag-region src={'/banner.png'} alt="Trøkk Logo"
                          className="h-10 inline-block ms-2 sm:w-auto w-10 object-cover object-left"/>
@@ -335,7 +331,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                 <div className="flex-shrink-0 flex items-center gap-2">
                     <div data-tauri-drag-region className="flex items-center pr-2 gap-1">
                         <div data-tauri-drag-region
-                             className="bg-stone-600 rounded-full cursor-default p-1.5 mb-1 mr-1 flex items-center justify-center"
+                             className="bg-muted rounded-full cursor-default p-1.5 mb-1 mr-1 flex items-center justify-center"
                         >
                             <User data-tauri-drag-region size={20}/>
                         </div>
@@ -350,7 +346,7 @@ const Content: React.FC<ContentProps> = ({openSettings, setOpenSettings}) => {
                                 <Settings className="lg:ms-2"/>
                             </Button>
                         </DialogTrigger>
-                        <DialogContent className='bg-stone-900 flex flex-col w-3/4 max-w-3xl'>
+                        <DialogContent className='bg-card flex flex-col w-3/4 max-w-3xl'>
                             <SettingsForm setOpen={setOpenSettings}/>
                         </DialogContent>
                     </Dialog>

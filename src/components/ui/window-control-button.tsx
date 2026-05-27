@@ -14,14 +14,14 @@ const WindowControlButton: React.FC<WindowControlButtonProps> = ({onClick, icon:
             onClick={onClick}
             className={`
                 border-0
-                w-[30px] 
+                w-[30px]
                 h-[30px]
-                rounded-full 
-                bg-stone-600 
-                hover:bg-stone-500 
-                flex 
-                items-center 
-                justify-center 
+                rounded-full
+                bg-secondary
+                hover:bg-accent
+                flex
+                items-center
+                justify-center
                 ${className}
             `}
             title={title}

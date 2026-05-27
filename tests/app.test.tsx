@@ -126,7 +126,7 @@ describe('App utility error handling', () => {
 
         renderApp();
 
-        fireEvent.click(screen.getByTitle('Klikk for å kopiere'));
+        fireEvent.click(screen.getByTitle('Klikk for å kopiere mappestien'));
 
         const dialog = await screen.findByRole('dialog');
 

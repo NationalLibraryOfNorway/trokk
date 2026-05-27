@@ -19,10 +19,10 @@ interface ErrorLogModalProps {
 const ErrorLogModal = ({entries, open, onOpenChange}: ErrorLogModalProps) => {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="grid h-[min(85vh,900px)] w-[min(96vw,72rem)] max-w-none grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-xl border border-stone-700 bg-stone-900 text-stone-50">
+            <DialogContent className="grid h-[min(85vh,900px)] w-[min(96vw,72rem)] max-w-none grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden rounded-xl border border-border bg-card text-card-foreground">
                 <DialogHeader className="gap-2">
                     <DialogTitle>Feillogg</DialogTitle>
-                    <DialogDescription className="text-sm leading-6 text-stone-300">
+                    <DialogDescription className="text-sm leading-6 text-muted-foreground">
                         Se de siste lagrede feilene og eventuelle detaljer for feilsøking.
                     </DialogDescription>
                 </DialogHeader>
@@ -34,7 +34,7 @@ const ErrorLogModal = ({entries, open, onOpenChange}: ErrorLogModalProps) => {
                 <DialogFooter className="gap-2">
                     <Button
                         type="button"
-                        className="bg-stone-700 hover:bg-stone-600"
+                        variant="secondary"
                         onClick={() => onOpenChange(false)}
                     >
                         Lukk
