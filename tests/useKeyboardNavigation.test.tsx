@@ -11,7 +11,9 @@ const keypressDelay = 100;
 const mockChildren = [
     {isDirectory: false, path: '/test/file1.tif', name: 'file1.tif'},
     {isDirectory: false, path: '/test/file2.tif', name: 'file2.tif'},
+    {isDirectory: false, path: '/test/readme.txt', name: 'readme.txt'},
     {isDirectory: false, path: '/test/file3.tif', name: 'file3.tif'},
+    {isDirectory: true, path: '/test/directory', name: 'directory'},
 ];
 
 interface TestComponentProps {
@@ -125,10 +127,10 @@ describe('useKeyboardNavigation', () => {
         expect(handleIndexChange).toHaveBeenCalledWith(0);
     });
 
-    it('should handle End key', () => {
+    it('should handle End key, and skip non-image files', () => {
         const {handleIndexChange} = setupMocks(0);
         pressKey('End', {});
-        expect(handleIndexChange).toHaveBeenCalledWith(mockChildren.length - 1);
+        expect(handleIndexChange).toHaveBeenCalledWith(2);
     });
 
     it('ArrowRight and l/L should handleNext', () => {
@@ -189,5 +191,11 @@ describe('useKeyboardNavigation', () => {
         const {setDelFilePath} = setupMocks(1);
         pressKey('Delete', {});
         expect(setDelFilePath).toHaveBeenCalledWith(mockChildren[1].path);
+    });
+
+    it('Delete should skip non-image files', () => {
+        const {setDelFilePath} = setupMocks(2);
+        pressKey('Delete', {});
+        expect(setDelFilePath).toHaveBeenCalledWith('/test/file3.tif');
     });
 });
