@@ -237,7 +237,8 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 <div className='flex flex-row gap-2 w-full px-6'>
                     <span className='text-muted-foreground'>Minst</span>
                     <Slider
-                        onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
+                        value={[thumbnailSizeEdit]}
+                        onValueChange={(value) => setThumbnailSizeEdit(value[0])}
                         min={1}
                         max={16}
                         step={1}
@@ -251,7 +252,8 @@ const SettingsForm: React.FC<SettingsFormProps> = ({setOpen}) => {
                 <div className='flex flex-row gap-2 w-full px-6'>
                     <span className='text-muted-foreground'>Minst</span>
                     <Slider
-                        onValueChange={(value) => setThumbnailSizeEdit(Number(value))}
+                        value={[previewSizeFractionEdit]}
+                        onValueChange={(value) => setPreviewSizeEdit(value[0])}
                         min={1}
                         max={16}
                         step={1}
