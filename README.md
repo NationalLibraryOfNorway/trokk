@@ -65,14 +65,27 @@ Legg til "command" i configureringen av cargo: "run --no-default-features --feat
 Samt, legg til environmental variabler nedenfor.
 
 ### Lokal utvikling environmental variabler
-| Variabel                   | Beskrivelse                                                                          |
-|----------------------------|--------------------------------------------------------------------------------------|
-| `OIDC_BASE_URL`            | URL til OIDC server (nbauth-realm, inkludert "protocol/openid-connect").             |
-| `OIDC_CLIENT_ID`           | Client ID til OIDC server (nbauth-realm)                                             |
-| `OIDC_CLIENT_SECRET`       | Client secret til OIDC server (nbauth-realm)                                         |
-| `OIDC_TEKST_BASE_URL`      | URL til OIDC server for papi auth (tekst-realm, inkludert "protocol/openid-connect") |
-| `OIDC_TEKST_CLIENT_ID`     | Client ID til OIDC server (tekst-realm)                                              |
-| `OIDC_TEKST_CLIENT_SECRET` | Client secret til OIDC server (tekst-realm)                                          |
+| Variabel                       | Beskrivelse                                                                          |
+|--------------------------------|--------------------------------------------------------------------------------------|
+| `OIDC_BASE_URL`                | URL til OIDC server (nbauth-realm, inkludert "protocol/openid-connect").             |
+| `OIDC_CLIENT_ID`               | Client ID til OIDC server (nbauth-realm)                                             |
+| `OIDC_CLIENT_SECRET`           | Client secret til OIDC server (nbauth-realm)                                         |
+| `OIDC_TEKST_BASE_URL`          | URL til OIDC server for papi auth (tekst-realm, inkludert "protocol/openid-connect") |
+| `OIDC_TEKST_CLIENT_ID`         | Client ID til OIDC server (tekst-realm)                                              |
+| `OIDC_TEKST_CLIENT_SECRET`     | Client secret til OIDC server (tekst-realm)                                          |
+| `VITE_DISABLE_VERSION_CHECK`   | Sett til `true` for å deaktivere versjonssjekken lokalt (se under)                  |
+
+#### Deaktivere versjonssjekk lokalt
+
+Under lokal utvikling er `VITE_APP_VERSION` ikke satt, og appen faller tilbake til versjon `0.0.0`. Dette gjør at versjonssjekken alltid blokkerer oppstart og opplasting (siden alle produksjonsversjoner er høyere).
+
+Lag en `.env.local`-fil i prosjektets rotmappe med følgende innhold:
+
+```
+VITE_DISABLE_VERSION_CHECK=true
+```
+
+Filen er allerede gitignorert via `.env*`-regelen i `.gitignore` og skal aldri committes.
 
 ## Vedlikehold
 

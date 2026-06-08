@@ -31,6 +31,10 @@ const getCurrentAppVersion = () => {
 	return value?.trim() || '0.0.0';
 };
 
+// Set VITE_DISABLE_VERSION_CHECK=true in .env.local to skip version checks during local dev
+const isVersionCheckDisabled = () =>
+	import.meta.env.VITE_DISABLE_VERSION_CHECK === 'true';
+
 const VERSION_GATE_SENTRY_LABEL = 'frontend_desktop_version_gate';
 
 export function VersionProvider({children}: { children: ReactNode }) {
@@ -62,6 +66,12 @@ export function VersionProvider({children}: { children: ReactNode }) {
 	}, []);
 
 	const runStartupVersionCheck = useCallback(async () => {
+		if (isVersionCheckDisabled()) {
+			setStartupVersionStatus('UP_TO_DATE');
+			setHasCheckedStartupVersion(true);
+			return;
+		}
+
 		const desktopVersionUri = getDesktopVersionUri();
 		if (!desktopVersionUri) {
 			setStartupVersionStatus(null);
@@ -125,6 +135,12 @@ export function VersionProvider({children}: { children: ReactNode }) {
 	}, [runStartupVersionCheck]);
 
 	const checkUploadVersionGate = useCallback(async (): Promise<boolean> => {
+		if (isVersionCheckDisabled()) {
+			setUploadVersionBlocking(false);
+			setUploadVersionMessage(null);
+			return false;
+		}
+
 		const desktopVersionUri = getDesktopVersionUri();
 		if (!desktopVersionUri) {
 			setUploadVersionBlocking(false);
