@@ -39,7 +39,6 @@ const MULTIPART_PART_SIZE: usize = 16 * 1024 * 1024; // 16 MiB (server limit)
 pub(crate) async fn upload_directory(
 	directory_path: &str,
 	object_id: &str,
-	material_type: &str,
 	app_window: Window,
 ) -> Result<usize, String> {
 	let secret_variables = get_secret_variables()
@@ -64,7 +63,6 @@ pub(crate) async fn upload_directory(
 			path: file_path,
 			object_id,
 			page_nr,
-			material_type,
 			file_size,
 			representation_type: None,
 		})
@@ -87,7 +85,6 @@ pub(crate) async fn upload_directory(
 #[cfg(not(feature = "debug-mock"))]
 pub(crate) async fn upload_batch_to_s3(
 	batch_map: HashMap<String, BatchRepresentation>,
-	material_type: &str,
 	app_window: Window,
 ) -> Result<usize, String> {
 	let secret_variables = get_secret_variables()
@@ -140,7 +137,6 @@ pub(crate) async fn upload_batch_to_s3(
 					path: &file_path,
 					object_id: &prefixed_batch_id,
 					page_nr,
-					material_type,
 					file_size,
 					representation_type: Some(rep_type),
 				})
@@ -172,7 +168,6 @@ async fn put_object(req: PutObjectRequest<'_>) -> Result<(), String> {
 		path,
 		object_id,
 		page_nr,
-		material_type,
 		file_size,
 		representation_type,
 	} = req;
@@ -183,13 +178,13 @@ async fn put_object(req: PutObjectRequest<'_>) -> Result<(), String> {
 
 	let key = if let Some(rep_type) = representation_type {
 		format!(
-			"{}/{}/representations/{}/data/{}_{:0>5}.{}",
-			material_type, object_id, rep_type, object_id, page_nr, extension
+			"{}/representations/{}/data/{}_{:0>5}.{}",
+			object_id, rep_type, object_id, page_nr, extension
 		)
 	} else {
 		format!(
-			"{}/{}/{}_{:0>5}.{}",
-			material_type, object_id, object_id, page_nr, extension
+			"{}/{}_{:0>5}.{}",
+			object_id, object_id, page_nr, extension
 		)
 	};
 
