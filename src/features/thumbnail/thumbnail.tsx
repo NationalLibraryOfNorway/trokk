@@ -117,7 +117,7 @@ const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(
                 </div>
             );
         } else {
-            content = <File size="96" className='mx-auto mt-1 text-muted-foreground'/>;
+            content = <File size="96" className={`mx-auto mt-1 text-muted-foreground ${isDisabled ? 'opacity-30 cursor-default' : ''}`}/>;
         }
 
         return (
