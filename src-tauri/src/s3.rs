@@ -182,10 +182,7 @@ async fn put_object(req: PutObjectRequest<'_>) -> Result<(), String> {
 			object_id, rep_type, object_id, page_nr, extension
 		)
 	} else {
-		format!(
-			"{}/{}_{:0>5}.{}",
-			object_id, object_id, page_nr, extension
-		)
+		format!("{}/{}_{:0>5}.{}", object_id, object_id, page_nr, extension)
 	};
 
 	if file_size <= MULTIPART_PART_SIZE {
