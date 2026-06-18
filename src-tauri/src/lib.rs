@@ -263,19 +263,17 @@ async fn get_papi_access_token() -> Result<String, String> {
 async fn upload_directory_to_s3(
 	directory_path: &str,
 	object_id: &str,
-	material_type: &str,
 	app_window: Window,
 ) -> Result<usize, String> {
-	s3::upload_directory(directory_path, object_id, material_type, app_window).await
+	s3::upload_directory(directory_path, object_id, app_window).await
 }
 
 #[tauri::command]
 async fn upload_batch_to_s3(
 	batch_map: HashMap<String, BatchRepresentation>,
-	material_type: &str,
 	app_window: tauri::Window,
 ) -> Result<usize, String> {
-	s3::upload_batch_to_s3(batch_map, material_type, app_window).await
+	s3::upload_batch_to_s3(batch_map, app_window).await
 }
 
 #[tauri::command]

@@ -155,7 +155,6 @@ pub struct PutObjectRequest<'a> {
 	pub path: &'a PathBuf,
 	pub object_id: &'a str,
 	pub page_nr: usize,
-	pub material_type: &'a str,
 	pub file_size: usize,
 	pub representation_type: Option<&'a str>,
 }
